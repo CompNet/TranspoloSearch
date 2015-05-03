@@ -28,11 +28,14 @@ import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.text.DateFormat;
 import java.text.Normalizer;
+import java.text.SimpleDateFormat;
 import java.text.Normalizer.Form;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -78,6 +81,16 @@ public class LeMondeReader extends ArticleReader
 	/** Text allowing to detect wikipedia URL */
 	public static final String DOMAIN = "www.lemonde.fr/";
 
+	/** Id of the element containing the article content in the Wikipedia page */
+	private final static String ID_ARTICLE_BODY = "articleBody";
+
+	/** Class of the article signature */
+	private final static String CLASS_AUTEUR = "auteur";
+	/** Class of the article signature */
+	private final static String CLASS_BLOC_SIGNATURE = "bloc_signature";
+	/** Class of the article body */
+	private final static String CLASS_CONTENT_ARTICLE_BODY = "content-article-body";
+	
 	/**
 	 * Retrieve the text located in a paragraph (P) HTML element.
 	 * 
@@ -99,7 +112,7 @@ public class LeMondeReader extends ArticleReader
 		processTextElement(element,rawStr,linkedStr);
 		
 		// possibly add a new line character
-		if(rawStr.charAt(rawStr.length()-1)!='\n')
+		if(rawStr.length()>0 && rawStr.charAt(rawStr.length()-1)!='\n')
 		{	rawStr.append("\n");
 			linkedStr.append("\n");
 		}
@@ -685,19 +698,61 @@ public class LeMondeReader extends ArticleReader
 			
 			// get the article element
 			logger.log("Ge the main element of the document");
-			Element articleElt = document.getElementsByTag(XmlNames.ELT_ARTICLE).first();
-			Element contentElt = articleElt.getElementsByTag(XmlNames.ELT_ARTICLE);
-//TODO			p "bloc_signature" à décomposer
-//TODO			div id="article_body" ne prendre que les <p>
-
+			Elements articleElts = document.getElementsByTag(XmlNames.ELT_ARTICLE);
+			Element articleElt = articleElts.first();
+			if(articleElts.size()==0)
+				throw new IllegalArgumentException("No <article> element found in the Web page");
+			else if(articleElts.size()>1)
+				logger.log("WARNING: There are more than 1 <article> elements, which is unusual. Let's focus on the first.");
+			
+			// retrieve the dates
+//			Element signatureElt = articleElt.getElementsByAttributeValue(XmlNames.ATT_CLASS, CLASS_BLOC_SIGNATURE).first();
+			Elements timeElts = articleElt.getElementsByTag(XmlNames.ELT_TIME);
+			Element publishingElt = timeElts.first();
+			Date publishingDate = getDateFromTimeElt(publishingElt);
+			logger.log("Found the publishing date: "+publishingDate);
+			Date modificationDate = null;
+			if(timeElts.size()>1)
+			{	Element modificationElt = timeElts.last();
+				modificationDate = getDateFromTimeElt(modificationElt);
+				logger.log("Found a last modification date: "+modificationDate);
+			}
+			else
+				logger.log("Did not find any last modification date");
+			
+			// retrieve the authors
+			List<String> authors = null;
+			Elements authorElts = articleElt.getElementsByAttributeValue(XmlNames.ATT_CLASS, CLASS_AUTEUR);
+			if(authorElts.isEmpty())
+				logger.log("WARNING: could not find any author, which is unusual");
+			else
+			{	logger.log("List of the authors found for this article:");
+				logger.increaseOffset();
+				authors = new ArrayList<String>();
+				for(Element authorElt: authorElts)
+				{	String authorName = authorElt.text();
+					logger.log(authorName);
+					authors.add(authorName);
+				}
+				logger.decreaseOffset();
+			}
+			
 			// get raw and linked texts
 			logger.log("Get raw and linked texts");
 			StringBuilder rawStr = new StringBuilder();
 			StringBuilder linkedStr = new StringBuilder();
 			
-			
-			// processing each element in the content part
-			for(Element element: contentElt.children())
+			// processing each element in the body
+			Element bodyElt = articleElt.getElementById(ID_ARTICLE_BODY);
+			if(bodyElt==null)
+			{	Elements bodyElts = articleElt.getElementsByAttributeValue(XmlNames.ATT_CLASS, CLASS_CONTENT_ARTICLE_BODY);
+				bodyElt = bodyElts.first();
+				if(bodyElts.size()==0)
+					throw new IllegalArgumentException("No article body found in the Web page");
+				else if(bodyElts.size()>1)
+					logger.log("WARNING: There are more than 1 element for the article body, which is unusual. Let's focus on the first.");
+			}
+			for(Element element: bodyElt.children())
 			{	String eltName = element.tag().getName();
 			
 				// section headers
@@ -768,11 +823,16 @@ public class LeMondeReader extends ArticleReader
 				}
 			}
 			
-			// create article object
+			// create and init article object
 			result = new Article(name);
 			result.setTitle(title);
 			result.setUrl(url);
 			result.initRetrievalDate();
+			result.setPublishingDate(publishingDate);
+			if(modificationDate!=null)
+				result.setModificationDate(modificationDate);
+			if(authors!=null)
+				result.addAuthors(authors);
 			
 			// clean text
 			String rawText = rawStr.toString();

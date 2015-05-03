@@ -95,6 +95,8 @@ public class XmlNames
 	public final static String ATT_ID = "id";
 	/** Html class attribute */
 	public final static String ATT_CLASS = "class";
+	/** Html datetime attribute */
+	public static final String ATT_DATETIME = "datetime";
 	/** Html href attribute */
 	public final static String ATT_HREF = "href";
 	/** Html title attribute */
@@ -149,6 +151,8 @@ public class XmlNames
 	public final static String ELT_TABLE = "table";
 	/** Html ordered table body tag */
 	public final static String ELT_TBODY = "tbody";
+	/** Html time tag */
+	public final static String ELT_TIME = "time";
 	/** Html unordered list tag */
 	public final static String ELT_UL = "ul";
 }

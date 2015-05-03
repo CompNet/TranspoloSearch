@@ -28,18 +28,24 @@ import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.Inflater;
 import java.util.zip.InflaterInputStream;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
 
 import fr.univ_avignon.transpolosearch.data.article.Article;
 import fr.univ_avignon.transpolosearch.tools.file.FileNames;
 import fr.univ_avignon.transpolosearch.tools.file.FileTools;
 import fr.univ_avignon.transpolosearch.tools.log.HierarchicalLogger;
 import fr.univ_avignon.transpolosearch.tools.log.HierarchicalLoggerManager;
+import fr.univ_avignon.transpolosearch.tools.xml.XmlNames;
 
 /**
  * All classes automatically getting articles
@@ -317,6 +323,34 @@ public abstract class ArticleReader
 		
 		String result = sourceCode.toString();
 		br.close();
+		return result;
+	}
+
+	/////////////////////////////////////////////////////////////////
+	// TIME				/////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////
+	/** Format used to parse the dates */
+	private static final DateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX");
+	
+	/**
+	 * Extract a date from the specified TIME html element.
+	 *  
+	 * @param timeElt
+	 * 		HTML element.
+	 * @return
+	 * 		The corresponding date.
+	 */
+	public Date getDateFromTimeElt(Element timeElt)
+	{	Date result = null;
+	
+		String valueStr = timeElt.attr(XmlNames.ATT_DATETIME);
+		try
+		{	result = DATE_FORMAT.parse(valueStr);
+		}
+		catch (ParseException e)
+		{	e.printStackTrace();
+		}
+	
 		return result;
 	}
 }

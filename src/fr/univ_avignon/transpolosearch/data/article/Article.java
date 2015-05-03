@@ -135,7 +135,7 @@ public class Article
 	 * @param authors
 	 * 		AuthorS to add to this article.
 	 */
-	public void addAuthorS(List<String> authors)
+	public void addAuthors(List<String> authors)
 	{	this.authors.addAll(authors);
 	}
 

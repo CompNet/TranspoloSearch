@@ -80,6 +80,7 @@ public class Test
 		logger.increaseOffset();
 		
 		URL url = new URL("http://www.lemonde.fr/culture/article/2014/07/16/la-prise-de-position-d-olivier-py-sur-le-fn-a-heurte-les-avignonnais_4457735_3246.html");
+//		URL url = new URL("http://www.lemonde.fr/afrique/article/2015/05/02/au-togo-l-opposition-coincee-apres-son-echec-a-la-presidentielle_4626476_3212.html");
 		
 		ArticleRetriever retriever = new ArticleRetriever(false);
 		retriever.process(url);
