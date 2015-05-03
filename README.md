@@ -1,10 +1,10 @@
 TranspoloSearch
 =======
-*Research of events in online journals and other Web resources*
+*Web-based information extraction for political science*
 
 * Copyright 2015 Vincent Labatut
 
-Nerwip is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation. For source availability and license information see `licence.txt`
+TranspoloSearch is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation. For source availability and license information see `licence.txt`
 
 * Lab site: http://lia.univ-avignon.fr/
 * GitHub repo: https://github.com/CompNet/TranspoloSearch
@@ -13,7 +13,7 @@ Nerwip is free software: you can redistribute it and/or modify it under the term
 -----------------------------------------------------------------------
 
 ## Description
- 
+This software is currently in development. Don't use it (yet)!
 
 ## Organization
 
