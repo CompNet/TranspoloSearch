@@ -1,3 +1,6 @@
+Production :
+- Remettre un fichier keys.xml (vide)
+--------------------------------------------------------------
 configuration du compte google
 http://preciselyconcise.com/apis_and_installations/get_google_api_key.php
 
