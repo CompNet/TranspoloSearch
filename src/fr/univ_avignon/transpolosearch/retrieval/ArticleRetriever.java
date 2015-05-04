@@ -153,10 +153,6 @@ public class ArticleRetriever
 			reader = new LeMondeReader();
 			name = reader.getName(url);
 		}
-		
-// TODO pour lemonde, traiter le cas où l'article n'est pas dispo en entier "L’accès à la totalité de l’article est protégé"
-// ex : http://www.lemonde.fr/culture/article/2014/07/16/la-prise-de-position-d-olivier-py-sur-le-fn-a-heurte-les-avignonnais_4457735_3246.html
-		
 		else
 		{	logger.log(">> Unknown Website");
 			reader = new GenericReader();

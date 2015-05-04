@@ -90,6 +90,8 @@ public class LeMondeReader extends ArticleReader
 	private final static String CLASS_BLOC_SIGNATURE = "bloc_signature";
 	/** Class of the article body */
 	private final static String CLASS_CONTENT_ARTICLE_BODY = "content-article-body";
+	/** Class of the article "related" links */
+	private final static String CLASS_LIRE = "lire";
 	
 	/**
 	 * Retrieve the text located in a paragraph (P) HTML element.
@@ -776,9 +778,13 @@ public class LeMondeReader extends ArticleReader
 					
 					// paragraph
 					else if(eltName.equals(XmlNames.ELT_P))
-					{	String str = element.text();
-						processParagraphElement(element,rawStr,linkedStr);
+					{	//String str = element.text();
+						// we ignore the inter-paragraph hyperlinks
+						if(!element.attr(XmlNames.ATT_CLASS).equals(CLASS_LIRE))
+							processParagraphElement(element,rawStr,linkedStr);
 					}
+// TODO pour lemonde, traiter le cas où l'article n'est pas dispo en entier "L’accès à la totalité de l’article est protégé"
+// ex : http://www.lemonde.fr/culture/article/2014/07/16/la-prise-de-position-d-olivier-py-sur-le-fn-a-heurte-les-avignonnais_4457735_3246.html
 					
 					// list
 					else if(eltName.equals(XmlNames.ELT_UL))
