@@ -29,7 +29,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import org.apache.commons.codec.binary.Base64;
+//import org.apache.commons.codec.binary.Base64;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.HttpClient;
@@ -73,12 +73,12 @@ public class Test
 	public static void main(String[] args) throws Exception
 	{	
 		// retrieval
-//		testRetrievalGeneric();
+		testRetrievalGeneric();
 		
 		// search
 //		testGoogleSearch();
 
-		nero();
+//		nero();
 		
 		logger.close();
 	}
@@ -101,7 +101,8 @@ public class Test
 //		URL url = new URL("http://www.lemonde.fr/afrique/article/2015/05/02/au-togo-l-opposition-coincee-apres-son-echec-a-la-presidentielle_4626476_3212.html");
 //		URL url = new URL("http://www.lemonde.fr/climat/article/2015/05/04/climat-les-energies-propres-en-panne-de-credits-de-recherche_4626656_1652612.html");
 //		URL url = new URL("http://www.lemonde.fr/les-decodeurs/article/2015/05/03/les-cinq-infos-a-retenir-du-week-end_4626595_4355770.html");
-		URL url = new URL("http://www.lemonde.fr/les-decodeurs/article/2015/04/29/seisme-au-nepal-une-perte-economique-superieure-au-pib_4624928_4355770.html");
+//		URL url = new URL("http://www.lemonde.fr/les-decodeurs/article/2015/04/29/seisme-au-nepal-une-perte-economique-superieure-au-pib_4624928_4355770.html");
+		URL url = new URL("http://www.liberation.fr/vous/2015/05/04/coeur-carmat-le-deuxieme-greffe-decede-a-son-tour_1289323");
 		
 		ArticleRetriever retriever = new ArticleRetriever(false);
 		retriever.process(url);
@@ -171,66 +172,66 @@ public class Test
 	 * @throws Exception
 	 * 		Some problem occurred...
 	 */
-	private static void nero() throws Exception
-	{	byte[] encodedBytes = Base64.encodeBase64("vince.labatut@gmail.com:rlm40PPO".getBytes());
-		String encoding = new String(encodedBytes);
-
-		// première requête
-		String url = "https://nero.irisa.fr/texts.xml";
-		HttpPost post = new HttpPost(url);
-		post.setHeader("Authorization", "Basic " + encoding);
-		
-		List<NameValuePair> urlParameters = new ArrayList<NameValuePair>();
-		urlParameters.add(new BasicNameValuePair("text[content]", "Je vais à Marseille cet été voir l'Olympique de Marseille."));
-		post.setEntity(new UrlEncodedFormEntity(urlParameters));
-		
-		HttpClient client = new DefaultHttpClient();
-		HttpResponse response = client.execute(post);
-		int responseCode = response.getStatusLine().getStatusCode();
-		System.out.println("Response Code : " + responseCode);
-		BufferedReader rd = new BufferedReader(new InputStreamReader(response.getEntity().getContent(),"UTF-8"));
-		StringBuffer res = new StringBuffer();
-		String line = "";
-		while ((line = rd.readLine()) != null)
-		{	System.out.println(line);
-			res.append(line);
-		}
-		
-		SAXBuilder sb = new SAXBuilder();
-		Document doc = sb.build(new StringReader(res.toString()));
-		Element root = doc.getRootElement();
-		Element idElt = root.getChild("id");
-		String id = idElt.getValue();
-		
-		// seconde requête
-		int i = 1;
-		do
-		{	System.out.println("\nRepetition "+i);
-			Thread.sleep(5000);
-			url = "https://nero.irisa.fr/texts/"+id+".xml";
-			System.out.println("url="+url);
-			HttpGet get = new HttpGet(url);
-			get.setHeader("Authorization", "Basic " + encoding);
-
-			client = new DefaultHttpClient();
-			response = client.execute(get);
-			responseCode = response.getStatusLine().getStatusCode();
-			System.out.println("Response Code : " + responseCode);
-			rd = new BufferedReader(new InputStreamReader(response.getEntity().getContent(),"UTF-8"));
-			res = new StringBuffer();
-			while((line = rd.readLine()) != null)
-			{	System.out.println(line);
-				res.append(line);
-			}
-			i++;
-		}
-		while(responseCode!=200);
-		
-		sb = new SAXBuilder();
-		doc = sb.build(new StringReader(res.toString()));
-		root = doc.getRootElement();
-		Element resultElt = root.getChild("result");
-		String result = resultElt.getValue();
-		System.out.println("\nResult="+result);
-	}
+//	private static void nero() throws Exception
+//	{	byte[] encodedBytes = Base64.encodeBase64("vince.labatut@gmail.com:rlm40PPO".getBytes());
+//		String encoding = new String(encodedBytes);
+//
+//		// première requête
+//		String url = "https://nero.irisa.fr/texts.xml";
+//		HttpPost post = new HttpPost(url);
+//		post.setHeader("Authorization", "Basic " + encoding);
+//		
+//		List<NameValuePair> urlParameters = new ArrayList<NameValuePair>();
+//		urlParameters.add(new BasicNameValuePair("text[content]", "Je vais à Marseille cet été voir l'Olympique de Marseille."));
+//		post.setEntity(new UrlEncodedFormEntity(urlParameters));
+//		
+//		HttpClient client = new DefaultHttpClient();
+//		HttpResponse response = client.execute(post);
+//		int responseCode = response.getStatusLine().getStatusCode();
+//		System.out.println("Response Code : " + responseCode);
+//		BufferedReader rd = new BufferedReader(new InputStreamReader(response.getEntity().getContent(),"UTF-8"));
+//		StringBuffer res = new StringBuffer();
+//		String line = "";
+//		while ((line = rd.readLine()) != null)
+//		{	System.out.println(line);
+//			res.append(line);
+//		}
+//		
+//		SAXBuilder sb = new SAXBuilder();
+//		Document doc = sb.build(new StringReader(res.toString()));
+//		Element root = doc.getRootElement();
+//		Element idElt = root.getChild("id");
+//		String id = idElt.getValue();
+//		
+//		// seconde requête
+//		int i = 1;
+//		do
+//		{	System.out.println("\nRepetition "+i);
+//			Thread.sleep(5000);
+//			url = "https://nero.irisa.fr/texts/"+id+".xml";
+//			System.out.println("url="+url);
+//			HttpGet get = new HttpGet(url);
+//			get.setHeader("Authorization", "Basic " + encoding);
+//
+//			client = new DefaultHttpClient();
+//			response = client.execute(get);
+//			responseCode = response.getStatusLine().getStatusCode();
+//			System.out.println("Response Code : " + responseCode);
+//			rd = new BufferedReader(new InputStreamReader(response.getEntity().getContent(),"UTF-8"));
+//			res = new StringBuffer();
+//			while((line = rd.readLine()) != null)
+//			{	System.out.println(line);
+//				res.append(line);
+//			}
+//			i++;
+//		}
+//		while(responseCode!=200);
+//		
+//		sb = new SAXBuilder();
+//		doc = sb.build(new StringReader(res.toString()));
+//		root = doc.getRootElement();
+//		Element resultElt = root.getChild("result");
+//		String result = resultElt.getValue();
+//		System.out.println("\nResult="+result);
+//	}
 }
