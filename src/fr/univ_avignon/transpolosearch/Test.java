@@ -107,8 +107,8 @@ public class Test
 		ArticleRetriever retriever = new ArticleRetriever(false);
 		retriever.process(url);
 		
-		logger.log("Test terminated");
 		logger.decreaseOffset();
+		logger.log("Test terminated");
 	}
 	
 	/////////////////////////////////////////////////////////////////
@@ -152,8 +152,8 @@ public class Test
 			}
 		logger.decreaseOffset();
 		
-		logger.log("Test terminated");
 		logger.decreaseOffset();
+		logger.log("Test terminated");
 	}
 
 	/////////////////////////////////////////////////////////////////

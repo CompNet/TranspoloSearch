@@ -67,8 +67,10 @@ import fr.univ_avignon.transpolosearch.tools.file.FileTools;
 import fr.univ_avignon.transpolosearch.tools.xml.XmlNames;
 
 /**
- * From a specified URL, this class retrieves a Wikipedia page,
- * and gives access to the raw and linked texts.
+ * From a specified URL, this class retrieves a page
+ * from the french newspaper LeMonde (as of 04/05/2015),
+ * and gives access to the raw and linked texts, as well
+ * as other metadata (authors, publishing date, etc.).
  * 
  * @author Vincent Labatut
  */
@@ -81,6 +83,9 @@ public class LeMondeReader extends ArticleReader
 	/** Text allowing to detect wikipedia URL */
 	public static final String DOMAIN = "www.lemonde.fr/";
 
+	/** Text displayed for limited access content */
+	private final static String CONTENT_LIMITED_ACCESS = "L’accès à la totalité de l’article est protégé";
+	
 	/** Id of the element containing the article content in the Wikipedia page */
 	private final static String ID_ARTICLE_BODY = "articleBody";
 
@@ -697,6 +702,11 @@ public class LeMondeReader extends ArticleReader
 			Element titleElt = document.getElementsByTag(XmlNames.ELT_TITLE).first();
 			String title = titleElt.text();
 			logger.log("Get title: "+title);
+			
+			// check if the access is restricted
+			Elements limitedElts = document.getElementsContainingText(CONTENT_LIMITED_ACCESS);
+			if(!limitedElts.isEmpty())
+				logger.log("WARNING: The access to this article is limited, only the beginning is available.");
 			
 			// get the article element
 			logger.log("Ge the main element of the document");
