@@ -1,4 +1,4 @@
-package fr.univ_avignon.transpolosearch.search;
+package fr.univ_avignon.transpolosearch.websearch;
 
 /*
  * TranspoloSearch
@@ -19,6 +19,10 @@ package fr.univ_avignon.transpolosearch.search;
  * If not, see <http://www.gnu.org/licenses/>.
  */
 
+import java.io.IOException;
+import java.net.URL;
+import java.util.List;
+
 import fr.univ_avignon.transpolosearch.tools.log.HierarchicalLogger;
 import fr.univ_avignon.transpolosearch.tools.log.HierarchicalLoggerManager;
 
@@ -28,11 +32,48 @@ import fr.univ_avignon.transpolosearch.tools.log.HierarchicalLoggerManager;
  * 
  * @author Vincent Labatut
  */
-public abstract class AbstractSearch
+public abstract class AbstractEngine
 {	
 	/////////////////////////////////////////////////////////////////
 	// LOGGER		/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
 	/** Common object used for logging */
 	public static HierarchicalLogger logger = HierarchicalLoggerManager.getHierarchicalLogger();
+
+	/////////////////////////////////////////////////////////////////
+	// SEARCH		/////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////
+	/**
+	 * Performs a search using the corresponding engine.
+	 * <br/>
+	 * See the public fields of the child-classes for a
+	 * description of the modifiable search parameters.
+	 * 
+	 * @param keyword
+	 * 		Kewords to search.
+	 * @return
+	 * 		List of results taking the form of URLs.
+	 * 
+	 * @throws IOException 
+	 * 		Problem while searching the Web.
+	 */
+	public abstract List<URL> search(String keyword) throws IOException;
+
+	/**
+	 * Performs a search using the corresponding engine.
+	 * <br/>
+	 * See the public fields of this class for a
+	 * description of the modifiable search parameters.
+	 * 
+	 * @param keyword
+	 * 		Kewords to search.
+	 * @param targetSite
+	 * 		Target site, or {@ode null} to search the whole Web.
+	 * @return
+	 * 		List of results taking the form of URLs.
+	 * 
+	 * @throws IOException
+	 * 		Problem while searching the Web.
+	 */
+	public abstract List<URL> search(String keyword, String targetSite)  throws IOException;
 }

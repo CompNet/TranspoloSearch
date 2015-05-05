@@ -45,9 +45,9 @@ import com.google.api.services.customsearch.model.Result;
 
 import fr.univ_avignon.transpolosearch.retrieval.ArticleRetriever;
 import fr.univ_avignon.transpolosearch.retrieval.reader.ArticleReader;
-import fr.univ_avignon.transpolosearch.search.GoogleSearch;
 import fr.univ_avignon.transpolosearch.tools.log.HierarchicalLogger;
 import fr.univ_avignon.transpolosearch.tools.log.HierarchicalLoggerManager;
+import fr.univ_avignon.transpolosearch.websearch.GoogleEngine;
 
 /**
  * This class is used to launch some processes
@@ -121,11 +121,11 @@ public class Test
 	 * 		Something went wrong during the search. 
 	 */
 	private static void testGoogleSearch() throws Exception
-	{	logger.setName("Test-GoogleSearch");
+	{	logger.setName("Test-GoogleEngine");
 		logger.log("Start testing Google Custom Search");
 		logger.increaseOffset();
 		
-		GoogleSearch gs = new GoogleSearch();
+		GoogleEngine gs = new GoogleEngine();
 	
 		// number of results
 		gs.resultNumber = 200;

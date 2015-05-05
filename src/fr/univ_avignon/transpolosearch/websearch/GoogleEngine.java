@@ -1,4 +1,4 @@
-package fr.univ_avignon.transpolosearch.search;
+package fr.univ_avignon.transpolosearch.websearch;
 
 /*
  * TranspoloSearch
@@ -30,6 +30,7 @@ import com.google.api.services.customsearch.model.Search;
 import fr.univ_avignon.transpolosearch.tools.keys.KeyHandler;
 
 import java.io.IOException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -46,13 +47,13 @@ import java.util.List;
  * 
  * @author Vincent Labatut
  */
-public class GoogleSearch extends AbstractSearch
+public class GoogleEngine extends AbstractEngine
 {
 	/**
 	 * Initializes the object used to search
 	 * the Web with the Google Custom Search (GCS) API.
 	 */
-	public GoogleSearch()
+	public GoogleEngine()
 	{	// Set up the HTTP transport and JSON factory
 		HttpTransport httpTransport = new NetHttpTransport();
 		//JsonFactory jsonFactory = new GsonFactory();
@@ -99,14 +100,38 @@ public class GoogleSearch extends AbstractSearch
 	/////////////////////////////////////////////////////////////////
 	// BUILDER		/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
-	/** Object used to build GoogleSearch instances */
+	/** Object used to build GoogleEngine instances */
 	private Customsearch.Builder builder;
 	
 	/////////////////////////////////////////////////////////////////
 	// SEARCH		/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
+	@Override
+	public List<URL> search(String keyword) throws IOException
+	{	List<URL> result = search(keyword, null);
+		return result;
+	}
+
+	@Override
+	public List<URL> search(String keyword, String targetSite)  throws IOException
+	{	// perform search
+		List<Result> resList = searchGoogle(keyword,targetSite);
+	
+		// build result list
+		List<URL> result = new ArrayList<URL>();
+		for(Result res: resList)
+		{	// TODO log
+			String title = res.getHtmlTitle();
+			String urlStr = res.getFormattedUrl();
+			URL url = new URL(urlStr);
+			result.add(url);
+		}
+		
+		return result;
+	}
+
 	/**
-	 * Perform a search using Google Custom Search.
+	 * Performs a search using Google Custom Search.
 	 * The search is performed on the whole Web.
 	 * <br/>
 	 * See the public fields of this class for a
@@ -120,13 +145,13 @@ public class GoogleSearch extends AbstractSearch
 	 * @throws IOException 
 	 * 		Problem while searching Google.
 	 */
-	public List<Result> search(String keyword) throws IOException
-	{	List<Result> result = search(keyword,null);
+	public List<Result> searchGoogle(String keyword) throws IOException
+	{	List<Result> result = searchGoogle(keyword,null);
 		return result;
 	}
 	
 	/**
-	 * Perform a search using Google Custom Search.
+	 * Performs a search using Google Custom Search.
 	 * The search is performed only on the specified site.
 	 * <br/>
 	 * See the public fields of this class for a
@@ -142,7 +167,7 @@ public class GoogleSearch extends AbstractSearch
 	 * @throws IOException
 	 * 		Problem while searching Google.
 	 */
-	public List<Result> search(String keyword, String targetSite)  throws IOException
+	public List<Result> searchGoogle(String keyword, String targetSite)  throws IOException
 	{	logger.log("Applying Google Custom Search");
 		logger.increaseOffset();
 		
