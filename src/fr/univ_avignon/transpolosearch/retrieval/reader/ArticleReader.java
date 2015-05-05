@@ -30,7 +30,6 @@ import java.net.URL;
 import java.net.URLEncoder;
 import java.text.DateFormat;
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.Inflater;
@@ -329,23 +328,22 @@ public abstract class ArticleReader
 	/////////////////////////////////////////////////////////////////
 	// TIME				/////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
-	/** Format used to parse the dates */
-	private static final DateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX");
-	
 	/**
 	 * Extract a date from the specified TIME html element.
 	 *  
 	 * @param timeElt
 	 * 		HTML element.
+	 * @param dateFormat 
+	 * 		Format used to parse the date.
 	 * @return
 	 * 		The corresponding date.
 	 */
-	public Date getDateFromTimeElt(Element timeElt)
+	public Date getDateFromTimeElt(Element timeElt, DateFormat dateFormat)
 	{	Date result = null;
 	
 		String valueStr = timeElt.attr(XmlNames.ATT_DATETIME);
 		try
-		{	result = DATE_FORMAT.parse(valueStr);
+		{	result = dateFormat.parse(valueStr);
 		}
 		catch (ParseException e)
 		{	e.printStackTrace();

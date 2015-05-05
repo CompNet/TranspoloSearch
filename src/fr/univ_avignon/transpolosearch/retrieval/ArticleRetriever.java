@@ -30,6 +30,7 @@ import fr.univ_avignon.transpolosearch.data.article.Article;
 import fr.univ_avignon.transpolosearch.retrieval.reader.ArticleReader;
 import fr.univ_avignon.transpolosearch.retrieval.reader.GenericReader;
 import fr.univ_avignon.transpolosearch.retrieval.reader.LeMondeReader;
+import fr.univ_avignon.transpolosearch.retrieval.reader.LiberationReader;
 import fr.univ_avignon.transpolosearch.retrieval.reader.ReaderException;
 import fr.univ_avignon.transpolosearch.retrieval.reader.WikipediaReader;
 import fr.univ_avignon.transpolosearch.tools.log.HierarchicalLogger;
@@ -151,6 +152,11 @@ public class ArticleRetriever
 		else if(address.contains(LeMondeReader.DOMAIN))
 		{	logger.log(">> Le Monde page");
 			reader = new LeMondeReader();
+			name = reader.getName(url);
+		}
+		else if(address.contains(LiberationReader.DOMAIN))
+		{	logger.log(">> Libération page");
+			reader = new LiberationReader();
 			name = reader.getName(url);
 		}
 		else

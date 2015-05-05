@@ -81,8 +81,11 @@ public class LiberationReader extends ArticleReader
 	// RETRIEVE			/////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////	
 	/** Text allowing to detect wikipedia URL */
-	public static final String DOMAIN = "www.liberation.fr//";
+	public static final String DOMAIN = "www.liberation.fr";
 
+	/** Format used to parse the dates */
+	private static final DateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+	
 	/** Text displayed for limited access content */
 	private final static String CONTENT_LIMITED_ACCESS = "Article réservé aux abonnés";
 	/** Text displayed for "related articles" links */
@@ -93,7 +96,9 @@ public class LiberationReader extends ArticleReader
 
 	/** Class of the author names */
 	private final static String CLASS_AUTHOR = "author";
-	/** Class of the article header info */
+	/** Class of the article description panel */
+	private final static String CLASS_DESCRIPTION = "description";
+	/** Class of the article information panel */
 	private final static String CLASS_INFO = "info";
 	
 	/**
@@ -720,12 +725,12 @@ public class LiberationReader extends ArticleReader
 			// retrieve the dates
 			Elements timeElts = infoElt.getElementsByTag(XmlNames.ELT_TIME);
 			Element publishingElt = timeElts.first();
-			Date publishingDate = getDateFromTimeElt(publishingElt);
+			Date publishingDate = getDateFromTimeElt(publishingElt,DATE_FORMAT);
 			logger.log("Found the publishing date: "+publishingDate);
 			Date modificationDate = null;
 			if(timeElts.size()>1)
 			{	Element modificationElt = timeElts.last();
-				modificationDate = getDateFromTimeElt(modificationElt);
+				modificationDate = getDateFromTimeElt(modificationElt,DATE_FORMAT);
 				logger.log("Found a last modification date: "+modificationDate);
 			}
 			else
@@ -752,7 +757,14 @@ public class LiberationReader extends ArticleReader
 			logger.log("Get raw and linked texts");
 			StringBuilder rawStr = new StringBuilder();
 			StringBuilder linkedStr = new StringBuilder();
-			
+
+			// get the description
+			Element descriptionElt = headerElt.getElementsByAttributeValue(XmlNames.ATT_CLASS, CLASS_DESCRIPTION).first();
+			Element h2Elt = descriptionElt.getElementsByTag(XmlNames.ELT_H2).first();
+			String text = h2Elt.text() + "\n";
+			rawStr.append(text);
+			linkedStr.append(text);
+
 			// processing each element in the body
 			Element bodyElt = articleElt.getElementById(ID_ARTICLE_BODY);
 //			if(bodyElt==null)
@@ -763,7 +775,12 @@ public class LiberationReader extends ArticleReader
 //				else if(bodyElts.size()>1)
 //					logger.log("WARNING: There are more than 1 element for the article body, which is unusual. Let's focus on the first.");
 //			}
-			Element contentElt = bodyElt.getElementsByTag(XmlNames.ELT_DIV).first();
+			Elements contentElts = bodyElt.children();
+			Iterator<Element> it = contentElts.iterator();
+			Element contentElt;
+			do
+				contentElt = it.next();
+			while(!contentElt.tagName().equalsIgnoreCase(XmlNames.ELT_DIV));
 			for(Element element: contentElt.children())
 			{	String eltName = element.tag().getName();
 			

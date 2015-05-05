@@ -82,7 +82,10 @@ public class LeMondeReader extends ArticleReader
 	/////////////////////////////////////////////////////////////////	
 	/** Text allowing to detect wikipedia URL */
 	public static final String DOMAIN = "www.lemonde.fr/";
-
+	
+	/** Format used to parse the dates */
+	private static final DateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX");
+	
 	/** Text displayed for limited access content */
 	private final static String CONTENT_LIMITED_ACCESS = "L’accès à la totalité de l’article est protégé";
 	
@@ -721,12 +724,12 @@ public class LeMondeReader extends ArticleReader
 //			Element signatureElt = articleElt.getElementsByAttributeValue(XmlNames.ATT_CLASS, CLASS_SIGNATURE).first();
 			Elements timeElts = articleElt.getElementsByTag(XmlNames.ELT_TIME);
 			Element publishingElt = timeElts.first();
-			Date publishingDate = getDateFromTimeElt(publishingElt);
+			Date publishingDate = getDateFromTimeElt(publishingElt,DATE_FORMAT);
 			logger.log("Found the publishing date: "+publishingDate);
 			Date modificationDate = null;
 			if(timeElts.size()>1)
 			{	Element modificationElt = timeElts.last();
-				modificationDate = getDateFromTimeElt(modificationElt);
+				modificationDate = getDateFromTimeElt(modificationElt,DATE_FORMAT);
 				logger.log("Found a last modification date: "+modificationDate);
 			}
 			else
