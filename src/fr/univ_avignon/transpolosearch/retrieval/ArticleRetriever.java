@@ -28,11 +28,7 @@ import org.xml.sax.SAXException;
 
 import fr.univ_avignon.transpolosearch.data.article.Article;
 import fr.univ_avignon.transpolosearch.retrieval.reader.ArticleReader;
-import fr.univ_avignon.transpolosearch.retrieval.reader.GenericReader;
-import fr.univ_avignon.transpolosearch.retrieval.reader.LeMondeReader;
-import fr.univ_avignon.transpolosearch.retrieval.reader.LiberationReader;
 import fr.univ_avignon.transpolosearch.retrieval.reader.ReaderException;
-import fr.univ_avignon.transpolosearch.retrieval.reader.WikipediaReader;
 import fr.univ_avignon.transpolosearch.tools.log.HierarchicalLogger;
 import fr.univ_avignon.transpolosearch.tools.log.HierarchicalLoggerManager;
 
@@ -44,6 +40,7 @@ import fr.univ_avignon.transpolosearch.tools.log.HierarchicalLoggerManager;
  * cached file, provided we are sure it was cached before.
  * 
  * @author Yasa Akbulut
+ * @author Vincent Labatut
  */
 public class ArticleRetriever
 {
@@ -141,29 +138,9 @@ public class ArticleRetriever
 		// choose the reader depending on the URL base
 		logger.log("Selecting reader: ");
 		logger.increaseOffset();
-		ArticleReader reader = null;
-		String name = null;
-		if(address.contains(WikipediaReader.DOMAIN))
-		{	logger.log(">> Wikipedia page");
-			reader = new WikipediaReader();
-			name = reader.getName(url);
-		}
-//TODO on pourrait mettre cette foret de if dans la classe abstraite, genre factory		
-		else if(address.contains(LeMondeReader.DOMAIN))
-		{	logger.log(">> Le Monde page");
-			reader = new LeMondeReader();
-			name = reader.getName(url);
-		}
-		else if(address.contains(LiberationReader.DOMAIN))
-		{	logger.log(">> Libération page");
-			reader = new LiberationReader();
-			name = reader.getName(url);
-		}
-		else
-		{	logger.log(">> Unknown Website");
-			reader = new GenericReader();
-			name = reader.getName(url);
-		}
+		ArticleReader reader = ArticleReader.buildReader(address);
+		String name = reader.getName(url);
+		logger.log("Detected domain: "+reader.getDomain());
 		logger.decreaseOffset();
 		
 		// determine if the page should be accessed

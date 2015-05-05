@@ -78,10 +78,19 @@ import fr.univ_avignon.transpolosearch.tools.xml.XmlNames;
 public class LeMondeReader extends ArticleReader
 {
 	/////////////////////////////////////////////////////////////////
+	// DOMAIN			/////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////
+	/** Text allowing to detect wikipedia URL */
+	public static final String DOMAIN = "www.lemonde.fr";
+	
+	@Override
+	public String getDomain()
+	{	return DOMAIN;
+	}
+
+	/////////////////////////////////////////////////////////////////
 	// RETRIEVE			/////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////	
-	/** Text allowing to detect wikipedia URL */
-	public static final String DOMAIN = "www.lemonde.fr/";
 	
 	/** Format used to parse the dates */
 	private static final DateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX");

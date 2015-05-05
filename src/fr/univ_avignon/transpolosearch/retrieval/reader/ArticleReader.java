@@ -56,6 +56,33 @@ import fr.univ_avignon.transpolosearch.tools.xml.XmlNames;
 public abstract class ArticleReader
 {
 	/////////////////////////////////////////////////////////////////
+	// FACTORY		/////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////
+	/**
+	 * Builds the appropriate reader to handle the specified
+	 * web address, then returns it.
+	 *  
+	 * @param url
+	 * 		The Web address to process. 
+	 * @return
+	 * 		An appropriate reader for the specified address.
+	 */
+	public static ArticleReader buildReader(String url)
+	{	ArticleReader result;
+		
+		if(url.contains(WikipediaReader.DOMAIN))
+			result = new WikipediaReader();
+		else if(url.contains(LeMondeReader.DOMAIN))
+			result = new LeMondeReader();
+		else if(url.contains(LiberationReader.DOMAIN))
+			result = new LiberationReader();
+		else
+			result = new GenericReader();
+		
+		return result;
+	}
+	
+	/////////////////////////////////////////////////////////////////
 	// LOGGER		/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
 	/** Common object used for logging */
@@ -108,6 +135,18 @@ public abstract class ArticleReader
 
 		return result;
 	}
+	
+	/////////////////////////////////////////////////////////////////
+	// DOMAIN			/////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////
+	/**
+	 * Returns the Web domain handled
+	 * by this reader.
+	 * 
+	 * @return
+	 * 		A string representing the Web domain.
+	 */
+	public abstract String getDomain();
 	
 	/////////////////////////////////////////////////////////////////
 	// CLEANING			/////////////////////////////////////////////
