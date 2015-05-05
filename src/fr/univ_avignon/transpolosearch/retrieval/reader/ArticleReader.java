@@ -60,7 +60,7 @@ public abstract class ArticleReader
 	/////////////////////////////////////////////////////////////////
 	/**
 	 * Builds the appropriate reader to handle the specified
-	 * web address, then returns it.
+	 * Web address, then returns it.
 	 *  
 	 * @param url
 	 * 		The Web address to process. 
