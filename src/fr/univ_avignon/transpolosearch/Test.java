@@ -72,10 +72,10 @@ public class Test
 	public static void main(String[] args) throws Exception
 	{	
 		// retrieval
-		testRetrievalGeneric();
+//		testRetrievalGeneric();
 		
 		// search
-//		testGoogleSearch();
+		testGoogleSearch();
 		
 		logger.close();
 	}
@@ -127,16 +127,14 @@ public class Test
 		
 		GoogleEngine gs = new GoogleEngine();
 	
-		// number of results
+		// parameters
 		gs.resultNumber = 200;
-	
-		// sort by date
-		gs.sortByDate = true;
-		// range
-		gs.dateRange = "20150101:20150131";
+		String keywords = "Cécile Helle";
+		String website = null;
+		String sortCriterion = "date:r:20150101:20150131";
 		
 		// launch search
-		List<Result> result = gs.search("Cécile Helle");
+		List<Result> result = gs.searchGoogle(keywords, website, sortCriterion);
 		
 		logger.log("Displaying results: "+result.size()+"/"+gs.resultNumber);
 		logger.increaseOffset();

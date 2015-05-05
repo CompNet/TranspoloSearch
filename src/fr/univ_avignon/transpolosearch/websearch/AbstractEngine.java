@@ -21,6 +21,7 @@ package fr.univ_avignon.transpolosearch.websearch;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.Date;
 import java.util.List;
 
 import fr.univ_avignon.transpolosearch.tools.log.HierarchicalLogger;
@@ -41,39 +42,41 @@ public abstract class AbstractEngine
 	public static HierarchicalLogger logger = HierarchicalLoggerManager.getHierarchicalLogger();
 
 	/////////////////////////////////////////////////////////////////
-	// SEARCH		/////////////////////////////////////////////////
+	// NAME			/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
 	/**
-	 * Performs a search using the corresponding engine.
-	 * <br/>
-	 * See the public fields of the child-classes for a
-	 * description of the modifiable search parameters.
+	 * Returns a String representing the name
+	 * of this search engine.
 	 * 
-	 * @param keyword
-	 * 		Kewords to search.
 	 * @return
-	 * 		List of results taking the form of URLs.
-	 * 
-	 * @throws IOException 
-	 * 		Problem while searching the Web.
+	 * 		Name of this search engine.
 	 */
-	public abstract List<URL> search(String keyword) throws IOException;
-
+	public abstract String getName();
+	
+	/////////////////////////////////////////////////////////////////
+	// SEARCH		/////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////
 	/**
 	 * Performs a search using the corresponding engine.
 	 * <br/>
 	 * See the public fields of this class for a
 	 * description of the modifiable search parameters.
 	 * 
-	 * @param keyword
-	 * 		Kewords to search.
-	 * @param targetSite
+	 * @param keywords
+	 * 		Person we want to look for.
+	 * @param website
 	 * 		Target site, or {@ode null} to search the whole Web.
+	 * @param startDate
+	 * 		Start of the period we want to consider, 
+	 * 		or {@code null} for no contraint.
+	 * @param endDate
+	 * 		End of the period we want to consider,
+	 * 		or {@code null} for no contraint.
 	 * @return
 	 * 		List of results taking the form of URLs.
 	 * 
 	 * @throws IOException
 	 * 		Problem while searching the Web.
 	 */
-	public abstract List<URL> search(String keyword, String targetSite)  throws IOException;
+	public abstract List<URL> search(String keywords, String website, Date startDate, Date endDate)  throws IOException;
 }

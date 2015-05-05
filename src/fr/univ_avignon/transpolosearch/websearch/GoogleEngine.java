@@ -31,7 +31,10 @@ import fr.univ_avignon.transpolosearch.tools.keys.KeyHandler;
 
 import java.io.IOException;
 import java.net.URL;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -68,8 +71,8 @@ public class GoogleEngine extends AbstractEngine
 	/////////////////////////////////////////////////////////////////
 	// DATA			/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
-//	/** Root of the URL */
-//	static final private String GOOGLE_SEARCH_URL = "https://www.googleapis.com/customsearch/v1?";
+	/** Object used to format dates in the query */
+	private final static DateFormat DATE_FORMAT = new SimpleDateFormat("yyyyMMdd");
 	/** Name of the GCS application */
 	private static final String APP_NAME = "TranspoloSearch";
 	/** Name of the API key */
@@ -84,16 +87,27 @@ public class GoogleEngine extends AbstractEngine
 	private static final long PAGE_SIZE = 10; // max seems to be only 10!
    
 	/////////////////////////////////////////////////////////////////
+	// DATA			/////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////
+	/** Textual name of this engine */
+	private static final String ENGINE_NAME = "Google Custom Search";
+
+	@Override
+	public String getName()
+	{	return ENGINE_NAME;
+	}
+	
+	/////////////////////////////////////////////////////////////////
 	// PARAMETERS	/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
     /** Focus on pages hosted in a certain country */
 	public String pageCountry = "countryFR";
 	/** Focus on pages in a certain language */
 	public String pageLanguage = "lang_fr";
-	/** Whether the result should be sorted by date, or not (in this case: by relevance). If {@link #sortByDate} is not {@code null}, only the specified time range is treated. */
-	public boolean sortByDate = false;
-	/** Date range the search should focus on. It should take the form YYYYMMDD:YYYYMMDD, or {@code null} for no limit. If {@link #sortByDate} is set to {@code false}, this range is ignored. */
-	public String dateRange = null;
+//	/** Whether the result should be sorted by date, or not (in this case: by relevance). If {@link #sortByDate} is not {@code null}, only the specified time range is treated. */
+//	public boolean sortByDate = false;
+//	/** Date range the search should focus on. It should take the form YYYYMMDD:YYYYMMDD, or {@code null} for no limit. If {@link #sortByDate} is set to {@code false}, this range is ignored. */
+//	public String dateRange = null;
 	/** Maximal number of results (can be less if google doesn't provide) */
 	public int resultNumber = 100;
 
@@ -107,48 +121,57 @@ public class GoogleEngine extends AbstractEngine
 	// SEARCH		/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
 	@Override
-	public List<URL> search(String keyword) throws IOException
-	{	List<URL> result = search(keyword, null);
-		return result;
-	}
+	public List<URL> search(String keywords, String website, Date startDate, Date endDate)  throws IOException
+	{	logger.log("Applying Google Custom Search");
+		logger.increaseOffset();
+		
+		// init GCS parameters
+		String sortCriterion;
+		if(startDate==null && endDate==null)
+		{	sortCriterion = null;
+		}
+		else if(startDate!=null && endDate!=null)
+		{	String dateRange = DATE_FORMAT.format(startDate)+":"+DATE_FORMAT.format(endDate);
+			sortCriterion = "date:r:" + dateRange;
+		}
+		else
+		{	logger.log("WARNING: one date is null, so we ignore both dates in the search");
+			sortCriterion = null;
+		}
+		
+		// display GCS parameters
+		logger.log("Parameters:");
+		logger.increaseOffset();
+			logger.log("keywords="+keywords);
+			logger.log("website="+website);
+			logger.log("pageCountry="+pageCountry);
+			logger.log("pageLanguage="+pageLanguage);
+			logger.log("PAGE_SIZE="+PAGE_SIZE);
+			logger.log("resultNumber="+resultNumber);
+			logger.log("sortCriterion="+sortCriterion);
+		logger.decreaseOffset();
 
-	@Override
-	public List<URL> search(String keyword, String targetSite)  throws IOException
-	{	// perform search
-		List<Result> resList = searchGoogle(keyword,targetSite);
+		// perform search
+		List<Result> resList = searchGoogle(keywords,website,sortCriterion);
 	
-		// build result list
+		// convert result list
+		logger.log("Results obtained:");
+		logger.increaseOffset();
 		List<URL> result = new ArrayList<URL>();
 		for(Result res: resList)
-		{	// TODO log
-			String title = res.getHtmlTitle();
+		{	String title = res.getHtmlTitle();
 			String urlStr = res.getFormattedUrl();
+			logger.log(title+" - "+urlStr);
 			URL url = new URL(urlStr);
 			result.add(url);
 		}
+		logger.decreaseOffset();
 		
+		logger.log("Search terminated: "+result.size()+"/"+resultNumber+" results retrieved");
+		logger.decreaseOffset();
 		return result;
 	}
 
-	/**
-	 * Performs a search using Google Custom Search.
-	 * The search is performed on the whole Web.
-	 * <br/>
-	 * See the public fields of this class for a
-	 * description of the modifiable search parameters.
-	 * 
-	 * @param keyword
-	 * 		Kewords to search.
-	 * @return
-	 * 		List of results presented using Google's class.
-	 * 
-	 * @throws IOException 
-	 * 		Problem while searching Google.
-	 */
-	public List<Result> searchGoogle(String keyword) throws IOException
-	{	List<Result> result = searchGoogle(keyword,null);
-		return result;
-	}
 	
 	/**
 	 * Performs a search using Google Custom Search.
@@ -157,39 +180,21 @@ public class GoogleEngine extends AbstractEngine
 	 * See the public fields of this class for a
 	 * description of the modifiable search parameters.
 	 * 
-	 * @param keyword
+	 * @param keywords
 	 * 		Kewords to search.
-	 * @param targetSite
+	 * @param website
 	 * 		Target site, or {@ode null} to search the whole Web.
+	 * @param sortCriterion
+	 * 		Criterion used for sorting (and possibly a range),
+	 * 		or {@code null} to use the default (relevance).
 	 * @return
 	 * 		List of results presented using Google's class.
 	 * 
 	 * @throws IOException
 	 * 		Problem while searching Google.
 	 */
-	public List<Result> searchGoogle(String keyword, String targetSite)  throws IOException
-	{	logger.log("Applying Google Custom Search");
-		logger.increaseOffset();
-		
-		// set up the sort criterion
-		String sortCriterion = null;
-		if(sortByDate)
-		{	sortCriterion = "date";
-			if(dateRange!=null)
-				sortCriterion = sortCriterion + ":r:"+dateRange;
-		}
-		
-		logger.log("Parameters:");
-		logger.increaseOffset();
-			logger.log("keyword="+keyword);
-			logger.log("targetSite="+targetSite);
-			logger.log("pageCountry="+pageCountry);
-			logger.log("pageLanguage="+pageLanguage);
-			logger.log("PAGE_SIZE="+PAGE_SIZE);
-			logger.log("sortCriterion="+sortCriterion);
-		logger.decreaseOffset();
-
-		// init the other variables
+	public List<Result> searchGoogle(String keywords, String website, String sortCriterion)  throws IOException
+	{			// init the other variables
 		List<Result> result = new ArrayList<Result>();
 		long start = 1;
 		
@@ -202,7 +207,7 @@ public class GoogleEngine extends AbstractEngine
 					
 					// create the GCS object
 					Customsearch customsearch = builder.build();//new Customsearch(httpTransport, jsonFactory,null);
-					Customsearch.Cse.List list = customsearch.cse().list(keyword);				
+					Customsearch.Cse.List list = customsearch.cse().list(keywords);				
 					list.setKey(API_KEY);
 					list.setCx(APP_KEY);
 					list.setCr(pageCountry);
@@ -210,8 +215,8 @@ public class GoogleEngine extends AbstractEngine
 					list.setNum(PAGE_SIZE);
 					if(sortCriterion!=null)
 						list.setSort(sortCriterion);
-					if(targetSite!=null)
-						list.setSiteSearch(targetSite);
+					if(website!=null)
+						list.setSiteSearch(website);
 					list.setStart(start);
 		            
 					// send the request
@@ -235,10 +240,8 @@ public class GoogleEngine extends AbstractEngine
 				if(start<resultNumber)
 					logger.log("Could not reach the specified number of results ("+result.size()+"/"+resultNumber+")");
 			}
-			logger.decreaseOffset();
-			
-			logger.log("Search terminated: "+result.size()+"/"+resultNumber+" results retrieved");
-			logger.decreaseOffset();
-	        return result;
+		logger.decreaseOffset();
+		
+        return result;
 	}
 }
