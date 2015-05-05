@@ -89,14 +89,14 @@ public class LeMondeReader extends ArticleReader
 	/** Id of the element containing the article content in the Wikipedia page */
 	private final static String ID_ARTICLE_BODY = "articleBody";
 
+	/** Class of the author names */
+	private final static String CLASS_AUTHOR = "auteur";
 	/** Class of the article signature */
-	private final static String CLASS_AUTEUR = "auteur";
-	/** Class of the article signature */
-	private final static String CLASS_BLOC_SIGNATURE = "bloc_signature";
+	private final static String CLASS_SIGNATURE = "bloc_signature";
 	/** Class of the article body */
-	private final static String CLASS_CONTENT_ARTICLE_BODY = "content-article-body";
-	/** Class of the article "related" links */
-	private final static String CLASS_LIRE = "lire";
+	private final static String CLASS_ARTICLE_BODY = "content-article-body";
+	/** Class of the article "related articles" links */
+	private final static String CLASS_RELATED_ARTICLES = "lire";
 	
 	/**
 	 * Retrieve the text located in a paragraph (P) HTML element.
@@ -709,7 +709,7 @@ public class LeMondeReader extends ArticleReader
 				logger.log("WARNING: The access to this article is limited, only the beginning is available.");
 			
 			// get the article element
-			logger.log("Ge the main element of the document");
+			logger.log("Get the main element of the document");
 			Elements articleElts = document.getElementsByTag(XmlNames.ELT_ARTICLE);
 			Element articleElt = articleElts.first();
 			if(articleElts.size()==0)
@@ -718,7 +718,7 @@ public class LeMondeReader extends ArticleReader
 				logger.log("WARNING: There are more than 1 <article> elements, which is unusual. Let's focus on the first.");
 			
 			// retrieve the dates
-//			Element signatureElt = articleElt.getElementsByAttributeValue(XmlNames.ATT_CLASS, CLASS_BLOC_SIGNATURE).first();
+//			Element signatureElt = articleElt.getElementsByAttributeValue(XmlNames.ATT_CLASS, CLASS_SIGNATURE).first();
 			Elements timeElts = articleElt.getElementsByTag(XmlNames.ELT_TIME);
 			Element publishingElt = timeElts.first();
 			Date publishingDate = getDateFromTimeElt(publishingElt);
@@ -734,7 +734,7 @@ public class LeMondeReader extends ArticleReader
 			
 			// retrieve the authors
 			List<String> authors = null;
-			Elements authorElts = articleElt.getElementsByAttributeValue(XmlNames.ATT_CLASS, CLASS_AUTEUR);
+			Elements authorElts = articleElt.getElementsByAttributeValue(XmlNames.ATT_CLASS, CLASS_AUTHOR);
 			if(authorElts.isEmpty())
 				logger.log("WARNING: could not find any author, which is unusual");
 			else
@@ -757,7 +757,7 @@ public class LeMondeReader extends ArticleReader
 			// processing each element in the body
 			Element bodyElt = articleElt.getElementById(ID_ARTICLE_BODY);
 			if(bodyElt==null)
-			{	Elements bodyElts = articleElt.getElementsByAttributeValue(XmlNames.ATT_CLASS, CLASS_CONTENT_ARTICLE_BODY);
+			{	Elements bodyElts = articleElt.getElementsByAttributeValue(XmlNames.ATT_CLASS, CLASS_ARTICLE_BODY);
 				bodyElt = bodyElts.first();
 				if(bodyElts.size()==0)
 					throw new IllegalArgumentException("No article body found in the Web page");
@@ -790,7 +790,7 @@ public class LeMondeReader extends ArticleReader
 					else if(eltName.equals(XmlNames.ELT_P))
 					{	//String str = element.text();
 						// we ignore the inter-paragraph hyperlinks
-						if(!element.attr(XmlNames.ATT_CLASS).equals(CLASS_LIRE))
+						if(!element.attr(XmlNames.ATT_CLASS).equals(CLASS_RELATED_ARTICLES))
 							processParagraphElement(element,rawStr,linkedStr);
 					}
 // TODO pour lemonde, traiter le cas où l'article n'est pas dispo en entier "L’accès à la totalité de l’article est protégé"

@@ -28,17 +28,18 @@ import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.text.DateFormat;
 import java.text.Normalizer;
+import java.text.SimpleDateFormat;
 import java.text.Normalizer.Form;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
 import java.util.TreeSet;
@@ -66,17 +67,35 @@ import fr.univ_avignon.transpolosearch.tools.file.FileTools;
 import fr.univ_avignon.transpolosearch.tools.xml.XmlNames;
 
 /**
- * From a specified URL, this class retrieves a Wikipedia page,
- * and gives access to the raw and linked texts.
+ * From a specified URL, this class retrieves a page
+ * from the french newspaper Libération (as of 05/05/2015),
+ * and gives access to the raw and linked texts, as well
+ * as other metadata (authors, publishing date, etc.).
  * 
  * @author Vincent Labatut
  */
 @SuppressWarnings("unused")
-public class GenericReader extends ArticleReader
+public class LiberationReader extends ArticleReader
 {
 	/////////////////////////////////////////////////////////////////
 	// RETRIEVE			/////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////	
+	/** Text allowing to detect wikipedia URL */
+	public static final String DOMAIN = "www.liberation.fr//";
+
+	/** Text displayed for limited access content */
+	private final static String CONTENT_LIMITED_ACCESS = "Article réservé aux abonnés";
+	/** Text displayed for "related articles" links */
+	private final static String CONTENT_RELATED_ARTICLES = "Lire aussi";
+	
+	/** Id of the element containing the article content in the Wikipedia page */
+	private final static String ID_ARTICLE_BODY = "article-body";
+
+	/** Class of the author names */
+	private final static String CLASS_AUTHOR = "author";
+	/** Class of the article header info */
+	private final static String CLASS_INFO = "info";
+	
 	/**
 	 * Retrieve the text located in a paragraph (P) HTML element.
 	 * 
@@ -251,30 +270,24 @@ public class GenericReader extends ArticleReader
 	 */
 	private void processListElement(Element element, StringBuilder rawStr, StringBuilder linkedStr, boolean ordered)
 	{	// possibly remove the last new line character
-		if(rawStr.length()>0)
-		{	char c = rawStr.charAt(rawStr.length()-1);
-			if(c=='\n')
-			{	rawStr.deleteCharAt(rawStr.length()-1);
-				linkedStr.deleteCharAt(linkedStr.length()-1);
-			}
+		char c = rawStr.charAt(rawStr.length()-1);
+		if(c=='\n')
+		{	rawStr.deleteCharAt(rawStr.length()-1);
+			linkedStr.deleteCharAt(linkedStr.length()-1);
 		}
 		
 		// possibly remove preceeding space
-		if(rawStr.length()>0)
-		{	char c = rawStr.charAt(rawStr.length()-1);
-			if(c==' ')
-			{	rawStr.deleteCharAt(rawStr.length()-1);
-				linkedStr.deleteCharAt(linkedStr.length()-1);
-			}
+		c = rawStr.charAt(rawStr.length()-1);
+		if(c==' ')
+		{	rawStr.deleteCharAt(rawStr.length()-1);
+			linkedStr.deleteCharAt(linkedStr.length()-1);
 		}
 		
 		// possibly add a column
-		if(rawStr.length()>0)
-		{	char c = rawStr.charAt(rawStr.length()-1);
-			if(c!='.' && c!=':' && c!=';')
-			{	rawStr.append(":");
-				linkedStr.append(":");
-			}
+		c = rawStr.charAt(rawStr.length()-1);
+		if(c!='.' && c!=':' && c!=';')
+		{	rawStr.append(":");
+			linkedStr.append(":");
 		}
 		
 		// process each list element
@@ -295,12 +308,10 @@ public class GenericReader extends ArticleReader
 			processTextElement(listElt,rawStr,linkedStr);
 			
 			// possibly remove the last new line character
-			if(rawStr.length()>0)
-			{	char c = rawStr.charAt(rawStr.length()-1);
-				if(c=='\n')
-				{	rawStr.deleteCharAt(rawStr.length()-1);
-					linkedStr.deleteCharAt(linkedStr.length()-1);
-				}
+			c = rawStr.charAt(rawStr.length()-1);
+			if(c=='\n')
+			{	rawStr.deleteCharAt(rawStr.length()-1);
+				linkedStr.deleteCharAt(linkedStr.length()-1);
 			}
 			
 			// add final separator
@@ -309,19 +320,17 @@ public class GenericReader extends ArticleReader
 		}
 		
 		// possibly remove last separator
-		if(rawStr.length()>0)
-		{	char c = rawStr.charAt(rawStr.length()-1);
-			if(c==';')
-			{	rawStr.deleteCharAt(rawStr.length()-1);
-				linkedStr.deleteCharAt(linkedStr.length()-1);
-				c = rawStr.charAt(rawStr.length()-1);
-				if(c!='.')
-				{	rawStr.append(".");
-					linkedStr.append(".");
-				}
-				rawStr.append("\n");
-				linkedStr.append("\n");
+		c = rawStr.charAt(rawStr.length()-1);
+		if(c==';')
+		{	rawStr.deleteCharAt(rawStr.length()-1);
+			linkedStr.deleteCharAt(linkedStr.length()-1);
+			c = rawStr.charAt(rawStr.length()-1);
+			if(c!='.')
+			{	rawStr.append(".");
+				linkedStr.append(".");
 			}
+			rawStr.append("\n");
+			linkedStr.append("\n");
 		}
 	}
 	
@@ -688,22 +697,73 @@ public class GenericReader extends ArticleReader
 			Document document  = retrieveSourceCode(name,url);
 					
 			// get its title
-			Element titleElt = document.getElementsByTag(XmlNames.ELT_TITLE).get(0);
+			Element titleElt = document.getElementsByTag(XmlNames.ELT_TITLE).first();
 			String title = titleElt.text();
 			logger.log("Get title: "+title);
 			
-			// identify the content element
+			// check if the access is restricted
+			Elements limitedElts = document.getElementsContainingText(CONTENT_LIMITED_ACCESS);
+			if(!limitedElts.isEmpty())
+				logger.log("WARNING: The access to this article is limited, only the beginning is available.");
+			
+			// get the article element
 			logger.log("Get the main element of the document");
-			Element bodyElt = document.getElementsByTag(XmlNames.ELT_BODY).get(0);
-			Element contentElt = getContentElement(bodyElt);
-
+			Elements articleElts = document.getElementsByTag(XmlNames.ELT_ARTICLE);
+			Element articleElt = articleElts.first();
+			if(articleElts.size()==0)
+				throw new IllegalArgumentException("No <article> element found in the Web page");
+			else if(articleElts.size()>1)
+				logger.log("WARNING: There are more than 1 <article> elements, which is unusual. Let's focus on the first.");
+			Element headerElt = articleElt.getElementsByTag(XmlNames.ELT_HEADER).first();
+			Element infoElt = headerElt.getElementsByAttributeValue(XmlNames.ATT_CLASS, CLASS_INFO).first();
+			
+			// retrieve the dates
+			Elements timeElts = infoElt.getElementsByTag(XmlNames.ELT_TIME);
+			Element publishingElt = timeElts.first();
+			Date publishingDate = getDateFromTimeElt(publishingElt);
+			logger.log("Found the publishing date: "+publishingDate);
+			Date modificationDate = null;
+			if(timeElts.size()>1)
+			{	Element modificationElt = timeElts.last();
+				modificationDate = getDateFromTimeElt(modificationElt);
+				logger.log("Found a last modification date: "+modificationDate);
+			}
+			else
+				logger.log("Did not find any last modification date");
+			
+			// retrieve the authors
+			List<String> authors = null;
+			Elements authorElts = infoElt.getElementsByAttributeValue(XmlNames.ATT_CLASS, CLASS_AUTHOR);
+			if(authorElts.isEmpty())
+				logger.log("WARNING: could not find any author, which is unusual");
+			else
+			{	logger.log("List of the authors found for this article:");
+				logger.increaseOffset();
+				authors = new ArrayList<String>();
+				for(Element authorElt: authorElts)
+				{	String authorName = authorElt.text();
+					logger.log(authorName);
+					authors.add(authorName);
+				}
+				logger.decreaseOffset();
+			}
+			
 			// get raw and linked texts
 			logger.log("Get raw and linked texts");
 			StringBuilder rawStr = new StringBuilder();
 			StringBuilder linkedStr = new StringBuilder();
 			
-			
-			// processing each element in the content part
+			// processing each element in the body
+			Element bodyElt = articleElt.getElementById(ID_ARTICLE_BODY);
+//			if(bodyElt==null)
+//			{	Elements bodyElts = articleElt.getElementsByAttributeValue(XmlNames.ATT_CLASS, CLASS_CONTENT_ARTICLE_BODY);
+//				bodyElt = bodyElts.first();
+//				if(bodyElts.size()==0)
+//					throw new IllegalArgumentException("No article body found in the Web page");
+//				else if(bodyElts.size()>1)
+//					logger.log("WARNING: There are more than 1 element for the article body, which is unusual. Let's focus on the first.");
+//			}
+			Element contentElt = bodyElt.getElementsByTag(XmlNames.ELT_DIV).first();
 			for(Element element: contentElt.children())
 			{	String eltName = element.tag().getName();
 			
@@ -729,7 +789,9 @@ public class GenericReader extends ArticleReader
 					// paragraph
 					else if(eltName.equals(XmlNames.ELT_P))
 					{	String str = element.text();
-						processParagraphElement(element,rawStr,linkedStr);
+						// we ignore the "related article" links
+						if(!str.startsWith(CONTENT_RELATED_ARTICLES))
+							processParagraphElement(element,rawStr,linkedStr);
 					}
 					
 					// list
@@ -775,11 +837,16 @@ public class GenericReader extends ArticleReader
 				}
 			}
 			
-			// create article object
+			// create and init article object
 			result = new Article(name);
 			result.setTitle(title);
 			result.setUrl(url);
 			result.initRetrievalDate();
+			result.setPublishingDate(publishingDate);
+			if(modificationDate!=null)
+				result.setModificationDate(modificationDate);
+			if(authors!=null)
+				result.addAuthors(authors);
 			
 			// clean text
 			String rawText = rawStr.toString();
@@ -814,149 +881,4 @@ public class GenericReader extends ArticleReader
 		
 		return result;
 	}
-	
-	/////////////////////////////////////////////////////////////////
-	// CONTENT			/////////////////////////////////////////////
-	/////////////////////////////////////////////////////////////////
-	/** Minimal proportion of the document (text-wise) we want to access */
-	private static final float MIN_CONTENT_RATIO = 0.5f;
-	
-	/**
-	 * Identifies which part of the specified element may be the main element, containing the most
-	 * relevant content.
-	 * <br/>
-	 * The basic rule is the following. First, we try to locate an article element. If it exists,
-	 * we just return it. If there are several of them, we issue a warning and return the first one.
-	 * Other wise, we perform a breadth-first search and go deeper as long as we get shortest elements 
-	 * (in terms of text content) while they still represent more than {@link #MIN_CONTENT_RATIO} 
-	 * percent of their parent. We keep the parent whose children do not respect this rule. In other
-	 * words, we keep the largest node whose content is split (roughly) evenly among its children. 
-	 * 
-	 * @param root
-	 * 		Root element.
-	 * @return
-	 * 		The elected subelement.
-	 */
-	private Element getContentElement(Element root)
-	{	Element result = null;
-		String totalText = root.text();
-		float totalLength = totalText.length();
-		logger.increaseOffset();
-		logger.log("Total text length: "+totalLength+" characters");
-		
-		// presence of an <article> element in the page
-		Elements articleElts = root.getElementsByTag(XmlNames.ELT_ARTICLE);
-		if(!articleElts.isEmpty())
-		{	logger.log("Found an <article> element in this Web page >> using it as the main content element");
-			result = articleElts.first();
-			if(articleElts.size()>1)
-				logger.log("WARNING: found several <article> elements in this Web page");
-		}
-		
-		// no <article> element: use text size 
-		else
-		{	logger.log("No <article> element in this Web page >> using text size");
-			
-			// set up data structures
-			Map<Element,Float> sizes = new HashMap<Element, Float>();
-			sizes.put(root, totalLength);
-			Queue<Element> queue = new LinkedList<Element>();
-			queue.offer(root);
-			
-			do
-			{	Element element = queue.poll();
-				Elements children = element.children();
-				float size = sizes.get(element);
-				boolean candidate = false;
-				
-				// if the node has no children, it's a candidate
-				if(children.isEmpty())
-					candidate = true;
-				
-				// if it has one or more child
-				else
-				{	candidate = true;
-					// it is a candidate only if none of them contains the majority of its text
-					for(Element child: children)
-					{	String text = child.text();
-						float sz = text.length();
-						sizes.put(child,sz);
-						candidate = candidate && sz/size<MIN_CONTENT_RATIO;
-					}
-					// if not a candidate, put its children in the queue
-					if(!candidate)
-					{	for(Element child: children)
-							queue.offer(child);
-					}
-				}
-				
-				// if we found a candidate
-				if(candidate)
-				{	// it's the new best candidate only if it's larger than the previous best candidate
-					if(result!=null)
-					{	float size0 = sizes.get(result);
-						if(size>size0)
-							result = element;
-					}
-					else
-						result = element;
-				}
-			}
-			while(!queue.isEmpty());
-		}
-		
-		String text = result.text();
-		float size = text.length();
-		logger.log("Selected element: "+size+" characters ("+size/totalLength*100+"%)");
-		logger.decreaseOffset();
-		return result;
-	}
-//	private Element getContentElement0(Element root)
-//	{	Element result = root;
-//		String totalText = root.text();
-//		float totalLength = totalText.length();
-//		float currentLength = totalLength;
-//		logger.increaseOffset();
-//		logger.log("Total text length: "+totalLength+" characters");
-//		
-//		// presence of an <article> element in the page
-//		Elements articleElts = root.getElementsByTag(XmlNames.ELT_ARTICLE);
-//		if(!articleElts.isEmpty())
-//		{	logger.log("Found an <article> element in this Web page >> using it as the main content element");
-//			result = articleElts.first();
-//			if(articleElts.size()>1)
-//				logger.log("WARNING: found several <article> elements in this Web page");
-//		}
-//		
-//		// no <article> element: use text size 
-//		else
-//		{	logger.log("No <article> element in this Web page >> looking for the largest text chunk");
-//			
-//			// set up queue
-//			Elements children = root.children();
-//			Queue<Element> queue = new LinkedList<Element>(children);
-//			
-//			while(!queue.isEmpty())
-//			{	Element element = queue.poll();
-//				
-//				// update current result
-//				String text = element.text();
-//				float length = text.length();
-//				if(length<currentLength && (length/currentLength)>=MIN_CONTENT_RATIO)
-//				{	// update result
-//					result = element;
-//					currentLength = length;
-//					
-//					// update queue
-//					children = root.children();
-//					for(Element child: children)
-//						queue.offer(child);
-//				}
-//			}
-//		}
-//		
-//		logger.log("Selected element: "+currentLength+" characters ("+currentLength/totalLength*100+"%)");
-//		logger.decreaseOffset();
-//		return result;
-//	}
 }
