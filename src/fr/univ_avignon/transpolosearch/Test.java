@@ -25,8 +25,11 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.StringReader;
 import java.net.URL;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 
 import org.apache.http.HttpResponse;
@@ -43,6 +46,7 @@ import org.jdom2.input.SAXBuilder;
 
 import com.google.api.services.customsearch.model.Result;
 
+import fr.univ_avignon.transpolosearch.extraction.Extractor;
 import fr.univ_avignon.transpolosearch.retrieval.ArticleRetriever;
 import fr.univ_avignon.transpolosearch.retrieval.reader.ArticleReader;
 import fr.univ_avignon.transpolosearch.tools.log.HierarchicalLogger;
@@ -75,7 +79,10 @@ public class Test
 //		testRetrievalGeneric();
 		
 		// search
-		testGoogleSearch();
+//		testGoogleSearch();
+		
+		// whole process
+		testExtractor();
 		
 		logger.close();
 	}
@@ -154,6 +161,29 @@ public class Test
 		logger.log("Test terminated");
 	}
 
+	/////////////////////////////////////////////////////////////////
+	// WHOLE PROCESS	/////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////
+	/**
+	 * Tests the whole information extractin process.
+	 * 
+	 * @throws Exception
+	 * 		Something went wrong during the search. 
+	 */
+	private static void testExtractor() throws Exception
+	{	Extractor extractor = new Extractor();
+	
+		DateFormat df = new SimpleDateFormat("yyyyMMdd");
+		
+		String keywords = "Cécile Helle";
+		String website = null;
+		Date startDate = df.parse("20150101");
+		Date endDate = df.parse("20150131");
+		boolean strictSearch = true;
+		
+		extractor.performExtraction(keywords, website, startDate, endDate, strictSearch);
+	}
+	
 	/////////////////////////////////////////////////////////////////
 	// LOGGER		/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
