@@ -29,7 +29,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-//import org.apache.commons.codec.binary.Base64;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.HttpClient;
@@ -161,77 +160,4 @@ public class Test
 	/////////////////////////////////////////////////////////////////
 	/** Common object used for logging */
 	private static HierarchicalLogger logger = HierarchicalLoggerManager.getHierarchicalLogger();
-	
-	/////////////////////////////////////////////////////////////////
-	// OTHER STUFF	/////////////////////////////////////////////////
-	/////////////////////////////////////////////////////////////////
-	/**
-	 * Testing the NERO named entity recognition tool.
-	 * TODO: remove the libs if not used here
-	 * 
-	 * @throws Exception
-	 * 		Some problem occurred...
-	 */
-//	private static void nero() throws Exception
-//	{	byte[] encodedBytes = Base64.encodeBase64("vince.labatut@gmail.com:rlm40PPO".getBytes());
-//		String encoding = new String(encodedBytes);
-//
-//		// première requête
-//		String url = "https://nero.irisa.fr/texts.xml";
-//		HttpPost post = new HttpPost(url);
-//		post.setHeader("Authorization", "Basic " + encoding);
-//		
-//		List<NameValuePair> urlParameters = new ArrayList<NameValuePair>();
-//		urlParameters.add(new BasicNameValuePair("text[content]", "Je vais à Marseille cet été voir l'Olympique de Marseille."));
-//		post.setEntity(new UrlEncodedFormEntity(urlParameters));
-//		
-//		HttpClient client = new DefaultHttpClient();
-//		HttpResponse response = client.execute(post);
-//		int responseCode = response.getStatusLine().getStatusCode();
-//		System.out.println("Response Code : " + responseCode);
-//		BufferedReader rd = new BufferedReader(new InputStreamReader(response.getEntity().getContent(),"UTF-8"));
-//		StringBuffer res = new StringBuffer();
-//		String line = "";
-//		while ((line = rd.readLine()) != null)
-//		{	System.out.println(line);
-//			res.append(line);
-//		}
-//		
-//		SAXBuilder sb = new SAXBuilder();
-//		Document doc = sb.build(new StringReader(res.toString()));
-//		Element root = doc.getRootElement();
-//		Element idElt = root.getChild("id");
-//		String id = idElt.getValue();
-//		
-//		// seconde requête
-//		int i = 1;
-//		do
-//		{	System.out.println("\nRepetition "+i);
-//			Thread.sleep(5000);
-//			url = "https://nero.irisa.fr/texts/"+id+".xml";
-//			System.out.println("url="+url);
-//			HttpGet get = new HttpGet(url);
-//			get.setHeader("Authorization", "Basic " + encoding);
-//
-//			client = new DefaultHttpClient();
-//			response = client.execute(get);
-//			responseCode = response.getStatusLine().getStatusCode();
-//			System.out.println("Response Code : " + responseCode);
-//			rd = new BufferedReader(new InputStreamReader(response.getEntity().getContent(),"UTF-8"));
-//			res = new StringBuffer();
-//			while((line = rd.readLine()) != null)
-//			{	System.out.println(line);
-//				res.append(line);
-//			}
-//			i++;
-//		}
-//		while(responseCode!=200);
-//		
-//		sb = new SAXBuilder();
-//		doc = sb.build(new StringReader(res.toString()));
-//		root = doc.getRootElement();
-//		Element resultElt = root.getChild("result");
-//		String result = resultElt.getValue();
-//		System.out.println("\nResult="+result);
-//	}
 }
