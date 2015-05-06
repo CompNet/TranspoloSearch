@@ -34,7 +34,8 @@ import org.xml.sax.SAXException;
 import fr.univ_avignon.transpolosearch.data.article.Article;
 import fr.univ_avignon.transpolosearch.data.entity.Entities;
 import fr.univ_avignon.transpolosearch.recognition.AbstractRecognizer;
-import fr.univ_avignon.transpolosearch.recognition.internal.modelless.opencalais.OpenCalais;
+import fr.univ_avignon.transpolosearch.recognition.RecognizerException;
+import fr.univ_avignon.transpolosearch.recognition.combiner.straightcombiner.StraightCombiner;
 import fr.univ_avignon.transpolosearch.retrieval.ArticleRetriever;
 import fr.univ_avignon.transpolosearch.retrieval.reader.ReaderException;
 import fr.univ_avignon.transpolosearch.tools.log.HierarchicalLogger;
@@ -61,10 +62,13 @@ public class Extractor
 	 * <br/>
 	 * Override/modify the methods called here, 
 	 * in order to change these parameters.
+	 * 
+	 * @throws RecognizerException
+	 * 		Problem while initializing the NER tool. 
 	 */
-	public Extractor()
+	public Extractor() throws RecognizerException
 	{	initDefaultSearchEngines();
-		initDefaultRecognizers();
+		initDefaultRecognizer();
 	}
 	
 	/////////////////////////////////////////////////////////////////
@@ -102,8 +106,10 @@ public class Extractor
 	 * 		Problem while retrieving a Web page.
 	 * @throws ReaderException 
 	 * 		Problem while retrieving a Web page.
+	 * @throws RecognizerException 
+	 * 		Problem while detecting the entities.
 	 */
-	public void performExtraction(String keywords, String website, Date startDate, Date endDate, boolean strictSearch) throws IOException, ReaderException, ParseException, SAXException
+	public void performExtraction(String keywords, String website, Date startDate, Date endDate, boolean strictSearch) throws IOException, ReaderException, ParseException, SAXException, RecognizerException
 	{	logger.log("Starting the information extraction");
 		logger.increaseOffset();
 		
@@ -114,10 +120,10 @@ public class Extractor
 		List<Article> articles = retrieveArticles(urls);
 		
 		// detect the entities
-		detectEntities(articles);
+		List<Entities> entities = detectEntities(articles);
 		
 		// possibly filter the articles depending on the dates
-		filterArticles(articles,startDate,endDate,strictSearch);
+		filterArticles(articles,entities,startDate,endDate,strictSearch);
 		
 		//TODO possibilité de spécifier un mot devant absolument être contenu dans les articles
 		
@@ -255,37 +261,36 @@ public class Extractor
 	// ENTITIES		/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
 	/** Tool used to detect named entities in the text */ 
-	private List<AbstractRecognizer> recognizers = new ArrayList<AbstractRecognizer>();
+	private AbstractRecognizer recognizer;
 	
 	/**
-	 * Initializes the objects representing named entity detection
-	 * tools, which will be applied to identify names and dates in
+	 * Initializes the named entity detection tool, 
+	 * which will be applied to identify names and dates in
 	 * the retrieved articles.
+	 * 
+	 * @throws RecognizerException
+	 * 		Problem while initializing the recognizer. 
 	 */
-	private void initDefaultRecognizers()
-	{	// setup OpenCalais
-		boolean ignorePronouns = false;
-		boolean exclusionOn = false;
-		OpenCalais openCalais = new OpenCalais(ignorePronouns, exclusionOn);
-		recognizers.add(openCalais);
-		
-		// setup HeidelTime
-		// TODO
+	private void initDefaultRecognizer() throws RecognizerException
+	{	recognizer = new StraightCombiner();
 	}
 	
-	private List<List<Entities>> detectEntities(List<Article> articles)
-	{	List<List<Entities>> result = new ArrayList<List<Entities>>();
+	/**
+	 * Detects the entities present in each specified article.
+	 * 
+	 * @param articles
+	 * 		The list of articles to process.
+	 * @return
+	 * 		A list of entites for each article.
+	 * @throws RecognizerException
+	 * 		Problem while applying the NER tool.
+	 */
+	private List<Entities> detectEntities(List<Article> articles) throws RecognizerException
+	{	List<Entities> result = new ArrayList<Entities>();
 		
 		for(Article article: articles)
-		{	// create a list to represent the article entities
-			List<Entities> list = new ArrayList<Entities>();
-			result.add(list);
-			
-			// each Entities object in the list comes from a NER tool
-			for(AbstractRecognizer recognizer: recognizers)
-			{	Entities entities = recognizer.process(article);
-				list.add(entities);
-			}
+		{	Entities entities = recognizer.process(article);
+			result.add(entities);
 		}
 		
 		return result;
@@ -294,7 +299,23 @@ public class Extractor
 	/////////////////////////////////////////////////////////////////
 	// FILTERING	/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
-	private void filterArticles(List<Article> articles, Date startDate, Date endDate, boolean strictSearch)
+	/**
+	 * Removes from the list the articles concerning events
+	 * not contained in the specified date range.
+	 *  
+	 * @param articles
+	 * 		List of articles to process.
+	 * @param entities
+	 * 		List of the entities detected in the listed articles.
+	 * @param startDate
+	 * 		Start of the time period.
+	 * @param endDate
+	 * 		End of the time period.
+	 * @param strictSearch
+	 * 		Whether the filtering should be applied ({@code false}
+	 * 		or not ({@code true}).
+	 */
+	private void filterArticles(List<Article> articles, List<Entities> entities, Date startDate, Date endDate, boolean strictSearch)
 	{	logger.log("Starting filtering the articles");
 		logger.increaseOffset();
 		
@@ -304,7 +325,7 @@ public class Extractor
 			logger.log("startDate="+startDate);
 			logger.log("endDate="+endDate);
 			String txt = "strictSearch="+strictSearch;
-			if(!strictSearch)
+			if(strictSearch)
 				txt = txt + "(dates are ignored here, because the search is strict)";
 			logger.log(txt);
 		logger.decreaseOffset();
@@ -314,10 +335,12 @@ public class Extractor
 		{	if(startDate==null || endDate==null)
 				logger.log("WARNING: one date is null, so both of them are ignored");
 			else
-			{	Iterator<Article> it = articles.iterator();
-				while(it.hasNext())
-				{	Article article = it.next();
+			{	Iterator<Article> itArt = articles.iterator();
+				Iterator<Entities> itEnt = entities.iterator();
+				while(itArt.hasNext())
+				{	Article article = itArt.next();
 					String rawText = article.getRawText();
+					Entities ents = itEnt.next();
 					//TODO check if the article contains a date between start and end
 				}
 			}
