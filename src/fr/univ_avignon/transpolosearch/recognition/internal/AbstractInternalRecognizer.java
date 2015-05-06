@@ -25,8 +25,8 @@ import java.text.ParseException;
 
 import org.xml.sax.SAXException;
 
-import fr.univ_avignon.transpolosearch.data.article.ArticleLanguage;
 import fr.univ_avignon.transpolosearch.data.article.Article;
+import fr.univ_avignon.transpolosearch.data.article.ArticleLanguage;
 import fr.univ_avignon.transpolosearch.data.entity.AbstractEntity;
 import fr.univ_avignon.transpolosearch.data.entity.Entities;
 import fr.univ_avignon.transpolosearch.recognition.AbstractRecognizer;
@@ -134,9 +134,9 @@ public abstract class AbstractInternalRecognizer<U,T extends AbstractInternalCon
 				logger.log("Possibly clean entities.");
 				cleanEntities(result);
 				
-				// possibly filter stop words and pronouns
+				// possibly filter stop-words and pronouns
 				logger.log("Filter entities (pronouns, stop-words, etc.)");
-				filterNoise(result);
+				filterNoise(result,language);
 				
 				// filter overlapping entities
 				logger.log("Filter overlapping entities");
