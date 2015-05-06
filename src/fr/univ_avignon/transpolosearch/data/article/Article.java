@@ -34,6 +34,7 @@ import java.util.Locale;
 import org.jdom2.Element;
 import org.xml.sax.SAXException;
 
+import fr.univ_avignon.transpolosearch.data.article.ArticleLanguage;
 import fr.univ_avignon.transpolosearch.data.entity.Entities;
 import fr.univ_avignon.transpolosearch.recognition.AbstractRecognizer;
 import fr.univ_avignon.transpolosearch.tools.file.FileNames;
@@ -104,7 +105,7 @@ public class Article
 	}
 
 	/////////////////////////////////////////////////////////////////
-	// TITLE			/////////////////////////////////////////////
+	// AUTHORS			/////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
 	/** Authors of this article */
 	private List<String> authors = new ArrayList<String>();
@@ -166,7 +167,33 @@ public class Article
 	}
 
 	/////////////////////////////////////////////////////////////////
-	// DATES	/////////////////////////////////////////////
+	// LANGUAGE			/////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////
+	/** Language of the article (only one allowed) */
+	private ArticleLanguage language;
+	
+	/**
+	 * Returns the language of this article.
+	 * 
+	 * @return
+	 * 		Language of this article.
+	 */
+	public ArticleLanguage getLanguage()
+	{	return language;
+	}
+	
+	/**
+	 * Changes the language of this article.
+	 * 
+	 * @param language
+	 * 		New language for this article.
+	 */
+	public void setLanguage(ArticleLanguage language)
+	{	this.language = language;
+	}
+
+	/////////////////////////////////////////////////////////////////
+	// DATES			/////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
 	/** Used to read/write dates */
     private static final DateFormat DATE_FORMAT = new SimpleDateFormat("dd/MM/yy HH:mm",Locale.ENGLISH);
@@ -472,6 +499,15 @@ public class Article
 			this.url = url;
 		}
 		
+		// language
+		{	Element languageElt = root.getChild(XmlNames.ELT_LANGUAGE);
+			if(languageElt!=null)
+			{	String languageStr = languageElt.getTextTrim().toUpperCase(Locale.ENGLISH);
+				ArticleLanguage language = ArticleLanguage.valueOf(languageStr);
+				this.language = language;
+			}
+		}
+		
 		// dates
 		{	Element datesElt = root.getChild(XmlNames.ELT_DATES);
 			// retrieval
@@ -570,6 +606,14 @@ public class Article
 			root.addContent(urlElt);
 		}
 		
+		// language
+		if(language!=null)
+		{	String languageStr = language.toString();
+			Element languageElt = new Element(XmlNames.ELT_LANGUAGE);
+			languageElt.setText(languageStr);
+			root.addContent(languageElt);
+		}
+		
 		// dates
 		{	Element datesElt = new Element(XmlNames.ELT_DATES);
 			root.addContent(datesElt);
@@ -609,7 +653,7 @@ public class Article
 		// record file
 		XmlTools.makeFileFromRoot(propertiesFile,schemaFile,root);
 	}
-
+	
 	/////////////////////////////////////////////////////////////////
 	// ENTITIES			/////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////

@@ -24,6 +24,7 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
+import fr.univ_avignon.transpolosearch.data.article.ArticleLanguage;
 import fr.univ_avignon.transpolosearch.data.article.Article;
 import fr.univ_avignon.transpolosearch.data.entity.AbstractEntity;
 import fr.univ_avignon.transpolosearch.data.entity.Entities;
@@ -111,6 +112,21 @@ public abstract class AbstractRecognizer
 	 * 		A list of entity types.
 	 */
 	public abstract List<EntityType> getHandledEntityTypes();
+	
+	/////////////////////////////////////////////////////////////////
+	// LANGUAGES		/////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////
+	/**
+	 * Checks whether the specified language is supported by this
+	 * recognizer, given its current settings (parameters, model...).
+	 * 
+	 * @param language
+	 * 		The language to be checked.
+	 * @return 
+	 * 		{@code true} iff this recognizer supports the specified
+	 * 		language, with its current parameters (model, etc.).
+	 */
+	public abstract boolean canHandleLanguage(ArticleLanguage language);
 	
 	/////////////////////////////////////////////////////////////////
 	// CACHING			/////////////////////////////////////////////

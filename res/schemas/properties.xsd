@@ -19,6 +19,11 @@
 	along with Nerwip - Named Entity Extraction in Wikipedia Pages.  
 	If not, see <http://www.gnu.org/licenses/>.
  -->
+	<xsd:include schemaLocation="_languages.xsd"/>
+
+	<xsd:simpleType name="tLanguageList">
+		<xsd:list itemType="tLanguage"/>
+	</xsd:simpleType>
 
 	<xsd:complexType name="tAuthors">
 		<xsd:sequence>
@@ -38,6 +43,7 @@
 		<xsd:sequence>
 			<xsd:element name="title" type="xsd:string" />
 			<xsd:element name="url" type="xsd:anyURI" />
+			<xsd:element name="language" type="tLanguageList" minOccurs="0"/>
 			<xsd:element name="authors" type="tAuthors"  minOccurs="0"/>
 			<xsd:element name="dates" type="tDates" />
 		</xsd:sequence>

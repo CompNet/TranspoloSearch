@@ -67,6 +67,8 @@ public class XmlNames
 	public static final String ELT_ENTITY = "entity";
 	/** Some text key */
 	public static final String ELT_KEY = "key";
+	/** Language of an article */
+	public static final String ELT_LANGUAGE = "language";
 	/** Date of modification of an article */
 	public static final String ELT_MODIFICATION_DATE = "modification";
 	/** Various properties of an article */

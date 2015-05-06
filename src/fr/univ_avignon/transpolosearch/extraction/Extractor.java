@@ -32,7 +32,9 @@ import java.util.TreeSet;
 import org.xml.sax.SAXException;
 
 import fr.univ_avignon.transpolosearch.data.article.Article;
+import fr.univ_avignon.transpolosearch.data.entity.Entities;
 import fr.univ_avignon.transpolosearch.recognition.AbstractRecognizer;
+import fr.univ_avignon.transpolosearch.recognition.internal.modelless.opencalais.OpenCalais;
 import fr.univ_avignon.transpolosearch.retrieval.ArticleRetriever;
 import fr.univ_avignon.transpolosearch.retrieval.reader.ReaderException;
 import fr.univ_avignon.transpolosearch.tools.log.HierarchicalLogger;
@@ -57,11 +59,12 @@ public class Extractor
 	 * Builds and initializes an extractor object,
 	 * using the default parameter. 
 	 * <br/>
-	 * Override in order to change these parameters.
+	 * Override/modify the methods called here, 
+	 * in order to change these parameters.
 	 */
 	public Extractor()
 	{	initDefaultSearchEngines();
-		initDefaultRecognizer();
+		initDefaultRecognizers();
 	}
 	
 	/////////////////////////////////////////////////////////////////
@@ -111,10 +114,10 @@ public class Extractor
 		List<Article> articles = retrieveArticles(urls);
 		
 		// detect the entities
-		detectEntities(articles); //TODO
+		detectEntities(articles);
 		
 		// possibly filter the articles depending on the dates
-		filterArticles(articles,startDate,endDate,strictSearch); //TODO
+		filterArticles(articles,startDate,endDate,strictSearch);
 		
 		//TODO possibilité de spécifier un mot devant absolument être contenu dans les articles
 		
@@ -252,16 +255,40 @@ public class Extractor
 	// ENTITIES		/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
 	/** Tool used to detect named entities in the text */ 
-	private AbstractRecognizer recognizer;
+	private List<AbstractRecognizer> recognizers = new ArrayList<AbstractRecognizer>();
 	
-	private void initDefaultRecognizer()
-	{
+	/**
+	 * Initializes the objects representing named entity detection
+	 * tools, which will be applied to identify names and dates in
+	 * the retrieved articles.
+	 */
+	private void initDefaultRecognizers()
+	{	// setup OpenCalais
+		boolean ignorePronouns = false;
+		boolean exclusionOn = false;
+		OpenCalais openCalais = new OpenCalais(ignorePronouns, exclusionOn);
+		recognizers.add(openCalais);
+		
+		// setup HeidelTime
 		// TODO
 	}
 	
-	private void detectEntities(List<Article> articles)
-	{	
-		// TODO
+	private List<List<Entities>> detectEntities(List<Article> articles)
+	{	List<List<Entities>> result = new ArrayList<List<Entities>>();
+		
+		for(Article article: articles)
+		{	// create a list to represent the article entities
+			List<Entities> list = new ArrayList<Entities>();
+			result.add(list);
+			
+			// each Entities object in the list comes from a NER tool
+			for(AbstractRecognizer recognizer: recognizers)
+			{	Entities entities = recognizer.process(article);
+				list.add(entities);
+			}
+		}
+		
+		return result;
 	}
 	
 	/////////////////////////////////////////////////////////////////

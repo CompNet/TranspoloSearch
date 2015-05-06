@@ -25,6 +25,7 @@ import java.text.ParseException;
 
 import org.xml.sax.SAXException;
 
+import fr.univ_avignon.transpolosearch.data.article.ArticleLanguage;
 import fr.univ_avignon.transpolosearch.data.article.Article;
 import fr.univ_avignon.transpolosearch.data.entity.AbstractEntity;
 import fr.univ_avignon.transpolosearch.data.entity.Entities;
@@ -98,7 +99,14 @@ public abstract class AbstractInternalRecognizer<U,T extends AbstractInternalCon
 			
 			// if needed, we process the text
 			if(!cache || processNeedeed)
-			{	// apply the NER tool
+			{	// check language
+				ArticleLanguage language = article.getLanguage();
+				if(language==null)
+					logger.log("WARNING: The article language is unknown >> it is possible this NER tool does not handle this language");
+				else if(!canHandleLanguage(language))
+					logger.log("WARNING: This NER tool does not handle the language of this article ("+language+")");
+				
+				// apply the NER tool
 				logger.log("Detect the entities");
 				prepareRecognizer();
 				U intRes = detectEntities(article);
