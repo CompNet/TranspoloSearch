@@ -27,6 +27,7 @@ import java.text.ParseException;
 import org.xml.sax.SAXException;
 
 import fr.univ_avignon.transpolosearch.data.article.Article;
+import fr.univ_avignon.transpolosearch.data.article.ArticleLanguage;
 import fr.univ_avignon.transpolosearch.retrieval.reader.ArticleReader;
 import fr.univ_avignon.transpolosearch.retrieval.reader.ReaderException;
 import fr.univ_avignon.transpolosearch.tools.log.HierarchicalLogger;
@@ -103,6 +104,24 @@ public class ArticleRetriever
 	}
 	
 	/////////////////////////////////////////////////////////////////
+	// LANGUAGE			/////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////
+	/** Language specified by the user for the retrieved articles (or {@code null} if it is unknown) */
+	private ArticleLanguage language = null;
+	
+	/**
+	 * Changes the language specified by
+	 * the user for the retrieved articles.
+	 * 
+	 * @param language
+	 * 		New language for the articles,
+	 * 		or {@code null} if the language is unknown.
+	 */
+	public void setLanguage(ArticleLanguage language)
+	{	this.language = language;
+	}
+
+	/////////////////////////////////////////////////////////////////
 	// RETRIEVE			/////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
 	/**
@@ -150,7 +169,7 @@ public class ArticleRetriever
 			
 			// use the reader to get the text
 			reader.setCacheEnabled(readerCache);
-			result = reader.read(url);
+			result = reader.read(url,language);
 			logger.decreaseOffset();
 			
 			// then record the contents

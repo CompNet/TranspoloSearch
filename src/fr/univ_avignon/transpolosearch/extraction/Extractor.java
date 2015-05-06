@@ -33,6 +33,7 @@ import java.util.TreeSet;
 import org.xml.sax.SAXException;
 
 import fr.univ_avignon.transpolosearch.data.article.Article;
+import fr.univ_avignon.transpolosearch.data.article.ArticleLanguage;
 import fr.univ_avignon.transpolosearch.data.entity.Entities;
 import fr.univ_avignon.transpolosearch.recognition.AbstractRecognizer;
 import fr.univ_avignon.transpolosearch.recognition.RecognizerException;
@@ -285,9 +286,12 @@ public class Extractor
 	{	logger.log("Starting the article retrieval");
 		logger.increaseOffset();
 		
-		// retrieve articles
+		// init
 		List<Article> result = new ArrayList<Article>();
 		ArticleRetriever articleRetriever = new ArticleRetriever(false); //TODO cache disabled for debugging
+		articleRetriever.setLanguage(ArticleLanguage.FR); // we know the articles will be in French
+
+		// retrieve articles
 		Iterator<URL> it = urls.iterator();
 		int i = 0;
 		while(it.hasNext())

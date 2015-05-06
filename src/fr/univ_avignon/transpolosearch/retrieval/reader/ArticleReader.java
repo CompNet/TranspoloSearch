@@ -44,6 +44,7 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 
 import fr.univ_avignon.transpolosearch.data.article.Article;
+import fr.univ_avignon.transpolosearch.data.article.ArticleLanguage;
 import fr.univ_avignon.transpolosearch.tools.file.FileNames;
 import fr.univ_avignon.transpolosearch.tools.file.FileTools;
 import fr.univ_avignon.transpolosearch.tools.log.HierarchicalLogger;
@@ -58,7 +59,7 @@ import fr.univ_avignon.transpolosearch.tools.xml.XmlNames;
  * @author Vincent Labatut
  */
 public abstract class ArticleReader
-{
+{	
 	/////////////////////////////////////////////////////////////////
 	// FACTORY		/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
@@ -233,13 +234,15 @@ public abstract class ArticleReader
 	 * 
 	 * @param url
 	 * 		Article address.
+	 * @param language
+	 * 		Language of the retrieved article, or {@code null} if it is unknown.
 	 * @return
 	 * 		An Article object corresponding to the targetted URL.
 	 * 
 	 * @throws ReaderException
 	 * 		Problem while retrieving the article.
 	 */
-	public abstract Article read(URL url) throws ReaderException;
+	public abstract Article read(URL url, ArticleLanguage language) throws ReaderException;
 
 	/**
 	 * Loads the html source code from the cached file,

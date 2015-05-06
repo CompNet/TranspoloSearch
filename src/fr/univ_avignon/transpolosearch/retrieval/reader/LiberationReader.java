@@ -60,6 +60,7 @@ import org.jsoup.nodes.TextNode;
 import org.jsoup.select.Elements;
 
 import fr.univ_avignon.transpolosearch.data.article.Article;
+import fr.univ_avignon.transpolosearch.data.article.ArticleLanguage;
 import fr.univ_avignon.transpolosearch.retrieval.reader.ArticleReader;
 import fr.univ_avignon.transpolosearch.retrieval.reader.ReaderException;
 import fr.univ_avignon.transpolosearch.tools.file.FileNames;
@@ -686,19 +687,8 @@ public class LiberationReader extends ArticleReader
 		}
 	}
 	
-	/**
-	 * Pulls a text from the specified URL without images, tags, etc.
-	 * 
-	 * @param url
-	 * 		Address of the targetted text.
-	 * @return
-	 * 		An Article object representing the retrieved text.
-	 * 
-	 * @throws ReaderException
-	 * 		Problem while retrieving the text.
-	 */
 	@Override
-	public Article read(URL url) throws ReaderException
+	public Article read(URL url, ArticleLanguage language) throws ReaderException
 	{	Article result = null;
 		String name = getName(url);
 		
@@ -871,6 +861,7 @@ public class LiberationReader extends ArticleReader
 			result.setTitle(title);
 			result.setUrl(url);
 			result.initRetrievalDate();
+			result.setLanguage(language);
 			result.setPublishingDate(publishingDate);
 			if(modificationDate!=null)
 				result.setModificationDate(modificationDate);
