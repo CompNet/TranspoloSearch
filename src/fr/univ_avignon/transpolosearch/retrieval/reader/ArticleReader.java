@@ -26,16 +26,20 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
+import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.text.DateFormat;
 import java.text.ParseException;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.Inflater;
 import java.util.zip.InflaterInputStream;
 
+import org.jsoup.HttpStatusException;
 import org.jsoup.Jsoup;
+import org.jsoup.UnsupportedMimeTypeException;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 
@@ -267,8 +271,9 @@ public abstract class ArticleReader
 		
 		// otherwise, load and cache the html file
 		else
-		{	logger.log("Cache disabled or HTML never retrieved before>> we get it from the web server");
-		
+		{	logger.log("Cache disabled or HTML never retrieved before>> we get it from the Web server");
+			logger.increaseOffset();
+			
 			// use custom page loader
 //			String sourceCode = manuallyReadUrl(url);
 //			System.out.println(sourceCode.toString());
@@ -276,11 +281,41 @@ public abstract class ArticleReader
 			
 			// use jericho page loader
 			int timeOut = 5000;
-			result = Jsoup.parse(url,timeOut);
-			String sourceCode = result.toString();
+			boolean again;
+			do
+			{	again = false;
+				try
+				{	logger.log("Trying to download the Web page");
+					result = Jsoup.parse(url,timeOut);
+				}
+				catch(SocketTimeoutException e)
+				{	logger.log("Could not download the page (timeout="+timeOut+" ms) >> trying again");
+					timeOut = timeOut + 5000;
+					again = true;
+				}
+				catch(UnsupportedMimeTypeException e)
+				{	logger.log(Arrays.asList(
+						"WARNING: Could not download the page, the MIME format is not supported.",
+						"Error message: "+e.getMessage()
+					));
+				}
+				catch(HttpStatusException e)
+				{	logger.log(Arrays.asList(
+						"WARNING: Could not download the page, the server returned an error "+e.getStatusCode()+" .",
+						"Error message: "+e.getMessage()
+					));
+				}
+			}
+			while(again);
+			logger.decreaseOffset();
 			
-			// cache html source code
-			FileTools.writeTextFile(originalFile, sourceCode);
+			if(result!=null)
+			{	logger.log("Page downloaded");
+				String sourceCode = result.toString();
+				
+				// cache html source code
+				FileTools.writeTextFile(originalFile, sourceCode);
+			}
 		}
 
 		//System.out.println(source.toString());

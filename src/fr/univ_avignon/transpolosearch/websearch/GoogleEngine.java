@@ -160,7 +160,7 @@ public class GoogleEngine extends AbstractEngine
 		List<URL> result = new ArrayList<URL>();
 		for(Result res: resList)
 		{	String title = res.getHtmlTitle();
-			String urlStr = res.getFormattedUrl();
+			String urlStr = res.getLink();
 			logger.log(title+" - "+urlStr);
 			URL url = new URL(urlStr);
 			result.add(url);

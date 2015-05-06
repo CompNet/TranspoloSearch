@@ -708,6 +708,10 @@ public class LiberationReader extends ArticleReader
 			logger.log("Retrieving page "+address);
 			long startTime = System.currentTimeMillis();
 			Document document  = retrieveSourceCode(name,url);
+			if(document==null)
+			{	logger.log("ERROR: Could not retrieve the document at URL "+url);
+				throw new ReaderException("Could not retrieve the document at URL "+url);
+			}
 					
 			// get its title
 			Element titleElt = document.getElementsByTag(XmlNames.ELT_TITLE).first();

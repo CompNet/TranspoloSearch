@@ -694,6 +694,10 @@ public class GenericReader extends ArticleReader
 			logger.log("Retrieving page "+address);
 			long startTime = System.currentTimeMillis();
 			Document document  = retrieveSourceCode(name,url);
+			if(document==null)
+			{	logger.log("ERROR: Could not retrieve the document at URL "+url);
+				throw new ReaderException("Could not retrieve the document at URL "+url);
+			}
 					
 			// get its title
 			Element titleElt = document.getElementsByTag(XmlNames.ELT_TITLE).get(0);
@@ -810,13 +814,13 @@ public class GenericReader extends ArticleReader
 			long endTime = System.currentTimeMillis();
 			logger.log("Total duration: "+(endTime-startTime)+" ms.");
 		}
-		catch (ClientProtocolException e)
+		catch(ClientProtocolException e)
 		{	e.printStackTrace();
 		} 
-		catch (ParseException e)
+		catch(ParseException e)
 		{	e.printStackTrace();
 		}
-		catch (IOException e)
+		catch(IOException e)
 		{	e.printStackTrace();
 		}
 		

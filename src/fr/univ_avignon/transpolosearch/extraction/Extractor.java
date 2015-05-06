@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
@@ -38,6 +39,7 @@ import fr.univ_avignon.transpolosearch.recognition.RecognizerException;
 import fr.univ_avignon.transpolosearch.recognition.combiner.straightcombiner.StraightCombiner;
 import fr.univ_avignon.transpolosearch.retrieval.ArticleRetriever;
 import fr.univ_avignon.transpolosearch.retrieval.reader.ReaderException;
+import fr.univ_avignon.transpolosearch.tools.file.FileNames;
 import fr.univ_avignon.transpolosearch.tools.log.HierarchicalLogger;
 import fr.univ_avignon.transpolosearch.tools.log.HierarchicalLoggerManager;
 import fr.univ_avignon.transpolosearch.websearch.AbstractEngine;
@@ -115,6 +117,9 @@ public class Extractor
 		
 		// perform the Web search
 		List<URL> urls = performWebSearch(keywords, website, startDate, endDate, strictSearch);
+		
+		// filter Web pages (remove PDFs, an so on)
+		filterWebPages(urls);
 		
 		// retrieve the corresponding articles
 		List<Article> articles = retrieveArticles(urls);
@@ -202,7 +207,13 @@ public class Extractor
 		}
 		
 		// apply each search engine
-		Set<URL> set = new TreeSet<URL>();
+		Set<URL> set = new TreeSet<URL>(new Comparator<URL>()
+		{	@Override
+			public int compare(URL url1, URL url2)
+			{	int result = url1.toString().compareTo(url2.toString());
+				return result;
+			}	
+		});
 		for(AbstractEngine engine: engines)
 		{	logger.log("Applying search engine "+engine.getName());
 			logger.increaseOffset();
@@ -218,6 +229,36 @@ public class Extractor
 		return result;
 	}
 	
+	/**
+	 * Removes from the specified list the URLs
+	 * which are not treatable.
+	 * 
+	 * @param urls
+	 * 		List of Web addresses.
+	 */
+	private void filterWebPages(List<URL> urls)
+	{	logger.log("Filtering the retrieved URL to remove those we can't treat");
+		logger.increaseOffset();
+		
+		Iterator<URL> it = urls.iterator();
+		while(it.hasNext())
+		{	URL url = it.next();
+			String urlStr = url.toString();
+			
+			// we don't propcess PDF files
+			if(urlStr.endsWith(FileNames.EX_PDF))
+			{	logger.log("The following URL points towards a PDF, we can't use it: "+urlStr);
+				it.remove();
+			}
+			
+			else
+				logger.log("We keep the URL "+urlStr);
+		}
+		
+		logger.decreaseOffset();
+		logger.log("Filtering complete");
+	}
+	
 	/////////////////////////////////////////////////////////////////
 	// RETRIEVAL	/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
@@ -230,8 +271,6 @@ public class Extractor
 	 * @return
 	 * 		The list of corresponding article objets.
 	 * 
-	 * @throws ReaderException
-	 * 		Problem while retrieving a Web page.
 	 * @throws IOException
 	 * 		Problem while retrieving a Web page.
 	 * @throws ParseException
@@ -239,17 +278,27 @@ public class Extractor
 	 * @throws SAXException
 	 * 		Problem while retrieving a Web page.
 	 */
-	private List<Article> retrieveArticles(List<URL> urls) throws ReaderException, IOException, ParseException, SAXException
+	private List<Article> retrieveArticles(List<URL> urls) throws IOException, ParseException, SAXException
 	{	logger.log("Starting the article retrieval");
 		logger.increaseOffset();
 		
 		// retrieve articles
 		List<Article> result = new ArrayList<Article>();
 		ArticleRetriever articleRetriever = new ArticleRetriever(false); //TODO cache disabled for debugging
-		for(URL url: urls)
-		{	logger.log("Retrieving article at URL "+url.toString());
-			Article article = articleRetriever.process(url);
-			result.add(article);
+		Iterator<URL> it = urls.iterator();
+		int i = 0;
+		while(it.hasNext())
+		{	URL url = it.next();
+			i++;
+			logger.log("Retrieving article ("+i+"/"+urls.size()+") at URL "+url.toString());
+			try
+			{	Article article = articleRetriever.process(url);
+				result.add(article);
+			}
+			catch (ReaderException e)
+			{	logger.log("WARNING: Could not retrieve the article at URL "+url.toString()+" >> removing it from the result list.");
+				it.remove();
+			}
 		}
 		
 		logger.decreaseOffset();
@@ -286,13 +335,20 @@ public class Extractor
 	 * 		Problem while applying the NER tool.
 	 */
 	private List<Entities> detectEntities(List<Article> articles) throws RecognizerException
-	{	List<Entities> result = new ArrayList<Entities>();
+	{	logger.log("Detecting entities in all "+articles.size()+" articles");
+		logger.increaseOffset();
+		List<Entities> result = new ArrayList<Entities>();
 		
 		for(Article article: articles)
-		{	Entities entities = recognizer.process(article);
-			result.add(entities);
+		{	logger.log("Processing article "+article.getTitle()+"("+article.getUrl()+")");
+			logger.increaseOffset();
+				Entities entities = recognizer.process(article);
+				result.add(entities);
+			logger.log("Found "+entities.getEntities().size()+" entites");
+			logger.decreaseOffset();
 		}
 		
+		logger.decreaseOffset();
 		return result;
 	}
 	
