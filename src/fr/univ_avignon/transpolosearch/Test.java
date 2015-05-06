@@ -180,8 +180,9 @@ public class Test
 		Date startDate = df.parse("20150101");
 		Date endDate = df.parse("20150131");
 		boolean strictSearch = true;
+		String compulsoryExpression = "Helle";
 		
-		extractor.performExtraction(keywords, website, startDate, endDate, strictSearch);
+		extractor.performExtraction(keywords, website, startDate, endDate, strictSearch, compulsoryExpression);
 	}
 	
 	/////////////////////////////////////////////////////////////////

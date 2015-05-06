@@ -99,6 +99,9 @@ public class Extractor
 	 * 		If {@code true}, both dates will be used directly in the Web search.
 	 * 		Otherwise, they will be used <i>a posteri</i> to filter the detected events.
 	 * 		If one of the dates is {@code null}, this parameter has no effect.
+	 * @param compulsoryExpression
+	 * 		String expression which must be present in the article,
+	 * 		or {@code null} if there's no such constraint.
 	 * 
 	 * @throws IOException 
 	 * 		Problem accessing the Web or a file.
@@ -111,7 +114,7 @@ public class Extractor
 	 * @throws RecognizerException 
 	 * 		Problem while detecting the entities.
 	 */
-	public void performExtraction(String keywords, String website, Date startDate, Date endDate, boolean strictSearch) throws IOException, ReaderException, ParseException, SAXException, RecognizerException
+	public void performExtraction(String keywords, String website, Date startDate, Date endDate, boolean strictSearch, String compulsoryExpression) throws IOException, ReaderException, ParseException, SAXException, RecognizerException
 	{	logger.log("Starting the information extraction");
 		logger.increaseOffset();
 		
@@ -119,7 +122,7 @@ public class Extractor
 		List<URL> urls = performWebSearch(keywords, website, startDate, endDate, strictSearch);
 		
 		// filter Web pages (remove PDFs, an so on)
-		filterWebPages(urls);
+		filterUrls(urls);
 		
 		// retrieve the corresponding articles
 		List<Article> articles = retrieveArticles(urls);
@@ -128,7 +131,7 @@ public class Extractor
 		List<Entities> entities = detectEntities(articles);
 		
 		// possibly filter the articles depending on the dates
-		filterArticles(articles,entities,startDate,endDate,strictSearch);
+		filterArticles(articles,entities,startDate,endDate,strictSearch,compulsoryExpression);
 		
 		//TODO possibilité de spécifier un mot devant absolument être contenu dans les articles
 		
@@ -236,7 +239,7 @@ public class Extractor
 	 * @param urls
 	 * 		List of Web addresses.
 	 */
-	private void filterWebPages(List<URL> urls)
+	private void filterUrls(List<URL> urls)
 	{	logger.log("Filtering the retrieved URL to remove those we can't treat");
 		logger.increaseOffset();
 		
@@ -357,7 +360,8 @@ public class Extractor
 	/////////////////////////////////////////////////////////////////
 	/**
 	 * Removes from the list the articles concerning events
-	 * not contained in the specified date range.
+	 * not contained in the specified date range. Also removes
+	 * the article not containing the compulsory expression.
 	 *  
 	 * @param articles
 	 * 		List of articles to process.
@@ -370,8 +374,11 @@ public class Extractor
 	 * @param strictSearch
 	 * 		Whether the filtering should be applied ({@code false}
 	 * 		or not ({@code true}).
+	 * @param compulsoryExpression
+	 * 		String expression which must be present in the article,
+	 * 		or {@code null} if there's no such constraint.
 	 */
-	private void filterArticles(List<Article> articles, List<Entities> entities, Date startDate, Date endDate, boolean strictSearch)
+	private void filterArticles(List<Article> articles, List<Entities> entities, Date startDate, Date endDate, boolean strictSearch, String compulsoryExpression)
 	{	logger.log("Starting filtering the articles");
 		logger.increaseOffset();
 		
@@ -384,21 +391,47 @@ public class Extractor
 			if(strictSearch)
 				txt = txt + "(dates are ignored here, because the search is strict)";
 			logger.log(txt);
+			logger.log("compulsoryExpression="+compulsoryExpression);
 		logger.decreaseOffset();
 
-		// possibly filter the resulting texts
+		// possibly filter the resulting texts depending on the compulsory expression
+		if(compulsoryExpression!=null)
+		{	logger.log("Removing articles not containing the compulsory expressin \""+compulsoryExpression+"\"");
+			logger.increaseOffset();
+				int count = 0;
+				Iterator<Article> it = articles.iterator();
+				while(it.hasNext())
+				{	Article article = it.next();
+					String rawText = article.getRawText();
+					if(!rawText.contains(compulsoryExpression))
+					{	logger.log("Removing article "+article.getTitle()+" ("+article.getUrl()+")");
+						it.remove();
+						count++;
+					}
+				}
+				logger.log(">Number of articles removed: "+count);
+				logger.log(">Number of articles remaining: "+articles.size());
+			logger.decreaseOffset();
+		}
+		else
+			logger.log("No compulsory expression to process");
+
+		// possibly filter the resulting texts depending on the dates they contain
 		if(!strictSearch)
 		{	if(startDate==null || endDate==null)
 				logger.log("WARNING: one date is null, so both of them are ignored");
 			else
-			{	Iterator<Article> itArt = articles.iterator();
-				Iterator<Entities> itEnt = entities.iterator();
-				while(itArt.hasNext())
-				{	Article article = itArt.next();
-					String rawText = article.getRawText();
-					Entities ents = itEnt.next();
-					//TODO check if the article contains a date between start and end
-				}
+			{	logger.log("Removing articles not fitting the date constraints: "+startDate+"->"+endDate);
+				logger.increaseOffset();
+					Iterator<Article> itArt = articles.iterator();
+					Iterator<Entities> itEnt = entities.iterator();
+					while(itArt.hasNext())
+					{	Article article = itArt.next();
+						String rawText = article.getRawText();
+						Entities ents = itEnt.next();
+						//TODO check if the article contains a date between start and end
+					}
+				logger.decreaseOffset();
 			}
 		}
 		
