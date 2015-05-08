@@ -57,7 +57,7 @@ public class XmlNames
 	public static final String ELT_AUTHORS = "authors";
 	/** Category of article (military, scientist, etc.) */
 	public static final String ELT_CATEGORY = "category";
-	/** Date of retrieval of an article */
+	/** Dates associated to an article */
 	public static final String ELT_DATES = "dates";
 	/** Text expressions which must be ignored because of how they end, when retreiving categories */
 	public static final String ELT_ENDS_WITH = "endsWith";
