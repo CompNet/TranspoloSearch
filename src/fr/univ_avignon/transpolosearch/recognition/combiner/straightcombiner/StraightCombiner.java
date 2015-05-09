@@ -1,18 +1,23 @@
 package fr.univ_avignon.transpolosearch.recognition.combiner.straightcombiner;
 
 /*
- * TranspoloSearch
- * Copyright 2015 Vincent Labatut
+ * Nerwip - Named Entity Extraction in Wikipedia Pages
+ * Copyright 2011 Yasa Akbulut, Burcu Küpelioğlu & Vincent Labatut
+ * Copyright 2012 Burcu Küpelioğlu, Samet Atdağ & Vincent Labatut
+ * Copyright 2013 Samet Atdağ & Vincent Labatut
+ * Copyright 2014-15 Vincent Labatut
  * 
- * This file is part of TranspoloSearch.
+ * This file is part of Nerwip - Named Entity Extraction in Wikipedia Pages.
  * 
- * TranspoloSearch is free software: you can redistribute it and/or modify it under 
- * the terms of the GNU General Public License as published by the Free Software 
- * Foundation, either version 2 of the License, or (at your option) any later version.
+ * Nerwip - Named Entity Extraction in Wikipedia Pages is free software: you can 
+ * redistribute it and/or modify it under the terms of the GNU General Public License 
+ * as published by the Free Software Foundation, either version 2 of the License, or
+ * (at your option) any later version.
  * 
- * TranspoloSearch is distributed in the hope that it will be useful, but WITHOUT ANY 
- * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A 
- * PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * Nerwip - Named Entity Extraction in Wikipedia Pages is distributed in the hope 
+ * that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty 
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public 
+ * License for more details.
  * 
  * You should have received a copy of the GNU General Public License
  * along with Nerwip - Named Entity Extraction in Wikipedia Pages.  
@@ -33,6 +38,8 @@ import fr.univ_avignon.transpolosearch.recognition.AbstractRecognizer;
 import fr.univ_avignon.transpolosearch.recognition.RecognizerException;
 import fr.univ_avignon.transpolosearch.recognition.RecognizerName;
 import fr.univ_avignon.transpolosearch.recognition.combiner.AbstractCombiner;
+import fr.univ_avignon.transpolosearch.recognition.internal.modelbased.heideltime.HeidelTime;
+import fr.univ_avignon.transpolosearch.recognition.internal.modelbased.heideltime.HeidelTimeModelName;
 import fr.univ_avignon.transpolosearch.recognition.internal.modelless.opencalais.OpenCalais;
 
 /**
@@ -72,7 +79,7 @@ public class StraightCombiner extends AbstractCombiner
 	/////////////////////////////////////////////////////////////////
 	@Override
 	public RecognizerName getName()
-	{	return RecognizerName.SVMCOMBINER;
+	{	return RecognizerName.STRAIGHTCOMBINER;
 	}
 
 	/////////////////////////////////////////////////////////////////
@@ -130,10 +137,15 @@ public class StraightCombiner extends AbstractCombiner
 	{	logger.increaseOffset();
 	
 		// HeidelTime
-//		{	logger.log("Init HeidelTime (Dates only)");
-//			HeidelTime heidelTime = new HeidelTime();
-//			recognizers.add(heidelTime);
-//		}
+		{	logger.log("Init HeidelTime (Dates only)");
+			HeidelTimeModelName modelName = HeidelTimeModelName.FRENCH_NARRATIVES;
+			boolean loadModelOnDemand = true;
+			boolean doIntervalTagging = false;
+			boolean ignorePronouns = false;
+			boolean exclusionOn = false;
+			HeidelTime heidelTime = new HeidelTime(modelName, loadModelOnDemand, doIntervalTagging, ignorePronouns, exclusionOn);
+			recognizers.add(heidelTime);
+		}
 		
 		// other combiner
 		{	logger.log("Init OpenCalais");
@@ -164,11 +176,11 @@ public class StraightCombiner extends AbstractCombiner
 		Iterator<AbstractRecognizer> it = recognizers.iterator();
 		
 		// first get the dates
-//		AbstractRecognizer heidelTime = it.next();
-//		Entities dates = entities.get(heidelTime);
-//		result.addEntities(dates);
+		AbstractRecognizer heidelTime = it.next();
+		Entities dates = entities.get(heidelTime);
+		result.addEntities(dates);
 		
-		// then add the rest of the (non-overlapping) entities
+		// then add the rest of the non-overlapping, non-date entities
 		AbstractRecognizer openCalais = it.next();
 		Entities ents = entities.get(openCalais);
 		List<AbstractEntity<?>> entList = ents.getEntities();
@@ -177,6 +189,9 @@ public class StraightCombiner extends AbstractCombiner
 			if(type!=EntityType.DATE && !result.isEntityOverlapping(entity))
 				result.addEntity(entity);
 		}
+		
+		// sort the entities
+		result.sortByPosition();
 		
 		logger.decreaseOffset();
 		return result;
