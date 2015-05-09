@@ -1,0 +1,17 @@
+#!/bin/sh
+
+# Set these paths appropriately
+
+TREETAGGER=res/ner/treetagger
+BIN=$TREETAGGER/bin
+CMD=$TREETAGGER/cmd
+LIB=$TREETAGGER/lib
+
+OPTIONS="-token -lemma -sgml"
+
+TAGGER=${BIN}/tree-tagger
+TOKENIZER=${CMD}/utf8-tokenize.perl
+PARFILE=${LIB}/slovak-utf8.par
+
+$TOKENIZER $* |
+$TAGGER $OPTIONS $PARFILE

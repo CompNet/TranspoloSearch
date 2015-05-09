@@ -1,18 +1,23 @@
 package fr.univ_avignon.transpolosearch.recognition.internal.modelbased.heideltime;
 
 /*
- * TranspoloSearch
- * Copyright 2015 Vincent Labatut
+ * Nerwip - Named Entity Extraction in Wikipedia Pages
+ * Copyright 2011 Yasa Akbulut, Burcu Küpelioğlu & Vincent Labatut
+ * Copyright 2012 Burcu Küpelioğlu, Samet Atdağ & Vincent Labatut
+ * Copyright 2013 Samet Atdağ & Vincent Labatut
+ * Copyright 2014-15 Vincent Labatut
  * 
- * This file is part of TranspoloSearch.
+ * This file is part of Nerwip - Named Entity Extraction in Wikipedia Pages.
  * 
- * TranspoloSearch is free software: you can redistribute it and/or modify it under 
- * the terms of the GNU General Public License as published by the Free Software 
- * Foundation, either version 2 of the License, or (at your option) any later version.
+ * Nerwip - Named Entity Extraction in Wikipedia Pages is free software: you can 
+ * redistribute it and/or modify it under the terms of the GNU General Public License 
+ * as published by the Free Software Foundation, either version 2 of the License, or
+ * (at your option) any later version.
  * 
- * TranspoloSearch is distributed in the hope that it will be useful, but WITHOUT ANY 
- * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A 
- * PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * Nerwip - Named Entity Extraction in Wikipedia Pages is distributed in the hope 
+ * that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty 
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public 
+ * License for more details.
  * 
  * You should have received a copy of the GNU General Public License
  * along with Nerwip - Named Entity Extraction in Wikipedia Pages.  
@@ -20,20 +25,14 @@ package fr.univ_avignon.transpolosearch.recognition.internal.modelbased.heidelti
  */
 
 import java.io.File;
-import java.io.IOException;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 
-import opennlp.tools.namefind.NameFinderME;
-import opennlp.tools.namefind.TokenNameFinderModel;
-import opennlp.tools.sentdetect.SentenceDetectorME;
-import opennlp.tools.sentdetect.SentenceModel;
-import opennlp.tools.tokenize.TokenizerME;
-import opennlp.tools.tokenize.TokenizerModel;
-import opennlp.tools.util.InvalidFormatException;
+import de.unihd.dbs.heideltime.standalone.DocumentType;
+import de.unihd.dbs.heideltime.standalone.HeidelTimeStandalone;
+import de.unihd.dbs.heideltime.standalone.OutputType;
+import de.unihd.dbs.heideltime.standalone.POSTagger;
+import de.unihd.dbs.uima.annotator.heideltime.resources.Language;
 import fr.univ_avignon.transpolosearch.data.article.ArticleLanguage;
 import fr.univ_avignon.transpolosearch.data.entity.EntityType;
 import fr.univ_avignon.transpolosearch.tools.file.FileNames;
@@ -49,93 +48,126 @@ import fr.univ_avignon.transpolosearch.tools.log.HierarchicalLoggerManager;
 public enum HeidelTimeModelName
 {	
 	/** 
-	 * Original NLP model.
-	 * More of a combination of processing
-	 * tools, actually: 
+	 * Processes English non-standard documents, such as 
+	 * Tweets or SMS.
+	 * <br/>
+	 * Like for all other models, HeidelTime is designed
+	 * to detect only temporal enities.   
 	 * <ul>
 	 * 	<li>Date</li>
-	 * 	<li>Location</li>
-	 * 	<li>Person</li>
-	 * 	<li>Organization</li>
 	 * </ul> 
 	 */ 
-	ORIGINAL_MODEL(
-		"Original",
-		"en-sent.bin",
-		"en-token.bin",
-		new HashMap<String, EntityType>()
-		{	/** */
-			private static final long serialVersionUID = 1L;
-			// data
-			{	put("en-ner-date.bin", EntityType.DATE);
-				put("en-ner-location.bin", EntityType.LOCATION);
-				put("en-ner-organization.bin", EntityType.ORGANIZATION);
-				put("en-ner-person.bin", EntityType.PERSON);
-				put("en-ner-time.bin", EntityType.DATE); //TODO hour? 
-			}
-		},
-		Arrays.asList(
-			EntityType.DATE,
-			EntityType.LOCATION,
-			EntityType.ORGANIZATION,
-			EntityType.PERSON
-		),
+	ENGLISH_COLLOQUIAL(
+		"EnColloquial",
+		Language.ENGLISHCOLL,
+		DocumentType.COLLOQUIAL,
 		Arrays.asList(ArticleLanguage.EN)
 	),
 	
 	/** 
-	 * Model trained on our own corpus.
-	 * It can handle: 
+	 * Processes English documents with a <i>narrative</i>
+	 * style, such as Wikipedia articles.
+	 * <br/>
+	 * Like for all other models, HeidelTime is designed
+	 * to detect only temporal enities.   
 	 * <ul>
-	 * 	<li>Location</li>
-	 * 	<li>Person</li>
-	 * 	<li>Organization</li>
+	 * 	<li>Date</li>
 	 * </ul> 
 	 */ 
-	NERWIP_MODEL(
-		"Nerwip",
-		"en-sent.bin",
-		"en-token.bin",
-		new HashMap<String, EntityType>()
-		{	/** */
-			private static final long serialVersionUID = 1L;
-			// data
-			{	put("en-wp-ner-location.bin", EntityType.LOCATION);
-				put("en-wp-ner-organization.bin", EntityType.ORGANIZATION);
-				put("en-wp-ner-person.bin", EntityType.PERSON);
-			}
-		},
-		Arrays.asList(
-			EntityType.LOCATION,
-			EntityType.ORGANIZATION,
-			EntityType.PERSON
-		),
+	ENGLISH_NARRATIVES(
+		"EnNarratives",
+		Language.ENGLISH,
+		DocumentType.NARRATIVES,
 		Arrays.asList(ArticleLanguage.EN)
-	);
+	),
 	
+	/** 
+	 * Processes English <i>news</i>, for which
+	 * <b>it is necessary to specify a reference date</b>
+	 * in the {@code HeidelTime} class.
+	 * <br/>
+	 * Like for all other models, HeidelTime is designed
+	 * to detect only temporal enities.   
+	 * <ul>
+	 * 	<li>Date</li>
+	 * </ul> 
+	 */ 
+	ENGLISH_NEWS(
+		"EnNews",
+		Language.ENGLISH,
+		DocumentType.NEWS,
+		Arrays.asList(ArticleLanguage.EN)
+	),
+	
+	/** 
+	 * Processes English scientific texts, i.e. texts with
+	 * a local time frame.
+	 * <br/>
+	 * Like for all other models, HeidelTime is designed
+	 * to detect only temporal enities.   
+	 * <ul>
+	 * 	<li>Date</li>
+	 * </ul> 
+	 */ 
+	ENGLISH_SCIENTIFIC(
+		"EnScientific",
+		Language.ENGLISHSCI,
+		DocumentType.SCIENTIFIC,
+		Arrays.asList(ArticleLanguage.EN)
+	),
+	
+	/** 
+	 * Processes French documents with a <i>narrative</i>
+	 * style, such as Wikipedia articles.
+	 * <br/>
+	 * Like for all other models, HeidelTime is designed
+	 * to detect only temporal enities.   
+	 * <ul>
+	 * 	<li>Date</li>
+	 * </ul> 
+	 */ 
+	FRENCH_NARRATIVES(
+		"FrNarratives",
+		Language.FRENCH,
+		DocumentType.NARRATIVES,
+		Arrays.asList(ArticleLanguage.FR)
+	),
+	
+	/** 
+	 * Processes French <i>news</i>, for which
+	 * <b>it is necessary to specify a reference date</b>
+	 * in the {@code HeidelTime} class.
+	 * <br/>
+	 * Like for all other models, HeidelTime is designed
+	 * to detect only temporal enities.   
+	 * <ul>
+	 * 	<li>Date</li>
+	 * </ul> 
+	 */ 
+	FRENCH_NEWS(
+		"FrNews",
+		Language.FRENCH,
+		DocumentType.NEWS,
+		Arrays.asList(ArticleLanguage.FR)
+	);
+
 	/**
 	 * Builds a new value representing
 	 * an OpenNLP model.
 	 * 
 	 * @param name
 	 * 		User-friendly name of the model.
-	 * @param sentenceDetectorFile 
-	 * 		Name of the file containing the sentence detector.
-	 * @param tokenizerFile 
-	 * 		Name of the file containing the tokenizer.
-	 * @param modelFiles 
-	 * 		File names of OpenNLP NER models.
-	 * @param types
-	 * 		List of the entity types handled by the model.
+	 * @param language 
+	 * 		Language parameter for HeidelTime.
+	 * @param documentType
+	 * 		Type of input document parameter for HeidelTime.
 	 * @param languages
 	 * 		List of the languages handled by the model.
 	 */
-	HeidelTimeModelName(String name, String sentenceDetectorFile, String tokenizerFile, Map<String,EntityType> modelFiles, List<EntityType> types, List<ArticleLanguage> languages)
+	HeidelTimeModelName(String name, Language language, DocumentType documentType, List<ArticleLanguage> languages)
 	{	this.name = name;
-		this.sentenceDetectorFile = sentenceDetectorFile;
-		this.tokenizerFile = tokenizerFile;
-		this.modelFiles = modelFiles;
-		this.types = types;
+		this.language = language;
+		this.documentType = documentType;
 		this.languages = languages;
 	}
 	
@@ -151,112 +183,87 @@ public enum HeidelTimeModelName
 	}
 	
 	/////////////////////////////////////////////////////////////////
+	// PARAMETERS		/////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////
+	/** Language parameter used when building a HeidelTime object */
+	private Language language;
+	/** Document type parameter used when building a HeidelTime object */
+	private DocumentType documentType;
+	
+	/**
+	 * Indicates if this model requires the specification of a reference
+	 * date when seaching for temporal entities.
+	 * 
+	 * @return
+	 * 		{@code true} iff this model needs a reference date.
+	 */
+	public boolean requiresDate()
+	{	boolean result = this==ENGLISH_NEWS || this==FRENCH_NEWS;
+		return result;
+	}
+	
+	/**
+	 * Returns the alternative model for when
+	 * the main model requires a date and does
+	 * not get one.
+	 * 
+	 * @return
+	 * 		Alternative model (to {@code this}).
+	 */
+	public HeidelTimeModelName getAltModel()
+	{	HeidelTimeModelName result = null;
+		switch(this)
+		{	case ENGLISH_NEWS:
+				result = ENGLISH_NARRATIVES;
+				break;
+			case FRENCH_NEWS:
+				result = FRENCH_NARRATIVES;
+				break;
+		}
+		
+		return result;
+	}
+	
+	
+	/////////////////////////////////////////////////////////////////
 	// FILES			/////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
-    /** Name of the file containing the sentence detector */
-	private String sentenceDetectorFile;
-	/** Name of the file containing the tokenizer */
-	private String tokenizerFile;
-	/** File names of OpenNLP NER models */
-	private Map<String,EntityType> modelFiles;
+    /** Name of the configuration file */
+	private final static String CONFIG_FILE = FileNames.FO_HEIDELTIME + File.separator + "config.props";
 	
 	/**
-	 * Loads the sentence detector used by the
-	 * model represented by this symbol.
+	 * Returns the object to use for detecting dates.
 	 * 
+	 * @param doIntervalTagging
+	 * 		Whether intervals should be detected or ignored (?). 
 	 * @return
-	 * 		The OpenNLP sentence detector used by this model.
-	 * 
-	 * @throws IOException
-	 * 		Problem while loading the sentence detector. 
-	 * @throws InvalidFormatException 
-	 * 		Problem while loading the sentence detector.
+	 * 		Instance of the HeidelTime NER tool.
 	 */
-	public SentenceDetectorME loadSentenceDetector() throws InvalidFormatException, IOException
-	{	String fileName = FileNames.FO_OPENNLP + File.separator + sentenceDetectorFile;
-		File file = new File(fileName);
-		
-		logger.log("Load sentence detector: "+file.toString());
-		SentenceModel sentenceModel;
-		sentenceModel = new SentenceModel(file);
-		SentenceDetectorME result = new SentenceDetectorME(sentenceModel);
-		
-		return result;
-	}
-
-	/**
-	 * Loads the tokenizer used by the
-	 * model represented by this symbol.
-	 * 
-	 * @return
-	 * 		The OpenNLP tokenizer used by this model.
-	 * 
-	 * @throws IOException
-	 * 		Problem while loading the tokenizer.
-	 * @throws InvalidFormatException 
-	 * 		Problem while loading the tokenizer.
-	 */
-	public TokenizerME loadTokenizer() throws InvalidFormatException, IOException
-	{	String fileName = FileNames.FO_OPENNLP + File.separator + tokenizerFile;
-		File file = new File(fileName);
-		
-		logger.log("Load tokenizer: "+file.toString());
-		TokenizerModel model = new TokenizerModel(file);
-		TokenizerME result = new TokenizerME(model);
+	public HeidelTimeStandalone buildMainTool(boolean doIntervalTagging)
+	{	OutputType outputType = OutputType.TIMEML;
+		POSTagger posTagger = POSTagger.TREETAGGER;
+		logger.log("Building the appropriate HeidelTime instance");
+		HeidelTimeStandalone result = new HeidelTimeStandalone(language, documentType, outputType, CONFIG_FILE, posTagger, doIntervalTagging);
 		
 		return result;
 	}
 	
 	/**
-	 * Loads the map of name finders used by the
-	 * model represented by this symbol.
+	 * Returns the object to use for detecting dates,
+	 * in case the main object is not applicable.
 	 * 
+	 * @param doIntervalTagging
+	 * 		Whether intervals should be detected or ignored (?). 
 	 * @return
-	 * 		The OpenNLP name finders used by this model.
-	 * 
-	 * @throws IOException 
-	 * 		Problem while loading the models.
-	 * @throws InvalidFormatException
-	 * 		Problem while loading the models.
+	 * 		Instance of the HeidelTime NER tool.
 	 */
-	public Map<NameFinderME, EntityType> loadNerModels() throws InvalidFormatException, IOException
-	{	logger.log("Load name finder models");
-		logger.increaseOffset();
+	public HeidelTimeStandalone buildAltTool(boolean doIntervalTagging)
+	{	HeidelTimeStandalone result = null;
 		
-		Map<NameFinderME, EntityType> result = new HashMap<NameFinderME,EntityType>();
-		for(Entry<String,EntityType> entry: modelFiles.entrySet())
-		{	String fileName = FileNames.FO_OPENNLP + File.separator + entry.getKey();
-			EntityType type = entry.getValue();
-			File file = new File(fileName);
-			logger.log("Load model: "+file.toString());
-			TokenNameFinderModel model = new TokenNameFinderModel(file);
-			NameFinderME nameFinder = new NameFinderME(model);
-			result.put(nameFinder,type);
-		}
-		logger.decreaseOffset();
-	
-		return result;
-	}
-
-	/**
-	 * Returns the files containing the model objects for
-	 * this model name.
-	 * <br/>
-	 * Note: in this method, we suppose there is only one model
-	 * file for each type.
-	 * 
-	 * @return
-	 * 		Map of filename associated to entity types.
-	 */
-	public Map<EntityType,File> getModelFiles()
-	{	Map<EntityType,File> result = new HashMap<EntityType,File>();
-		for(Entry<String, EntityType> entry: modelFiles.entrySet())
-		{	String key = entry.getKey();
-			EntityType value = entry.getValue();
-			String fileName = FileNames.FO_OPENNLP + File.separator + key;
-			File file = new File(fileName);
-			result.put(value,file);
-		}
+		HeidelTimeModelName altModel = getAltModel();
+		if(altModel!=null)
+			result = altModel.buildMainTool(doIntervalTagging);
+		
 		return result;
 	}
 	
@@ -264,7 +271,7 @@ public enum HeidelTimeModelName
 	// ENTITY TYPES		/////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
 	/** List of entity types this model can treat */
-	private List<EntityType> types;
+	private static final List<EntityType> TYPES = Arrays.asList(EntityType.DATE);
 	
 	/**
 	 * Returns the list of types
@@ -274,7 +281,7 @@ public enum HeidelTimeModelName
 	 * 		A list of supported {@link EntityType}.
 	 */
 	public List<EntityType> getHandledTypes()
-	{	return types;
+	{	return TYPES;
 	}
 	
 	/////////////////////////////////////////////////////////////////

@@ -64,6 +64,8 @@ public class FileNames
 			public final static String FO_CUSTOM = FO_NER + File.separator + "custom";
 				/** Folder of custom lists */
 				public final static String FO_CUSTOM_LISTS = FO_CUSTOM + File.separator + "lists";
+			/** Folder of HeidelTime resources */
+			public final static String FO_HEIDELTIME = FO_NER + File.separator + "heideltime";
 			/** Folder of Illinois resources */
 			public final static String FO_ILLINOIS = FO_NER + File.separator + "illinois";
 				/** Folder of Illinois config files */
