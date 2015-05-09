@@ -15,8 +15,7 @@ package fr.univ_avignon.transpolosearch.retrieval.reader;
  * PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * 
  * You should have received a copy of the GNU General Public License
- * along with Nerwip - Named Entity Extraction in Wikipedia Pages.  
- * If not, see <http://www.gnu.org/licenses/>.
+ * along with TranspoloSearch. If not, see <http://www.gnu.org/licenses/>.
  */
 
 import java.io.BufferedReader;

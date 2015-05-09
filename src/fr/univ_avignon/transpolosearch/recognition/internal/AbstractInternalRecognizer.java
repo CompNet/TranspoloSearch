@@ -15,8 +15,7 @@ package fr.univ_avignon.transpolosearch.recognition.internal;
  * PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * 
  * You should have received a copy of the GNU General Public License
- * along with Nerwip - Named Entity Extraction in Wikipedia Pages.  
- * If not, see <http://www.gnu.org/licenses/>.
+ * along with TranspoloSearch. If not, see <http://www.gnu.org/licenses/>.
  */
 
 import java.io.File;
@@ -35,7 +34,7 @@ import fr.univ_avignon.transpolosearch.recognition.RecognizerException;
 
 /**
  * This class is used to represent or implement NER tools invocable 
- * internally, i.e. programmatically, from within Nerwip. 
+ * internally, i.e. programmatically, from within our own system. 
  * 
  * @param <T>
  * 		Class of the converter associated to this recognizer.
@@ -182,7 +181,7 @@ public abstract class AbstractInternalRecognizer<U,T extends AbstractInternalCon
      * and returns the internal representation of
      * the detected entities. Those must then
      * be converted to objects compatible
-     * with the rest of Nerwip.
+     * with the rest of our own system.
      * 
      * @param article
      * 		Article to process.

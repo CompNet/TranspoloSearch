@@ -15,8 +15,7 @@ package fr.univ_avignon.transpolosearch.recognition.internal.modelless.opencalai
  * PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * 
  * You should have received a copy of the GNU General Public License
- * along with Nerwip - Named Entity Extraction in Wikipedia Pages.  
- * If not, see <http://www.gnu.org/licenses/>.
+ * along with TranspoloSearch. If not, see <http://www.gnu.org/licenses/>.
  */
 
 import java.io.IOException;
@@ -45,7 +44,7 @@ import fr.univ_avignon.transpolosearch.tools.file.FileNames;
 /**
  * This class is the converter associated to OpenCalais.
  * It is able to convert the text outputed by this NER tool
- * into objects compatible with Nerwip.
+ * into objects compatible with our own system.
  * <br/>
  * It can also read/write these results using raw text
  * and our XML format.

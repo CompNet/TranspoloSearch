@@ -15,8 +15,7 @@ package fr.univ_avignon.transpolosearch.recognition;
  * PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * 
  * You should have received a copy of the GNU General Public License
- * along with Nerwip - Named Entity Extraction in Wikipedia Pages.  
- * If not, see <http://www.gnu.org/licenses/>.
+ * along with TranspoloSearch. If not, see <http://www.gnu.org/licenses/>.
  */
 
 import java.io.File;
@@ -43,7 +42,7 @@ import fr.univ_avignon.transpolosearch.tools.string.StringTools;
  * This class is used to represent or implement NER tools.
  * The former case corresponds to external tools, i.e. applications
  * executed externally. The latter to tools invocable internally,
- * i.e. programmatically, from within Nerwip. 
+ * i.e. programmatically, from within our own system. 
  * 		 
  * @author Yasa Akbulut
  * @author Samet Atdağ

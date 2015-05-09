@@ -15,17 +15,16 @@ package fr.univ_avignon.transpolosearch.recognition;
  * PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * 
  * You should have received a copy of the GNU General Public License
- * along with Nerwip - Named Entity Extraction in Wikipedia Pages.  
- * If not, see <http://www.gnu.org/licenses/>.
+ * along with TranspoloSearch. If not, see <http://www.gnu.org/licenses/>.
  */
 
 /**
  * Problem while performing the conversion
  * of the output of a NER tool. This conversion
  * can be internal (the tool was executed directly
- * from within Nerwip) or external (the NER tool
+ * from within our system) or external (the NER tool
  * generated a file, which was then processed by
- * Nerwip).
+ * our system).
  * 
  * @author Yasa Akbulut
  */

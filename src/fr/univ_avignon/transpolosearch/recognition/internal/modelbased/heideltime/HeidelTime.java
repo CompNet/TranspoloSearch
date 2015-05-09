@@ -1,27 +1,21 @@
 package fr.univ_avignon.transpolosearch.recognition.internal.modelbased.heideltime;
 
 /*
- * Nerwip - Named Entity Extraction in Wikipedia Pages
- * Copyright 2011 Yasa Akbulut, Burcu Küpelioğlu & Vincent Labatut
- * Copyright 2012 Burcu Küpelioğlu, Samet Atdağ & Vincent Labatut
- * Copyright 2013 Samet Atdağ & Vincent Labatut
- * Copyright 2014-15 Vincent Labatut
+ * TranspoloSearch
+ * Copyright 2015 Vincent Labatut
  * 
- * This file is part of Nerwip - Named Entity Extraction in Wikipedia Pages.
+ * This file is part of TranspoloSearch.
  * 
- * Nerwip - Named Entity Extraction in Wikipedia Pages is free software: you can 
- * redistribute it and/or modify it under the terms of the GNU General Public License 
- * as published by the Free Software Foundation, either version 2 of the License, or
- * (at your option) any later version.
+ * TranspoloSearch is free software: you can redistribute it and/or modify it under 
+ * the terms of the GNU General Public License as published by the Free Software 
+ * Foundation, either version 2 of the License, or (at your option) any later version.
  * 
- * Nerwip - Named Entity Extraction in Wikipedia Pages is distributed in the hope 
- * that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty 
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public 
- * License for more details.
+ * TranspoloSearch is distributed in the hope that it will be useful, but WITHOUT ANY 
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A 
+ * PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * 
  * You should have received a copy of the GNU General Public License
- * along with Nerwip - Named Entity Extraction in Wikipedia Pages.  
- * If not, see <http://www.gnu.org/licenses/>.
+ * along with TranspoloSearch. If not, see <http://www.gnu.org/licenses/>.
  */
 
 import java.util.ArrayList;
@@ -48,7 +42,7 @@ import fr.univ_avignon.transpolosearch.recognition.internal.modelbased.AbstractM
  * </ul>
  * <br/>
  * Note we ignore some of the data output by HeidelTime when
- * converting to Nerwip format. Cf. {@link HeidelTimeConverter}
+ * converting to our own format. Cf. {@link HeidelTimeConverter}
  * for more details. 
  * <br/>
  * Official HeidelTime website: <a href="https://code.google.com/p/heideltime/">https://code.google.com/p/heideltime/</a>

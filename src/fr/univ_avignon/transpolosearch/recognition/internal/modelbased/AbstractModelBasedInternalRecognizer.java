@@ -15,8 +15,7 @@ package fr.univ_avignon.transpolosearch.recognition.internal.modelbased;
  * PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * 
  * You should have received a copy of the GNU General Public License
- * along with Nerwip - Named Entity Extraction in Wikipedia Pages.  
- * If not, see <http://www.gnu.org/licenses/>.
+ * along with TranspoloSearch. If not, see <http://www.gnu.org/licenses/>.
  */
 
 import java.util.List;
@@ -28,7 +27,7 @@ import fr.univ_avignon.transpolosearch.recognition.internal.AbstractInternalReco
 
 /**
  * This class is used to represent or implement NER tools invocable 
- * internally, i.e. programmatically, from within Nerwip, and using
+ * internally, i.e. programmatically, from within our system, and using
  * a model, i.e. some data stored externally as files. Those must
  * be loaded, which implies a specific processing.
  * 
