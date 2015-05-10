@@ -33,7 +33,9 @@ import org.xml.sax.SAXException;
 
 import fr.univ_avignon.transpolosearch.data.article.Article;
 import fr.univ_avignon.transpolosearch.data.article.ArticleLanguage;
+import fr.univ_avignon.transpolosearch.data.entity.AbstractEntity;
 import fr.univ_avignon.transpolosearch.data.entity.Entities;
+import fr.univ_avignon.transpolosearch.data.entity.EntityType;
 import fr.univ_avignon.transpolosearch.recognition.AbstractRecognizer;
 import fr.univ_avignon.transpolosearch.recognition.RecognizerException;
 import fr.univ_avignon.transpolosearch.recognition.combiner.straightcombiner.StraightCombiner;
@@ -287,7 +289,7 @@ public class Extractor
 		
 		// init
 		List<Article> result = new ArrayList<Article>();
-		ArticleRetriever articleRetriever = new ArticleRetriever(false); //TODO cache disabled for debugging
+		ArticleRetriever articleRetriever = new ArticleRetriever(true); //TODO cache disabled for debugging
 		articleRetriever.setLanguage(ArticleLanguage.FR); // we know the articles will be in French
 
 		// retrieve articles
@@ -328,6 +330,7 @@ public class Extractor
 	 */
 	private void initDefaultRecognizer() throws RecognizerException
 	{	recognizer = new StraightCombiner();
+		recognizer.setCacheEnabled(true);//TODO false for debugging
 	}
 	
 	/**
@@ -350,7 +353,12 @@ public class Extractor
 			logger.increaseOffset();
 				Entities entities = recognizer.process(article);
 				result.add(entities);
-			logger.log("Found "+entities.getEntities().size()+" entites");
+				
+				logger.log("Found "+entities.getEntities().size()+" entities");
+				logger.increaseOffset();
+					// TODO extraire les évènements (par phrase?)
+					
+				logger.decreaseOffset();
 			logger.decreaseOffset();
 		}
 		
@@ -405,6 +413,7 @@ public class Extractor
 				Iterator<Article> it = articles.iterator();
 				while(it.hasNext())
 				{	Article article = it.next();
+					logger.log("Processing article "+article.getTitle());
 					String rawText = article.getRawText();
 					if(!rawText.contains(compulsoryExpression))
 					{	logger.log("Removing article "+article.getTitle()+" ("+article.getUrl()+")");
@@ -426,14 +435,34 @@ public class Extractor
 			else
 			{	logger.log("Removing articles not fitting the date constraints: "+startDate+"->"+endDate);
 				logger.increaseOffset();
+					fr.univ_avignon.transpolosearch.tools.time.Date start = new fr.univ_avignon.transpolosearch.tools.time.Date(startDate);
+					fr.univ_avignon.transpolosearch.tools.time.Date end = new fr.univ_avignon.transpolosearch.tools.time.Date(endDate);
 					Iterator<Article> itArt = articles.iterator();
 					Iterator<Entities> itEnt = entities.iterator();
+					int count = 0;
 					while(itArt.hasNext())
 					{	Article article = itArt.next();
-						String rawText = article.getRawText();
+						logger.log("Processing article "+article.getTitle());
 						Entities ents = itEnt.next();
-						//TODO check if the article contains a date between start and end
+						List<AbstractEntity<?>> dates = ents.getEntitiesByType(EntityType.DATE);
+
+						// check if the article contains a date between start and end
+						boolean found = false;
+						Iterator<AbstractEntity<?>> it = dates.iterator();
+						while(!found && it.hasNext())
+						{	AbstractEntity<?> entity = it.next();
+							fr.univ_avignon.transpolosearch.tools.time.Date d = (fr.univ_avignon.transpolosearch.tools.time.Date) entity.getValue();
+							found = d.isContained(start, end);
+						}
+						
+						if(!found)
+						{	logger.log("Removing article "+article.getTitle()+" ("+article.getUrl()+")");
+							it.remove();
+							count++;
+						}
 					}
+					logger.log(">Number of articles removed: "+count);
+					logger.log(">Number of articles remaining: "+articles.size());
 				logger.decreaseOffset();
 			}
 		}

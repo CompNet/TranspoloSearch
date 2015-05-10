@@ -428,3 +428,4 @@ public abstract class ArticleReader
 		return result;
 	}
 }
+// TODO remove "<" and ">" (or replace them by [ and ]) from the retrieved text, in order to avoid problems when handling xml later
