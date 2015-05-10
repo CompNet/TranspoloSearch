@@ -56,6 +56,13 @@ import fr.univ_avignon.transpolosearch.tools.xml.XmlNames;
  * from the Web using a starting name or URL 
  * should inherit from this abstract class.
  * 
+ * TODO list of readers to implement:
+ * 	- les échos
+ *  - le figaro
+ *  - la provence
+ *  - médiapart
+ * l'approche générique ne fonctionne pas si la page contient plusieurs articles
+ * 
  * @author Vincent Labatut
  */
 public abstract class ArticleReader

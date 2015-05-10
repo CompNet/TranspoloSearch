@@ -778,7 +778,7 @@ public class LeMondeReader extends ArticleReader
 			{	String eltName = element.tag().getName();
 			
 				// section headers
-				if(eltName.equals(XmlNames.ELT_H2))
+				if(eltName.equals(XmlNames.ELT_H1) || eltName.equals(XmlNames.ELT_H2))
 				{	// get section name
 					StringBuilder fakeRaw = new StringBuilder();
 					StringBuilder fakeLinked = new StringBuilder();

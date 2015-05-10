@@ -587,7 +587,7 @@ public class GenericReader extends ArticleReader
 				String eltName = element.tag().getName();
 				
 				// section headers: same thing
-				if(eltName.equals(XmlNames.ELT_H2) || eltName.equals(XmlNames.ELT_H3)
+				if(eltName.equals(XmlNames.ELT_H1) || eltName.equals(XmlNames.ELT_H2) || eltName.equals(XmlNames.ELT_H3)
 					|| eltName.equals(XmlNames.ELT_H4) || eltName.equals(XmlNames.ELT_H5) || eltName.equals(XmlNames.ELT_H6))
 				{	processParagraphElement(element,rawStr,linkedStr);
 				}
@@ -613,7 +613,7 @@ public class GenericReader extends ArticleReader
 				{	processSpanElement(element,rawStr,linkedStr);
 				}
 				
-				// hyperlinks must be included in the linked string, provided they are not external
+				// hyperlinks must be included in the linked version of the article
 				else if(eltName.equals(XmlNames.ELT_A))
 				{	processHyperlinkElement(element,rawStr,linkedStr);
 				}
@@ -707,13 +707,14 @@ public class GenericReader extends ArticleReader
 			StringBuilder rawStr = new StringBuilder();
 			StringBuilder linkedStr = new StringBuilder();
 			
-			
+//TODO pq pas remplacer le for ci-dessous par un appel à processText sur le container ?
+//TODO mutualiser les methodes processXxxx dans la classe abstraite ? (on surcharge une méthode au besoin)
 			// processing each element in the content part
 			for(Element element: contentElt.children())
 			{	String eltName = element.tag().getName();
 			
 				// section headers
-				if(eltName.equals(XmlNames.ELT_H2))
+				if(eltName.equals(XmlNames.ELT_H1) || eltName.equals(XmlNames.ELT_H2))
 				{	// get section name
 					StringBuilder fakeRaw = new StringBuilder();
 					StringBuilder fakeLinked = new StringBuilder();
@@ -731,8 +732,8 @@ public class GenericReader extends ArticleReader
 					{	processParagraphElement(element,rawStr,linkedStr);
 					}
 					
-					// paragraph
-					else if(eltName.equals(XmlNames.ELT_P))
+					// paragraph / italic / bold
+					else if(eltName.equals(XmlNames.ELT_P) || eltName.equals(XmlNames.ELT_B) || eltName.equals(XmlNames.ELT_I))
 					{	//String str = element.text();
 						processParagraphElement(element,rawStr,linkedStr);
 					}
@@ -754,8 +755,8 @@ public class GenericReader extends ArticleReader
 						//first = !processTableElement(element, rawStr, linkedStr); 
 					}
 					
-					// divisions
-					else if(eltName.equals(XmlNames.ELT_DIV))
+					// divisions / sections
+					else if(eltName.equals(XmlNames.ELT_DIV) || eltName.equals(XmlNames.ELT_SECTION))
 					{	processDivisionElement(element, rawStr, linkedStr);
 					}
 				
@@ -832,11 +833,12 @@ public class GenericReader extends ArticleReader
 	 * relevant content.
 	 * <br/>
 	 * The basic rule is the following. First, we try to locate an article element. If it exists,
-	 * we just return it. If there are several of them, we issue a warning and return the first one.
-	 * Other wise, we perform a breadth-first search and go deeper as long as we get shortest elements 
-	 * (in terms of text content) while they still represent more than {@link #MIN_CONTENT_RATIO} 
-	 * percent of their parent. We keep the parent whose children do not respect this rule. In other
-	 * words, we keep the largest node whose content is split (roughly) evenly among its children. 
+	 * we go on with it. If there are several of them, we issue a warning and use the first one.
+	 * Otherwise, we use the root parameter. We perform a breadth-first search and go deeper as 
+	 * long as we get shortest elements (in terms of text content) while they still represent more 
+	 * than {@link #MIN_CONTENT_RATIO} percent of their parent. We keep the parent whose children 
+	 * do not respect this rule. In other words, we keep the largest node whose content is split 
+	 * (roughly) evenly among its children. 
 	 * 
 	 * @param root
 	 * 		Root element.
@@ -854,14 +856,13 @@ public class GenericReader extends ArticleReader
 		Elements articleElts = root.getElementsByTag(XmlNames.ELT_ARTICLE);
 		if(!articleElts.isEmpty())
 		{	logger.log("Found an <article> element in this Web page >> using it as the main content element");
-			result = articleElts.first();
+			root = articleElts.first();
 			if(articleElts.size()>1)
 				logger.log("WARNING: found several <article> elements in this Web page");
 		}
 		
-		// no <article> element: use text size 
-		else
-		{	logger.log("No <article> element in this Web page >> using text size");
+		// now, use text size 
+		{	//logger.log("No <article> element in this Web page >> using text size");
 			
 			// set up data structures
 			Map<Element,Float> sizes = new HashMap<Element, Float>();
@@ -881,7 +882,9 @@ public class GenericReader extends ArticleReader
 				
 				// if it has one or more child
 				else
-				{	candidate = true;
+				{	// a list is probably not a candidate
+					String name = element.tagName();
+					candidate = !name.equals(XmlNames.ELT_UL) && !name.equals(XmlNames.ELT_OL);
 					// it is a candidate only if none of them contains the majority of its text
 					for(Element child: children)
 					{	String text = child.text();

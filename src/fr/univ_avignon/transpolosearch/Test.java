@@ -75,13 +75,13 @@ public class Test
 	public static void main(String[] args) throws Exception
 	{	
 		// retrieval
-//		testRetrievalGeneric();
+		testRetrievalGeneric();
 		
 		// search
 //		testGoogleSearch();
 		
 		// whole process
-		testExtractor();
+//		testExtractor();
 		
 		logger.close();
 	}
@@ -106,9 +106,11 @@ public class Test
 //		URL url = new URL("http://www.lemonde.fr/les-decodeurs/article/2015/05/03/les-cinq-infos-a-retenir-du-week-end_4626595_4355770.html");
 //		URL url = new URL("http://www.lemonde.fr/les-decodeurs/article/2015/04/29/seisme-au-nepal-une-perte-economique-superieure-au-pib_4624928_4355770.html");
 		
-		URL url = new URL("http://www.liberation.fr/vous/2015/05/04/coeur-carmat-le-deuxieme-greffe-decede-a-son-tour_1289323");
+//		URL url = new URL("http://www.liberation.fr/vous/2015/05/04/coeur-carmat-le-deuxieme-greffe-decede-a-son-tour_1289323");
 //		URL url = new URL("http://www.liberation.fr/societe/2015/05/04/femmes-en-politique-un-match-contre-les-machos_1289649");
 //		URL url = new URL("http://www.liberation.fr/societe/2015/05/03/surveillance-le-flou-du-spectacle_1287003");
+		
+		URL url = new URL("http://destimed.fr/Grand-Orient-de-France-conference");
 		
 		ArticleRetriever retriever = new ArticleRetriever(false);
 		retriever.process(url);
