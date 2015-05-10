@@ -135,8 +135,6 @@ public class Extractor
 		// possibly filter the articles depending on the dates
 		filterArticles(articles,entities,startDate,endDate,strictSearch,compulsoryExpression);
 		
-		//TODO possibilité de spécifier un mot devant absolument être contenu dans les articles
-		
 		logger.decreaseOffset();
 		logger.log("Information extraction over");
 	}
@@ -289,7 +287,7 @@ public class Extractor
 		
 		// init
 		List<Article> result = new ArrayList<Article>();
-		ArticleRetriever articleRetriever = new ArticleRetriever(true); //TODO cache disabled for debugging
+		ArticleRetriever articleRetriever = new ArticleRetriever(false); //TODO cache disabled for debugging
 		articleRetriever.setLanguage(ArticleLanguage.FR); // we know the articles will be in French
 
 		// retrieve articles
@@ -330,7 +328,7 @@ public class Extractor
 	 */
 	private void initDefaultRecognizer() throws RecognizerException
 	{	recognizer = new StraightCombiner();
-		recognizer.setCacheEnabled(true);//TODO false for debugging
+		recognizer.setCacheEnabled(false);//TODO false for debugging
 	}
 	
 	/**
@@ -407,7 +405,7 @@ public class Extractor
 
 		// possibly filter the resulting texts depending on the compulsory expression
 		if(compulsoryExpression!=null)
-		{	logger.log("Removing articles not containing the compulsory expressin \""+compulsoryExpression+"\"");
+		{	logger.log("Removing articles not containing the compulsory expression \""+compulsoryExpression+"\"");
 			logger.increaseOffset();
 				int count = 0;
 				Iterator<Article> it = articles.iterator();
