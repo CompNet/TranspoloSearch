@@ -33,6 +33,7 @@ import java.util.Locale;
 import org.jdom2.Element;
 import org.xml.sax.SAXException;
 
+import fr.univ_avignon.transpolosearch.tools.string.StringTools;
 import fr.univ_avignon.transpolosearch.data.article.ArticleLanguage;
 import fr.univ_avignon.transpolosearch.data.entity.Entities;
 import fr.univ_avignon.transpolosearch.recognition.AbstractRecognizer;
@@ -455,13 +456,13 @@ public class Article
 		
 		// raw text
 		String rawText = FileTools.readTextFile(result.rawFile);
-		rawText = rawText.replaceAll("\u00A0"," "); // remove unbreakable spaces
+		rawText = StringTools.replaceSpaces(rawText);
 		result.setRawText(rawText);
 
 		// raw text with hyperlinks
 		if(result.linkedFile.exists())
 		{	String linkedText = FileTools.readTextFile(result.linkedFile);
-			linkedText = linkedText.replaceAll("\u00A0"," "); // remove unbreakable spaces
+			linkedText = StringTools.replaceSpaces(linkedText);
 			result.setLinkedText(linkedText);
 		}
 		else

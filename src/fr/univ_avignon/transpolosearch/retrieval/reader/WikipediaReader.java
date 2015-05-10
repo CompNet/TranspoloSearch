@@ -743,7 +743,7 @@ public class WikipediaReader extends ArticleReader
 	}
 	
 	@Override
-	public Article read(URL url, ArticleLanguage language) throws ReaderException
+	public Article processUrl(URL url, ArticleLanguage language) throws ReaderException
 	{	Article result = null;
 		String name = getName(url);
 		
