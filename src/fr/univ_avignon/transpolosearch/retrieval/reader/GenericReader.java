@@ -221,7 +221,8 @@ public class GenericReader extends ArticleReader
 			// simple text
 			String str = element.text();
 			if(!str.isEmpty())
-			{	rawStr.append(str);
+			{	str = removeGtst(str);
+				rawStr.append(str);
 				
 				// hyperlink
 //				String eltTitle = element.attr(XmlNames.ATT_TITLE);
@@ -650,6 +651,7 @@ public class GenericReader extends ArticleReader
 				// other elements are considered as simple text
 				else
 				{	String text = element.text();
+					text = removeGtst(text);
 					rawStr.append(text);
 					linkedStr.append(text);
 				}
@@ -666,6 +668,7 @@ public class GenericReader extends ArticleReader
 						&& text.startsWith(" "))
 					text = text.substring(1);
 				// complete string buffers
+				text = removeGtst(text);
 				rawStr.append(text);
 				linkedStr.append(text);
 			}
@@ -691,6 +694,7 @@ public class GenericReader extends ArticleReader
 			// get its title
 			Element titleElt = document.getElementsByTag(XmlNames.ELT_TITLE).get(0);
 			String title = titleElt.text();
+			title = removeGtst(title);
 			logger.log("Get title: "+title);
 			
 			// identify the content element
@@ -729,7 +733,7 @@ public class GenericReader extends ArticleReader
 					
 					// paragraph
 					else if(eltName.equals(XmlNames.ELT_P))
-					{	String str = element.text();
+					{	//String str = element.text();
 						processParagraphElement(element,rawStr,linkedStr);
 					}
 					

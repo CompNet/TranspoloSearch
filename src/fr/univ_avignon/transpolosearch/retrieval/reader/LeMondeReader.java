@@ -246,7 +246,8 @@ public class LeMondeReader extends ArticleReader
 			// simple text
 			String str = element.text();
 			if(!str.isEmpty())
-			{	rawStr.append(str);
+			{	str = removeGtst(str);
+				rawStr.append(str);
 				
 				// hyperlink
 //				String eltTitle = element.attr(XmlNames.ATT_TITLE);
@@ -665,6 +666,7 @@ public class LeMondeReader extends ArticleReader
 				// other elements are considered as simple text
 				else
 				{	String text = element.text();
+					text = removeGtst(text);
 					rawStr.append(text);
 					linkedStr.append(text);
 				}
@@ -681,6 +683,7 @@ public class LeMondeReader extends ArticleReader
 						&& text.startsWith(" "))
 					text = text.substring(1);
 				// complete string buffers
+				text = removeGtst(text);
 				rawStr.append(text);
 				linkedStr.append(text);
 			}
@@ -706,6 +709,7 @@ public class LeMondeReader extends ArticleReader
 			// get its title
 			Element titleElt = document.getElementsByTag(XmlNames.ELT_TITLE).first();
 			String title = titleElt.text();
+			title = removeGtst(title);
 			logger.log("Get title: "+title);
 			
 			// check if the access is restricted
@@ -748,6 +752,7 @@ public class LeMondeReader extends ArticleReader
 				authors = new ArrayList<String>();
 				for(Element authorElt: authorElts)
 				{	String authorName = authorElt.text();
+					authorName = removeGtst(authorName);
 					logger.log(authorName);
 					authors.add(authorName);
 				}
