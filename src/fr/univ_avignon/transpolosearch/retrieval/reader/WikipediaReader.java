@@ -159,7 +159,8 @@ public class WikipediaReader extends ArticleReader
 	 * @param linkedStr
 	 * 		Current text with hyperlinks.
 	 */
-	private void processParagraphElement(Element element, StringBuilder rawStr, StringBuilder linkedStr)
+	@Override
+	protected void processParagraphElement(Element element, StringBuilder rawStr, StringBuilder linkedStr)
 	{	// possibly add a new line character first
 		if(rawStr.length()>0 && rawStr.charAt(rawStr.length()-1)!='\n')
 		{	rawStr.append("\n");
@@ -189,7 +190,8 @@ public class WikipediaReader extends ArticleReader
 	 * @return
 	 * 		{@code true} iff the element was processed.
 	 */
-	private boolean processQuoteElement(Element element, StringBuilder rawStr, StringBuilder linkedStr)
+	@Override
+	protected boolean processQuoteElement(Element element, StringBuilder rawStr, StringBuilder linkedStr)
 	{	boolean result = true;
 		
 		// possibly modify the previous characters 
@@ -243,7 +245,8 @@ public class WikipediaReader extends ArticleReader
 	 * @return
 	 * 		{@code true} iff the element was processed.
 	 */
-	private boolean processSpanElement(Element element, StringBuilder rawStr, StringBuilder linkedStr)
+	@Override
+	protected boolean processSpanElement(Element element, StringBuilder rawStr, StringBuilder linkedStr)
 	{	boolean result;
 		String eltClass = element.attr(XmlNames.ATT_CLASS);
 		
@@ -282,7 +285,8 @@ public class WikipediaReader extends ArticleReader
 	 * @return
 	 * 		{@code true} iff the element was processed.
 	 */
-	private boolean processHyperlinkElement(Element element, StringBuilder rawStr, StringBuilder linkedStr)
+	@Override
+	protected boolean processHyperlinkElement(Element element, StringBuilder rawStr, StringBuilder linkedStr)
 	{	boolean result;
 		String eltClass = element.attr(XmlNames.ATT_CLASS);
 		
@@ -333,7 +337,8 @@ public class WikipediaReader extends ArticleReader
 	 * @param ordered
 	 * 		Whether the list is numbered or not.
 	 */
-	private void processListElement(Element element, StringBuilder rawStr, StringBuilder linkedStr, boolean ordered)
+	@Override
+	protected void processListElement(Element element, StringBuilder rawStr, StringBuilder linkedStr, boolean ordered)
 	{	// possibly remove the last new line character
 		char c = rawStr.charAt(rawStr.length()-1);
 		if(c=='\n')
@@ -410,7 +415,8 @@ public class WikipediaReader extends ArticleReader
 	 * @param linkedStr
 	 * 		Current text with hyperlinks.
 	 */
-	private void processDescriptionListElement(Element element, StringBuilder rawStr, StringBuilder linkedStr)
+	@Override
+	protected void processDescriptionListElement(Element element, StringBuilder rawStr, StringBuilder linkedStr)
 	{	// possibly remove the last new line character
 		char c = rawStr.charAt(rawStr.length()-1);
 		if(c=='\n')
@@ -543,7 +549,8 @@ public class WikipediaReader extends ArticleReader
 	 * @return
 	 * 		{@code true} iff the element was processed.
 	 */
-	private boolean processDivisionElement(Element element, StringBuilder rawStr, StringBuilder linkedStr)
+	@Override
+	protected boolean processDivisionElement(Element element, StringBuilder rawStr, StringBuilder linkedStr)
 	{	boolean result;
 		String eltClass = element.attr(XmlNames.ATT_CLASS);
 		
@@ -592,7 +599,8 @@ public class WikipediaReader extends ArticleReader
 	 * @return
 	 * 		{@code true} iff the element was processed.
 	 */
-	private boolean processTableElement(Element element, StringBuilder rawStr, StringBuilder linkedStr)
+	@Override
+	protected boolean processTableElement(Element element, StringBuilder rawStr, StringBuilder linkedStr)
 	{	boolean result;
 		String eltClass = element.attr(XmlNames.ATT_CLASS);
 		
@@ -648,7 +656,8 @@ public class WikipediaReader extends ArticleReader
 	 * @param linkedStr
 	 * 		The StringBuffer to contain the text with hyperlinks.
 	 */
-	private void processTextElement(Element textElement, StringBuilder rawStr, StringBuilder linkedStr)
+	@Override
+	protected void processTextElement(Element textElement, StringBuilder rawStr, StringBuilder linkedStr)
 	{	// we process each element contained in the specified text element
 		for(Node node: textElement.childNodes())
 		{	// element node
