@@ -53,7 +53,7 @@ import fr.univ_avignon.transpolosearch.tools.file.FileTools;
 import fr.univ_avignon.transpolosearch.tools.log.HierarchicalLogger;
 import fr.univ_avignon.transpolosearch.tools.log.HierarchicalLoggerManager;
 import fr.univ_avignon.transpolosearch.tools.string.StringTools;
-import fr.univ_avignon.transpolosearch.tools.xml.XmlNames;
+import fr.univ_avignon.transpolosearch.tools.xml.HtmlNames;
 
 /**
  * All classes automatically getting articles
@@ -495,7 +495,7 @@ public abstract class ArticleReader
 	public Date getDateFromTimeElt(Element timeElt, DateFormat dateFormat)
 	{	Date result = null;
 	
-		String valueStr = timeElt.attr(XmlNames.ATT_DATETIME);
+		String valueStr = timeElt.attr(HtmlNames.ATT_DATETIME);
 		try
 		{	result = dateFormat.parse(valueStr);
 		}
@@ -629,8 +629,8 @@ public abstract class ArticleReader
 		}
 		
 		// hyperlink
-		String href = element.attr(XmlNames.ATT_HREF);
-		String code = "<" + XmlNames.ELT_A + " " +XmlNames.ATT_HREF + "=\"" + href + "\">" + str + "</" + XmlNames.ELT_A + ">";
+		String href = element.attr(HtmlNames.ATT_HREF);
+		String code = "<" + HtmlNames.ELT_A + " " +HtmlNames.ATT_HREF + "=\"" + href + "\">" + str + "</" + HtmlNames.ELT_A + ">";
 		linkedStr.append(code);
 		
 		return result;
@@ -678,7 +678,7 @@ public abstract class ArticleReader
 		
 		// process each list element
 		int count = 1;
-		for(Element listElt: element.getElementsByTag(XmlNames.ELT_LI))
+		for(Element listElt: element.getElementsByTag(HtmlNames.ELT_LI))
 		{	// add leading space
 			rawStr.append(" ");
 			linkedStr.append(" ");
@@ -769,7 +769,7 @@ public abstract class ArticleReader
 			
 			// get term
 			String tempName = tempElt.tagName();
-			if(tempName.equals(XmlNames.ELT_DT))
+			if(tempName.equals(HtmlNames.ELT_DT))
 			{	// process term
 				processTextElement(tempElt,rawStr,linkedStr);
 				
@@ -932,64 +932,64 @@ public abstract class ArticleReader
 				String eltName = element.tag().getName();
 				
 				// section headers: same thing
-				if(eltName.equals(XmlNames.ELT_H1) || eltName.equals(XmlNames.ELT_H2) || eltName.equals(XmlNames.ELT_H3)
-					|| eltName.equals(XmlNames.ELT_H4) || eltName.equals(XmlNames.ELT_H5) || eltName.equals(XmlNames.ELT_H6))
+				if(eltName.equals(HtmlNames.ELT_H1) || eltName.equals(HtmlNames.ELT_H2) || eltName.equals(HtmlNames.ELT_H3)
+					|| eltName.equals(HtmlNames.ELT_H4) || eltName.equals(HtmlNames.ELT_H5) || eltName.equals(HtmlNames.ELT_H6))
 				{	processParagraphElement(element,rawStr,linkedStr);
 				}
 	
 				// paragraphs inside paragraphs are processed recursively
-				else if(eltName.equals(XmlNames.ELT_P))
+				else if(eltName.equals(HtmlNames.ELT_P))
 				{	processParagraphElement(element,rawStr,linkedStr);
 				}
 				
 				// superscripts are to be avoided
-				else if(eltName.equals(XmlNames.ELT_SUP))
+				else if(eltName.equals(HtmlNames.ELT_SUP))
 				{	// they are either external references or WP inline notes
 					// cf. http://en.wikipedia.org/wiki/Template%3ACitation_needed
 				}
 				
 				// small caps are placed before phonetic transcriptions of names, which we avoid
-				else if(eltName.equals(XmlNames.ELT_SMALL))
+				else if(eltName.equals(HtmlNames.ELT_SMALL))
 				{	// we don't need them, and they can mess up NER tools
 				}
 				
 				// we ignore certain types of span (phonetic trancription, WP buttons...) 
-				else if(eltName.equals(XmlNames.ELT_SPAN))
+				else if(eltName.equals(HtmlNames.ELT_SPAN))
 				{	processSpanElement(element,rawStr,linkedStr);
 				}
 				
 				// hyperlinks must be included in the linked version of the article
-				else if(eltName.equals(XmlNames.ELT_A))
+				else if(eltName.equals(HtmlNames.ELT_A))
 				{	processHyperlinkElement(element,rawStr,linkedStr);
 				}
 				
 				// lists
-				else if(eltName.equals(XmlNames.ELT_UL))
+				else if(eltName.equals(HtmlNames.ELT_UL))
 				{	processListElement(element,rawStr,linkedStr,false);
 				}
-				else if(eltName.equals(XmlNames.ELT_OL))
+				else if(eltName.equals(HtmlNames.ELT_OL))
 				{	processListElement(element,rawStr,linkedStr,true);
 				}
-				else if(eltName.equals(XmlNames.ELT_DL))
+				else if(eltName.equals(HtmlNames.ELT_DL))
 				{	processDescriptionListElement(element,rawStr,linkedStr);
 				}
 				
 				// list item
-				else if(eltName.equals(XmlNames.ELT_LI))
+				else if(eltName.equals(HtmlNames.ELT_LI))
 				{	processTextElement(element,rawStr,linkedStr);
 				}
 	
 				// divisions are just processed recursively
-				else if(eltName.equals(XmlNames.ELT_DIV))
+				else if(eltName.equals(HtmlNames.ELT_DIV))
 				{	processDivisionElement(element,rawStr,linkedStr);
 				}
 				
 				// quotes are just processed recursively
-				else if(eltName.equals(XmlNames.ELT_BLOCKQUOTE))
+				else if(eltName.equals(HtmlNames.ELT_BLOCKQUOTE))
 				{	processQuoteElement(element,rawStr,linkedStr);
 				}
 				// citation
-				else if(eltName.equals(XmlNames.ELT_CITE))
+				else if(eltName.equals(HtmlNames.ELT_CITE))
 				{	processParagraphElement(element,rawStr,linkedStr);
 				}
 				

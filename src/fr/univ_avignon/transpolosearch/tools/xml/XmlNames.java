@@ -1,21 +1,27 @@
 package fr.univ_avignon.transpolosearch.tools.xml;
 
 /*
- * TranspoloSearch
- * Copyright 2015 Vincent Labatut
+ * Nerwip - Named Entity Extraction in Wikipedia Pages
+ * Copyright 2011 Yasa Akbulut, Burcu Küpelioğlu & Vincent Labatut
+ * Copyright 2012 Burcu Küpelioğlu, Samet Atdağ & Vincent Labatut
+ * Copyright 2013 Samet Atdağ & Vincent Labatut
+ * Copyright 2014-15 Vincent Labatut
  * 
- * This file is part of TranspoloSearch.
+ * This file is part of Nerwip - Named Entity Extraction in Wikipedia Pages.
  * 
- * TranspoloSearch is free software: you can redistribute it and/or modify it under 
- * the terms of the GNU General Public License as published by the Free Software 
- * Foundation, either version 2 of the License, or (at your option) any later version.
+ * Nerwip - Named Entity Extraction in Wikipedia Pages is free software: you can 
+ * redistribute it and/or modify it under the terms of the GNU General Public License 
+ * as published by the Free Software Foundation, either version 2 of the License, or
+ * (at your option) any later version.
  * 
- * TranspoloSearch is distributed in the hope that it will be useful, but WITHOUT ANY 
- * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A 
- * PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * Nerwip - Named Entity Extraction in Wikipedia Pages is distributed in the hope 
+ * that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty 
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public 
+ * License for more details.
  * 
  * You should have received a copy of the GNU General Public License
- * along with TranspoloSearch. If not, see <http://www.gnu.org/licenses/>.
+ * along with Nerwip - Named Entity Extraction in Wikipedia Pages.  
+ * If not, see <http://www.gnu.org/licenses/>.
  */
 
 /**
@@ -70,10 +76,10 @@ public class XmlNames
 	public static final String ELT_LANGUAGE = "language";
 	/** Date of modification of an article */
 	public static final String ELT_MODIFICATION_DATE = "modification";
-	/** Various properties of an article */
-	public static final String ELT_PROPERTIES = "properties";
 	/** Date of publishing of an article */
 	public static final String ELT_PUBLISHING_DATE = "publishing";
+	/** Various properties of an article */
+	public static final String ELT_PROPERTIES = "properties";
 	/** Set of texts not to be associated to categories */
 	public static final String ELT_REJECT = "reject";
 	/** Date of retrieval of an article */
@@ -88,80 +94,4 @@ public class XmlNames
 	public static final String ELT_URL = "url";
 	/** Actual value of an entity (might differ from its textual representation */
 	public static final String ELT_VALUE = "value";
-	
-	/////////////////////////////////////////////////////////////////
-	// HTML ATTRIBUTES	/////////////////////////////////////////////
-	/////////////////////////////////////////////////////////////////
-	/** Html id attribute */
-	public final static String ATT_ID = "id";
-	/** Html class attribute */
-	public final static String ATT_CLASS = "class";
-	/** Html datetime attribute */
-	public static final String ATT_DATETIME = "datetime";
-	/** Html href attribute */
-	public final static String ATT_HREF = "href";
-	/** Html title attribute */
-	public final static String ATT_TITLE = "title";
-
-	/////////////////////////////////////////////////////////////////
-	// HTML ELEMENTS	/////////////////////////////////////////////
-	/////////////////////////////////////////////////////////////////
-	/** Html hyperlink tag */
-	public final static String ELT_A = "a";
-	/** Html article tag */
-	public final static String ELT_ARTICLE = "article";
-	/** Html bold tag */
-	public final static String ELT_B = "b";
-	/** Html body tag */
-	public final static String ELT_BODY = "body";
-	/** Html cite tag */
-	public final static String ELT_CITE = "cite";
-	/** Html division tag */
-	public final static String ELT_DIV = "div";
-	/** Html description definition tag */
-	public final static String ELT_DD = "dd";
-	/** Html description list tag */
-	public final static String ELT_DL = "dl";
-	/** Html description term tag */
-	public final static String ELT_DT = "dt";
-	/** Html section tag */
-	public final static String ELT_H1 = "h1";
-	/** Html section tag */
-	public final static String ELT_H2 = "h2";
-	/** Html section tag */
-	public final static String ELT_H3 = "h3";
-	/** Html section tag */
-	public final static String ELT_H4 = "h4";
-	/** Html section tag */
-	public final static String ELT_H5 = "h5";
-	/** Html section tag */
-	public final static String ELT_H6 = "h6";
-	/** Html header tag */
-	public final static String ELT_HEADER = "header";
-	/** Html italic tag */
-	public final static String ELT_I = "i";
-	/** Html list item tag */
-	public final static String ELT_LI = "li";
-	/** Html ordered list tag */
-	public final static String ELT_OL = "ol";
-	/** Html paragraph tag */
-	public final static String ELT_P = "p";
-	/** Html quote tag */
-	public final static String ELT_BLOCKQUOTE = "blockquote";
-	/** Html section tag */
-	public final static String ELT_SECTION = "section";
-	/** Html small text tag */
-	public final static String ELT_SMALL = "small";
-	/** Html span tag */
-	public final static String ELT_SPAN = "span";
-	/** Html superscript tag */
-	public final static String ELT_SUP = "sup";
-	/** Html ordered table tag */
-	public final static String ELT_TABLE = "table";
-	/** Html ordered table body tag */
-	public final static String ELT_TBODY = "tbody";
-	/** Html time tag */
-	public final static String ELT_TIME = "time";
-	/** Html unordered list tag */
-	public final static String ELT_UL = "ul";
 }

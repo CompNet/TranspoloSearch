@@ -56,7 +56,7 @@ import fr.univ_avignon.transpolosearch.retrieval.reader.ArticleReader;
 import fr.univ_avignon.transpolosearch.retrieval.reader.ReaderException;
 import fr.univ_avignon.transpolosearch.tools.file.FileNames;
 import fr.univ_avignon.transpolosearch.tools.file.FileTools;
-import fr.univ_avignon.transpolosearch.tools.xml.XmlNames;
+import fr.univ_avignon.transpolosearch.tools.xml.HtmlNames;
 
 /**
  * From a specified URL, this class retrieves a Wikipedia page,
@@ -248,7 +248,7 @@ public class WikipediaReader extends ArticleReader
 	@Override
 	protected boolean processSpanElement(Element element, StringBuilder rawStr, StringBuilder linkedStr)
 	{	boolean result;
-		String eltClass = element.attr(XmlNames.ATT_CLASS);
+		String eltClass = element.attr(HtmlNames.ATT_CLASS);
 		
 		if(eltClass==null || 
 			// we don't need phonetic transcriptions, and they can mess up NER tools
@@ -288,7 +288,7 @@ public class WikipediaReader extends ArticleReader
 	@Override
 	protected boolean processHyperlinkElement(Element element, StringBuilder rawStr, StringBuilder linkedStr)
 	{	boolean result;
-		String eltClass = element.attr(XmlNames.ATT_CLASS);
+		String eltClass = element.attr(HtmlNames.ATT_CLASS);
 		
 //		if(eltClass==null)
 		{	result = true;
@@ -303,14 +303,14 @@ public class WikipediaReader extends ArticleReader
 //	System.out.print("");
 				
 				// hyperlink
-				String eltTitle = element.attr(XmlNames.ATT_TITLE);
+				String eltTitle = element.attr(HtmlNames.ATT_TITLE);
 				if((eltClass==null
 						|| (!eltClass.contains(CLASS_IMAGE) && !eltClass.contains(CLASS_EXTERNAL)))
 						&& (eltTitle==null	
 						|| (!eltTitle.contains(TITLE_LISTEN)))
 				)
-				{	String href = element.attr(XmlNames.ATT_HREF);
-					String code = "<" + XmlNames.ELT_A + " " +XmlNames.ATT_HREF + "=\"" + href + "\">" + str + "</" + XmlNames.ELT_A + ">";
+				{	String href = element.attr(HtmlNames.ATT_HREF);
+					String code = "<" + HtmlNames.ELT_A + " " +HtmlNames.ATT_HREF + "=\"" + href + "\">" + str + "</" + HtmlNames.ELT_A + ">";
 					linkedStr.append(code);
 				}
 				else
@@ -362,7 +362,7 @@ public class WikipediaReader extends ArticleReader
 		
 		// process each list element
 		int count = 1;
-		for(Element listElt: element.getElementsByTag(XmlNames.ELT_LI))
+		for(Element listElt: element.getElementsByTag(HtmlNames.ELT_LI))
 		{	// add leading space
 			rawStr.append(" ");
 			linkedStr.append(" ");
@@ -451,7 +451,7 @@ public class WikipediaReader extends ArticleReader
 			
 			// get term
 			String tempName = tempElt.tagName();
-			if(tempName.equals(XmlNames.ELT_DT))
+			if(tempName.equals(HtmlNames.ELT_DT))
 			{	// process term
 				processTextElement(tempElt,rawStr,linkedStr);
 				
@@ -484,7 +484,7 @@ public class WikipediaReader extends ArticleReader
 			}
 			
 			// get definition
-//			if(tempName.equals(XmlNames.ELT_DD))
+//			if(tempName.equals(HtmlNames.ELT_DD))
 			if(tempElt!=null)
 			{	// process term
 				processTextElement(tempElt,rawStr,linkedStr);
@@ -552,7 +552,7 @@ public class WikipediaReader extends ArticleReader
 	@Override
 	protected boolean processDivisionElement(Element element, StringBuilder rawStr, StringBuilder linkedStr)
 	{	boolean result;
-		String eltClass = element.attr(XmlNames.ATT_CLASS);
+		String eltClass = element.attr(HtmlNames.ATT_CLASS);
 		
 //if(eltClass.contains("thumb"))
 //	System.out.print("");
@@ -602,7 +602,7 @@ public class WikipediaReader extends ArticleReader
 	@Override
 	protected boolean processTableElement(Element element, StringBuilder rawStr, StringBuilder linkedStr)
 	{	boolean result;
-		String eltClass = element.attr(XmlNames.ATT_CLASS);
+		String eltClass = element.attr(HtmlNames.ATT_CLASS);
 		
 		if(eltClass==null || 
 			// we ignore infoboxes
@@ -666,64 +666,64 @@ public class WikipediaReader extends ArticleReader
 				String eltName = element.tag().getName();
 				
 				// section headers: same thing
-				if(eltName.equals(XmlNames.ELT_H2) || eltName.equals(XmlNames.ELT_H3)
-					|| eltName.equals(XmlNames.ELT_H4) || eltName.equals(XmlNames.ELT_H5) || eltName.equals(XmlNames.ELT_H6))
+				if(eltName.equals(HtmlNames.ELT_H2) || eltName.equals(HtmlNames.ELT_H3)
+					|| eltName.equals(HtmlNames.ELT_H4) || eltName.equals(HtmlNames.ELT_H5) || eltName.equals(HtmlNames.ELT_H6))
 				{	processParagraphElement(element,rawStr,linkedStr);
 				}
 	
 				// paragraphs inside paragraphs are processed recursively
-				else if(eltName.equals(XmlNames.ELT_P))
+				else if(eltName.equals(HtmlNames.ELT_P))
 				{	processParagraphElement(element,rawStr,linkedStr);
 				}
 				
 				// superscripts are to be avoided
-				else if(eltName.equals(XmlNames.ELT_SUP))
+				else if(eltName.equals(HtmlNames.ELT_SUP))
 				{	// they are either external references or WP inline notes
 					// cf. http://en.wikipedia.org/wiki/Template%3ACitation_needed
 				}
 				
 				// small caps are placed before phonetic transcriptions of names, which we avoid
-				else if(eltName.equals(XmlNames.ELT_SMALL))
+				else if(eltName.equals(HtmlNames.ELT_SMALL))
 				{	// we don't need them, and they can mess up NER tools
 				}
 				
 				// we ignore certain types of span (phonetic trancription, WP buttons...) 
-				else if(eltName.equals(XmlNames.ELT_SPAN))
+				else if(eltName.equals(HtmlNames.ELT_SPAN))
 				{	processSpanElement(element,rawStr,linkedStr);
 				}
 				
 				// hyperlinks must be included in the linked string, provided they are not external
-				else if(eltName.equals(XmlNames.ELT_A))
+				else if(eltName.equals(HtmlNames.ELT_A))
 				{	processHyperlinkElement(element,rawStr,linkedStr);
 				}
 				
 				// lists
-				else if(eltName.equals(XmlNames.ELT_UL))
+				else if(eltName.equals(HtmlNames.ELT_UL))
 				{	processListElement(element,rawStr,linkedStr,false);
 				}
-				else if(eltName.equals(XmlNames.ELT_OL))
+				else if(eltName.equals(HtmlNames.ELT_OL))
 				{	processListElement(element,rawStr,linkedStr,true);
 				}
-				else if(eltName.equals(XmlNames.ELT_DL))
+				else if(eltName.equals(HtmlNames.ELT_DL))
 				{	processDescriptionListElement(element,rawStr,linkedStr);
 				}
 				
 				// list item
-				else if(eltName.equals(XmlNames.ELT_LI))
+				else if(eltName.equals(HtmlNames.ELT_LI))
 				{	processTextElement(element,rawStr,linkedStr);
 				}
 	
 				// divisions are just processed recursively
-				else if(eltName.equals(XmlNames.ELT_DIV))
+				else if(eltName.equals(HtmlNames.ELT_DIV))
 				{	processDivisionElement(element,rawStr,linkedStr);
 				}
 				
 				// quotes are just processed recursively
-				else if(eltName.equals(XmlNames.ELT_BLOCKQUOTE))
+				else if(eltName.equals(HtmlNames.ELT_BLOCKQUOTE))
 				{	processQuoteElement(element,rawStr,linkedStr);
 				}
 				// citation
-				else if(eltName.equals(XmlNames.ELT_CITE))
+				else if(eltName.equals(HtmlNames.ELT_CITE))
 				{	processParagraphElement(element,rawStr,linkedStr);
 				}
 				
@@ -771,7 +771,7 @@ public class WikipediaReader extends ArticleReader
 			}
 					
 			// get its title
-			Element firstHeadingElt = document.getElementsByAttributeValue(XmlNames.ATT_ID,ID_TITLE).get(0);
+			Element firstHeadingElt = document.getElementsByAttributeValue(HtmlNames.ATT_ID,ID_TITLE).get(0);
 			String title = firstHeadingElt.text();
 			title = removeGtst(title);
 			logger.log("Get title: "+title);
@@ -780,16 +780,16 @@ public class WikipediaReader extends ArticleReader
 			logger.log("Get raw and linked texts.");
 			StringBuilder rawStr = new StringBuilder();
 			StringBuilder linkedStr = new StringBuilder();
-			Element bodyContentElt = document.getElementsByAttributeValue(XmlNames.ATT_ID,ID_CONTENT).get(0);
+			Element bodyContentElt = document.getElementsByAttributeValue(HtmlNames.ATT_ID,ID_CONTENT).get(0);
 			// processing each element in the content part
 			boolean ignoringSection = false;
 			boolean first = true;
 			for(Element element: bodyContentElt.children())
 			{	String eltName = element.tag().getName();
-				String eltClass = element.attr(XmlNames.ATT_CLASS);
+				String eltClass = element.attr(HtmlNames.ATT_CLASS);
 			
 				// section headers
-				if(eltName.equals(XmlNames.ELT_H2))
+				if(eltName.equals(HtmlNames.ELT_H2))
 				{	first = false;
 					// get section name
 					StringBuilder fakeRaw = new StringBuilder();
@@ -809,14 +809,14 @@ public class WikipediaReader extends ArticleReader
 			
 				else if(!ignoringSection)
 				{	// lower sections
-					if(eltName.equals(XmlNames.ELT_H3) || eltName.equals(XmlNames.ELT_H4) 
-						|| eltName.equals(XmlNames.ELT_H5) || eltName.equals(XmlNames.ELT_H6))
+					if(eltName.equals(HtmlNames.ELT_H3) || eltName.equals(HtmlNames.ELT_H4) 
+						|| eltName.equals(HtmlNames.ELT_H5) || eltName.equals(HtmlNames.ELT_H6))
 					{	first = false;
 						processParagraphElement(element,rawStr,linkedStr);
 					}
 					
 					// paragraph
-					else if(eltName.equals(XmlNames.ELT_P))
+					else if(eltName.equals(HtmlNames.ELT_P))
 					{	String str = element.text();
 						// ignore possible initial disambiguation link
 						if(!first || !str.startsWith(PARAGRAPH_FORTHE))	 
@@ -826,43 +826,43 @@ public class WikipediaReader extends ArticleReader
 					}
 					
 					// list
-					else if(eltName.equals(XmlNames.ELT_UL))
+					else if(eltName.equals(HtmlNames.ELT_UL))
 					{	first = false;
 						processListElement(element,rawStr,linkedStr,false);
 					}
-					else if(eltName.equals(XmlNames.ELT_OL))
+					else if(eltName.equals(HtmlNames.ELT_OL))
 					{	first = false;
 						processListElement(element,rawStr,linkedStr,true);
 					}
-					else if(eltName.equals(XmlNames.ELT_DL))
+					else if(eltName.equals(HtmlNames.ELT_DL))
 					{	first = false;
 						processDescriptionListElement(element,rawStr,linkedStr);
 					}
 					
 					// tables
-					else if(eltName.equals(XmlNames.ELT_TABLE))
+					else if(eltName.equals(HtmlNames.ELT_TABLE))
 					{	first = !processTableElement(element, rawStr, linkedStr);
 					}
 					
 					// divisions
-					else if(eltName.equals(XmlNames.ELT_DIV))
+					else if(eltName.equals(HtmlNames.ELT_DIV))
 					{	// ignore possible initial picture 
 						if(!first || eltClass==null || !eltClass.contains(CLASS_THUMB))
 							first = !processDivisionElement(element, rawStr, linkedStr);
 					}
 				
 					// we ignore certain types of span (phonetic trancription, WP buttons...) 
-					else if(eltName.equals(XmlNames.ELT_SPAN))
+					else if(eltName.equals(HtmlNames.ELT_SPAN))
 					{	first = !processSpanElement(element,rawStr,linkedStr);
 					}
 					
 					// hyperlinks must be included in the linked string, provided they are not external
-					else if(eltName.equals(XmlNames.ELT_A))
+					else if(eltName.equals(HtmlNames.ELT_A))
 					{	first = !processHyperlinkElement(element,rawStr,linkedStr);
 					}
 					
 					// quotes are just processed recursively
-					else if(eltName.equals(XmlNames.ELT_BLOCKQUOTE))
+					else if(eltName.equals(HtmlNames.ELT_BLOCKQUOTE))
 					{	first = !processQuoteElement(element,rawStr,linkedStr);
 					}
 					

@@ -64,7 +64,7 @@ import fr.univ_avignon.transpolosearch.retrieval.reader.ArticleReader;
 import fr.univ_avignon.transpolosearch.retrieval.reader.ReaderException;
 import fr.univ_avignon.transpolosearch.tools.file.FileNames;
 import fr.univ_avignon.transpolosearch.tools.file.FileTools;
-import fr.univ_avignon.transpolosearch.tools.xml.XmlNames;
+import fr.univ_avignon.transpolosearch.tools.xml.HtmlNames;
 
 /**
  * From a specified URL, this class retrieves a page
@@ -126,7 +126,7 @@ public class LeMondeReader extends ArticleReader
 			}
 					
 			// get its title
-			Element titleElt = document.getElementsByTag(XmlNames.ELT_TITLE).first();
+			Element titleElt = document.getElementsByTag(HtmlNames.ELT_TITLE).first();
 			String title = titleElt.text();
 			title = removeGtst(title);
 			logger.log("Get title: "+title);
@@ -138,7 +138,7 @@ public class LeMondeReader extends ArticleReader
 			
 			// get the article element
 			logger.log("Get the main element of the document");
-			Elements articleElts = document.getElementsByTag(XmlNames.ELT_ARTICLE);
+			Elements articleElts = document.getElementsByTag(HtmlNames.ELT_ARTICLE);
 			Element articleElt = articleElts.first();
 			if(articleElts.size()==0)
 				throw new IllegalArgumentException("No <article> element found in the Web page");
@@ -146,8 +146,8 @@ public class LeMondeReader extends ArticleReader
 				logger.log("WARNING: There are more than 1 <article> elements, which is unusual. Let's focus on the first.");
 			
 			// retrieve the dates
-//			Element signatureElt = articleElt.getElementsByAttributeValue(XmlNames.ATT_CLASS, CLASS_SIGNATURE).first();
-			Elements timeElts = articleElt.getElementsByTag(XmlNames.ELT_TIME);
+//			Element signatureElt = articleElt.getElementsByAttributeValue(HtmlNames.ATT_CLASS, CLASS_SIGNATURE).first();
+			Elements timeElts = articleElt.getElementsByTag(HtmlNames.ELT_TIME);
 			Element publishingElt = timeElts.first();
 			Date publishingDate = getDateFromTimeElt(publishingElt,DATE_FORMAT);
 			logger.log("Found the publishing date: "+publishingDate);
@@ -162,7 +162,7 @@ public class LeMondeReader extends ArticleReader
 			
 			// retrieve the authors
 			List<String> authors = null;
-			Elements authorElts = articleElt.getElementsByAttributeValue(XmlNames.ATT_CLASS, CLASS_AUTHOR);
+			Elements authorElts = articleElt.getElementsByAttributeValue(HtmlNames.ATT_CLASS, CLASS_AUTHOR);
 			if(authorElts.isEmpty())
 				logger.log("WARNING: could not find any author, which is unusual");
 			else
@@ -186,7 +186,7 @@ public class LeMondeReader extends ArticleReader
 			// processing each element in the body
 			Element bodyElt = articleElt.getElementById(ID_ARTICLE_BODY);
 			if(bodyElt==null)
-			{	Elements bodyElts = articleElt.getElementsByAttributeValue(XmlNames.ATT_CLASS, CLASS_ARTICLE_BODY);
+			{	Elements bodyElts = articleElt.getElementsByAttributeValue(HtmlNames.ATT_CLASS, CLASS_ARTICLE_BODY);
 				bodyElt = bodyElts.first();
 				if(bodyElts.size()==0)
 					throw new IllegalArgumentException("No article body found in the Web page");
@@ -197,7 +197,7 @@ public class LeMondeReader extends ArticleReader
 			{	String eltName = element.tag().getName();
 			
 				// section headers
-				if(eltName.equals(XmlNames.ELT_H1) || eltName.equals(XmlNames.ELT_H2))
+				if(eltName.equals(HtmlNames.ELT_H1) || eltName.equals(HtmlNames.ELT_H2))
 				{	// get section name
 					StringBuilder fakeRaw = new StringBuilder();
 					StringBuilder fakeLinked = new StringBuilder();
@@ -210,55 +210,55 @@ public class LeMondeReader extends ArticleReader
 			
 				else
 				{	// lower sections
-					if(eltName.equals(XmlNames.ELT_H3) || eltName.equals(XmlNames.ELT_H4) 
-						|| eltName.equals(XmlNames.ELT_H5) || eltName.equals(XmlNames.ELT_H6))
+					if(eltName.equals(HtmlNames.ELT_H3) || eltName.equals(HtmlNames.ELT_H4) 
+						|| eltName.equals(HtmlNames.ELT_H5) || eltName.equals(HtmlNames.ELT_H6))
 					{	processParagraphElement(element,rawStr,linkedStr);
 					}
 					
 					// paragraph
-					else if(eltName.equals(XmlNames.ELT_P))
+					else if(eltName.equals(HtmlNames.ELT_P))
 					{	//String str = element.text();
 						// we ignore the inter-paragraph hyperlinks
-						if(!element.attr(XmlNames.ATT_CLASS).equals(CLASS_RELATED_ARTICLES))
+						if(!element.attr(HtmlNames.ATT_CLASS).equals(CLASS_RELATED_ARTICLES))
 							processParagraphElement(element,rawStr,linkedStr);
 					}
 // TODO pour lemonde, traiter le cas où l'article n'est pas dispo en entier "L’accès à la totalité de l’article est protégé"
 // ex : http://www.lemonde.fr/culture/article/2014/07/16/la-prise-de-position-d-olivier-py-sur-le-fn-a-heurte-les-avignonnais_4457735_3246.html
 					
 					// list
-					else if(eltName.equals(XmlNames.ELT_UL))
+					else if(eltName.equals(HtmlNames.ELT_UL))
 					{	processListElement(element,rawStr,linkedStr,false);
 					}
-					else if(eltName.equals(XmlNames.ELT_OL))
+					else if(eltName.equals(HtmlNames.ELT_OL))
 					{	processListElement(element,rawStr,linkedStr,true);
 					}
-					else if(eltName.equals(XmlNames.ELT_DL))
+					else if(eltName.equals(HtmlNames.ELT_DL))
 					{	processDescriptionListElement(element,rawStr,linkedStr);
 					}
 					
 					// tables
-					else if(eltName.equals(XmlNames.ELT_TABLE))
+					else if(eltName.equals(HtmlNames.ELT_TABLE))
 					{	//TODO should we completely ignore tables?
 						//first = !processTableElement(element, rawStr, linkedStr); 
 					}
 					
 					// divisions
-					else if(eltName.equals(XmlNames.ELT_DIV))
+					else if(eltName.equals(HtmlNames.ELT_DIV))
 					{	processDivisionElement(element, rawStr, linkedStr);
 					}
 				
 					// we ignore certain types of span (phonetic trancription, WP buttons...) 
-					else if(eltName.equals(XmlNames.ELT_SPAN))
+					else if(eltName.equals(HtmlNames.ELT_SPAN))
 					{	processSpanElement(element,rawStr,linkedStr);
 					}
 					
 					// hyperlinks must be included in the linked string, provided they are not external
-					else if(eltName.equals(XmlNames.ELT_A))
+					else if(eltName.equals(HtmlNames.ELT_A))
 					{	processHyperlinkElement(element,rawStr,linkedStr);
 					}
 					
 					// quotes are just processed recursively
-					else if(eltName.equals(XmlNames.ELT_BLOCKQUOTE))
+					else if(eltName.equals(HtmlNames.ELT_BLOCKQUOTE))
 					{	processQuoteElement(element,rawStr,linkedStr);
 					}
 					

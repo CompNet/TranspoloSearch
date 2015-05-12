@@ -63,7 +63,7 @@ import fr.univ_avignon.transpolosearch.retrieval.reader.ArticleReader;
 import fr.univ_avignon.transpolosearch.retrieval.reader.ReaderException;
 import fr.univ_avignon.transpolosearch.tools.file.FileNames;
 import fr.univ_avignon.transpolosearch.tools.file.FileTools;
-import fr.univ_avignon.transpolosearch.tools.xml.XmlNames;
+import fr.univ_avignon.transpolosearch.tools.xml.HtmlNames;
 
 /**
  * From a specified URL, this class retrieves a Wikipedia page,
@@ -102,14 +102,14 @@ public class GenericReader extends ArticleReader
 			}
 					
 			// get its title
-			Element titleElt = document.getElementsByTag(XmlNames.ELT_TITLE).get(0);
+			Element titleElt = document.getElementsByTag(HtmlNames.ELT_TITLE).get(0);
 			String title = titleElt.text();
 			title = removeGtst(title);
 			logger.log("Get title: "+title);
 			
 			// identify the content element
 			logger.log("Get the main element of the document");
-			Element bodyElt = document.getElementsByTag(XmlNames.ELT_BODY).get(0);
+			Element bodyElt = document.getElementsByTag(HtmlNames.ELT_BODY).get(0);
 			Element contentElt = getContentElement(bodyElt);
 
 			// get raw and linked texts
@@ -149,7 +149,7 @@ public class GenericReader extends ArticleReader
 			{	String eltName = element.tag().getName();
 			
 				// section headers
-				if(eltName.equals(XmlNames.ELT_H1) || eltName.equals(XmlNames.ELT_H2))
+				if(eltName.equals(HtmlNames.ELT_H1) || eltName.equals(HtmlNames.ELT_H2))
 				{	// get section name
 					StringBuilder fakeRaw = new StringBuilder();
 					StringBuilder fakeLinked = new StringBuilder();
@@ -162,51 +162,51 @@ public class GenericReader extends ArticleReader
 			
 				else
 				{	// lower sections
-					if(eltName.equals(XmlNames.ELT_H3) || eltName.equals(XmlNames.ELT_H4) 
-						|| eltName.equals(XmlNames.ELT_H5) || eltName.equals(XmlNames.ELT_H6))
+					if(eltName.equals(HtmlNames.ELT_H3) || eltName.equals(HtmlNames.ELT_H4) 
+						|| eltName.equals(HtmlNames.ELT_H5) || eltName.equals(HtmlNames.ELT_H6))
 					{	processParagraphElement(element,rawStr,linkedStr);
 					}
 					
 					// paragraph / italic / bold
-					else if(eltName.equals(XmlNames.ELT_P) || eltName.equals(XmlNames.ELT_B) || eltName.equals(XmlNames.ELT_I))
+					else if(eltName.equals(HtmlNames.ELT_P) || eltName.equals(HtmlNames.ELT_B) || eltName.equals(HtmlNames.ELT_I))
 					{	//String str = element.text();
 						processParagraphElement(element,rawStr,linkedStr);
 					}
 					
 					// list
-					else if(eltName.equals(XmlNames.ELT_UL))
+					else if(eltName.equals(HtmlNames.ELT_UL))
 					{	processListElement(element,rawStr,linkedStr,false);
 					}
-					else if(eltName.equals(XmlNames.ELT_OL))
+					else if(eltName.equals(HtmlNames.ELT_OL))
 					{	processListElement(element,rawStr,linkedStr,true);
 					}
-					else if(eltName.equals(XmlNames.ELT_DL))
+					else if(eltName.equals(HtmlNames.ELT_DL))
 					{	processDescriptionListElement(element,rawStr,linkedStr);
 					}
 					
 					// tables
-					else if(eltName.equals(XmlNames.ELT_TABLE))
+					else if(eltName.equals(HtmlNames.ELT_TABLE))
 					{	//TODO should we completely ignore tables?
 						//first = !processTableElement(element, rawStr, linkedStr); 
 					}
 					
 					// divisions / sections
-					else if(eltName.equals(XmlNames.ELT_DIV) || eltName.equals(XmlNames.ELT_SECTION))
+					else if(eltName.equals(HtmlNames.ELT_DIV) || eltName.equals(HtmlNames.ELT_SECTION))
 					{	processDivisionElement(element, rawStr, linkedStr);
 					}
 				
 					// we ignore certain types of span (phonetic trancription, WP buttons...) 
-					else if(eltName.equals(XmlNames.ELT_SPAN))
+					else if(eltName.equals(HtmlNames.ELT_SPAN))
 					{	processSpanElement(element,rawStr,linkedStr);
 					}
 					
 					// hyperlinks must be included in the linked string, provided they are not external
-					else if(eltName.equals(XmlNames.ELT_A))
+					else if(eltName.equals(HtmlNames.ELT_A))
 					{	processHyperlinkElement(element,rawStr,linkedStr);
 					}
 					
 					// quotes are just processed recursively
-					else if(eltName.equals(XmlNames.ELT_BLOCKQUOTE))
+					else if(eltName.equals(HtmlNames.ELT_BLOCKQUOTE))
 					{	processQuoteElement(element,rawStr,linkedStr);
 					}
 					
@@ -288,7 +288,7 @@ public class GenericReader extends ArticleReader
 		logger.log("Total text length: "+totalLength+" characters");
 		
 		// presence of an <article> element in the page
-		Elements articleElts = root.getElementsByTag(XmlNames.ELT_ARTICLE);
+		Elements articleElts = root.getElementsByTag(HtmlNames.ELT_ARTICLE);
 		if(!articleElts.isEmpty())
 		{	logger.log("Found an <article> element in this Web page >> using it as the main content element");
 			root = articleElts.first();
@@ -319,7 +319,7 @@ public class GenericReader extends ArticleReader
 				else
 				{	// a list is probably not a candidate
 					String name = element.tagName();
-					candidate = !name.equals(XmlNames.ELT_UL) && !name.equals(XmlNames.ELT_OL);
+					candidate = !name.equals(HtmlNames.ELT_UL) && !name.equals(HtmlNames.ELT_OL);
 					// it is a candidate only if none of them contains the majority of its text
 					for(Element child: children)
 					{	String text = child.text();
@@ -364,7 +364,7 @@ public class GenericReader extends ArticleReader
 //		logger.log("Total text length: "+totalLength+" characters");
 //		
 //		// presence of an <article> element in the page
-//		Elements articleElts = root.getElementsByTag(XmlNames.ELT_ARTICLE);
+//		Elements articleElts = root.getElementsByTag(HtmlNames.ELT_ARTICLE);
 //		if(!articleElts.isEmpty())
 //		{	logger.log("Found an <article> element in this Web page >> using it as the main content element");
 //			result = articleElts.first();
