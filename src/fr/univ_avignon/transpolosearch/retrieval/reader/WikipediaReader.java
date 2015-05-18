@@ -168,7 +168,7 @@ public class WikipediaReader extends ArticleReader
 		}
 		
 		// recursive processing
-		processTextElement(element,rawStr,linkedStr);
+		processAnyElement(element,rawStr,linkedStr);
 		
 		// possibly add a new line character
 		if(rawStr.charAt(rawStr.length()-1)!='\n')
@@ -207,7 +207,7 @@ public class WikipediaReader extends ArticleReader
 		// recursive processing
 		int rawIdx = rawStr.length();
 		int linkedIdx = linkedStr.length();
-		processTextElement(element,rawStr,linkedStr);
+		processAnyElement(element,rawStr,linkedStr);
 
 		// possibly remove characters added after quote marks
 		while(rawStr.length()>rawIdx && 
@@ -260,7 +260,7 @@ public class WikipediaReader extends ArticleReader
 			
 		{	result = true;
 			// otherwise, we process what's inside the span tag
-			processTextElement(element,rawStr,linkedStr);
+			processAnyElement(element,rawStr,linkedStr);
 		}
 		
 		else
@@ -375,7 +375,7 @@ public class WikipediaReader extends ArticleReader
 			count++;
 			
 			// get text and links
-			processTextElement(listElt,rawStr,linkedStr);
+			processAnyElement(listElt,rawStr,linkedStr);
 			
 			// possibly remove the last new line character
 			c = rawStr.charAt(rawStr.length()-1);
@@ -453,7 +453,7 @@ public class WikipediaReader extends ArticleReader
 			String tempName = tempElt.tagName();
 			if(tempName.equals(HtmlNames.ELT_DT))
 			{	// process term
-				processTextElement(tempElt,rawStr,linkedStr);
+				processAnyElement(tempElt,rawStr,linkedStr);
 				
 				// possibly remove the last new line character
 				c = rawStr.charAt(rawStr.length()-1);
@@ -487,7 +487,7 @@ public class WikipediaReader extends ArticleReader
 //			if(tempName.equals(HtmlNames.ELT_DD))
 			if(tempElt!=null)
 			{	// process term
-				processTextElement(tempElt,rawStr,linkedStr);
+				processAnyElement(tempElt,rawStr,linkedStr);
 				
 				// possibly remove the last new line character
 				c = rawStr.charAt(rawStr.length()-1);
@@ -574,7 +574,7 @@ public class WikipediaReader extends ArticleReader
 			&& !eltClass.contains(CLASS_TOPICON)
 			))
 		{	result = true;
-			processTextElement(element, rawStr, linkedStr);
+			processAnyElement(element, rawStr, linkedStr);
 		}
 		
 		else
@@ -622,7 +622,7 @@ public class WikipediaReader extends ArticleReader
 			for(Element rowElt: tbodyElt.children())
 			{	for(Element colElt: rowElt.children())
 				{	// process cell content
-					processTextElement(colElt, rawStr, linkedStr);
+					processAnyElement(colElt, rawStr, linkedStr);
 					
 					// possibly add final dot and space. 
 					if(rawStr.charAt(rawStr.length()-1)!=' ')
@@ -657,7 +657,7 @@ public class WikipediaReader extends ArticleReader
 	 * 		The StringBuffer to contain the text with hyperlinks.
 	 */
 	@Override
-	protected void processTextElement(Element textElement, StringBuilder rawStr, StringBuilder linkedStr)
+	protected void processAnyElement(Element textElement, StringBuilder rawStr, StringBuilder linkedStr)
 	{	// we process each element contained in the specified text element
 		for(Node node: textElement.childNodes())
 		{	// element node
@@ -710,7 +710,7 @@ public class WikipediaReader extends ArticleReader
 				
 				// list item
 				else if(eltName.equals(HtmlNames.ELT_LI))
-				{	processTextElement(element,rawStr,linkedStr);
+				{	processAnyElement(element,rawStr,linkedStr);
 				}
 	
 				// divisions are just processed recursively
