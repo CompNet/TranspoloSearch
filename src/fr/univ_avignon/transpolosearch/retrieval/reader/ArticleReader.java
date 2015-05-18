@@ -30,9 +30,11 @@ import java.net.URL;
 import java.net.URLEncoder;
 import java.text.DateFormat;
 import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.Iterator;
+import java.util.List;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.Inflater;
 import java.util.zip.InflaterInputStream;
@@ -682,6 +684,28 @@ public abstract class ArticleReader
 	}
 	
 	/**
+	 * Just inserts a space.
+	 * 
+	 * @param element
+	 * 		Element to be processed.
+	 * @param rawStr
+	 * 		Current raw text string.
+	 * @param linkedStr
+	 * 		Current text with hyperlinks.
+	 * @return
+	 * 		{@code true} iff the element was processed.
+	 */
+	@SuppressWarnings("unused")
+	protected boolean processSpacerElement(Element element, StringBuilder rawStr, StringBuilder linkedStr)
+	{	boolean result = true;
+	
+		rawStr.append(" ");
+		linkedStr.append(" ");
+		
+		return result;
+	}
+	
+	/**
 	 * Retrieve the text located in a list (UL or OL) HTML element.
 	 * 
 	 * @param element
@@ -953,10 +977,35 @@ public abstract class ArticleReader
 	 */
 	protected boolean processTableElement(Element element, StringBuilder rawStr, StringBuilder linkedStr)
 	{	boolean result = true;
-		Element tbodyElt = element.children().get(0);
+		
+		// extract the list of rows (we don't need the rest)
+		Elements children = element.children();
+		List<Element> rowElts = new ArrayList<Element>(); 
+		for(Element child: children)
+		{	String name = child.tagName();
 			
-		for(Element rowElt: tbodyElt.children())
-		{	for(Element colElt: rowElt.children())
+			// if there's a caption, put it first
+			if(name.equalsIgnoreCase(HtmlNames.ELT_CAPTION))
+			{	processAnyElement(child, rawStr, linkedStr);
+			}
+			
+			// if the table has a header/body/footer, extract the rows
+			else if(name.equalsIgnoreCase(HtmlNames.ELT_THEAD)
+				|| name.equalsIgnoreCase(HtmlNames.ELT_TBODY)
+				|| name.equalsIgnoreCase(HtmlNames.ELT_TFOOT))
+			{	Elements children2 = child.children();
+				rowElts.addAll(children2);
+			}
+			
+			// otherwise, just get the rows
+			else if(name.equalsIgnoreCase(HtmlNames.ELT_TR))
+				rowElts.add(child);
+		}
+		
+		// extract the text from each row
+		for(Element rowElt: rowElts)
+		{	// process each column
+			for(Element colElt: rowElt.children())
 			{	// process cell content
 				processAnyElement(colElt, rawStr, linkedStr);
 				
@@ -972,6 +1021,10 @@ public abstract class ArticleReader
 					}
 				}
 			}
+			
+			// add new line
+			rawStr.append("\n");
+			linkedStr.append("\n");
 		}
 		
 		return result;
@@ -1037,7 +1090,7 @@ public abstract class ArticleReader
 				}
 				
 				// bold: just some text
-				else if(eltName.equals(HtmlNames.ELT_B))
+				else if(eltName.equals(HtmlNames.ELT_B)) //TODO 10
 				{	processAnyElement(textElement, rawStr, linkedStr);
 				}
 				
@@ -1067,12 +1120,12 @@ public abstract class ArticleReader
 				}
 				
 				// quotes: processed recursively
-				else if(eltName.equals(HtmlNames.ELT_BLOCKQUOTE) || eltName.equals(HtmlNames.ELT_QUOTE))
+				else if(eltName.equals(HtmlNames.ELT_BLOCKQUOTE) || eltName.equals(HtmlNames.ELT_QUOTE) || eltName.equals(HtmlNames.ELT_Q))
 				{	processQuoteElement(element,rawStr,linkedStr);
 				}
 				
 				// document body: considered as a div
-				else if(eltName.equals(HtmlNames.ELT_BODY))
+				else if(eltName.equals(HtmlNames.ELT_BODY)) //TODO 20
 				{	processDivisionElement(element, rawStr, linkedStr);
 				}
 				
@@ -1117,7 +1170,7 @@ public abstract class ArticleReader
 				}
 				
 				// Web component content: no use for us
-				else if(eltName.equals(HtmlNames.ELT_CONTENT))
+				else if(eltName.equals(HtmlNames.ELT_CONTENT)) //TODO 30
 				{	// nothing to do
 				}
 				
@@ -1167,7 +1220,7 @@ public abstract class ArticleReader
 				}
 				
 				// division: processed recursively
-				else if(eltName.equals(HtmlNames.ELT_DIV))
+				else if(eltName.equals(HtmlNames.ELT_DIV)) //TODO 40
 				{	processDivisionElement(element,rawStr,linkedStr);
 				}
 				
@@ -1217,7 +1270,7 @@ public abstract class ArticleReader
 				}
 				
 				// footer: treated like a div
-				else if(eltName.equals(HtmlNames.ELT_FOOTER))
+				else if(eltName.equals(HtmlNames.ELT_FOOTER)) //TODO 50
 				{	processDivisionElement(element, rawStr, linkedStr);
 					//TODO or maybe should be ignored...
 				}
@@ -1239,7 +1292,7 @@ public abstract class ArticleReader
 				}
 				
 				// head: ignored
-				else if(eltName.equals(HtmlNames.ELT_HEAD))
+				else if(eltName.equals(HtmlNames.ELT_HEAD)) //TODO 60
 				{	// nothing to do
 				}
 				
@@ -1290,7 +1343,7 @@ public abstract class ArticleReader
 				}
 				
 				// input text: ignored
-				else if(eltName.equals(HtmlNames.ELT_ISINDEX))
+				else if(eltName.equals(HtmlNames.ELT_ISINDEX)) //TODO 70
 				{	// nothing to do
 				}
 				
@@ -1340,7 +1393,7 @@ public abstract class ArticleReader
 				}
 				
 				// marked text: just text
-				else if(eltName.equals(HtmlNames.ELT_MARK))
+				else if(eltName.equals(HtmlNames.ELT_MARK)) //TODO 80
 				{	processAnyElement(textElement, rawStr, linkedStr);
 				}
 				
@@ -1385,7 +1438,7 @@ public abstract class ArticleReader
 				}
 				
 				// various list types
-				else if(eltName.equals(HtmlNames.ELT_OL))
+				else if(eltName.equals(HtmlNames.ELT_OL)) //TODO 90
 				{	processListElement(element,rawStr,linkedStr,true);
 				}
 
@@ -1399,34 +1452,167 @@ public abstract class ArticleReader
 				{	// nothing to do
 				}
 				
-				
-				
-				
-				// paragraphs inside paragraphs are processed recursively
+				// paragraph: processed recursively
 				else if(eltName.equals(HtmlNames.ELT_P))
 				{	processParagraphElement(element,rawStr,linkedStr);
 				}
 				
-				// small caps are treated as normal text
-				else if(eltName.equals(HtmlNames.ELT_SMALL))
-				{	processAnyElement(element,rawStr,linkedStr);
+				// object parameter: ignored
+				else if(eltName.equals(HtmlNames.ELT_PARAM))
+				{	// nothing to do
 				}
 				
-				// span are just processed recursively
+				// plain text: just text
+				else if(eltName.equals(HtmlNames.ELT_PLAINTEXT) || eltName.equals(HtmlNames.ELT_PRE))
+				{	processAnyElement(textElement, rawStr, linkedStr);
+				}
+				
+				// progress bar: ignored
+				else if(eltName.equals(HtmlNames.ELT_PROGRESS))
+				{	// nothing to do
+				}
+				
+				// ruby stuff: ignored
+				else if(eltName.equals(HtmlNames.ELT_RP) || eltName.equals(HtmlNames.ELT_RT)  //TODO 100
+					|| eltName.equals(HtmlNames.ELT_RTC) || eltName.equals(HtmlNames.ELT_RUBY))
+				{	// nothing to do
+				}
+				
+				// strikethrough: ignored
+				else if(eltName.equals(HtmlNames.ELT_S) || eltName.equals(HtmlNames.ELT_STRIKE))
+				{	// nothing to do
+				}
+				
+				// sample output of computer program: just text
+				else if(eltName.equals(HtmlNames.ELT_SAMP))
+				{	// nothing to do
+				}
+				
+				// script: ignored
+				else if(eltName.equals(HtmlNames.ELT_SCRIPT))
+				{	// nothing to do
+				}
+				
+				// section: treated as a div
+				else if(eltName.equals(HtmlNames.ELT_SECTION))
+				{	processDivisionElement(element, rawStr, linkedStr);
+				}
+				
+				// form drop-down list: ignored
+				else if(eltName.equals(HtmlNames.ELT_SELECT))
+				{	// nothing to do
+				}
+				
+				// small: just text
+				else if(eltName.equals(HtmlNames.ELT_SMALL))
+				{	processAbbreviationElement(element, rawStr, linkedStr);
+				}
+				
+				// audio source: ignored
+				else if(eltName.equals(HtmlNames.ELT_SOURCE)) //TODO 110
+				{	// nothing to do
+				}
+				
+				// spacer: just put a space
+				else if(eltName.equals(HtmlNames.ELT_SPACER))
+				{	processSpacerElement(element, rawStr, linkedStr);
+				}
+				
+				// span: processed recursively
 				else if(eltName.equals(HtmlNames.ELT_SPAN))
 				{	processSpanElement(element,rawStr,linkedStr);
 				}
 				
-				// superscripts are ignored
-				else if(eltName.equals(HtmlNames.ELT_SUP))
+				// strong: just text
+				else if(eltName.equals(HtmlNames.ELT_STRONG))
+				{	processAnyElement(textElement, rawStr, linkedStr);
+				}
+				
+				// document style: ignored
+				else if(eltName.equals(HtmlNames.ELT_STYLE))
+				{	// nothing to do
+				}
+				
+				// sub/superscripts: ignored
+				else if(eltName.equals(HtmlNames.ELT_SUB) || eltName.equals(HtmlNames.ELT_SUP))
 				{	// nothing to do here
 				}
 				
-				// various list types
+				// details summary: ignored
+				else if(eltName.equals(HtmlNames.ELT_SUMMARY))
+				{	// nothing to do
+				}
+				
+				// table: approximately represented as text
+				else if(eltName.equals(HtmlNames.ELT_TABLE))
+				{	processTableElement(element, rawStr, linkedStr);
+				}
+				
+				// table-related elements: already processed in the table method
+				else if(eltName.equals(HtmlNames.ELT_THEAD) || eltName.equals(HtmlNames.ELT_TBODY) || eltName.equals(HtmlNames.ELT_TFOOT) //TODO 121
+					|| eltName.equals(HtmlNames.ELT_TH)|| eltName.equals(HtmlNames.ELT_TR)|| eltName.equals(HtmlNames.ELT_TD))
+				{	// nothing to do
+				}
+				
+				// template: ignored
+				else if(eltName.equals(HtmlNames.ELT_TEMPLATE))
+				{	// nothing to do
+				}
+				
+				// input text area: ignored
+				else if(eltName.equals(HtmlNames.ELT_TEXTAREA))
+				{	// nothing to do
+				}
+				
+				// time/date: text
+				else if(eltName.equals(HtmlNames.ELT_TIME))
+				{	processAnyElement(textElement, rawStr, linkedStr);
+				}
+				
+				// title: treated like a pargraph
+				else if(eltName.equals(HtmlNames.ELT_TITLE))
+				{	processParagraphElement(element, rawStr, linkedStr);
+				}
+				
+				// media track: ignored
+				else if(eltName.equals(HtmlNames.ELT_TITLE))
+				{	// nothing to do
+				}
+				
+				// teletype text: just text
+				else if(eltName.equals(HtmlNames.ELT_TT)) //TODO 130
+				{	processAnyElement(textElement, rawStr, linkedStr);
+				}
+				
+				// special formatting: just text
+				else if(eltName.equals(HtmlNames.ELT_U))
+				{	processAnyElement(textElement, rawStr, linkedStr);
+				}
+				
+				// unordered list: each item is processed
 				else if(eltName.equals(HtmlNames.ELT_UL))
 				{	processListElement(element,rawStr,linkedStr,false);
 				}
 				
+				// variable definition: just text
+				else if(eltName.equals(HtmlNames.ELT_VAR))
+				{	processAnyElement(textElement, rawStr, linkedStr);
+				}
+				
+				// video: ignored
+				else if(eltName.equals(HtmlNames.ELT_VIDEO))
+				{	// nothing to do
+				}
+				
+				// word break opportuinies: just text
+				else if(eltName.equals(HtmlNames.ELT_WBR))
+				{	processAnyElement(textElement, rawStr, linkedStr);
+				}
+				
+				// xmp: ignored
+				else if(eltName.equals(HtmlNames.ELT_XMP)) //TODO 136
+				{	// nothing to do
+				}
 				
 				// other elements are considered as simple text
 				else
