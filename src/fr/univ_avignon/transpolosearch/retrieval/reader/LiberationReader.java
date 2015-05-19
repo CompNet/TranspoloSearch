@@ -64,7 +64,8 @@ import fr.univ_avignon.transpolosearch.retrieval.reader.ArticleReader;
 import fr.univ_avignon.transpolosearch.retrieval.reader.ReaderException;
 import fr.univ_avignon.transpolosearch.tools.file.FileNames;
 import fr.univ_avignon.transpolosearch.tools.file.FileTools;
-import fr.univ_avignon.transpolosearch.tools.xml.HtmlNames;
+import fr.univ_avignon.transpolosearch.tools.html.HtmlNames;
+import fr.univ_avignon.transpolosearch.tools.html.HtmlTools;
 
 /**
  * From a specified URL, this class retrieves a page
@@ -152,12 +153,12 @@ public class LiberationReader extends ArticleReader
 			// retrieve the dates
 			Elements timeElts = infoElt.getElementsByTag(HtmlNames.ELT_TIME);
 			Element publishingElt = timeElts.first();
-			Date publishingDate = getDateFromTimeElt(publishingElt,DATE_FORMAT);
+			Date publishingDate = HtmlTools.getDateFromTimeElt(publishingElt,DATE_FORMAT);
 			logger.log("Found the publishing date: "+publishingDate);
 			Date modificationDate = null;
 			if(timeElts.size()>1)
 			{	Element modificationElt = timeElts.last();
-				modificationDate = getDateFromTimeElt(modificationElt,DATE_FORMAT);
+				modificationDate = HtmlTools.getDateFromTimeElt(modificationElt,DATE_FORMAT);
 				logger.log("Found a last modification date: "+modificationDate);
 			}
 			else

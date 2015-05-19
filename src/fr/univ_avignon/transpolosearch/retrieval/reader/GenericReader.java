@@ -63,7 +63,8 @@ import fr.univ_avignon.transpolosearch.retrieval.reader.ArticleReader;
 import fr.univ_avignon.transpolosearch.retrieval.reader.ReaderException;
 import fr.univ_avignon.transpolosearch.tools.file.FileNames;
 import fr.univ_avignon.transpolosearch.tools.file.FileTools;
-import fr.univ_avignon.transpolosearch.tools.xml.HtmlNames;
+import fr.univ_avignon.transpolosearch.tools.html.HtmlNames;
+import fr.univ_avignon.transpolosearch.tools.html.HtmlTools;
 
 /**
  * From a specified URL, this class retrieves a Wikipedia page,
@@ -174,7 +175,7 @@ public class GenericReader extends ArticleReader
 			HtmlNames.ELT_DATA,HtmlNames.ELT_DATALIST,HtmlNames.ELT_DECORATOR,HtmlNames.ELT_DEL,
 			HtmlNames.ELT_DIALOG,HtmlNames.ELT_DIR,HtmlNames.ELT_ELEMENT,HtmlNames.ELT_EMBED,
 			HtmlNames.ELT_FIELDSET,HtmlNames.ELT_FONT,HtmlNames.ELT_FORM,HtmlNames.ELT_FRAME,
-			HtmlNames.ELT_FRAMESET,HtmlNames.ELT_IFRAME,HtmlNames.ELT_IMAGE,HtmlNames.ELT_INPUT,
+			HtmlNames.ELT_FRAMESET,HtmlNames.ELT_IFRAME,HtmlNames.ELT_IMG,HtmlNames.ELT_INPUT,
 			HtmlNames.ELT_ISINDEX,HtmlNames.ELT_KBD,HtmlNames.ELT_KEYGEN,HtmlNames.ELT_LABEL,
 			HtmlNames.ELT_LEGEND,HtmlNames.ELT_LINK,HtmlNames.ELT_LISTING,HtmlNames.ELT_MAP,
 			HtmlNames.ELT_MENU,HtmlNames.ELT_MENUITEM,HtmlNames.ELT_METER,HtmlNames.ELT_NAV,
@@ -206,19 +207,22 @@ public class GenericReader extends ArticleReader
 	 */
 	private Element getContentElement(Element root)
 	{	Element result = null;
+		int maxText = 0;
+		
 		String totalText = root.text();
 		float totalLength = totalText.length();
 		logger.increaseOffset();
 		logger.log("Total text length: "+totalLength+" characters");
 		
 		// presence of an <article> element in the page
-		Elements articleElts = root.getElementsByTag(HtmlNames.ELT_ARTICLE);
-		if(!articleElts.isEmpty())
-		{	logger.log("Found an <article> element in this Web page >> using it as the main content element");
-			root = articleElts.first();
-			if(articleElts.size()>1)
-				logger.log("WARNING: found several <article> elements in this Web page");
-		}
+//		Elements articleElts = root.getElementsByTag(HtmlNames.ELT_ARTICLE);
+//		if(!articleElts.isEmpty())
+//		{	logger.log("Found an <article> element in this Web page >> using it as the main content element");
+//			root = articleElts.first();
+//			if(articleElts.size()>1)
+//				logger.log("WARNING: found several <article> elements in this Web page");
+//		}
+		// not a good idea: <article> is often misused (as well as <section>)
 		
 		// now, use text size 
 		{	//logger.log("No <article> element in this Web page >> using text size");
@@ -232,8 +236,6 @@ public class GenericReader extends ArticleReader
 			do
 			{	Element element = queue.poll();
 				String name = element.tagName();
-if(element.attr("id").equals("post-21996"))
-	System.out.println();
 				Elements children = element.children();
 				float size = sizes.get(element);
 				boolean candidate = false;
@@ -267,13 +269,26 @@ if(element.attr("id").equals("post-21996"))
 				// if we found a candidate
 				if(candidate)
 				{	// it's the new best candidate only if it's larger than the previous best candidate
+//					if(result!=null)
+//					{	float size0 = sizes.get(result);
+//						if(size>size0)
+//							result = element;
+//					}
+//					else
+//						result = element;
+					
+					// it's the new best candidate if its largest uninterrupted text is larger than for the previous best candidate
+					int sz = HtmlTools.getMaxTextLength(element);
 					if(result!=null)
-					{	float size0 = sizes.get(result);
-						if(size>size0)
-							result = element;
+					{	if(sz>maxText)
+						{	result = element;
+							maxText = sz;
+						}
 					}
 					else
-						result = element;
+					{	result = element;
+						maxText = sz;
+					}
 				}
 			}
 			while(!queue.isEmpty());
@@ -285,52 +300,4 @@ if(element.attr("id").equals("post-21996"))
 		logger.decreaseOffset();
 		return result;
 	}
-//	private Element getContentElement0(Element root)
-//	{	Element result = root;
-//		String totalText = root.text();
-//		float totalLength = totalText.length();
-//		float currentLength = totalLength;
-//		logger.increaseOffset();
-//		logger.log("Total text length: "+totalLength+" characters");
-//		
-//		// presence of an <article> element in the page
-//		Elements articleElts = root.getElementsByTag(HtmlNames.ELT_ARTICLE);
-//		if(!articleElts.isEmpty())
-//		{	logger.log("Found an <article> element in this Web page >> using it as the main content element");
-//			result = articleElts.first();
-//			if(articleElts.size()>1)
-//				logger.log("WARNING: found several <article> elements in this Web page");
-//		}
-//		
-//		// no <article> element: use text size 
-//		else
-//		{	logger.log("No <article> element in this Web page >> looking for the largest text chunk");
-//			
-//			// set up queue
-//			Elements children = root.children();
-//			Queue<Element> queue = new LinkedList<Element>(children);
-//			
-//			while(!queue.isEmpty())
-//			{	Element element = queue.poll();
-//				
-//				// update current result
-//				String text = element.text();
-//				float length = text.length();
-//				if(length<currentLength && (length/currentLength)>=MIN_CONTENT_RATIO)
-//				{	// update result
-//					result = element;
-//					currentLength = length;
-//					
-//					// update queue
-//					children = root.children();
-//					for(Element child: children)
-//						queue.offer(child);
-//				}
-//			}
-//		}
-//		
-//		logger.log("Selected element: "+currentLength+" characters ("+currentLength/totalLength*100+"%)");
-//		logger.decreaseOffset();
-//		return result;
-//	}
 }

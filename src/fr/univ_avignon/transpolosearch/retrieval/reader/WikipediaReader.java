@@ -56,7 +56,7 @@ import fr.univ_avignon.transpolosearch.retrieval.reader.ArticleReader;
 import fr.univ_avignon.transpolosearch.retrieval.reader.ReaderException;
 import fr.univ_avignon.transpolosearch.tools.file.FileNames;
 import fr.univ_avignon.transpolosearch.tools.file.FileTools;
-import fr.univ_avignon.transpolosearch.tools.xml.HtmlNames;
+import fr.univ_avignon.transpolosearch.tools.html.HtmlNames;
 
 /**
  * From a specified URL, this class retrieves a Wikipedia page,

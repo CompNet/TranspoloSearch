@@ -28,11 +28,8 @@ import java.net.HttpURLConnection;
 import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.net.URLEncoder;
-import java.text.DateFormat;
-import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.zip.GZIPInputStream;
@@ -52,10 +49,10 @@ import fr.univ_avignon.transpolosearch.data.article.Article;
 import fr.univ_avignon.transpolosearch.data.article.ArticleLanguage;
 import fr.univ_avignon.transpolosearch.tools.file.FileNames;
 import fr.univ_avignon.transpolosearch.tools.file.FileTools;
+import fr.univ_avignon.transpolosearch.tools.html.HtmlNames;
 import fr.univ_avignon.transpolosearch.tools.log.HierarchicalLogger;
 import fr.univ_avignon.transpolosearch.tools.log.HierarchicalLoggerManager;
 import fr.univ_avignon.transpolosearch.tools.string.StringTools;
-import fr.univ_avignon.transpolosearch.tools.xml.HtmlNames;
 
 /**
  * All classes automatically getting articles
@@ -67,7 +64,9 @@ import fr.univ_avignon.transpolosearch.tools.xml.HtmlNames;
  *  - le figaro
  *  - la provence
  *  - médiapart
+ *  - france3
  * l'approche générique ne fonctionne pas si la page contient plusieurs articles
+ * Facebook foire complètement
  * 
  * @author Vincent Labatut
  */
@@ -484,33 +483,6 @@ public abstract class ArticleReader
 		
 		String result = sourceCode.toString();
 		br.close();
-		return result;
-	}
-
-	/////////////////////////////////////////////////////////////////
-	// TIME				/////////////////////////////////////////////
-	/////////////////////////////////////////////////////////////////
-	/**
-	 * Extract a date from the specified TIME html element.
-	 *  
-	 * @param timeElt
-	 * 		HTML element.
-	 * @param dateFormat 
-	 * 		Format used to parse the date.
-	 * @return
-	 * 		The corresponding date.
-	 */
-	public Date getDateFromTimeElt(Element timeElt, DateFormat dateFormat)
-	{	Date result = null;
-	
-		String valueStr = timeElt.attr(HtmlNames.ATT_DATETIME);
-		try
-		{	result = dateFormat.parse(valueStr);
-		}
-		catch (ParseException e)
-		{	e.printStackTrace();
-		}
-	
 		return result;
 	}
 
@@ -1248,7 +1220,7 @@ public abstract class ArticleReader
 				}
 				
 				// image: ignored
-				else if(eltName.equalsIgnoreCase(HtmlNames.ELT_IMAGE))
+				else if(eltName.equalsIgnoreCase(HtmlNames.ELT_IMG))
 				{	// nothing to do
 				}
 				
@@ -1536,7 +1508,12 @@ public abstract class ArticleReader
 				
 				// no other elements should be encountered 
 				else
-				{	throw new IllegalArgumentException("Unexpected HTML element <"+eltName+">");
+				{	//throw new IllegalArgumentException("Unexpected HTML element <"+eltName+">");
+					logger.log("WARNING: Unexpected HTML element <"+eltName+">");
+					String text = element.text();
+					text = removeGtst(text);
+					rawStr.append(text);
+					linkedStr.append(text);
 				}
 			}
 			
