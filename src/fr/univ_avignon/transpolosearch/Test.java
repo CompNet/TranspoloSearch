@@ -109,8 +109,86 @@ public class Test
 //		URL url = new URL("http://www.liberation.fr/vous/2015/05/04/coeur-carmat-le-deuxieme-greffe-decede-a-son-tour_1289323");
 //		URL url = new URL("http://www.liberation.fr/societe/2015/05/04/femmes-en-politique-un-match-contre-les-machos_1289649");
 //		URL url = new URL("http://www.liberation.fr/societe/2015/05/03/surveillance-le-flou-du-spectacle_1287003");
-		
-		URL url = new URL("http://destimed.fr/Grand-Orient-de-France-conference");
+			
+//		URL url = new URL("http://www.citylocalnews.com/avignon/2015/01/08/grand-avignon-cecile-helle-poursuit-son-lobby-ant-tram");
+//		URL url = new URL("http://www.mobilicites.com/011-3377-Avignon-construira-bien-une-ligne-de-tramway.html");
+//		URL url = new URL("http://www.citylocalnews.com/avignon/2015/01/26/avignon-des-policiers-a-cheval-bientot-sur-la-barthelasse");
+//		URL url = new URL("https://fr-fr.facebook.com/pages/Les-Refondateurs/243905395803677");
+//		URL url = new URL("http://www.citylocalnews.com/avignon/2015/01/10/avignon-le-tramway-divisera-t-il-la-majorite-municipale");
+//		URL url = new URL("http://destimed.fr/Grand-Orient-de-France-conference");
+		URL url = new URL("http://www.medias-presse.info/le-grand-orient-nous-refait-le-coup-de-la-republique-en-danger/21996");
+//		URL url = new URL("http://www.meridienmag.fr/Actualites/ca-roule-pour-le-tramway-du-Grand-Avignon_2010.html");
+//		URL url = new URL("http://www.grandavignon.fr/actualites/fiche/avignon-plan-proprete-tous-mobilises-tous-concernes/");
+//		URL url = new URL("http://france3-regions.francetvinfo.fr/provence-alpes/2015/01/15/le-grand-avignon-aura-son-tramway-decouvrez-son-trace-632322.html");
+//		URL url = new URL("http://www.midilibre.fr/2015/01/11/l-agglo-du-grand-avignon-vote-pour-le-tramway,1109359.php");
+//		URL url = new URL("http://www.ville-rail-transports.com/content/21024-Avignon-Les-%C3%A9lus-votent-un-nouveau-projet-de-tram");
+//		URL url = new URL("http://www.midilibre.fr/vaucluse/avignon/index_15.php");
+//		URL url = new URL("http://www.liberation.fr/politiques/2015/01/08/regionales-vauzelle-ne-se-representera-pas-en-paca_1176199");
+//		URL url = new URL("http://www.francebleu.fr/infos/chantier-tramway/le-tramway-en-questions-sur-france-bleu-vaucluse-2061645");
+//		URL url = new URL("http://www.busetcar.com/actualites/detail/81676/le-tramway-d-avignon-verra-le-jour.html");
+//		URL url = new URL("http://www.mavieenprovence.com/fr/tendances.html");
+//		URL url = new URL("http://www.ledauphine.com/vaucluse/2015/01/06/avignon-tram-ou-pas-tram");
+//		URL url = new URL("http://avignon.lafrancealunisson.fr/");
+//		URL url = new URL("http://www.laprovence.com/actu/politique-en-direct/3203098/tramway-un-vote-convoque-samedi-pour-trancher.html");
+//		URL url = new URL("http://www.ventoux-magazine.com/actualites/actualite/aeroport-d-avignon-le-pole-pegase-a-bien-decolle/x2132axyw2vMT79AhRm.html");
+//		URL url = new URL("http://www.presseagence.fr/lettre-economique-politique-paca/2015/01/22/avignon-inauguration-de-la-pepiniere-dentreprises-du-technopole-pegase-lundi-26-janvier-2015/");
+//		URL url = new URL("http://www.fm-mag.fr/evenement/antimaconnisme-refus-de-lautre-la-republique-en-danger");
+//		URL url = new URL("http://coordination-antinucleaire-sudest.net/2012/index.php?/page/2");
+//		URL url = new URL("http://www.atlantico.fr/pepites/ps-michel-vauzelle-ne-se-representera-pas-presidence-region-paca-1945014.html");
+//		URL url = new URL("http://www.leravi.org/spip.php?article1935");
+//		URL url = new URL("http://www.infoavignon.com/actualites/politique-actualites/grand-avignon-cest-parti-pour-le-tram/");
+//		URL url = new URL("http://raphael-helle.blog.lemonde.fr/2015/01/07/je-suis-charlie/");
+//		URL url = new URL("http://www.clodelle45autrement.fr/2015/01/images-d-orleans-roller-derby-contre-hell-r-cheeky-dolls-la-rochelle-11-janvier-2015.html");
+//		URL url = new URL("http://raphael-helle.blog.lemonde.fr/category/vie-privee/");
+//		URL url = new URL("http://www.marcvuillemot.com/tag/var%20et%20intercommunalite/");
+//		URL url = new URL("http://www.univ-orleans.fr/espe/colloques");
+//		URL url = new URL("http://www.lalogitude.com/albums/nos_adherents/index.html");
+//		URL url = new URL("http://leslecturesdececile.fr/categorie/romance-historique/");
+//		URL url = new URL("http://tvmag.lefigaro.fr/programme-tv/fiche/rmc-decouverte/serie-documentaire/190829701/highway-thru-hell-usa.html");
+//		URL url = new URL("http://www.canalfrance.info/Marche-republicaine%E2%80%89-qui-seront-les-personnalites-presentes_a3173.html");
+//		URL url = new URL("http://www.hellfest.fr/fr/pass-1-jour-a1084/");
+//		URL url = new URL("https://pastel.archives-ouvertes.fr/tel-01109446/document");
+//		URL url = new URL("http://www.gites-de-france-cotedor.com/location-Gite-Meursault-Cote-D-or-21G726.html");
+//		URL url = new URL("http://tourner1page.fr/tag/mer/");
+//		URL url = new URL("http://www.michelbachlebas.fr/mh-infos-municipales/presse");
+//		URL url = new URL("http://prof.planck.fr/index.php?n=People.HFI-DPC");
+//		URL url = new URL("http://www.enews-france.com/les-inrocks-secret-des-affaires-informer-n-est-pas-un-delit-128409-p");
+//		URL url = new URL("http://www.lefigaro.fr/politique/2015/01/10/01002-20150110ARTFIG00160-l-impressionnante-liste-des-politiques-presents-a-la-marche-republicaine-a-paris.php");
+//		URL url = new URL("http://blogs.mediapart.fr/edition/les-invites-de-mediapart/article/280115/secret-des-affaires-informer-n-est-pas-un-delit");
+//		URL url = new URL("http://www.zicazic.com/zicazine/index.php?option=content&task=view&id=12130");
+//		URL url = new URL("http://www.lesinrocks.com/2015/01/28/actualite/secret-des-affaires-informer-nest-pas-un-delit-11550918/");
+//		URL url = new URL("http://univ-poitiers.academia.edu/CCM/Books");
+//		URL url = new URL("http://www.tmplab.org/page/2/");
+//		URL url = new URL("http://univ-poitiers.academia.edu/CCM");
+//		URL url = new URL("http://www.commequiers.com/les-associatons-le-guide.html");
+//		URL url = new URL("http://video.lefigaro.fr/figaro/video/la-chute-de-la-premiere-ministre-danoise-sur-les-marches-de-l-elysee/3984216817001/");
+//		URL url = new URL("http://www.ville-de-wallers-arenberg.fr/wp/index.php/extensions/s5-tab-show-2/doc_download/88-bi-23");
+//		URL url = new URL("http://www.400coups.net/archives/__crochet__/");
+//		URL url = new URL("http://rakotoarison.over-blog.com/article-sr-125380563.html");
+//		URL url = new URL("http://www.jesuismort.com/biographie_celebrite_anniversaire/5-eme_anniversaire_de_la_mort_de_celebrite.php");
+//		URL url = new URL("http://cercletibetverite.unblog.fr/2015/01/");
+//		URL url = new URL("http://www.shutupandplaythebooks.com/tu-mourras-moins-bete-marion-montaigne/");
+//		URL url = new URL("http://bijoucontemporain.unblog.fr/category/ecole/gerrit-rietveld-academie-nl/");
+//		URL url = new URL("https://les5duvin.wordpress.com/tag/salon-des-vins-de-loire/");
+//		URL url = new URL("http://seminesaa.hypotheses.org/2842");
+//		URL url = new URL("http://www.africine.org/index.php?menu=menuflm&smenu=format&choix_format=8&choix_trie=1");
+//		URL url = new URL("http://www.agoravox.fr/tribune-libre/article/le-charlisme-est-un-humanisme-2-162338");
+//		URL url = new URL("https://hal-mines-paristech.archives-ouvertes.fr/dumas-01102770/document");
+//		URL url = new URL("http://www.babelio.com/livres/Green-Les-aventures-de-HawkFisher-tome-1/29897");
+//		URL url = new URL("http://www.influencelesite.com/page/79");
+//		URL url = new URL("http://www.unesourisdansmondressing.com/2015/01/22/avancer-malgre-la-tuile/");
+//		URL url = new URL("http://www.ladepeche.fr/article/2015/01/06/");
+//		URL url = new URL("http://www.cine-loisirs.fr/series/the-originals-2693/saison/2/episode/10");
+//		URL url = new URL("http://pppl.blog.lemonde.fr/tag/robert-johnson/");
+//		URL url = new URL("http://www.ideozmag.fr/je-suis-charlie-charlisme-est-un-humanisme-union-nationale/");
+//		URL url = new URL("http://www.musicme.com/Vybz-Kartel/");
+//		URL url = new URL("http://www.influencelesite.com/page/79");
+//		URL url = new URL("http://www.unesourisdansmondressing.com/2015/01/22/avancer-malgre-la-tuile/");
+//		URL url = new URL("http://www.ladepeche.fr/article/2015/01/06/");
+//		URL url = new URL("http://www.cine-loisirs.fr/series/the-originals-2693/saison/2/episode/10");
+//		URL url = new URL("http://pppl.blog.lemonde.fr/tag/robert-johnson/");
+//		URL url = new URL("http://www.ideozmag.fr/je-suis-charlie-charlisme-est-un-humanisme-union-nationale/");
+//		URL url = new URL("http://www.musicme.com/Vybz-Kartel/");
 		
 		ArticleRetriever retriever = new ArticleRetriever(false);
 		retriever.process(url);
@@ -144,6 +222,7 @@ public class Test
 		// launch search
 		List<Result> result = gs.searchGoogle(keywords, website, sortCriterion);
 		
+		List<String> msgs = new ArrayList<String>();
 		logger.log("Displaying results: "+result.size()+"/"+gs.resultNumber);
 		logger.increaseOffset();
 			int i = 0;
@@ -155,8 +234,11 @@ public class Test
 					res.getFormattedUrl(),
 					"----------------------------------------")
 				);
+				msgs.add(res.getLink());
 			}
 		logger.decreaseOffset();
+		
+		logger.log(msgs);
 		
 		logger.decreaseOffset();
 		logger.log("Test terminated");

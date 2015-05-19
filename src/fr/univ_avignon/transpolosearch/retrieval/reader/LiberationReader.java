@@ -108,6 +108,8 @@ public class LiberationReader extends ArticleReader
 	private final static String CLASS_DESCRIPTION = "description";
 	/** Class of the article information panel */
 	private final static String CLASS_INFO = "info";
+	/** Class of footnotes */
+	private final static String CLASS_FOOTNOTE = "note";
 	
 	@Override
 	public Article processUrl(URL url, ArticleLanguage language) throws ReaderException
@@ -194,93 +196,14 @@ public class LiberationReader extends ArticleReader
 
 			// processing each element in the body
 			Element bodyElt = articleElt.getElementById(ID_ARTICLE_BODY);
-//			if(bodyElt==null)
-//			{	Elements bodyElts = articleElt.getElementsByAttributeValue(HtmlNames.ATT_CLASS, CLASS_CONTENT_ARTICLE_BODY);
-//				bodyElt = bodyElts.first();
-//				if(bodyElts.size()==0)
-//					throw new IllegalArgumentException("No article body found in the Web page");
-//				else if(bodyElts.size()>1)
-//					logger.log("WARNING: There are more than 1 element for the article body, which is unusual. Let's focus on the first.");
-//			}
 			Elements contentElts = bodyElt.children();
 			Iterator<Element> it = contentElts.iterator();
 			Element contentElt;
 			do
 				contentElt = it.next();
 			while(!contentElt.tagName().equalsIgnoreCase(HtmlNames.ELT_DIV));
-			for(Element element: contentElt.children())
-			{	String eltName = element.tag().getName();
-			
-				// section headers
-				if(eltName.equals(HtmlNames.ELT_H1) || eltName.equals(HtmlNames.ELT_H2))
-				{	// get section name
-					StringBuilder fakeRaw = new StringBuilder();
-					StringBuilder fakeLinked = new StringBuilder();
-					processParagraphElement(element,fakeRaw,fakeLinked);
-					String str = fakeRaw.toString().trim().toLowerCase(Locale.ENGLISH);
-					rawStr.append("\n-----");
-					linkedStr.append("\n-----");
-					processParagraphElement(element,rawStr,linkedStr);
-				}
-			
-				else
-				{	// lower sections
-					if(eltName.equals(HtmlNames.ELT_H3) || eltName.equals(HtmlNames.ELT_H4) 
-						|| eltName.equals(HtmlNames.ELT_H5) || eltName.equals(HtmlNames.ELT_H6))
-					{	processParagraphElement(element,rawStr,linkedStr);
-					}
-					
-					// paragraph
-					else if(eltName.equals(HtmlNames.ELT_P))
-					{	String str = element.text();
-						// we ignore the "related article" links
-						if(!str.startsWith(CONTENT_RELATED_ARTICLES))
-							processParagraphElement(element,rawStr,linkedStr);
-					}
-					
-					// list
-					else if(eltName.equals(HtmlNames.ELT_UL))
-					{	processListElement(element,rawStr,linkedStr,false);
-					}
-					else if(eltName.equals(HtmlNames.ELT_OL))
-					{	processListElement(element,rawStr,linkedStr,true);
-					}
-					else if(eltName.equals(HtmlNames.ELT_DL))
-					{	processDescriptionListElement(element,rawStr,linkedStr);
-					}
-					
-					// tables
-					else if(eltName.equals(HtmlNames.ELT_TABLE))
-					{	//TODO should we completely ignore tables?
-						//first = !processTableElement(element, rawStr, linkedStr); 
-					}
-					
-					// divisions
-					else if(eltName.equals(HtmlNames.ELT_DIV))
-					{	processDivisionElement(element, rawStr, linkedStr);
-					}
+			processAnyElement(contentElt, rawStr, linkedStr);
 				
-					// we ignore certain types of span (phonetic trancription, WP buttons...) 
-					else if(eltName.equals(HtmlNames.ELT_SPAN))
-					{	processSpanElement(element,rawStr,linkedStr);
-					}
-					
-					// hyperlinks must be included in the linked string, provided they are not external
-					else if(eltName.equals(HtmlNames.ELT_A))
-					{	processHyperlinkElement(element,rawStr,linkedStr);
-					}
-					
-					// quotes are just processed recursively
-					else if(eltName.equals(HtmlNames.ELT_BLOCKQUOTE))
-					{	processQuoteElement(element,rawStr,linkedStr);
-					}
-					
-					// other tags are ignored
-					else
-						logger.log("Ignored tag: "+eltName);
-				}
-			}
-			
 			// create and init article object
 			result = new Article(name);
 			result.setTitle(title);
@@ -295,12 +218,12 @@ public class LiberationReader extends ArticleReader
 			
 			// clean text
 			String rawText = rawStr.toString();
-			rawText = cleanText(rawText);
+//			rawText = cleanText(rawText);
 //			rawText = ArticleCleaning.replaceChars(rawText);
 			result.setRawText(rawText);
 			logger.log("Length of the raw text: "+rawText.length()+" chars.");
 			String linkedText = linkedStr.toString();
-			linkedText = cleanText(linkedText);
+//			linkedText = cleanText(linkedText);
 //			linkedText = ArticleCleaning.replaceChars(linkedText);
 			result.setLinkedText(linkedText);
 			logger.log("Length of the linked text: "+linkedText.length()+" chars.");
@@ -326,4 +249,31 @@ public class LiberationReader extends ArticleReader
 		
 		return result;
 	}
+
+	/////////////////////////////////////////////////////////////////
+	// ELEMENTS			/////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////
+	@Override
+	protected void processParagraphElement(Element element, StringBuilder rawStr, StringBuilder linkedStr)
+	{	// we ignore the "related article" links
+		String str = element.text();
+		String eltClass = element.attr(HtmlNames.ATT_CLASS);
+		if(!str.startsWith(CONTENT_RELATED_ARTICLES) && !eltClass.equalsIgnoreCase(CLASS_FOOTNOTE))
+		{	// possibly add a new line character first (if the last one is not already a newline)
+			if(rawStr.length()>0 && rawStr.charAt(rawStr.length()-1)!='\n')
+			{	rawStr.append("\n");
+				linkedStr.append("\n");
+			}
+			
+			// recursive processing
+			processAnyElement(element,rawStr,linkedStr);
+			
+			// possibly add a new line character (if the last one is not already a newline)
+			if(rawStr.length()>0 && rawStr.charAt(rawStr.length()-1)!='\n')
+			{	rawStr.append("\n");
+				linkedStr.append("\n");
+			}
+		}
+	}
+
 }

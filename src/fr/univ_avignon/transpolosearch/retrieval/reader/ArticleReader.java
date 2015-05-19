@@ -197,6 +197,9 @@ public abstract class ArticleReader
 			// replace multiple consecutive newlines by a single one 
 			output = output.replaceAll("(\\n)+", "\n");
 			
+			// remove spaces at the end of lines 
+			output = output.replaceAll(" \\n", "\n");
+			
 			// replace multiple space-separated punctuations by single ones 
 //			output = output.replaceAll("; ;", ";");
 //			output = output.replaceAll(", ,", ",");
@@ -222,13 +225,13 @@ public abstract class ArticleReader
 			output = output.replaceAll("\\(\\)", "");
 			
 			// adds final dot when it is missing at the end of a sentence (itself detected thanks to the new line)
-			output = output.replaceAll("([^(\\.|\\-)])\\n", "$1.\n");
+//			output = output.replaceAll("([^(\\.|\\-)])\\n", "$1.\n");
 			
 			// insert a space after coma, when missing
-			output = output.replaceAll(",([^ _])", ", $1");
+//			output = output.replaceAll(",([^ _])", ", $1");
 	
 			// insert a space after semi-column, when missing
-			output = output.replaceAll(";([^ _])", "; $1");
+//			output = output.replaceAll(";([^ _])", "; $1");
 			
 			// replace 2 single quotes by double quotes
 			output = output.replaceAll("''+", "\"");
@@ -249,6 +252,7 @@ public abstract class ArticleReader
 	{	// raw text
 		String rawText = article.getRawText();
 		rawText = StringTools.replaceSpaces(rawText);
+		rawText = cleanText(rawText);
 		article.setRawText(rawText);
 		
 		// linked text
@@ -256,7 +260,9 @@ public abstract class ArticleReader
 		if(linkedText==null)
 			linkedText = rawText;
 		else
-			linkedText = StringTools.replaceSpaces(linkedText);
+		{	linkedText = StringTools.replaceSpaces(linkedText);
+			linkedText = cleanText(linkedText);
+		}
 		article.setLinkedText(linkedText);
 	}
 	
@@ -410,7 +416,7 @@ public abstract class ArticleReader
 	 * URL.
 	 * 
 	 * @param url
-	 * 		Address of the web page to be read.
+	 * 		Address of the Web page to be read.
 	 * @return
 	 * 		String containing the read HTML source code.
 	 * 
@@ -707,6 +713,8 @@ public abstract class ArticleReader
 	
 	/**
 	 * Retrieve the text located in a list (UL or OL) HTML element.
+	 * Note that if several levels of list exist, these are lost
+	 * in the produced text.  
 	 * 
 	 * @param element
 	 * 		Element to be processed.
@@ -718,77 +726,39 @@ public abstract class ArticleReader
 	 * 		Whether the list is numbered or not.
 	 */
 	protected void processListElement(Element element, StringBuilder rawStr, StringBuilder linkedStr, boolean ordered)
-	{	// possibly remove the last new line character
+	{	// possibly add a new line character right before
 		if(rawStr.length()>0)
 		{	char c = rawStr.charAt(rawStr.length()-1);
-			if(c=='\n')
-			{	rawStr.deleteCharAt(rawStr.length()-1);
-				linkedStr.deleteCharAt(linkedStr.length()-1);
-			}
-		}
-		
-		// possibly remove preceeding space
-		if(rawStr.length()>0)
-		{	char c = rawStr.charAt(rawStr.length()-1);
-			if(c==' ')
-			{	rawStr.deleteCharAt(rawStr.length()-1);
-				linkedStr.deleteCharAt(linkedStr.length()-1);
-			}
-		}
-		
-		// possibly add a column
-		if(rawStr.length()>0)
-		{	char c = rawStr.charAt(rawStr.length()-1);
-			if(c!='.' && c!=':' && c!=';')
-			{	rawStr.append(":");
-				linkedStr.append(":");
+			if(c!='\n')
+			{	rawStr.append("\n");
+				linkedStr.append("\n");
 			}
 		}
 		
 		// process each list element
 		int count = 1;
 		for(Element listElt: element.getElementsByTag(HtmlNames.ELT_LI))
-		{	// add leading space
-			rawStr.append(" ");
-			linkedStr.append(" ");
-			
-			// possibly add number
+		{	// add leading marker
 			if(ordered)
 			{	rawStr.append(count+") ");
 				linkedStr.append(count+") ");
+			}
+			else
+			{	rawStr.append("- ");
+				linkedStr.append("- ");
 			}
 			count++;
 			
 			// get text and links
 			processAnyElement(listElt,rawStr,linkedStr);
 			
-			// possibly remove the last new line character
+			// possibly add a new line character
 			if(rawStr.length()>0)
 			{	char c = rawStr.charAt(rawStr.length()-1);
-				if(c=='\n')
-				{	rawStr.deleteCharAt(rawStr.length()-1);
-					linkedStr.deleteCharAt(linkedStr.length()-1);
+				if(c!='\n')
+				{	rawStr.append("\n");
+					linkedStr.append("\n");
 				}
-			}
-			
-			// add final separator
-			rawStr.append(";");
-			linkedStr.append(";");
-		}
-		
-		// possibly remove last separator
-		if(rawStr.length()>0)
-		{	char c = rawStr.charAt(rawStr.length()-1);
-			if(c==';')
-			{	rawStr.deleteCharAt(rawStr.length()-1);
-				linkedStr.deleteCharAt(linkedStr.length()-1);
-				c = rawStr.charAt(rawStr.length()-1);
-				if(c!='.')
-				{	rawStr.append(".");
-					linkedStr.append(".");
-				}
-				rawStr.append("\n");
-				linkedStr.append("\n");
 			}
 		}
 	}
@@ -804,25 +774,13 @@ public abstract class ArticleReader
 	 * 		Current text with hyperlinks.
 	 */
 	protected void processDescriptionListElement(Element element, StringBuilder rawStr, StringBuilder linkedStr)
-	{	// possibly remove the last new line character
-		char c = rawStr.charAt(rawStr.length()-1);
-		if(c=='\n')
-		{	rawStr.deleteCharAt(rawStr.length()-1);
-			linkedStr.deleteCharAt(linkedStr.length()-1);
-		}
-		
-		// possibly remove preceeding space
-		c = rawStr.charAt(rawStr.length()-1);
-		if(c==' ')
-		{	rawStr.deleteCharAt(rawStr.length()-1);
-			linkedStr.deleteCharAt(linkedStr.length()-1);
-		}
-		
-		// possibly add a column
-		c = rawStr.charAt(rawStr.length()-1);
-		if(c!='.' && c!=':' && c!=';')
-		{	rawStr.append(":");
-			linkedStr.append(":");
+	{	// possibly add a new line character right before
+		if(rawStr.length()>0)
+		{	char c = rawStr.charAt(rawStr.length()-1);
+			if(c!='\n')
+			{	rawStr.append("\n");
+				linkedStr.append("\n");
+			}
 		}
 		
 		// process each list element
@@ -832,35 +790,23 @@ public abstract class ArticleReader
 		if(it.hasNext())
 			tempElt = it.next();
 		while(tempElt!=null)
-		{	// add leading space
-			rawStr.append(" ");
-			linkedStr.append(" ");
+		{	// add leading mark
+			rawStr.append("- ");
+			linkedStr.append("- ");
 			
 			// get term
 			String tempName = tempElt.tagName();
-			if(tempName.equals(HtmlNames.ELT_DT))
+			if(tempName.equalsIgnoreCase(HtmlNames.ELT_DT))
 			{	// process term
 				processAnyElement(tempElt,rawStr,linkedStr);
 				
-				// possibly remove the last new line character
-				c = rawStr.charAt(rawStr.length()-1);
-				if(c=='\n')
-				{	rawStr.deleteCharAt(rawStr.length()-1);
-					linkedStr.deleteCharAt(linkedStr.length()-1);
-				}
-				
-				// possibly remove preceeding space
-				c = rawStr.charAt(rawStr.length()-1);
-				if(c==' ')
-				{	rawStr.deleteCharAt(rawStr.length()-1);
-					linkedStr.deleteCharAt(linkedStr.length()-1);
-				}
-				
 				// possibly add a column and space
-				c = rawStr.charAt(rawStr.length()-1);
-				if(c!='.' && c!=':' && c!=';')
-				{	rawStr.append(": ");
-					linkedStr.append(": ");
+				if(rawStr.length()>0)
+				{	char c = rawStr.charAt(rawStr.length()-1);
+					if(c!='.' && c!=':' && c!=';')
+					{	rawStr.append(": ");
+						linkedStr.append(": ");
+					}
 				}
 				
 				// go to next element
@@ -875,25 +821,13 @@ public abstract class ArticleReader
 			{	// process term
 				processAnyElement(tempElt,rawStr,linkedStr);
 				
-				// possibly remove the last new line character
-				c = rawStr.charAt(rawStr.length()-1);
-				if(c=='\n')
-				{	rawStr.deleteCharAt(rawStr.length()-1);
-					linkedStr.deleteCharAt(linkedStr.length()-1);
-				}
-				
-				// possibly remove preceeding space
-				c = rawStr.charAt(rawStr.length()-1);
-				if(c==' ')
-				{	rawStr.deleteCharAt(rawStr.length()-1);
-					linkedStr.deleteCharAt(linkedStr.length()-1);
-				}
-				
-				// possibly add a semi-column
-				c = rawStr.charAt(rawStr.length()-1);
-				if(c!='.' && c!=':' && c!=';')
-				{	rawStr.append(";");
-					linkedStr.append(";");
+				// possibly add a new line character
+				if(rawStr.length()>0)
+				{	char c = rawStr.charAt(rawStr.length()-1);
+					if(c!='\n')
+					{	rawStr.append("\n");
+						linkedStr.append("\n");
+					}
 				}
 				
 				// go to next element
@@ -902,20 +836,6 @@ public abstract class ArticleReader
 				else
 					tempElt = null;
 			}
-		}
-		
-		// possibly remove last separator
-		c = rawStr.charAt(rawStr.length()-1);
-		if(c==';')
-		{	rawStr.deleteCharAt(rawStr.length()-1);
-			linkedStr.deleteCharAt(linkedStr.length()-1);
-			c = rawStr.charAt(rawStr.length()-1);
-			if(c!='.')
-			{	rawStr.append(".");
-				linkedStr.append(".");
-			}
-			rawStr.append("\n");
-			linkedStr.append("\n");
 		}
 	}
 	
@@ -934,7 +854,7 @@ public abstract class ArticleReader
 	protected boolean processDivisionElement(Element element, StringBuilder rawStr, StringBuilder linkedStr)
 	{	boolean result = true;
 		
-		processAnyElement(element, rawStr, linkedStr);
+		processParagraphElement(element, rawStr, linkedStr);
 		
 		return result;
 	}
@@ -1049,577 +969,574 @@ public abstract class ArticleReader
 				String eltName = element.tag().getName();
 				
 				// hyperlinks: must be included in the linked version of the article
-				if(eltName.equals(HtmlNames.ELT_A))
+				if(eltName.equalsIgnoreCase(HtmlNames.ELT_A))
 				{	processHyperlinkElement(element,rawStr,linkedStr);
 				}
 				
 				// abbreviations and acronyms: ignored
-				else if(eltName.equals(HtmlNames.ELT_ABBR) || eltName.equals(HtmlNames.ELT_ACRONYM))
+				else if(eltName.equalsIgnoreCase(HtmlNames.ELT_ABBR) || eltName.equalsIgnoreCase(HtmlNames.ELT_ACRONYM))
 				{	processAbbreviationElement(element,rawStr,linkedStr);
 				}
 				
 				// author's address: ignored
-				else if(eltName.equals(HtmlNames.ELT_ADDRESS))
+				else if(eltName.equalsIgnoreCase(HtmlNames.ELT_ADDRESS))
 				{	// we could try to use that to retrieve the authors' names
 					// but this seems too troublesome, because the content is not structured at all
 				}
 				
 				// applet: no use for us
-				else if(eltName.equals(HtmlNames.ELT_APPLET))
+				else if(eltName.equalsIgnoreCase(HtmlNames.ELT_APPLET))
 				{	// nothing to do here
 				}
 				
 				// image zone: no use for us
-				else if(eltName.equals(HtmlNames.ELT_AREA))
+				else if(eltName.equalsIgnoreCase(HtmlNames.ELT_AREA))
 				{	// nothing to do here
 				}
 				
 				// article: considered as a div
-				else if(eltName.equals(HtmlNames.ELT_ARTICLE))
+				else if(eltName.equalsIgnoreCase(HtmlNames.ELT_ARTICLE))
 				{	processDivisionElement(element, rawStr, linkedStr);
 				}
 				
 				// aside: should be ignored, since it is secondary content
-				else if(eltName.equals(HtmlNames.ELT_ASIDE))
+				else if(eltName.equalsIgnoreCase(HtmlNames.ELT_ASIDE))
 				{	// nothing to do here
 				}
 				
 				// audio: no use for us
-				else if(eltName.equals(HtmlNames.ELT_AUDIO))
+				else if(eltName.equalsIgnoreCase(HtmlNames.ELT_AUDIO))
 				{	// nothing to do here
 				}
 				
 				// bold: just some text
-				else if(eltName.equals(HtmlNames.ELT_B)) //TODO 10
-				{	processAnyElement(textElement, rawStr, linkedStr);
+				else if(eltName.equalsIgnoreCase(HtmlNames.ELT_B)) //TODO 10
+				{	processAnyElement(element, rawStr, linkedStr);
 				}
 				
 				// base: no use for us
-				else if(eltName.equals(HtmlNames.ELT_BASE))
+				else if(eltName.equalsIgnoreCase(HtmlNames.ELT_BASE))
 				{	// nothing to do here
 				}
 				
 				// basefont: no use for us
-				else if(eltName.equals(HtmlNames.ELT_BASEFONT))
+				else if(eltName.equalsIgnoreCase(HtmlNames.ELT_BASEFONT))
 				{	// nothing to do here
 				}
 				
 				// text orientation: just text
-				else if(eltName.equals(HtmlNames.ELT_BDI) || eltName.equals(HtmlNames.ELT_BDO))
-				{	processAnyElement(textElement, rawStr, linkedStr);
+				else if(eltName.equalsIgnoreCase(HtmlNames.ELT_BDI) || eltName.equalsIgnoreCase(HtmlNames.ELT_BDO))
+				{	processAnyElement(element, rawStr, linkedStr);
 				}
 				
 				// big: just some text
-				else if(eltName.equals(HtmlNames.ELT_BIG))
-				{	processAnyElement(textElement, rawStr, linkedStr);
+				else if(eltName.equalsIgnoreCase(HtmlNames.ELT_BIG))
+				{	processAnyElement(element, rawStr, linkedStr);
 				}
 				
 				// blinking text: just text
-				else if(eltName.equals(HtmlNames.ELT_BLINK))
-				{	processAnyElement(textElement, rawStr, linkedStr);
+				else if(eltName.equalsIgnoreCase(HtmlNames.ELT_BLINK))
+				{	processAnyElement(element, rawStr, linkedStr);
 				}
 				
 				// quotes: processed recursively
-				else if(eltName.equals(HtmlNames.ELT_BLOCKQUOTE) || eltName.equals(HtmlNames.ELT_QUOTE) || eltName.equals(HtmlNames.ELT_Q))
+				else if(eltName.equalsIgnoreCase(HtmlNames.ELT_BLOCKQUOTE) || eltName.equalsIgnoreCase(HtmlNames.ELT_QUOTE) || eltName.equalsIgnoreCase(HtmlNames.ELT_Q))
 				{	processQuoteElement(element,rawStr,linkedStr);
 				}
 				
 				// document body: considered as a div
-				else if(eltName.equals(HtmlNames.ELT_BODY)) //TODO 20
+				else if(eltName.equalsIgnoreCase(HtmlNames.ELT_BODY)) //TODO 20
 				{	processDivisionElement(element, rawStr, linkedStr);
 				}
 				
 				// line break: insert a newline
-				else if(eltName.equals(HtmlNames.ELT_BR))
+				else if(eltName.equalsIgnoreCase(HtmlNames.ELT_BR))
 				{	processLinebreakElement(element, rawStr, linkedStr);
 				}
 				
 				// form button: no use for us
-				else if(eltName.equals(HtmlNames.ELT_BUTTON))
+				else if(eltName.equalsIgnoreCase(HtmlNames.ELT_BUTTON))
 				{	// nothing to do
 				}
 				
 				// graphic canvas: no use for us
-				else if(eltName.equals(HtmlNames.ELT_CANVAS))
+				else if(eltName.equalsIgnoreCase(HtmlNames.ELT_CANVAS))
 				{	// nothing to do
 				}
 
 				// table caption: like a paragraph
-				else if(eltName.equals(HtmlNames.ELT_CAPTION))
+				else if(eltName.equalsIgnoreCase(HtmlNames.ELT_CAPTION))
 				{	processParagraphElement(element, rawStr, linkedStr);
 				}
 
 				// center: no use for us
-				else if(eltName.equals(HtmlNames.ELT_CENTER))
+				else if(eltName.equalsIgnoreCase(HtmlNames.ELT_CENTER))
 				{	// nothing to do
 				}
 				
 				// citation or title of a work: just text
-				else if(eltName.equals(HtmlNames.ELT_CITE))
-				{	processAnyElement(textElement, rawStr, linkedStr);
+				else if(eltName.equalsIgnoreCase(HtmlNames.ELT_CITE))
+				{	processAnyElement(element, rawStr, linkedStr);
 				}
 				
 				// source code: we don't want that here
-				else if(eltName.equals(HtmlNames.ELT_CODE))
+				else if(eltName.equalsIgnoreCase(HtmlNames.ELT_CODE))
 				{	// nothing to do
 				}
 				
 				// column properties: no use for us
-				else if(eltName.equals(HtmlNames.ELT_COL) || eltName.equals(HtmlNames.ELT_COLGROUP))
+				else if(eltName.equalsIgnoreCase(HtmlNames.ELT_COL) || eltName.equalsIgnoreCase(HtmlNames.ELT_COLGROUP))
 				{	// nothing to do
 				}
 				
 				// Web component content: no use for us
-				else if(eltName.equals(HtmlNames.ELT_CONTENT)) //TODO 30
+				else if(eltName.equalsIgnoreCase(HtmlNames.ELT_CONTENT)) //TODO 30
 				{	// nothing to do
 				}
 				
 				// structured data: just get the text
-				else if(eltName.equals(HtmlNames.ELT_DATA))
-				{	processAnyElement(textElement, rawStr, linkedStr);
+				else if(eltName.equalsIgnoreCase(HtmlNames.ELT_DATA))
+				{	processAnyElement(element, rawStr, linkedStr);
 				}
 				
 				// input options: no use for us
-				else if(eltName.equals(HtmlNames.ELT_DATALIST))
+				else if(eltName.equalsIgnoreCase(HtmlNames.ELT_DATALIST))
 				{	// nothing to do
 				}
 				
 				// definition in a definition list: already processed in DL
-				else if(eltName.equals(HtmlNames.ELT_DD))
+				else if(eltName.equalsIgnoreCase(HtmlNames.ELT_DD))
 				{	// nothing to do
 				}
 				
 				// Web component decorator: ignored
-				else if(eltName.equals(HtmlNames.ELT_DECORATOR))
+				else if(eltName.equalsIgnoreCase(HtmlNames.ELT_DECORATOR))
 				{	// nothing to do
 				}
 				
 				// deleted text: ignored
-				else if(eltName.equals(HtmlNames.ELT_DEL))
+				else if(eltName.equalsIgnoreCase(HtmlNames.ELT_DEL))
 				{	// nothing to do
 				}
 				
 				// details (hide/show): just get the text
-				else if(eltName.equals(HtmlNames.ELT_DETAILS))
-				{	processAnyElement(textElement, rawStr, linkedStr);
+				else if(eltName.equalsIgnoreCase(HtmlNames.ELT_DETAILS))
+				{	processAnyElement(element, rawStr, linkedStr);
 				}
 				
 				// term definition: like an abbreviation
-				else if(eltName.equals(HtmlNames.ELT_DFN))
+				else if(eltName.equalsIgnoreCase(HtmlNames.ELT_DFN))
 				{	processAbbreviationElement(element, rawStr, linkedStr);
 				}
 				
 				// dialog box: ignored
-				else if(eltName.equals(HtmlNames.ELT_DIALOG))
+				else if(eltName.equalsIgnoreCase(HtmlNames.ELT_DIALOG))
 				{	// nothing to do
 				}
 				
 				// directory list: ignored
-				else if(eltName.equals(HtmlNames.ELT_DIR))
+				else if(eltName.equalsIgnoreCase(HtmlNames.ELT_DIR))
 				{	// nothing to do
 				}
 				
 				// division: processed recursively
-				else if(eltName.equals(HtmlNames.ELT_DIV)) //TODO 40
+				else if(eltName.equalsIgnoreCase(HtmlNames.ELT_DIV)) //TODO 40
 				{	processDivisionElement(element,rawStr,linkedStr);
 				}
 				
 				// definition list: process each item
-				else if(eltName.equals(HtmlNames.ELT_DL))
+				else if(eltName.equalsIgnoreCase(HtmlNames.ELT_DL))
 				{	processDescriptionListElement(element,rawStr,linkedStr);
 				}
 				
 				// term in a definition list: already processed in DL
-				else if(eltName.equals(HtmlNames.ELT_DT))
+				else if(eltName.equalsIgnoreCase(HtmlNames.ELT_DT))
 				{	// nothing to do
 				}
 				
 				// emphasis: just some text
-				else if(eltName.equals(HtmlNames.ELT_EM))
-				{	processAnyElement(textElement, rawStr, linkedStr);
+				else if(eltName.equalsIgnoreCase(HtmlNames.ELT_EM))
+				{	processAnyElement(element, rawStr, linkedStr);
 				}
 				
 				// element: ignored
-				else if(eltName.equals(HtmlNames.ELT_ELEMENT))
+				else if(eltName.equalsIgnoreCase(HtmlNames.ELT_ELEMENT))
 				{	// nothing to do
 				}
 				
 				// embedded application: ignored
-				else if(eltName.equals(HtmlNames.ELT_EMBED))
+				else if(eltName.equalsIgnoreCase(HtmlNames.ELT_EMBED))
 				{	// nothing to do
 				}
 				
 				// form groups: ignored
-				else if(eltName.equals(HtmlNames.ELT_FIELDSET))
+				else if(eltName.equalsIgnoreCase(HtmlNames.ELT_FIELDSET))
 				{	// nothing to do
 				}
 				
 				// figure caption: ignored
-				else if(eltName.equals(HtmlNames.ELT_FIGCAPTION))
+				else if(eltName.equalsIgnoreCase(HtmlNames.ELT_FIGCAPTION))
 				{	// nothing to do
 				}
 				
 				// figure: ignored
-				else if(eltName.equals(HtmlNames.ELT_FIGURE))
+				else if(eltName.equalsIgnoreCase(HtmlNames.ELT_FIGURE))
 				{	// nothing to do
 				}
 				
 				// font: ignored
-				else if(eltName.equals(HtmlNames.ELT_FONT))
+				else if(eltName.equalsIgnoreCase(HtmlNames.ELT_FONT))
 				{	// nothing to do
 				}
 				
 				// footer: treated like a div
-				else if(eltName.equals(HtmlNames.ELT_FOOTER)) //TODO 50
+				else if(eltName.equalsIgnoreCase(HtmlNames.ELT_FOOTER)) //TODO 50
 				{	processDivisionElement(element, rawStr, linkedStr);
 					//TODO or maybe should be ignored...
 				}
 				
 				// form: ignored
-				else if(eltName.equals(HtmlNames.ELT_FORM))
+				else if(eltName.equalsIgnoreCase(HtmlNames.ELT_FORM))
 				{	// nothing to do
 				}
 				
 				// frame/frameset: ignored
-				else if(eltName.equals(HtmlNames.ELT_FRAME) || eltName.equals(HtmlNames.ELT_FRAMESET))
+				else if(eltName.equalsIgnoreCase(HtmlNames.ELT_FRAME) || eltName.equalsIgnoreCase(HtmlNames.ELT_FRAMESET))
 				{	// nothing to do
 				}
 				
 				// section headers: treated like paragraphs
-				else if(eltName.equals(HtmlNames.ELT_H1) || eltName.equals(HtmlNames.ELT_H2) || eltName.equals(HtmlNames.ELT_H3)
-					|| eltName.equals(HtmlNames.ELT_H4) || eltName.equals(HtmlNames.ELT_H5) || eltName.equals(HtmlNames.ELT_H6))
+				else if(eltName.equalsIgnoreCase(HtmlNames.ELT_H1) || eltName.equalsIgnoreCase(HtmlNames.ELT_H2) || eltName.equalsIgnoreCase(HtmlNames.ELT_H3)
+					|| eltName.equalsIgnoreCase(HtmlNames.ELT_H4) || eltName.equalsIgnoreCase(HtmlNames.ELT_H5) || eltName.equalsIgnoreCase(HtmlNames.ELT_H6))
 				{	processParagraphElement(element,rawStr,linkedStr);
 				}
 				
 				// head: ignored
-				else if(eltName.equals(HtmlNames.ELT_HEAD)) //TODO 60
+				else if(eltName.equalsIgnoreCase(HtmlNames.ELT_HEAD)) //TODO 60
 				{	// nothing to do
 				}
 				
 				// section header: treated like a div
-				else if(eltName.equals(HtmlNames.ELT_HEADER))
+				else if(eltName.equalsIgnoreCase(HtmlNames.ELT_HEADER))
 				{	processDivisionElement(element, rawStr, linkedStr);
 					//TODO or maybe should be ignored...
 				}
 				
 				// title group: ignored
-				else if(eltName.equals(HtmlNames.ELT_HGROUP))
+				else if(eltName.equalsIgnoreCase(HtmlNames.ELT_HGROUP))
 				{	// nothing to do
 				}
 				
 				// thematic break: insert a newline
-				else if(eltName.equals(HtmlNames.ELT_HR))
+				else if(eltName.equalsIgnoreCase(HtmlNames.ELT_HR))
 				{	processLinebreakElement(element, rawStr, linkedStr);
 				}
 				
 				// document: treat like a div
-				else if(eltName.equals(HtmlNames.ELT_HTML))
+				else if(eltName.equalsIgnoreCase(HtmlNames.ELT_HTML))
 				{	processDivisionElement(element, rawStr, linkedStr);
 				}
 
 				// italic: just some text
-				else if(eltName.equals(HtmlNames.ELT_I))
-				{	processAnyElement(textElement, rawStr, linkedStr);
+				else if(eltName.equalsIgnoreCase(HtmlNames.ELT_I))
+				{	processAnyElement(element, rawStr, linkedStr);
 				}
 
 				// inline frame: ignored
-				else if(eltName.equals(HtmlNames.ELT_IFRAME))
+				else if(eltName.equalsIgnoreCase(HtmlNames.ELT_IFRAME))
 				{	// nothing to do
 				}
 				
 				// image: ignored
-				else if(eltName.equals(HtmlNames.ELT_IMAGE))
+				else if(eltName.equalsIgnoreCase(HtmlNames.ELT_IMAGE))
 				{	// nothing to do
 				}
 				
 				// input control: ignored
-				else if(eltName.equals(HtmlNames.ELT_INPUT))
+				else if(eltName.equalsIgnoreCase(HtmlNames.ELT_INPUT))
 				{	// nothing to do
 				}
 				
 				// inserted text: just text
-				else if(eltName.equals(HtmlNames.ELT_INS))
-				{	processAnyElement(textElement, rawStr, linkedStr);
+				else if(eltName.equalsIgnoreCase(HtmlNames.ELT_INS))
+				{	processAnyElement(element, rawStr, linkedStr);
 				}
 				
 				// input text: ignored
-				else if(eltName.equals(HtmlNames.ELT_ISINDEX)) //TODO 70
+				else if(eltName.equalsIgnoreCase(HtmlNames.ELT_ISINDEX)) //TODO 70
 				{	// nothing to do
 				}
 				
 				// keyboard input: ignored
-				else if(eltName.equals(HtmlNames.ELT_KBD))
+				else if(eltName.equalsIgnoreCase(HtmlNames.ELT_KBD))
 				{	// nothing to do
 				}
 				
 				// keygen form field: ignored
-				else if(eltName.equals(HtmlNames.ELT_KEYGEN))
+				else if(eltName.equalsIgnoreCase(HtmlNames.ELT_KEYGEN))
 				{	// nothing to do
 				}
 				
 				// input label: ignored
-				else if(eltName.equals(HtmlNames.ELT_LABEL))
+				else if(eltName.equalsIgnoreCase(HtmlNames.ELT_LABEL))
 				{	// nothing to do
 				}
 				
 				// fieldset legend: ignored
-				else if(eltName.equals(HtmlNames.ELT_LEGEND))
+				else if(eltName.equalsIgnoreCase(HtmlNames.ELT_LEGEND))
 				{	// nothing to do
 				}
 				
 				// list item: already processed in OL/UL
-				else if(eltName.equals(HtmlNames.ELT_LI))
+				else if(eltName.equalsIgnoreCase(HtmlNames.ELT_LI))
 				{	// nothing to do
 				}
 	
 				// stylesheet link: ignored
-				else if(eltName.equals(HtmlNames.ELT_LINK))
+				else if(eltName.equalsIgnoreCase(HtmlNames.ELT_LINK))
 				{	// nothing to do
 				}
 				
 				// listing: ignored
-				else if(eltName.equals(HtmlNames.ELT_LISTING))
+				else if(eltName.equalsIgnoreCase(HtmlNames.ELT_LISTING))
 				{	// nothing to do
 				}
 				
 				// main content: treat like a div
-				else if(eltName.equals(HtmlNames.ELT_MAIN))
+				else if(eltName.equalsIgnoreCase(HtmlNames.ELT_MAIN))
 				{	processDivisionElement(element, rawStr, linkedStr);
 				}
 				
 				// image map: ignored
-				else if(eltName.equals(HtmlNames.ELT_MAP))
+				else if(eltName.equalsIgnoreCase(HtmlNames.ELT_MAP))
 				{	// nothing to do
 				}
 				
 				// marked text: just text
-				else if(eltName.equals(HtmlNames.ELT_MARK)) //TODO 80
-				{	processAnyElement(textElement, rawStr, linkedStr);
+				else if(eltName.equalsIgnoreCase(HtmlNames.ELT_MARK)) //TODO 80
+				{	processAnyElement(element, rawStr, linkedStr);
 				}
 				
 				// menu & menuitem: ignored
-				else if(eltName.equals(HtmlNames.ELT_MENU) || eltName.equals(HtmlNames.ELT_MENUITEM))
+				else if(eltName.equalsIgnoreCase(HtmlNames.ELT_MENU) || eltName.equalsIgnoreCase(HtmlNames.ELT_MENUITEM))
 				{	// nothing to do
 				}
 				
 				// document metadata: ignored
-				else if(eltName.equals(HtmlNames.ELT_META))
+				else if(eltName.equalsIgnoreCase(HtmlNames.ELT_META))
 				{	// nothing to do
 				}
 				
 				// form meter: ignored
-				else if(eltName.equals(HtmlNames.ELT_METER))
+				else if(eltName.equalsIgnoreCase(HtmlNames.ELT_METER))
 				{	// nothing to do
 				}
 				
 				// navigation links: ignored
-				else if(eltName.equals(HtmlNames.ELT_NAV))
+				else if(eltName.equalsIgnoreCase(HtmlNames.ELT_NAV))
 				{	// nothing to do
 				}
 				
 				// no frames alternative: just text
-				else if(eltName.equals(HtmlNames.ELT_NOFRAMES))
-				{	processAnyElement(textElement, rawStr, linkedStr);
+				else if(eltName.equalsIgnoreCase(HtmlNames.ELT_NOFRAMES))
+				{	processAnyElement(element, rawStr, linkedStr);
 				}
 				
 				// no embed alternative: just text
-				else if(eltName.equals(HtmlNames.ELT_NOEMBED))
-				{	processAnyElement(textElement, rawStr, linkedStr);
+				else if(eltName.equalsIgnoreCase(HtmlNames.ELT_NOEMBED))
+				{	processAnyElement(element, rawStr, linkedStr);
 				}
 				
 				// no script alternative: just text
-				else if(eltName.equals(HtmlNames.ELT_NOSCRIPT))
-				{	processAnyElement(textElement, rawStr, linkedStr);
+				else if(eltName.equalsIgnoreCase(HtmlNames.ELT_NOSCRIPT))
+				{	processAnyElement(element, rawStr, linkedStr);
 				}
 				
 				// multimedia objects: ignored
-				else if(eltName.equals(HtmlNames.ELT_OBJECT))
+				else if(eltName.equalsIgnoreCase(HtmlNames.ELT_OBJECT))
 				{	// nothing to do
 				}
 				
 				// various list types
-				else if(eltName.equals(HtmlNames.ELT_OL)) //TODO 90
+				else if(eltName.equalsIgnoreCase(HtmlNames.ELT_OL)) //TODO 90
 				{	processListElement(element,rawStr,linkedStr,true);
 				}
 
 				// form options: ignored
-				else if(eltName.equals(HtmlNames.ELT_OPTGROUP) || eltName.equals(HtmlNames.ELT_OPTION))
+				else if(eltName.equalsIgnoreCase(HtmlNames.ELT_OPTGROUP) || eltName.equalsIgnoreCase(HtmlNames.ELT_OPTION))
 				{	// nothing to do
 				}
 				
 				// output: ignored
-				else if(eltName.equals(HtmlNames.ELT_OUTPUT))
+				else if(eltName.equalsIgnoreCase(HtmlNames.ELT_OUTPUT))
 				{	// nothing to do
 				}
 				
 				// paragraph: processed recursively
-				else if(eltName.equals(HtmlNames.ELT_P))
+				else if(eltName.equalsIgnoreCase(HtmlNames.ELT_P))
 				{	processParagraphElement(element,rawStr,linkedStr);
 				}
 				
 				// object parameter: ignored
-				else if(eltName.equals(HtmlNames.ELT_PARAM))
+				else if(eltName.equalsIgnoreCase(HtmlNames.ELT_PARAM))
 				{	// nothing to do
 				}
 				
 				// plain text: just text
-				else if(eltName.equals(HtmlNames.ELT_PLAINTEXT) || eltName.equals(HtmlNames.ELT_PRE))
-				{	processAnyElement(textElement, rawStr, linkedStr);
+				else if(eltName.equalsIgnoreCase(HtmlNames.ELT_PLAINTEXT) || eltName.equalsIgnoreCase(HtmlNames.ELT_PRE))
+				{	processAnyElement(element, rawStr, linkedStr);
 				}
 				
 				// progress bar: ignored
-				else if(eltName.equals(HtmlNames.ELT_PROGRESS))
+				else if(eltName.equalsIgnoreCase(HtmlNames.ELT_PROGRESS))
 				{	// nothing to do
 				}
 				
 				// ruby stuff: ignored
-				else if(eltName.equals(HtmlNames.ELT_RP) || eltName.equals(HtmlNames.ELT_RT)  //TODO 100
-					|| eltName.equals(HtmlNames.ELT_RTC) || eltName.equals(HtmlNames.ELT_RUBY))
+				else if(eltName.equalsIgnoreCase(HtmlNames.ELT_RP) || eltName.equalsIgnoreCase(HtmlNames.ELT_RT)  //TODO 100
+					|| eltName.equalsIgnoreCase(HtmlNames.ELT_RTC) || eltName.equalsIgnoreCase(HtmlNames.ELT_RUBY))
 				{	// nothing to do
 				}
 				
 				// strikethrough: ignored
-				else if(eltName.equals(HtmlNames.ELT_S) || eltName.equals(HtmlNames.ELT_STRIKE))
+				else if(eltName.equalsIgnoreCase(HtmlNames.ELT_S) || eltName.equalsIgnoreCase(HtmlNames.ELT_STRIKE))
 				{	// nothing to do
 				}
 				
 				// sample output of computer program: just text
-				else if(eltName.equals(HtmlNames.ELT_SAMP))
+				else if(eltName.equalsIgnoreCase(HtmlNames.ELT_SAMP))
 				{	// nothing to do
 				}
 				
 				// script: ignored
-				else if(eltName.equals(HtmlNames.ELT_SCRIPT))
+				else if(eltName.equalsIgnoreCase(HtmlNames.ELT_SCRIPT))
 				{	// nothing to do
 				}
 				
 				// section: treated as a div
-				else if(eltName.equals(HtmlNames.ELT_SECTION))
+				else if(eltName.equalsIgnoreCase(HtmlNames.ELT_SECTION))
 				{	processDivisionElement(element, rawStr, linkedStr);
 				}
 				
 				// form drop-down list: ignored
-				else if(eltName.equals(HtmlNames.ELT_SELECT))
+				else if(eltName.equalsIgnoreCase(HtmlNames.ELT_SELECT))
 				{	// nothing to do
 				}
 				
 				// small: just text
-				else if(eltName.equals(HtmlNames.ELT_SMALL))
+				else if(eltName.equalsIgnoreCase(HtmlNames.ELT_SMALL))
 				{	processAbbreviationElement(element, rawStr, linkedStr);
 				}
 				
 				// audio source: ignored
-				else if(eltName.equals(HtmlNames.ELT_SOURCE)) //TODO 110
+				else if(eltName.equalsIgnoreCase(HtmlNames.ELT_SOURCE)) //TODO 110
 				{	// nothing to do
 				}
 				
 				// spacer: just put a space
-				else if(eltName.equals(HtmlNames.ELT_SPACER))
+				else if(eltName.equalsIgnoreCase(HtmlNames.ELT_SPACER))
 				{	processSpacerElement(element, rawStr, linkedStr);
 				}
 				
 				// span: processed recursively
-				else if(eltName.equals(HtmlNames.ELT_SPAN))
+				else if(eltName.equalsIgnoreCase(HtmlNames.ELT_SPAN))
 				{	processSpanElement(element,rawStr,linkedStr);
 				}
 				
 				// strong: just text
-				else if(eltName.equals(HtmlNames.ELT_STRONG))
-				{	processAnyElement(textElement, rawStr, linkedStr);
+				else if(eltName.equalsIgnoreCase(HtmlNames.ELT_STRONG))
+				{	processAnyElement(element, rawStr, linkedStr);
 				}
 				
 				// document style: ignored
-				else if(eltName.equals(HtmlNames.ELT_STYLE))
+				else if(eltName.equalsIgnoreCase(HtmlNames.ELT_STYLE))
 				{	// nothing to do
 				}
 				
 				// sub/superscripts: ignored
-				else if(eltName.equals(HtmlNames.ELT_SUB) || eltName.equals(HtmlNames.ELT_SUP))
+				else if(eltName.equalsIgnoreCase(HtmlNames.ELT_SUB) || eltName.equalsIgnoreCase(HtmlNames.ELT_SUP))
 				{	// nothing to do here
 				}
 				
 				// details summary: ignored
-				else if(eltName.equals(HtmlNames.ELT_SUMMARY))
+				else if(eltName.equalsIgnoreCase(HtmlNames.ELT_SUMMARY))
 				{	// nothing to do
 				}
 				
 				// table: approximately represented as text
-				else if(eltName.equals(HtmlNames.ELT_TABLE))
+				else if(eltName.equalsIgnoreCase(HtmlNames.ELT_TABLE))
 				{	processTableElement(element, rawStr, linkedStr);
 				}
 				
 				// table-related elements: already processed in the table method
-				else if(eltName.equals(HtmlNames.ELT_THEAD) || eltName.equals(HtmlNames.ELT_TBODY) || eltName.equals(HtmlNames.ELT_TFOOT) //TODO 121
-					|| eltName.equals(HtmlNames.ELT_TH)|| eltName.equals(HtmlNames.ELT_TR)|| eltName.equals(HtmlNames.ELT_TD))
+				else if(eltName.equalsIgnoreCase(HtmlNames.ELT_THEAD) || eltName.equalsIgnoreCase(HtmlNames.ELT_TBODY) || eltName.equalsIgnoreCase(HtmlNames.ELT_TFOOT) //TODO 121
+					|| eltName.equalsIgnoreCase(HtmlNames.ELT_TH)|| eltName.equalsIgnoreCase(HtmlNames.ELT_TR)|| eltName.equalsIgnoreCase(HtmlNames.ELT_TD))
 				{	// nothing to do
 				}
 				
 				// template: ignored
-				else if(eltName.equals(HtmlNames.ELT_TEMPLATE))
+				else if(eltName.equalsIgnoreCase(HtmlNames.ELT_TEMPLATE))
 				{	// nothing to do
 				}
 				
 				// input text area: ignored
-				else if(eltName.equals(HtmlNames.ELT_TEXTAREA))
+				else if(eltName.equalsIgnoreCase(HtmlNames.ELT_TEXTAREA))
 				{	// nothing to do
 				}
 				
 				// time/date: text
-				else if(eltName.equals(HtmlNames.ELT_TIME))
-				{	processAnyElement(textElement, rawStr, linkedStr);
+				else if(eltName.equalsIgnoreCase(HtmlNames.ELT_TIME))
+				{	processAnyElement(element, rawStr, linkedStr);
 				}
 				
 				// title: treated like a pargraph
-				else if(eltName.equals(HtmlNames.ELT_TITLE))
+				else if(eltName.equalsIgnoreCase(HtmlNames.ELT_TITLE))
 				{	processParagraphElement(element, rawStr, linkedStr);
 				}
 				
 				// media track: ignored
-				else if(eltName.equals(HtmlNames.ELT_TITLE))
+				else if(eltName.equalsIgnoreCase(HtmlNames.ELT_TITLE))
 				{	// nothing to do
 				}
 				
 				// teletype text: just text
-				else if(eltName.equals(HtmlNames.ELT_TT)) //TODO 130
-				{	processAnyElement(textElement, rawStr, linkedStr);
+				else if(eltName.equalsIgnoreCase(HtmlNames.ELT_TT)) //TODO 130
+				{	processAnyElement(element, rawStr, linkedStr);
 				}
 				
 				// special formatting: just text
-				else if(eltName.equals(HtmlNames.ELT_U))
-				{	processAnyElement(textElement, rawStr, linkedStr);
+				else if(eltName.equalsIgnoreCase(HtmlNames.ELT_U))
+				{	processAnyElement(element, rawStr, linkedStr);
 				}
 				
 				// unordered list: each item is processed
-				else if(eltName.equals(HtmlNames.ELT_UL))
+				else if(eltName.equalsIgnoreCase(HtmlNames.ELT_UL))
 				{	processListElement(element,rawStr,linkedStr,false);
 				}
 				
 				// variable definition: just text
-				else if(eltName.equals(HtmlNames.ELT_VAR))
-				{	processAnyElement(textElement, rawStr, linkedStr);
+				else if(eltName.equalsIgnoreCase(HtmlNames.ELT_VAR))
+				{	processAnyElement(element, rawStr, linkedStr);
 				}
 				
 				// video: ignored
-				else if(eltName.equals(HtmlNames.ELT_VIDEO))
+				else if(eltName.equalsIgnoreCase(HtmlNames.ELT_VIDEO))
 				{	// nothing to do
 				}
 				
 				// word break opportuinies: just text
-				else if(eltName.equals(HtmlNames.ELT_WBR))
-				{	processAnyElement(textElement, rawStr, linkedStr);
+				else if(eltName.equalsIgnoreCase(HtmlNames.ELT_WBR))
+				{	processAnyElement(element, rawStr, linkedStr);
 				}
 				
 				// xmp: ignored
-				else if(eltName.equals(HtmlNames.ELT_XMP)) //TODO 136
+				else if(eltName.equalsIgnoreCase(HtmlNames.ELT_XMP)) //TODO 136
 				{	// nothing to do
 				}
 				
-				// other elements are considered as simple text
+				// no other elements should be encountered 
 				else
-				{	String text = element.text();
-					text = removeGtst(text);
-					rawStr.append(text);
-					linkedStr.append(text);
+				{	throw new IllegalArgumentException("Unexpected HTML element <"+eltName+">");
 				}
 			}
 			
@@ -1628,17 +1545,20 @@ public abstract class ArticleReader
 			{	// get the text
 				TextNode textNode = (TextNode) node;
 				String text = textNode.text();
-				
-				// if at the begining of a new line, or already preceeded by a space, remove leading spaces
-				while(rawStr.length()>0 
-						&& (rawStr.charAt(rawStr.length()-1)=='\n' || rawStr.charAt(rawStr.length()-1)==' ') 
-						&& text.startsWith(" "))
-					text = text.substring(1);
-				
-				// complete string buffers
 				text = removeGtst(text);
-				rawStr.append(text);
-				linkedStr.append(text);
+				
+				// the text but must non-empty, and contains something else than spaces
+				if(!text.trim().isEmpty())
+				{	// if at the begining of a new line, or already preceeded by a space, remove leading spaces
+					while(rawStr.length()>0 
+							&& (rawStr.charAt(rawStr.length()-1)=='\n' || rawStr.charAt(rawStr.length()-1)==' ') 
+							&& text.startsWith(" "))
+						text = text.substring(1);
+					
+					// complete string buffers
+					rawStr.append(text);
+					linkedStr.append(text);
+				}
 			}
 		}
 	}

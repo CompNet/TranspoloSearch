@@ -325,8 +325,11 @@ public class WikipediaReader extends ArticleReader
 	}
 	
 	/**
-	 * Retrieve the text located in 
-	 * a list (UL or OL) HTML element.
+	 * Retrieve the text located in  list (UL or OL) HTML element.
+	 * <br/>
+	 * We try to linearize the list, in order to make it look like
+	 * regular text. This is possible because list are used in a
+	 * more "regular" way in Wikipedia than in random Web pages.
 	 * 
 	 * @param element
 	 * 		Element to be processed.
@@ -405,8 +408,11 @@ public class WikipediaReader extends ArticleReader
 	}
 	
 	/**
-	 * Retrieve the text located in 
-	 * a description list (DL) HTML element.
+	 * Retrieve the text located in a description list (DL) HTML element.
+	 * <br/>
+	 * We try to linearize the list, in order to make it look like
+	 * regular text. This is possible because list are used in a
+	 * more "regular" way in Wikipedia than in random Web pages.
 	 * 
 	 * @param element
 	 * 		Element to be processed.
@@ -879,12 +885,12 @@ public class WikipediaReader extends ArticleReader
 			
 			// clean text
 			String rawText = rawStr.toString();
-			rawText = cleanText(rawText);
+//			rawText = cleanText(rawText);
 //			rawText = ArticleCleaning.replaceChars(rawText);
 			result.setRawText(rawText);
 			logger.log("Length of the raw text: "+rawText.length()+" chars.");
 			String linkedText = linkedStr.toString();
-			linkedText = cleanText(linkedText);
+//			linkedText = cleanText(linkedText);
 //			linkedText = ArticleCleaning.replaceChars(linkedText);
 			result.setLinkedText(linkedText);
 			logger.log("Length of the linked text: "+linkedText.length()+" chars.");

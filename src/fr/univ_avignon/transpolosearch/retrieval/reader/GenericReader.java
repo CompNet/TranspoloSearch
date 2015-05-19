@@ -117,104 +117,8 @@ public class GenericReader extends ArticleReader
 			StringBuilder rawStr = new StringBuilder();
 			StringBuilder linkedStr = new StringBuilder();
 			
-//TODO pq pas remplacer le for ci-dessous par un appel à processText sur le container ?
-/*
- * TODO liste de tous les éléments HTML à traiter : https://developer.mozilla.org/en/docs/Web/HTML/Element
- * à ignorer:
- * - base, head, link, meta, style, title
- * - address, footer, header, nav, abbr
- * - figcaption, figure, cite, data, dfn, 
- * - rp, rt, rtc, ruby,
- * - sub, sup, wbr
- * - area, audion, img, map, track, video, 
- * - embed, iframe, object, param, source
- * - canvas, noscript, script, del
- * - button, datalist, fieldset, form, input, keygen, label, legend, meter, optgroup, option, output, progress, select, textarea
- * - details, dialog, menu, menuitem, summary
- * - content, decorator, element, shadow, template
- * - applet, basefont, dir, frame, frameset, isindex, noembed, xmp
- * à traiter:
- * - structures : article, body, hgroup, section, div, main, bdi, bdo, span, ins, center, 
- * - texte : h1...h6, p, pre, b, i, em, kbd, mark, s (barré), small, strong, time, u 
- * -         acronym, big, blink, listing, plaintext, spacer, strike, tt, 
- * - code : code, samp, var, 
- * - citations : q (enligne), blockquote (horsligne) 
- * - listes : dl/dt/dd, ul/ol/li, 
- * - nouvelle ligne : hr, br
- * - tables : (caption), col, colgroup, table, tbody, td, tfoot, (th), thead, tr
- * - autres : a, 
- */
 			// processing each element in the content part
-			for(Element element: contentElt.children())
-			{	String eltName = element.tag().getName();
-			
-				// section headers
-				if(eltName.equals(HtmlNames.ELT_H1) || eltName.equals(HtmlNames.ELT_H2))
-				{	// get section name
-					StringBuilder fakeRaw = new StringBuilder();
-					StringBuilder fakeLinked = new StringBuilder();
-					processParagraphElement(element,fakeRaw,fakeLinked);
-					String str = fakeRaw.toString().trim().toLowerCase(Locale.ENGLISH);
-					rawStr.append("\n-----");
-					linkedStr.append("\n-----");
-					processParagraphElement(element,rawStr,linkedStr);
-				}
-			
-				else
-				{	// lower sections
-					if(eltName.equals(HtmlNames.ELT_H3) || eltName.equals(HtmlNames.ELT_H4) 
-						|| eltName.equals(HtmlNames.ELT_H5) || eltName.equals(HtmlNames.ELT_H6))
-					{	processParagraphElement(element,rawStr,linkedStr);
-					}
-					
-					// paragraph / italic / bold
-					else if(eltName.equals(HtmlNames.ELT_P) || eltName.equals(HtmlNames.ELT_B) || eltName.equals(HtmlNames.ELT_I))
-					{	//String str = element.text();
-						processParagraphElement(element,rawStr,linkedStr);
-					}
-					
-					// list
-					else if(eltName.equals(HtmlNames.ELT_UL))
-					{	processListElement(element,rawStr,linkedStr,false);
-					}
-					else if(eltName.equals(HtmlNames.ELT_OL))
-					{	processListElement(element,rawStr,linkedStr,true);
-					}
-					else if(eltName.equals(HtmlNames.ELT_DL))
-					{	processDescriptionListElement(element,rawStr,linkedStr);
-					}
-					
-					// tables
-					else if(eltName.equals(HtmlNames.ELT_TABLE))
-					{	//TODO should we completely ignore tables?
-						//first = !processTableElement(element, rawStr, linkedStr); 
-					}
-					
-					// divisions / sections
-					else if(eltName.equals(HtmlNames.ELT_DIV) || eltName.equals(HtmlNames.ELT_SECTION))
-					{	processDivisionElement(element, rawStr, linkedStr);
-					}
-				
-					// we ignore certain types of span (phonetic trancription, WP buttons...) 
-					else if(eltName.equals(HtmlNames.ELT_SPAN))
-					{	processSpanElement(element,rawStr,linkedStr);
-					}
-					
-					// hyperlinks must be included in the linked string, provided they are not external
-					else if(eltName.equals(HtmlNames.ELT_A))
-					{	processHyperlinkElement(element,rawStr,linkedStr);
-					}
-					
-					// quotes are just processed recursively
-					else if(eltName.equals(HtmlNames.ELT_BLOCKQUOTE))
-					{	processQuoteElement(element,rawStr,linkedStr);
-					}
-					
-					// other tags are ignored
-					else
-						logger.log("Ignored tag: "+eltName);
-				}
-			}
+			processAnyElement(contentElt, rawStr, linkedStr);
 			
 			// create article object
 			result = new Article(name);
@@ -225,12 +129,12 @@ public class GenericReader extends ArticleReader
 			
 			// clean text
 			String rawText = rawStr.toString();
-			rawText = cleanText(rawText);
+//			rawText = cleanText(rawText);
 //			rawText = ArticleCleaning.replaceChars(rawText);
 			result.setRawText(rawText);
 			logger.log("Length of the raw text: "+rawText.length()+" chars.");
 			String linkedText = linkedStr.toString();
-			linkedText = cleanText(linkedText);
+//			linkedText = cleanText(linkedText);
 //			linkedText = ArticleCleaning.replaceChars(linkedText);
 			result.setLinkedText(linkedText);
 			logger.log("Length of the linked text: "+linkedText.length()+" chars.");
@@ -262,6 +166,26 @@ public class GenericReader extends ArticleReader
 	/////////////////////////////////////////////////////////////////
 	/** Minimal proportion of the document (text-wise) we want to access */
 	private static final float MIN_CONTENT_RATIO = 0.5f;
+	/** List of tags which are not likely to contain the content element */
+	private static final List<String> STOP_TAGS = Arrays.asList(
+			HtmlNames.ELT_APPLET,HtmlNames.ELT_AREA,HtmlNames.ELT_ASIDE,HtmlNames.ELT_AUDIO,
+			HtmlNames.ELT_BASE,HtmlNames.ELT_BASEFONT,HtmlNames.ELT_BDI,HtmlNames.ELT_BDO,
+			HtmlNames.ELT_BUTTON,HtmlNames.ELT_CANVAS,HtmlNames.ELT_CODE,HtmlNames.ELT_CONTENT,
+			HtmlNames.ELT_DATA,HtmlNames.ELT_DATALIST,HtmlNames.ELT_DECORATOR,HtmlNames.ELT_DEL,
+			HtmlNames.ELT_DIALOG,HtmlNames.ELT_DIR,HtmlNames.ELT_ELEMENT,HtmlNames.ELT_EMBED,
+			HtmlNames.ELT_FIELDSET,HtmlNames.ELT_FONT,HtmlNames.ELT_FORM,HtmlNames.ELT_FRAME,
+			HtmlNames.ELT_FRAMESET,HtmlNames.ELT_IFRAME,HtmlNames.ELT_IMAGE,HtmlNames.ELT_INPUT,
+			HtmlNames.ELT_ISINDEX,HtmlNames.ELT_KBD,HtmlNames.ELT_KEYGEN,HtmlNames.ELT_LABEL,
+			HtmlNames.ELT_LEGEND,HtmlNames.ELT_LINK,HtmlNames.ELT_LISTING,HtmlNames.ELT_MAP,
+			HtmlNames.ELT_MENU,HtmlNames.ELT_MENUITEM,HtmlNames.ELT_METER,HtmlNames.ELT_NAV,
+			HtmlNames.ELT_OBJECT,HtmlNames.ELT_OPTGROUP,HtmlNames.ELT_OPTION,HtmlNames.ELT_OUTPUT,
+			HtmlNames.ELT_PARAM,HtmlNames.ELT_PROGRESS,HtmlNames.ELT_RP,HtmlNames.ELT_RT,
+			HtmlNames.ELT_RTC,HtmlNames.ELT_RUBY,HtmlNames.ELT_S,HtmlNames.ELT_SAMP,
+			HtmlNames.ELT_SCRIPT,HtmlNames.ELT_SHADOW,HtmlNames.ELT_SELECT,HtmlNames.ELT_SOURCE,
+			HtmlNames.ELT_STRIKE,HtmlNames.ELT_STYLE,HtmlNames.ELT_SUB,HtmlNames.ELT_SUP,
+			HtmlNames.ELT_TEMPLATE,HtmlNames.ELT_TEXTAREA,HtmlNames.ELT_TRACK,HtmlNames.ELT_VIDEO,
+			HtmlNames.ELT_WBR,HtmlNames.ELT_XMP
+		);
 	
 	/**
 	 * Identifies which part of the specified element may be the main element, containing the most
@@ -307,20 +231,26 @@ public class GenericReader extends ArticleReader
 			
 			do
 			{	Element element = queue.poll();
+				String name = element.tagName();
+if(element.attr("id").equals("post-21996"))
+	System.out.println();
 				Elements children = element.children();
 				float size = sizes.get(element);
 				boolean candidate = false;
 				
-				// if the node has no children, it's a candidate
-				if(children.isEmpty())
+				// if the node is in the stop list, it's not a candidate
+				if(STOP_TAGS.contains(name))
+					candidate = false;
+				
+				// otherwise, if the node has no children, it's a candidate
+				else if(children.isEmpty())
 					candidate = true;
 				
 				// if it has one or more child
 				else
-				{	// a list is probably not a candidate
-					String name = element.tagName();
+				{	// a list is probably not a candidate (TODO other tags?)
 					candidate = !name.equals(HtmlNames.ELT_UL) && !name.equals(HtmlNames.ELT_OL);
-					// it is a candidate only if none of them contains the majority of its text
+					// it is a candidate only if none child contains the majority of its text
 					for(Element child: children)
 					{	String text = child.text();
 						float sz = text.length();
