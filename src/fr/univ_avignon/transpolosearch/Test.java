@@ -75,13 +75,13 @@ public class Test
 	public static void main(String[] args) throws Exception
 	{	
 		// retrieval
-		testRetrievalGeneric();
+//		testRetrievalGeneric();
 		
 		// search
 //		testGoogleSearch();
 		
 		// whole process
-//		testExtractor();
+		testExtractor();
 		
 		logger.close();
 	}
@@ -143,10 +143,10 @@ public class Test
 //		URL url = new URL("http://www.infoavignon.com/actualites/politique-actualites/grand-avignon-cest-parti-pour-le-tram/");
 //		URL url = new URL("http://raphael-helle.blog.lemonde.fr/2015/01/07/je-suis-charlie/");
 //		URL url = new URL("http://www.clodelle45autrement.fr/2015/01/images-d-orleans-roller-derby-contre-hell-r-cheeky-dolls-la-rochelle-11-janvier-2015.html");
+//		URL url = new URL("http://raphael-helle.blog.lemonde.fr/category/vie-privee/");
+//		URL url = new URL("http://www.marcvuillemot.com/tag/var%20et%20intercommunalite/"); //xxxxxxxx liste d'articles
 
-		URL url = new URL("http://raphael-helle.blog.lemonde.fr/category/vie-privee/");
-//		URL url = new URL("http://www.marcvuillemot.com/tag/var%20et%20intercommunalite/");
-//		URL url = new URL("http://www.univ-orleans.fr/espe/colloques");
+		URL url = new URL("http://www.univ-orleans.fr/espe/colloques");
 //		URL url = new URL("http://www.lalogitude.com/albums/nos_adherents/index.html");
 //		URL url = new URL("http://leslecturesdececile.fr/categorie/romance-historique/");
 //		URL url = new URL("http://tvmag.lefigaro.fr/programme-tv/fiche/rmc-decouverte/serie-documentaire/190829701/highway-thru-hell-usa.html");

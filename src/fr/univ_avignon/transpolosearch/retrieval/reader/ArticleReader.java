@@ -69,6 +69,7 @@ import fr.univ_avignon.transpolosearch.tools.string.StringTools;
  *  - france bleu
  *  - le dauphiné
  *  - info avignon
+ *  - overblog
  * l'approche générique ne fonctionne pas si la page contient plusieurs articles
  * Facebook foire complètement
  * 

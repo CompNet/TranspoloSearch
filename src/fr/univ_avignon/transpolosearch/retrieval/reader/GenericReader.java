@@ -67,14 +67,16 @@ import fr.univ_avignon.transpolosearch.tools.html.HtmlNames;
 import fr.univ_avignon.transpolosearch.tools.html.HtmlTools;
 
 /**
- * From a specified URL, this class retrieves a Wikipedia page,
- * and gives access to the raw and linked texts.
+ * From a specified URL, this class retrieves a Web page,
+ * and gives access to the raw and linked texts. A generic
+ * strategy is applied to detect which part of the page
+ * corresponds to some relevant content (cf. {@link #getContentElement(Element)}.
  * 
  * @author Vincent Labatut
  */
 @SuppressWarnings("unused")
 public class GenericReader extends ArticleReader
-{
+{	
 	/////////////////////////////////////////////////////////////////
 	// DOMAIN			/////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////

@@ -18,7 +18,9 @@ package fr.univ_avignon.transpolosearch.extraction;
  * along with TranspoloSearch. If not, see <http://www.gnu.org/licenses/>.
  */
 
+import java.io.File;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.net.URL;
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -26,6 +28,7 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Scanner;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -42,6 +45,7 @@ import fr.univ_avignon.transpolosearch.recognition.combiner.straightcombiner.Str
 import fr.univ_avignon.transpolosearch.retrieval.ArticleRetriever;
 import fr.univ_avignon.transpolosearch.retrieval.reader.ReaderException;
 import fr.univ_avignon.transpolosearch.tools.file.FileNames;
+import fr.univ_avignon.transpolosearch.tools.file.FileTools;
 import fr.univ_avignon.transpolosearch.tools.log.HierarchicalLogger;
 import fr.univ_avignon.transpolosearch.tools.log.HierarchicalLoggerManager;
 import fr.univ_avignon.transpolosearch.websearch.AbstractEngine;
@@ -135,6 +139,12 @@ public class Extractor
 		// possibly filter the articles depending on the dates
 		filterArticles(articles,entities,startDate,endDate,strictSearch,compulsoryExpression);
 		
+		// displays the remaining articles with their entities
+		displayRemainingEntities(articles,entities); //TODO for debug only
+		
+		// extract events from the remaining articles and entities
+		extractEvents(articles,entities);
+		
 		logger.decreaseOffset();
 		logger.log("Information extraction over");
 	}
@@ -188,47 +198,77 @@ public class Extractor
 	 * 		Problem accessing the Web.
 	 */
 	private List<URL> performWebSearch(String keywords, String website, Date startDate, Date endDate, boolean strictSearch) throws IOException
-	{	logger.log("Applying iteratively each search engine");
-		logger.increaseOffset();
+	{	boolean cachedSearch = true; //TODO for debug
+		String cacheFilePath = FileNames.FO_OUTPUT + File.separator + FileNames.FI_SEARCH_RESULTS;
+		File cacheFile = new File(cacheFilePath);
 		
-		// log stuff
-		logger.log("Parameters:");
-		logger.increaseOffset();
-			logger.log("keywords="+keywords);
-			logger.log("startDate="+startDate);
-			logger.log("endDate="+endDate);
-			String txt = "strictSearch="+strictSearch;
-			if(!strictSearch)
-				txt = txt + "(dates are ignored here, because the search is not strict)";
-			logger.log(txt);
-		logger.decreaseOffset();
+		List<URL> result;
 		
-		// nullify dates if the search is not strict
-		if(!strictSearch)
-		{	startDate = null;
-			endDate = null;
+		// use cached results
+		if(cachedSearch && cacheFile.exists())
+		{	logger.log("Loading the previous search results");
+			result = new ArrayList<URL>();
+			Scanner sc = FileTools.openTextFileRead(cacheFile);
+			while(sc.hasNextLine())
+			{	String urlStr = sc.nextLine();
+				URL url = new URL(urlStr);
+				result.add(url);
+			}
+			logger.log("Total number of pages loaded: "+result.size());
 		}
 		
-		// apply each search engine
-		Set<URL> set = new TreeSet<URL>(new Comparator<URL>()
-		{	@Override
-			public int compare(URL url1, URL url2)
-			{	int result = url1.toString().compareTo(url2.toString());
-				return result;
-			}	
-		});
-		for(AbstractEngine engine: engines)
-		{	logger.log("Applying search engine "+engine.getName());
+		// search the results
+		else
+		{	logger.log("Applying iteratively each search engine");
 			logger.increaseOffset();
-				List<URL> temp = engine.search(keywords,website,startDate,endDate);
-				set.addAll(temp);
+			
+			// log stuff
+			logger.log("Parameters:");
+			logger.increaseOffset();
+				logger.log("keywords="+keywords);
+				logger.log("startDate="+startDate);
+				logger.log("endDate="+endDate);
+				String txt = "strictSearch="+strictSearch;
+				if(!strictSearch)
+					txt = txt + "(dates are ignored here, because the search is not strict)";
+				logger.log(txt);
+			logger.decreaseOffset();
+			
+			// nullify dates if the search is not strict
+			if(!strictSearch)
+			{	startDate = null;
+				endDate = null;
+			}
+			
+			// apply each search engine
+			Set<URL> set = new TreeSet<URL>(new Comparator<URL>()
+			{	@Override
+				public int compare(URL url1, URL url2)
+				{	int result = url1.toString().compareTo(url2.toString());
+					return result;
+				}	
+			});
+			for(AbstractEngine engine: engines)
+			{	logger.log("Applying search engine "+engine.getName());
+				logger.increaseOffset();
+					List<URL> temp = engine.search(keywords,website,startDate,endDate);
+					set.addAll(temp);
+				logger.decreaseOffset();
+			}
+			
+			result = new ArrayList<URL>(set);
+			logger.log("Total number of pages found: "+result.size());
+			
+			String filePath = FileNames.FO_OUTPUT + File.separator + FileNames.FI_SEARCH_RESULTS;
+			logger.log("Recording all URLs in text file \""+filePath+"\"");
+			PrintWriter pw = FileTools.openTextFileWrite(filePath);
+			for(URL url: result)
+				pw.println(url.toString());
+			pw.close();
+			
 			logger.decreaseOffset();
 		}
 		
-		List<URL> result = new ArrayList<URL>(set);
-		logger.log("Total number of pages found: "+result.size());
-		
-		logger.decreaseOffset();
 		return result;
 	}
 	
@@ -381,7 +421,7 @@ public class Extractor
 	 * @param endDate
 	 * 		End of the time period.
 	 * @param strictSearch
-	 * 		Whether the filtering should be applied ({@code false}
+	 * 		Whether the filtering should be applied ({@code false})
 	 * 		or not ({@code true}).
 	 * @param compulsoryExpression
 	 * 		String expression which must be present in the article,
@@ -402,20 +442,23 @@ public class Extractor
 			logger.log(txt);
 			logger.log("compulsoryExpression="+compulsoryExpression);
 		logger.decreaseOffset();
-
+		
 		// possibly filter the resulting texts depending on the compulsory expression
 		if(compulsoryExpression!=null)
 		{	logger.log("Removing articles not containing the compulsory expression \""+compulsoryExpression+"\"");
 			logger.increaseOffset();
 				int count = 0;
-				Iterator<Article> it = articles.iterator();
-				while(it.hasNext())
-				{	Article article = it.next();
+				Iterator<Article> itArt = articles.iterator();
+				Iterator<Entities> itEnt = entities.iterator();
+				while(itArt.hasNext())
+				{	Article article = itArt.next();
+					itEnt.next();
 					logger.log("Processing article "+article.getTitle());
 					String rawText = article.getRawText();
 					if(!rawText.contains(compulsoryExpression))
 					{	logger.log("Removing article "+article.getTitle()+" ("+article.getUrl()+")");
-						it.remove();
+						itArt.remove();
+						itEnt.remove();
 						count++;
 					}
 				}
@@ -440,22 +483,32 @@ public class Extractor
 					int count = 0;
 					while(itArt.hasNext())
 					{	Article article = itArt.next();
-						logger.log("Processing article "+article.getTitle());
 						Entities ents = itEnt.next();
+						logger.log("Processing article "+article.getTitle());
 						List<AbstractEntity<?>> dates = ents.getEntitiesByType(EntityType.DATE);
 
 						// check if the article contains a date between start and end
-						boolean found = false;
-						Iterator<AbstractEntity<?>> it = dates.iterator();
-						while(!found && it.hasNext())
-						{	AbstractEntity<?> entity = it.next();
-							fr.univ_avignon.transpolosearch.tools.time.Date d = (fr.univ_avignon.transpolosearch.tools.time.Date) entity.getValue();
-							found = d.isContained(start, end);
+						boolean remove = dates.isEmpty();
+						if(!remove)	
+						{	fr.univ_avignon.transpolosearch.tools.time.Date date = null;
+							Iterator<AbstractEntity<?>> it = dates.iterator();
+							while(date==null && it.hasNext())
+							{	AbstractEntity<?> entity = it.next();
+								fr.univ_avignon.transpolosearch.tools.time.Date d = (fr.univ_avignon.transpolosearch.tools.time.Date) entity.getValue();
+								if(d.isContained(start, end))
+									date = d;
+							}
+							
+							if(date!=null)
+							{	logger.log("Found date "+date+" in article "+article.getTitle()+" >> removal ("+article.getUrl()+")");
+								remove = true;
+							}
 						}
 						
-						if(!found)
-						{	logger.log("Removing article "+article.getTitle()+" ("+article.getUrl()+")");
-							it.remove();
+						// possibly remove the article/entities
+						if(remove)
+						{	itArt.remove();
+							itEnt.remove();
 							count++;
 						}
 					}
@@ -467,5 +520,104 @@ public class Extractor
 		
 		logger.decreaseOffset();
 		logger.log("Article filtering complete");
+	}
+
+	/////////////////////////////////////////////////////////////////
+	// DISPLAY	/////////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////
+	/**
+	 * Displays the entities associated to each article.
+	 * 
+	 * @param articles
+	 * 		List of articles.
+	 * @param entities
+	 * 		List of associated entities.
+	 */
+	private void displayRemainingEntities(List<Article> articles, List<Entities> entities)
+	{	logger.log("Displaying remaining articles and entities");
+		logger.increaseOffset();
+		
+		Iterator<Article> itArt = articles.iterator();
+		Iterator<Entities> itEnt = entities.iterator();
+		int count = 0;
+		while(itArt.hasNext())
+		{	Article article = itArt.next();
+			Entities ents = itEnt.next();
+			logger.log("Article: "+article.getTitle()+" ("+count+"/"+articles.size()+")");
+			logger.increaseOffset();
+				count++;
+				List<AbstractEntity<?>> dates = ents.getEntitiesByType(EntityType.DATE);
+				if(!dates.isEmpty())
+				{	String first = "Dates ("+dates.size()+"):";
+					List<String> msg = new ArrayList<String>();
+					msg.add(first);
+					for(AbstractEntity<?> entity: dates)
+						msg.add(entity.toString());
+					logger.log(msg);
+				}
+				List<AbstractEntity<?>> locations = ents.getEntitiesByType(EntityType.LOCATION);
+				if(!locations.isEmpty())
+				{	String first = "Locations ("+locations.size()+"):";
+					List<String> msg = new ArrayList<String>();
+					msg.add(first);
+					for(AbstractEntity<?> entity: locations)
+						msg.add(entity.toString());
+					logger.log(msg);
+				}
+				List<AbstractEntity<?>> organizations = ents.getEntitiesByType(EntityType.ORGANIZATION);
+				if(!organizations.isEmpty())
+				{	String first = "Organizations ("+organizations.size()+"):";
+					List<String> msg = new ArrayList<String>();
+					msg.add(first);
+					for(AbstractEntity<?> entity: organizations)
+						msg.add(entity.toString());
+					logger.log(msg);
+				}
+				List<AbstractEntity<?>> persons = ents.getEntitiesByType(EntityType.PERSON);
+				if(!persons.isEmpty())
+				{	String first = "Persons ("+persons.size()+"):";
+					List<String> msg = new ArrayList<String>();
+					msg.add(first);
+					for(AbstractEntity<?> entity: persons)
+						msg.add(entity.toString());
+					logger.log(msg);
+				}
+			logger.decreaseOffset();
+		}
+		
+		logger.decreaseOffset();
+		logger.log("Display complete");
+	}
+	
+	/////////////////////////////////////////////////////////////////
+	// EVENT EXTRACTION		/////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////
+	/**
+	 * Takes a list of articles and a list of the corresponding entities,
+	 * and identifies the events described in the articles.
+	 * 
+	 * @param articles
+	 * 		List of articles to treat.
+	 * @param entities
+	 * 		List of the associated entities.
+	 */
+	private void extractEvents(List<Article> articles, List<Entities> entities)
+	{	logger.log("Extracting events");
+		logger.increaseOffset();
+	
+		Iterator<Article> itArt = articles.iterator();
+		Iterator<Entities> itEnt = entities.iterator();
+		int count = 0;
+		while(itArt.hasNext())
+		{	Article article = itArt.next();
+			Entities ents = itEnt.next();
+			logger.log("Article: "+article.getTitle()+" ("+count+"/"+articles.size()+")");
+			logger.increaseOffset();
+				count++;
+				List<AbstractEntity<?>> dates = ents.getEntitiesByType(EntityType.DATE);
+		}
+		
+		logger.decreaseOffset();
+		logger.log("Event extraction complete");
 	}
 }
