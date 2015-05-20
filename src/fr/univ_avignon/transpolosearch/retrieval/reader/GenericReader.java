@@ -174,7 +174,7 @@ public class GenericReader extends ArticleReader
 			HtmlNames.ELT_BUTTON,HtmlNames.ELT_CANVAS,HtmlNames.ELT_CODE,HtmlNames.ELT_CONTENT,
 			HtmlNames.ELT_DATA,HtmlNames.ELT_DATALIST,HtmlNames.ELT_DECORATOR,HtmlNames.ELT_DEL,
 			HtmlNames.ELT_DIALOG,HtmlNames.ELT_DIR,HtmlNames.ELT_ELEMENT,HtmlNames.ELT_EMBED,
-			HtmlNames.ELT_FIELDSET,HtmlNames.ELT_FONT,HtmlNames.ELT_FORM,HtmlNames.ELT_FRAME,
+			HtmlNames.ELT_FIELDSET,HtmlNames.ELT_FORM,HtmlNames.ELT_FRAME,
 			HtmlNames.ELT_FRAMESET,HtmlNames.ELT_IFRAME,HtmlNames.ELT_IMG,HtmlNames.ELT_INPUT,
 			HtmlNames.ELT_ISINDEX,HtmlNames.ELT_KBD,HtmlNames.ELT_KEYGEN,HtmlNames.ELT_LABEL,
 			HtmlNames.ELT_LEGEND,HtmlNames.ELT_LINK,HtmlNames.ELT_LISTING,HtmlNames.ELT_MAP,
@@ -192,13 +192,19 @@ public class GenericReader extends ArticleReader
 	 * Identifies which part of the specified element may be the main element, containing the most
 	 * relevant content.
 	 * <br/>
-	 * The basic rule is the following. First, we try to locate an article element. If it exists,
-	 * we go on with it. If there are several of them, we issue a warning and use the first one.
-	 * Otherwise, we use the root parameter. We perform a breadth-first search and go deeper as 
-	 * long as we get shortest elements (in terms of text content) while they still represent more 
-	 * than {@link #MIN_CONTENT_RATIO} percent of their parent. We keep the parent whose children 
-	 * do not respect this rule. In other words, we keep the largest node whose content is split 
-	 * (roughly) evenly among its children. 
+	 * We consider an element to be a candidate (in terms of containing the relevant part of the Web page)
+	 * when none of its children contain more than {@link #MIN_CONTENT_RATIO} percent of its own content.
+	 * In other words, when there is a relatively uniform distribution of content amongst children. Otherwise,
+	 * if the most part of the content goes to a single child, we go on exploring the document tree.
+	 * <br>
+	 * The idea here is that an article is generally composed of several distinct paragraphs. So, the method
+	 * is not efficient for sites putting all their content in the same node, for instance a single paragraph
+	 * element. TODO We could add an alternative/complementary, method, consisting in focusing on elements
+	 * containing almost all the text of the document at once.
+	 * <br/>
+	 * Once several candidates have been detected, they are compared in terms of the longest uniterrupted text
+	 * they contain. The idea here is that sometimes, the article consists of less text than the rest of the
+	 * page (menus, navigation, etc.). But it generally contains longer sentences, hence this criterion.  
 	 * 
 	 * @param root
 	 * 		Root element.

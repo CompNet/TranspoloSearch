@@ -100,6 +100,11 @@ public class Test
 		logger.log("Start testing the generic Web page retrieval");
 		logger.increaseOffset();
 		
+		// problem cases:
+		// - comments longer than the article text
+		// - all the article text in a single element (eg. <p>)
+		// - page listing articles (instead of focusing on a single one)
+		
 //		URL url = new URL("http://www.lemonde.fr/culture/article/2014/07/16/la-prise-de-position-d-olivier-py-sur-le-fn-a-heurte-les-avignonnais_4457735_3246.html");
 //		URL url = new URL("http://www.lemonde.fr/afrique/article/2015/05/02/au-togo-l-opposition-coincee-apres-son-echec-a-la-presidentielle_4626476_3212.html");
 //		URL url = new URL("http://www.lemonde.fr/climat/article/2015/05/04/climat-les-energies-propres-en-panne-de-credits-de-recherche_4626656_1652612.html");
@@ -116,13 +121,12 @@ public class Test
 //		URL url = new URL("https://fr-fr.facebook.com/pages/Les-Refondateurs/243905395803677");
 //		URL url = new URL("http://www.citylocalnews.com/avignon/2015/01/10/avignon-le-tramway-divisera-t-il-la-majorite-municipale");
 //		URL url = new URL("http://destimed.fr/Grand-Orient-de-France-conference");
-//		URL url = new URL("http://www.medias-presse.info/le-grand-orient-nous-refait-le-coup-de-la-republique-en-danger/21996"); //xxxxxxxx
+//		URL url = new URL("http://www.medias-presse.info/le-grand-orient-nous-refait-le-coup-de-la-republique-en-danger/21996"); //xxxxxxxx plus de commentaires que d'article
 //		URL url = new URL("http://www.meridienmag.fr/Actualites/ca-roule-pour-le-tramway-du-Grand-Avignon_2010.html");
 //		URL url = new URL("http://www.grandavignon.fr/actualites/fiche/avignon-plan-proprete-tous-mobilises-tous-concernes/");
 //		URL url = new URL("http://france3-regions.francetvinfo.fr/provence-alpes/2015/01/15/le-grand-avignon-aura-son-tramway-decouvrez-son-trace-632322.html");
 //		URL url = new URL("http://www.midilibre.fr/2015/01/11/l-agglo-du-grand-avignon-vote-pour-le-tramway,1109359.php");
-		
-		URL url = new URL("http://www.ville-rail-transports.com/content/21024-Avignon-Les-%C3%A9lus-votent-un-nouveau-projet-de-tram");
+//		URL url = new URL("http://www.ville-rail-transports.com/content/21024-Avignon-Les-%C3%A9lus-votent-un-nouveau-projet-de-tram");
 //		URL url = new URL("http://www.midilibre.fr/vaucluse/avignon/index_15.php");
 //		URL url = new URL("http://www.liberation.fr/politiques/2015/01/08/regionales-vauzelle-ne-se-representera-pas-en-paca_1176199");
 //		URL url = new URL("http://www.francebleu.fr/infos/chantier-tramway/le-tramway-en-questions-sur-france-bleu-vaucluse-2061645");
@@ -132,15 +136,15 @@ public class Test
 //		URL url = new URL("http://avignon.lafrancealunisson.fr/");
 //		URL url = new URL("http://www.laprovence.com/actu/politique-en-direct/3203098/tramway-un-vote-convoque-samedi-pour-trancher.html");
 //		URL url = new URL("http://www.ventoux-magazine.com/actualites/actualite/aeroport-d-avignon-le-pole-pegase-a-bien-decolle/x2132axyw2vMT79AhRm.html");
-//		URL url = new URL("http://www.presseagence.fr/lettre-economique-politique-paca/2015/01/22/avignon-inauguration-de-la-pepiniere-dentreprises-du-technopole-pegase-lundi-26-janvier-2015/");
-//		URL url = new URL("http://www.fm-mag.fr/evenement/antimaconnisme-refus-de-lautre-la-republique-en-danger");
+//		URL url = new URL("http://www.fm-mag.fr/evenement/antimaconnisme-refus-de-lautre-la-republique-en-danger"); //xxxxxxxx article trop court par rapport à la page
 //		URL url = new URL("http://coordination-antinucleaire-sudest.net/2012/index.php?/page/2");
 //		URL url = new URL("http://www.atlantico.fr/pepites/ps-michel-vauzelle-ne-se-representera-pas-presidence-region-paca-1945014.html");
 //		URL url = new URL("http://www.leravi.org/spip.php?article1935");
 //		URL url = new URL("http://www.infoavignon.com/actualites/politique-actualites/grand-avignon-cest-parti-pour-le-tram/");
 //		URL url = new URL("http://raphael-helle.blog.lemonde.fr/2015/01/07/je-suis-charlie/");
 //		URL url = new URL("http://www.clodelle45autrement.fr/2015/01/images-d-orleans-roller-derby-contre-hell-r-cheeky-dolls-la-rochelle-11-janvier-2015.html");
-//		URL url = new URL("http://raphael-helle.blog.lemonde.fr/category/vie-privee/");
+
+		URL url = new URL("http://raphael-helle.blog.lemonde.fr/category/vie-privee/");
 //		URL url = new URL("http://www.marcvuillemot.com/tag/var%20et%20intercommunalite/");
 //		URL url = new URL("http://www.univ-orleans.fr/espe/colloques");
 //		URL url = new URL("http://www.lalogitude.com/albums/nos_adherents/index.html");

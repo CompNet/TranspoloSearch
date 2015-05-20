@@ -28,6 +28,7 @@ import java.net.HttpURLConnection;
 import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -65,6 +66,9 @@ import fr.univ_avignon.transpolosearch.tools.string.StringTools;
  *  - la provence
  *  - médiapart
  *  - france3
+ *  - france bleu
+ *  - le dauphiné
+ *  - info avignon
  * l'approche générique ne fonctionne pas si la page contient plusieurs articles
  * Facebook foire complètement
  * 
@@ -391,6 +395,9 @@ public abstract class ArticleReader
 						"WARNING: Could not download the page, the server returned an error "+e.getStatusCode()+" .",
 						"Error message: "+e.getMessage()
 					));
+				}
+				catch(UnknownHostException e)
+				{	logger.log("WARNING: Could not download the page, the IP address of the server could not be determined");
 				}
 			}
 			while(again);
@@ -1156,9 +1163,9 @@ public abstract class ArticleReader
 				{	// nothing to do
 				}
 				
-				// font: ignored
+				// font: just text
 				else if(eltName.equalsIgnoreCase(HtmlNames.ELT_FONT))
-				{	// nothing to do
+				{	processAnyElement(element, rawStr, linkedStr);
 				}
 				
 				// footer: treated like a div
