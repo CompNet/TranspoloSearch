@@ -30,6 +30,7 @@ import fr.univ_avignon.transpolosearch.data.entity.EntityOrganization;
 import fr.univ_avignon.transpolosearch.data.entity.EntityPerson;
 import fr.univ_avignon.transpolosearch.data.entity.EntityType;
 import fr.univ_avignon.transpolosearch.recognition.RecognizerName;
+import fr.univ_avignon.transpolosearch.tools.time.Date;
 import fr.univ_avignon.transpolosearch.tools.xml.XmlNames;
 
 /**
@@ -46,253 +47,42 @@ import fr.univ_avignon.transpolosearch.tools.xml.XmlNames;
 public class Event implements Comparable<Event>
 {	
 	/**
-	 * General constructor for an entity.
+	 * Builds a new event using the specified date.
 	 * 
-	 * @param startPos
-	 * 		Starting position in the text.
-	 * @param endPos
-	 * 		Ending position in the text.
-	 * @param source
-	 * 		Tool which detected this entity.
-	 * @param valueStr
-	 * 		String representation in the text.
-	 * @param value
-	 * 		Actual value of the entity (can be the same as {@link #valueStr}).
+	 * @param startDate
+	 * 		Starting date.
 	 */
-	public Event(int startPos, int endPos, RecognizerName source, String valueStr, T value)
-	{	this.startPos = startPos;
-		this.endPos = endPos;
-		this.source = source;
-		this.valueStr = valueStr;
-		this.value = value;
-	}
-	
-	/**
-	 * Builds an entity of the specified type.
-	 * 
-	 * @param <T>
-	 * 		Class of the entity value.
-	 * @param type
-	 * 		Type of the entity.
-	 * @param startPos
-	 * 		Starting position in the text.
-	 * @param endPos
-	 * 		Ending position in the text.
-	 * @param source
-	 * 		Tool which detected this entity.
-	 * @param valueStr
-	 * 		String representation in the text.
-	 * @return
-	 * 		An object representing the entity.
-	 */
-	public static <T> Event<?> build(EntityType type, int startPos, int endPos, RecognizerName source, String valueStr)
-	{	Event<?> result = null;
-
-// debug
-//if(valueStr.equals("1934"))
-//	System.out.println();
-	
-		switch(type)
-		{	case DATE:
-				result = new EntityDate(startPos, endPos, source, valueStr, null);
-				break;
-			case LOCATION:
-				result = new EntityLocation(startPos, endPos, source, valueStr, null);
-				break;
-			case ORGANIZATION:
-				result = new EntityOrganization(startPos, endPos, source, valueStr, null);
-				break;
-			case PERSON:
-				result = new EntityPerson(startPos, endPos, source, valueStr, null);
-				break;
-		}
-		
-		return result;
-	}
-	
-	/////////////////////////////////////////////////////////////////
-	// VALUE			/////////////////////////////////////////////
-	/////////////////////////////////////////////////////////////////
-	/** Entity value (depends on its type) */
-	protected T value = null;
-	
-	/**
-	 * Returns the actual value of this entity.
-	 * For numeric entity, it should be the numerica value.
-	 * For named entities, it should be a unique representation
-	 * of its semantics. For instance, an ontological concept,
-	 * or an id in Freebase.
-	 * 
-	 * @return
-	 * 		Actual value of this entity.
-	 */
-	public T getValue()
-	{	return value;
+	public Event(EntityDate startDate)
+	{	this.startDate = startDate.getValue();
+		this.endDate = null;
 	}
 
 	/**
-	 * Changes the actual value of this entity.
-	 * For numeric entity, it should be the numerica value.
-	 * For named entities, it should be a unique representation
-	 * of its semantics. For instance, an ontological concept,
-	 * or an id in Freebase.
+	 * Builds a new event using the specified period.
 	 * 
-	 * @param value
-	 * 		New value of this entity.
+	 * @param startDate
+	 * 		Starting date.
+	 * @param endDate
+	 * 		Ending date.
 	 */
-	public void setValue(T value)
-	{	this.value = value;
+	public Event(EntityDate startDate, EntityDate endDate)
+	{	this.startDate = startDate.getValue();
+		this.endDate = endDate.getValue();
 	}
 	
 	/////////////////////////////////////////////////////////////////
-	// STRING			/////////////////////////////////////////////
+	// DATES			/////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
-	/** String representation of the entity (might also be its value if the entity is named) */
-	protected String valueStr = null;
-	
-	/**
-	 * Returns the original string corresponding
-	 * to this entity.
-	 * 
-	 * @return
-	 * 		Original string representation of this entity. 
-	 */
-	public String getStringValue()
-	{	return valueStr;
-	}
-
-	/**
-	 * Changes the original string corresponding
-	 * to this entity.
-	 * 
-	 * @param valueStr
-	 * 		New string representation of this entity.
-	 */
-	public void setStringValue(String valueStr)
-	{	this.valueStr = valueStr;
-	}
+	/** Start date */
+	private Date startDate = null;
+	/** End date (or {@code null} if no end date) */
+	private Date endDate = null;
 	
 	/////////////////////////////////////////////////////////////////
-	// TYPE				/////////////////////////////////////////////
+	// LOCATIONS		/////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
-	/**
-	 * Returns the type of this entity.
-	 * 
-	 * @return 
-	 * 		The type of this entity.
-	 */
-	public abstract EntityType getType();
 	
-	/////////////////////////////////////////////////////////////////
-	// POSITION			/////////////////////////////////////////////
-	/////////////////////////////////////////////////////////////////
-	/** Start position of an entity in the text */
-	protected int startPos = -1;
-	/** End position of an entity in the text */
-	protected int endPos = -1;
-		
-	/**
-	 * Returns the starting position of this
-	 * entity, in the text.
-	 * 
-	 * @return
-	 * 		Starting position of this entity.
-	 */
-	public int getStartPos()
-	{	return startPos;
-	}
 	
-	/**
-	 * Returns the starting position of this
-	 * entity, in the text.
-	 * 
-	 * @param startPos
-	 * 		New starting position of this entity.
-	 */
-	public void setStartPos(int startPos)
-	{	this.startPos = startPos;
-	}
-
-	/**
-	 * Returns the ending position of this
-	 * entity, in the text.
-	 * 
-	 * @return
-	 * 		Ending position of this entity.
-	 */
-	public int getEndPos()
-	{	return endPos;
-	}
-	
-	/**
-	 * Returns the ending position of this
-	 * entity, in the text.
-	 * 
-	 * @param endPos
-	 * 		New ending position of this entity.
-	 */
-	public void setEndPos(int endPos)
-	{	this.endPos = endPos;
-	}
-	
-	/**
-	 * Checks if the specified text position
-	 * is contained in this entity.
-	 * 
-	 * @param position
-	 * 		Position to be checked.
-	 * @return
-	 * 		{@code true} iff the specified position
-	 * 		is contained in this entity.
-	 */
-	public boolean containsPosition(int position)
-	{	boolean result = position>=startPos && position <=endPos;
-		return result;
-	}
-	
-	/**
-	 * Checks if the specified position is
-	 * located after this entity (i.e. after
-	 * its own ending position).
-	 * 
-	 * @param position
-	 * 		Position to be checked.
-	 * @return
-	 * 		{@code true} iff the position is located
-	 * 		after, and out of, this entity.
-	 */
-	public boolean precedesPosition(int position)
-	{	boolean result = position>endPos;
-		return result;
-	}
-	
-	/////////////////////////////////////////////////////////////////
-	// SOURCE			/////////////////////////////////////////////
-	/////////////////////////////////////////////////////////////////
-	/** Origin of the entity (what detected it) */
-	protected RecognizerName source;
-	
-	/**
-	 * Returns the NER tool which
-	 * detected this entity.
-	 * 
-	 * @return
-	 * 		NER tool having detected this entity.
-	 */
-	public RecognizerName getSource()
-	{	return source;
-	}
-
-	/**
-	 * Changes the NER tool which
-	 * detected this entity.
-	 * 
-	 * @param source
-	 * 		New NER tool having detected this entity.
-	 */
-	public void setSource(RecognizerName source)
-	{	this.source = source;
-	}
 	
 	/////////////////////////////////////////////////////////////////
 	// COMPARISON		/////////////////////////////////////////////
