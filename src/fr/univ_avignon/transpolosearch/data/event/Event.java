@@ -346,39 +346,6 @@ public class Event implements Comparable<Event>
 		boolean result = this.startPos < startPos;
 		return result;
 	}
-
-	/////////////////////////////////////////////////////////////////
-	// TEXT				/////////////////////////////////////////////
-	/////////////////////////////////////////////////////////////////
-	/**
-	 * Checks if the text recorded for this entity
-	 * corresponds to the one found in the article
-	 * at the entity positions.
-	 * 
-	 * @param article
-	 * 		Article of reference. 
-	 * @return 
-	 * 		{@code true} iff the article and entity texts are the same.
-	 */
-	public boolean checkText(Article article)
-	{	String text = article.getRawText();
-		String valueStr2 = text.substring(startPos,endPos);
-		boolean result = valueStr.equals(valueStr2);
-		return result;
-	}
-	
-	@Override
-	public String toString()
-	{	String result = "ENTITY(";
-		result = result + "STRING=\"" + valueStr+"\"";
-		result = result + ", TYPE=" + getType(); 
-		result = result + ", POS=("+startPos+","+endPos+")"; 
-		result = result + ", SOURCE="+source.toString();
-		if(value!=null)
-			result = result + ", VALUE=(" + value.toString() + ")"; 
-		result = result + ")";
-		return result;
-	}
 	
 	/////////////////////////////////////////////////////////////////
 	// XML				/////////////////////////////////////////////
