@@ -18,8 +18,12 @@ package fr.univ_avignon.transpolosearch.data.event;
  * along with TranspoloSearch. If not, see <http://www.gnu.org/licenses/>.
  */
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 
 import org.jdom2.Element;
 
@@ -78,9 +82,116 @@ public class Event implements Comparable<Event>
 	/** End date (or {@code null} if no end date) */
 	private Date endDate = null;
 	
+	/**
+	 * Returns the start date of the event, or
+	 * the only date if this is a single-date event.
+	 * 
+	 * @return
+	 * 		Start (or only) date of this event.
+	 */
+	public Date getStartDate()
+	{	return startDate;
+	}
+	
+	/**
+	 * Returns the end date of the event, or
+	 * {@code null} if this is only described by
+	 * a single date.
+	 * 
+	 * @return
+	 * 		End date or {@code null} if single date event.
+	 */
+	public Date getEndDate()
+	{	return endDate;
+	}
+	
 	/////////////////////////////////////////////////////////////////
 	// LOCATIONS		/////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
+	/** List of strings representing the locations associated to this event */
+	private final Set<String> locations = new TreeSet<String>();
+	
+	/**
+	 * Returns the set of locations associated
+	 * to this event.
+	 * 
+	 * @return
+	 * 		A list of location names.
+	 */
+	public Collection<String> getLocations()
+	{	return locations;
+	}
+	
+	/**
+	 * Adds a location name to the current list.
+	 * 
+	 * @param location
+	 * 		The location entity whose <i>normalized</i>
+	 * 		name will be added to this event.
+	 */
+	public void addLocation(EntityLocation location)
+	{	String normalizedName = location.getValue();
+		locations.add(normalizedName);
+	}
+	
+	/////////////////////////////////////////////////////////////////
+	// ORGANIZATIONS	/////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////
+	/** List of strings representing the organizations associated to this event */
+	private final Set<String> organizations = new TreeSet<String>();
+	
+	/**
+	 * Returns the set of organizations associated
+	 * to this event.
+	 * 
+	 * @return
+	 * 		A list of organization names.
+	 */
+	public Collection<String> getOrganizations()
+	{	return organizations;
+	}
+	
+	/**
+	 * Adds an organization name to the current list.
+	 * 
+	 * @param organization
+	 * 		The organization entity whose <i>normalized</i>
+	 * 		name will be added to this event.
+	 */
+	public void addOrganization(EntityOrganization organization)
+	{	String normalizedName = organization.getValue();
+		locations.add(normalizedName);
+	}
+	
+	/////////////////////////////////////////////////////////////////
+	// PERSONS			/////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////
+	/** List of strings representing the persons associated to this event */
+	private final Set<String> persons = new TreeSet<String>();
+	
+	/**
+	 * Returns the set of persons associated
+	 * to this event.
+	 * 
+	 * @return
+	 * 		A list of person names.
+	 */
+	public Collection<String> getPersons()
+	{	return persons;
+	}
+	
+	/**
+	 * Adds a person name to the current list.
+	 * 
+	 * @param person
+	 * 		The person entity whose <i>normalized</i>
+	 * 		name will be added to this event.
+	 */
+	public void addPerson(EntityPerson person)
+	{	String normalizedName = person.getValue();
+		locations.add(normalizedName);
+	}
+	
 	
 	
 	
