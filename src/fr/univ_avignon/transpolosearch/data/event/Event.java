@@ -48,7 +48,7 @@ import fr.univ_avignon.transpolosearch.tools.xml.XmlNames;
  * 
  * @author Vincent Labatut
  */
-public class Event implements Comparable<Event>
+public class Event
 {	
 	/**
 	 * Builds a new event using the specified date.
@@ -192,160 +192,71 @@ public class Event implements Comparable<Event>
 		locations.add(normalizedName);
 	}
 	
-	
-	
-	
 	/////////////////////////////////////////////////////////////////
-	// COMPARISON		/////////////////////////////////////////////
+	// COMPATIBILITY	/////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
-//	/**
-//	 * Checks if the specified entity overlaps
-//	 * with this one. However, one should not
-//	 * contain the other. Perfect matches are not
-//	 * allowed neither.
-//	 * 
-//	 * @param entity
-//	 * 		Entity to be compared with this one. 
-//	 * @return
-//	 * 		{@code true} only if they partially overlap.
-//	 */
-//	public boolean overlapsStrictlyWith(AbstractEntity<?> entity)
-//	{	int startPos2 = entity.getStartPos();
-//		int endPos2 = entity.getEndPos();
-//		
-//		boolean result = (startPos2<endPos && endPos2>endPos)
-//			|| (startPos<endPos2 && endPos>endPos2);
-//		
-//		return result;
-//	}
+	public boolean isCompatible(Event event)
+	{	boolean result;
+		
+		// check if dates are compatible
+		result = areCompatibleDates(startDate,endDate,event.startDate,event.endDate);
+
+		// check if at least one compatible location
+		if(result)
+			result = areCompatibleLocations(locations,event.locations);
+		
+		// check if at least one compatible person
+		if(result)
+			result = areCompatiblePersons(persons,event.persons);
 	
-	/**
-	 * Checks if the specified entity overlaps
-	 * with this one. Inclusion and perfect match
-	 * are also allowed.
-	 * 
-	 * @param entity
-	 * 		Entity to be compared with this one. 
-	 * @return
-	 * 		{@code true} only if they partially overlap.
-	 */
-	public boolean overlapsWith(Event<?> entity)
-	{	int startPos2 = entity.getStartPos();
-		int endPos2 = entity.getEndPos();
+		// check if at least one compatible organization
+		if(result)
+			result = areCompatibleOrganizations(organizations,event.organizations);
+
+		return result;
+	}
+	
+	public boolean areCompatibleDates(Date startDate1, Date endDate1, Date startDate2, Date endDate2)
+	{	boolean result;
 		
-		boolean result = (startPos2<=endPos && endPos2>=endPos)
-			|| (startPos<=endPos2 && endPos>=endPos2);
+		// TODO
 		
 		return result;
 	}
-
-	/**
-	 * Checks if this entity overlaps with <i>at least</i>
-	 * one of the entities in the specified list. Inclusion 
-	 * and perfect match are also allowed.
-	 * 
-	 * @param entities
-	 * 		List of entities to be compared with this one. 
-	 * @return
-	 * 		{@code true} only if this entity partially overlaps
-	 * 		with at least one of the listed entities.
-	 */
-	public boolean overlapsWithOne(List<Event<?>> entities)
-	{	boolean result = false;
-		Iterator<Event<?>> it = entities.iterator();
+	
+	public boolean areCompatibleLocations(Set<String> locations1, Set<String> locations2)
+	{	boolean result;
 		
-		while(!result && it.hasNext())
-		{	Event<?> entity = it.next();
-			result = overlapsWith(entity);
-		}
+		// TODO
 		
 		return result;
 	}
-
-//	/**
-//	 * Checks if the specified entity is strictly contained
-//	 * in this entity. Perfect matches are not allowed.
-//	 * 
-//	 * @param entity
-//	 * 		Entity to be compared with this one. 
-//	 * @return
-//	 * 		{@code true} only if this entity contained the specified one.
-//	 */
-//	public boolean containsStrictly(AbstractEntity<?> entity)
-//	{	int startPos2 = entity.getStartPos();
-//		int endPos2 = entity.getEndPos();
-//		
-//		boolean result = startPos2>=startPos && endPos2<endPos
-//			|| startPos2>startPos && endPos2<=endPos;
-//
-//		return result;
-//	}
-
-	/**
-	 * Checks if the specified entity is contained in,
-	 * or matches this entity.
-	 * 
-	 * @param entity
-	 * 		Entity to be compared with this one. 
-	 * @return
-	 * 		{@code true} only if this entity contained the specified one.
-	 */
-	public boolean contains(Event<?> entity)
-	{	int startPos2 = entity.getStartPos();
-		int endPos2 = entity.getEndPos();
+	
+	public boolean areCompatiblePersons(Set<String> persons1, Set<String> persons2)
+	{	boolean result;
 		
-		boolean result = startPos2>=startPos && endPos2<=endPos;
+		// TODO
+		
+		return result;
+	}
+	
+	public boolean areCompatibleOrganizations(Set<String> organizations1, Set<String> organizations2)
+	{	boolean result;
+		
+		// TODO
 		
 		return result;
 	}
 	
 	/**
-	 * Checks if the specified entity matches (spatially)
-	 * exactly this entity.
-	 * 
-	 * @param entity
-	 * 		Entity to be compared with this one. 
-	 * @return
-	 * 		{@code true} only if this entity matches the specified one.
+	 * TODO faudra identifier les entités de façon unique
+	 *  - changer la "value" des entités pour un code genre freebase
+	 *  - adapter les classes entités, notamment l'enregistrement/lecture de ce code
+	 *  - traiter les cas non répertoriés dans freebase (liste manuelle ? outil de désambiguisation ?)
+	 *  - créer de vraies classes "entités valeurs" et renommer les existantes en "mentions d'entités"
+	 *  - peut être placer les tests de compatibilité directement dans les classes correspondant aux valeurs d'entités ?
+	 *  - autres ?
 	 */
-	public boolean hasSamePosition(Event<?> entity)
-	{	int startPos2 = entity.getStartPos();
-		int endPos2 = entity.getEndPos();
-	
-		boolean result = startPos==startPos2 && endPos==endPos2;
-		
-		return result;
-	}
-	
-	/**
-	 * Returns the length of this entity,
-	 * calculated from its positions in the text.
-	 * 
-	 * @return
-	 * 		Length of the entity in characters.
-	 */
-	public int getLength()
-	{	int result = endPos-startPos;
-		return result;
-	}
-
-	/**
-	 * Checks if this entity is located before
-	 * the specified entity. Only the starting
-	 * position is considered. And using a strict
-	 * comparison.
-	 * 
-	 * @param entity
-	 * 		Entity to compare to this one.
-	 * @return
-	 * 		{@code true} iff this entity is located 
-	 * 		before the specified one.
-	 */
-	public boolean precedes(Event<?> entity)
-	{	int startPos = entity.getStartPos();
-		boolean result = this.startPos < startPos;
-		return result;
-	}
 	
 	/////////////////////////////////////////////////////////////////
 	// XML				/////////////////////////////////////////////
@@ -357,7 +268,10 @@ public class Event implements Comparable<Event>
 	 * @return
 	 * 		An XML element representing this entity.
 	 */
-	public abstract Element exportAsElement();
+	public Element exportAsElement()
+	{
+		
+	}
 	
 	/**
 	 * Builds an entity from the specified
@@ -370,8 +284,8 @@ public class Event implements Comparable<Event>
 	 * @return
 	 * 		The entity corresponding to the specified element.
 	 */
-	public static Event<?> importFromElement(Element element, RecognizerName source)
-	{	Event<?> result = null;
+	public static Event importFromElement(Element element, RecognizerName source)
+	{	Event result = null;
 		
 		String typeStr = element.getAttributeValue(XmlNames.ATT_TYPE);
 		EntityType type = EntityType.valueOf(typeStr);
@@ -388,52 +302,6 @@ public class Event implements Comparable<Event>
 			case PERSON:
 				result = EntityPerson.importFromElement(element,source);
 				break;
-		}
-		
-		return result;
-	}
-
-	/////////////////////////////////////////////////////////////////
-	// COMPARABLE		/////////////////////////////////////////////
-	/////////////////////////////////////////////////////////////////
-	@Override
-	public int compareTo(Event<?> o)
-	{	int startPos = o.getStartPos();
-		int result = this.startPos - startPos;
-		if(result==0)
-		{	int endPos = o.getEndPos();
-			result = this.endPos - endPos;
-			if(result==0)
-			{	String valueStr = o.getStringValue();
-				result = this.valueStr.compareTo(valueStr);
-			}
-		}
-		return result;
-	}
-	
-	@Override
-	public int hashCode()
-	{	String temp = startPos + ":" + endPos + ":" + valueStr + ":" + source;
-		int result = temp.hashCode();
-		return result;
-	}
-	
-	@Override
-	public boolean equals(Object obj)
-	{	boolean result = false;
-		
-		if(obj!=null)
-		{	if(obj instanceof Event<?>)
-			{	Event<?> entity = (Event<?>)obj;
-				int start = entity.getStartPos();
-				if(this.startPos==start)
-				{	int endPos = entity.getEndPos();
-					if(this.endPos==endPos)
-					{	String valueStr = entity.getStringValue();
-						result = this.valueStr.equals(valueStr);
-					}
-				}
-			}
 		}
 		
 		return result;
