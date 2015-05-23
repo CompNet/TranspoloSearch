@@ -19,6 +19,7 @@ package fr.univ_avignon.transpolosearch.data.event;
  */
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -81,6 +82,32 @@ public class Event
 	}
 	
 	/////////////////////////////////////////////////////////////////
+	// TEXT				/////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////
+	/** Text containing the event */
+	private String text = null;
+	
+	/**
+	 * Returns the text containing this event.
+	 * 
+	 * @return
+	 * 		Text containing this event.
+	 */
+	public String getText()
+	{	return text;
+	}
+	
+	/**
+	 * Changes the text containing this event.
+	 * 
+	 * @param text
+	 * 		New text containing this event.
+	 */
+	public void setText(String text)
+	{	this.text = text;
+	}
+
+	/////////////////////////////////////////////////////////////////
 	// DATES			/////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
 	/** Start date */
@@ -137,7 +164,21 @@ public class Event
 	 */
 	public void addLocation(EntityLocation location)
 	{	String normalizedName = location.getValue();
+		if(normalizedName==null)
+			normalizedName = location.getStringValue();
 		locations.add(normalizedName);
+	}
+	
+	/**
+	 * Adds the location names to the current list.
+	 * 
+	 * @param locations
+	 * 		The location entities whose <i>normalized</i>
+	 * 		name will be added to this event.
+	 */
+	public void addLocation(List<EntityLocation> locations)
+	{	for(EntityLocation location: locations)
+			addLocation(location);
 	}
 	
 	/////////////////////////////////////////////////////////////////
@@ -166,7 +207,21 @@ public class Event
 	 */
 	public void addOrganization(EntityOrganization organization)
 	{	String normalizedName = organization.getValue();
+		if(normalizedName==null)
+			normalizedName = organization.getStringValue();
 		locations.add(normalizedName);
+	}
+	
+	/**
+	 * Adds the organization names to the current list.
+	 * 
+	 * @param organizations
+	 * 		The location entities whose <i>normalized</i>
+	 * 		name will be added to this event.
+	 */
+	public void addOrganizations(List<EntityOrganization> organizations)
+	{	for(EntityOrganization organization: organizations)
+			addOrganization(organization);
 	}
 	
 	/////////////////////////////////////////////////////////////////
@@ -195,7 +250,21 @@ public class Event
 	 */
 	public void addPerson(EntityPerson person)
 	{	String normalizedName = person.getValue();
+		if(normalizedName==null)
+			normalizedName = person.getStringValue();
 		locations.add(normalizedName);
+	}
+	
+	/**
+	 * Adds the person names to the current list.
+	 * 
+	 * @param persons
+	 * 		The person entities whose <i>normalized</i>
+	 * 		name will be added to this event.
+	 */
+	public void addPerson(List<EntityPerson> persons)
+	{	for(EntityPerson person: persons)
+			addPerson(person);
 	}
 	
 	/////////////////////////////////////////////////////////////////
@@ -357,6 +426,31 @@ public class Event
 		
 		// TODO
 		
+		return result;
+	}
+
+	/////////////////////////////////////////////////////////////////
+	// STRING			/////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////
+	@Override
+	public String toString()
+	{	String result = "<";
+		
+		if(endDate==null)
+			result = result + "date=" + startDate;
+		else
+			result = result + " start=" + startDate + " end=" + endDate;
+		
+		if(!persons.isEmpty())
+			result = result + " persons=" + persons;
+		
+		if(!locations.isEmpty())
+			result = result + " locations=" + locations;
+		
+		if(!organizations.isEmpty())
+			result = result + " organizations=" + organizations;
+		
+		result = result + " >";
 		return result;
 	}
 }

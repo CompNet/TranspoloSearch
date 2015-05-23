@@ -169,9 +169,8 @@ public class Entities
 	}
 	
 	/**
-	 * Returns the entity at the specified
-	 * position (in the list of entities,
-	 * not in the text).
+	 * Returns the entity at the specified position (in the list of 
+	 * entities, not in the text).
 	 * 
 	 * @param index
 	 * 		Position of the required entity.
@@ -183,6 +182,29 @@ public class Entities
 		return result;
 	}
 
+	/**
+	 * Returns the list of entities overlapping the specified range.
+	 * The parameters are expressed in terms of characters in the original
+	 * text.
+	 * 
+	 * @param startPos
+	 * 		Position of the first character in the specified range.
+	 * @param endPos
+	 * 		Position of the last character+1 in the specified range.
+	 * @return
+	 * 		List of the concerned entities.
+	 */
+	public List<AbstractEntity<?>> getEntitiesIn(int startPos, int endPos)
+	{	List<AbstractEntity<?>> result = new ArrayList<AbstractEntity<?>>();
+		
+		for(AbstractEntity<?> entity: entities)
+		{	if(entity.containsPosition(startPos) || entity.containsPosition(endPos-1))
+				result.add(entity);
+		}
+		
+		return result;
+	}
+	
 	/**
 	 * Adds a new entity in the list.
 	 * No redundance check is performed. 
@@ -242,6 +264,29 @@ public class Entities
 	 */
 	public void sortByPosition()
 	{	Collections.sort(entities);
+	}
+	
+	/**
+	 * Takes a list of entities of various types, and returns
+	 * only those with the specified type.
+	 * 
+	 * @param list
+	 * 		List of entities.
+	 * @param type
+	 * 		Entity type of interest.
+	 * @return
+	 * 		A sublist of the original entity list.
+	 */
+	public static List<AbstractEntity<?>> filterByType(List<AbstractEntity<?>> list, EntityType type)
+	{	List<AbstractEntity<?>> result = new ArrayList<AbstractEntity<?>>();
+		
+		for(AbstractEntity<?> entity: list)
+		{	EntityType t = entity.getType();
+			if(t==type)
+				result.add(entity);
+		}
+		
+		return result;
 	}
 	
 	/////////////////////////////////////////////////////////////////

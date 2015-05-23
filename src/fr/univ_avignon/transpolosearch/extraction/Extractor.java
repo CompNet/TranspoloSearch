@@ -24,6 +24,7 @@ import java.io.PrintWriter;
 import java.net.URL;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.Iterator;
@@ -38,7 +39,12 @@ import fr.univ_avignon.transpolosearch.data.article.Article;
 import fr.univ_avignon.transpolosearch.data.article.ArticleLanguage;
 import fr.univ_avignon.transpolosearch.data.entity.AbstractEntity;
 import fr.univ_avignon.transpolosearch.data.entity.Entities;
+import fr.univ_avignon.transpolosearch.data.entity.EntityDate;
+import fr.univ_avignon.transpolosearch.data.entity.EntityLocation;
+import fr.univ_avignon.transpolosearch.data.entity.EntityOrganization;
+import fr.univ_avignon.transpolosearch.data.entity.EntityPerson;
 import fr.univ_avignon.transpolosearch.data.entity.EntityType;
+import fr.univ_avignon.transpolosearch.data.event.Event;
 import fr.univ_avignon.transpolosearch.recognition.AbstractRecognizer;
 import fr.univ_avignon.transpolosearch.recognition.RecognizerException;
 import fr.univ_avignon.transpolosearch.recognition.combiner.straightcombiner.StraightCombiner;
@@ -48,6 +54,7 @@ import fr.univ_avignon.transpolosearch.tools.file.FileNames;
 import fr.univ_avignon.transpolosearch.tools.file.FileTools;
 import fr.univ_avignon.transpolosearch.tools.log.HierarchicalLogger;
 import fr.univ_avignon.transpolosearch.tools.log.HierarchicalLoggerManager;
+import fr.univ_avignon.transpolosearch.tools.string.StringTools;
 import fr.univ_avignon.transpolosearch.websearch.AbstractEngine;
 import fr.univ_avignon.transpolosearch.websearch.GoogleEngine;
 
@@ -327,7 +334,7 @@ public class Extractor
 		
 		// init
 		List<Article> result = new ArrayList<Article>();
-		ArticleRetriever articleRetriever = new ArticleRetriever(false); //TODO cache disabled for debugging
+		ArticleRetriever articleRetriever = new ArticleRetriever(true); //TODO cache disabled for debugging
 		articleRetriever.setLanguage(ArticleLanguage.FR); // we know the articles will be in French
 
 		// retrieve articles
@@ -368,7 +375,7 @@ public class Extractor
 	 */
 	private void initDefaultRecognizer() throws RecognizerException
 	{	recognizer = new StraightCombiner();
-		recognizer.setCacheEnabled(false);//TODO false for debugging
+		recognizer.setCacheEnabled(true);//TODO false for debugging
 	}
 	
 	/**
@@ -393,10 +400,6 @@ public class Extractor
 				result.add(entities);
 				
 				logger.log("Found "+entities.getEntities().size()+" entities");
-				logger.increaseOffset();
-					// TODO extraire les évènements (par phrase?)
-					
-				logger.decreaseOffset();
 			logger.decreaseOffset();
 		}
 		
@@ -599,12 +602,16 @@ public class Extractor
 	 * @param articles
 	 * 		List of articles to treat.
 	 * @param entities
-	 * 		List of the associated entities.
+	 * 		List of the associated entities.*
+	 * @return
+	 * 		The resulting list of events, for each article.
 	 */
-	private void extractEvents(List<Article> articles, List<Entities> entities)
+	private List<List<Event>> extractEvents(List<Article> articles, List<Entities> entities)
 	{	logger.log("Extracting events");
 		logger.increaseOffset();
-	
+		List<List<Event>> result = new ArrayList<List<Event>>();
+		
+		// processing each article
 		Iterator<Article> itArt = articles.iterator();
 		Iterator<Entities> itEnt = entities.iterator();
 		int count = 0;
@@ -614,10 +621,82 @@ public class Extractor
 			logger.log("Article: "+article.getTitle()+" ("+count+"/"+articles.size()+")");
 			logger.increaseOffset();
 				count++;
-				List<AbstractEntity<?>> dates = ents.getEntitiesByType(EntityType.DATE);
+				String rawText = article.getRawText();
+				List<Event> events = new ArrayList<Event>();
+				result.add(events);
+				
+				// retrieving the sentence positions
+				List<Integer> sentencePos = StringTools.getSentencePositions(rawText);
+				sentencePos.add(rawText.length()); // to mark the end of the last sentence
+				int sp = -1;
+				
+				// for each sentence, we get the detected entities
+				for(int ep: sentencePos)
+				{	if(sp>=0)
+					{	List<AbstractEntity<?>> le = ents.getEntitiesIn(sp, ep);
+						List<AbstractEntity<?>> dates = Entities.filterByType(le,EntityType.DATE);
+						// only go on if there is at least one date
+						if(!dates.isEmpty())
+						{	if(dates.size()>1)
+								logger.log("WARNING: there are several dates in sentence \""+rawText.substring(sp,ep)+"\"");
+							else
+							{	EntityDate ed = (EntityDate)dates.get(0);
+								List<AbstractEntity<?>> persons = Entities.filterByType(le,EntityType.PERSON);
+								if(persons.isEmpty())
+									logger.log("WARNING: there is a date ("+ed.getValue()+") but no persons in sentence \""+rawText.substring(sp,ep)+"\"");
+								else
+								{	Event event = new Event(ed);
+									events.add(event);
+									for(AbstractEntity<?> entity: persons)
+									{	EntityPerson person = (EntityPerson)entity;
+										event.addPerson(person);
+									}
+									List<AbstractEntity<?>> organizations = Entities.filterByType(le,EntityType.ORGANIZATION);
+									for(AbstractEntity<?> entity: organizations)
+									{	EntityOrganization organization = (EntityOrganization)entity;
+										event.addOrganization(organization);
+									}
+									List<AbstractEntity<?>> locations = Entities.filterByType(le,EntityType.LOCATION);
+									for(AbstractEntity<?> entity: locations)
+									{	EntityLocation location = (EntityLocation)entity;
+										event.addLocation(location);
+									}
+									logger.log(Arrays.asList("Event found for sentence \""+rawText.substring(sp,ep)+"\"",event.toString()));
+								}
+							}
+						}
+					}
+					sp = ep;
+				}
+			logger.log("Total number of events for this sentence: "+events.size());
+			logger.decreaseOffset();
 		}
+		
+// TODO donner le choix de travailler par texte entier plutot que par simple phrase ? 		
 		
 		logger.decreaseOffset();
 		logger.log("Event extraction complete");
+		return result;
 	}
+	
+	/**
+	 * Takes a list of entities and returns the list of
+	 * corresponding strings.
+	 * 
+	 * @param entities
+	 * 		List of entities.
+	 * @return
+	 * 		List of the associated strings.
+	 */
+//	private List<String> extractEntityNames(List<AbstractEntity<?>> entities)
+//	{	List<String> result = new ArrayList<String>();
+//		
+//		for(AbstractEntity<?> entity: entities)
+//		{	Object object = entity.getValue();
+//			String str = object.toString();
+//			result.add(str);
+//		}
+//		
+//		return result;
+//	}
 }
