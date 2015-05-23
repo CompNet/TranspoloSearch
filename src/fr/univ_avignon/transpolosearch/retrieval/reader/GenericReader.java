@@ -203,6 +203,8 @@ public class GenericReader extends ArticleReader
 	 * is not efficient for sites putting all their content in the same node, for instance a single paragraph
 	 * element. TODO We could add an alternative/complementary, method, consisting in focusing on elements
 	 * containing almost all the text of the document at once.
+	 * 
+	 * TODO we could also compute the longest text while ignoring purely formatting elements (b, i, etc.)
 	 * <br/>
 	 * Once several candidates have been detected, they are compared in terms of the longest uniterrupted text
 	 * they contain. The idea here is that sometimes, the article consists of less text than the rest of the
