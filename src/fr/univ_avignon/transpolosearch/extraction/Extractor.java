@@ -672,7 +672,8 @@ public class Extractor
 			logger.decreaseOffset();
 		}
 		
-// TODO donner le choix de travailler par texte entier plutot que par simple phrase ? 		
+// TODO donner le choix de travailler par texte entier plutot que par simple phrase ?
+// (ça peut être du au non-traitement des coréférences)
 		
 		logger.decreaseOffset();
 		logger.log("Event extraction complete");
