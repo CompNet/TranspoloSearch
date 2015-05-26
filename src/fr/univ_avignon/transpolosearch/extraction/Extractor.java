@@ -150,7 +150,8 @@ public class Extractor
 		displayRemainingEntities(articles,entities); //TODO for debug only
 		
 		// extract events from the remaining articles and entities
-		extractEvents(articles,entities);
+		boolean bySentence = false; //TODO for debug
+		extractEvents(articles,entities,bySentence);
 		
 		logger.decreaseOffset();
 		logger.log("Information extraction over");
@@ -603,10 +604,13 @@ public class Extractor
 	 * 		List of articles to treat.
 	 * @param entities
 	 * 		List of the associated entities.*
+	 * @param bySentence
+	 * 		Whether to retrieve events by sentence (all event-related entities
+	 * 		must be in the same sentence) or by article.
 	 * @return
 	 * 		The resulting list of events, for each article.
 	 */
-	private List<List<Event>> extractEvents(List<Article> articles, List<Entities> entities)
+	private List<List<Event>> extractEvents(List<Article> articles, List<Entities> entities, boolean bySentence)
 	{	logger.log("Extracting events");
 		logger.increaseOffset();
 		List<List<Event>> result = new ArrayList<List<Event>>();
@@ -615,6 +619,7 @@ public class Extractor
 		Iterator<Article> itArt = articles.iterator();
 		Iterator<Entities> itEnt = entities.iterator();
 		int count = 0;
+		int eventNbr = 0;
 		while(itArt.hasNext())
 		{	Article article = itArt.next();
 			Entities ents = itEnt.next();
@@ -625,58 +630,95 @@ public class Extractor
 				List<Event> events = new ArrayList<Event>();
 				result.add(events);
 				
-				// retrieving the sentence positions
-				List<Integer> sentencePos = StringTools.getSentencePositions(rawText);
-				sentencePos.add(rawText.length()); // to mark the end of the last sentence
-				int sp = -1;
-				
-				// for each sentence, we get the detected entities
-				for(int ep: sentencePos)
-				{	if(sp>=0)
-					{	List<AbstractEntity<?>> le = ents.getEntitiesIn(sp, ep);
-						List<AbstractEntity<?>> dates = Entities.filterByType(le,EntityType.DATE);
-						// only go on if there is at least one date
-						if(!dates.isEmpty())
-						{	if(dates.size()>1)
-								logger.log("WARNING: there are several dates in sentence \""+rawText.substring(sp,ep)+"\"");
-							else
-							{	EntityDate ed = (EntityDate)dates.get(0);
-								List<AbstractEntity<?>> persons = Entities.filterByType(le,EntityType.PERSON);
-								if(persons.isEmpty())
-									logger.log("WARNING: there is a date ("+ed.getValue()+") but no persons in sentence \""+rawText.substring(sp,ep)+"\"");
+				if(bySentence)
+				{	// retrieving the sentence positions
+					List<Integer> sentencePos = StringTools.getSentencePositions(rawText);
+					sentencePos.add(rawText.length()); // to mark the end of the last sentence
+					int sp = -1;
+					
+					// for each sentence, we get the detected entities
+					for(int ep: sentencePos)
+					{	if(sp>=0)
+						{	List<AbstractEntity<?>> le = ents.getEntitiesIn(sp, ep);
+							List<AbstractEntity<?>> dates = Entities.filterByType(le,EntityType.DATE);
+							// only go on if there is at least one date
+							if(!dates.isEmpty())
+							{	if(dates.size()>1)
+									logger.log("WARNING: there are several dates in sentence \""+rawText.substring(sp,ep)+"\"");
 								else
-								{	Event event = new Event(ed);
-									events.add(event);
-									for(AbstractEntity<?> entity: persons)
-									{	EntityPerson person = (EntityPerson)entity;
-										event.addPerson(person);
+								{	EntityDate ed = (EntityDate)dates.get(0);
+									List<AbstractEntity<?>> persons = Entities.filterByType(le,EntityType.PERSON);
+									if(persons.isEmpty())
+										logger.log("WARNING: there is a date ("+ed.getValue()+") but no persons in sentence \""+rawText.substring(sp,ep)+"\"");
+									else
+									{	Event event = new Event(ed);
+										events.add(event);
+										eventNbr++;
+										for(AbstractEntity<?> entity: persons)
+										{	EntityPerson person = (EntityPerson)entity;
+											event.addPerson(person);
+										}
+										List<AbstractEntity<?>> organizations = Entities.filterByType(le,EntityType.ORGANIZATION);
+										for(AbstractEntity<?> entity: organizations)
+										{	EntityOrganization organization = (EntityOrganization)entity;
+											event.addOrganization(organization);
+										}
+										List<AbstractEntity<?>> locations = Entities.filterByType(le,EntityType.LOCATION);
+										for(AbstractEntity<?> entity: locations)
+										{	EntityLocation location = (EntityLocation)entity;
+											event.addLocation(location);
+										}
+										logger.log(Arrays.asList("Event found for sentence \""+rawText.substring(sp,ep)+"\"",event.toString()));
 									}
-									List<AbstractEntity<?>> organizations = Entities.filterByType(le,EntityType.ORGANIZATION);
-									for(AbstractEntity<?> entity: organizations)
-									{	EntityOrganization organization = (EntityOrganization)entity;
-										event.addOrganization(organization);
-									}
-									List<AbstractEntity<?>> locations = Entities.filterByType(le,EntityType.LOCATION);
-									for(AbstractEntity<?> entity: locations)
-									{	EntityLocation location = (EntityLocation)entity;
-										event.addLocation(location);
-									}
-									logger.log(Arrays.asList("Event found for sentence \""+rawText.substring(sp,ep)+"\"",event.toString()));
 								}
 							}
 						}
+						sp = ep;
 					}
-					sp = ep;
 				}
-			logger.log("Total number of events for this sentence: "+events.size());
+				
+				else
+				{	List<AbstractEntity<?>> dates = ents.getEntitiesByType(EntityType.DATE);
+					// only go on if there is at least one date
+					if(!dates.isEmpty())
+					{	if(dates.size()>1)
+							logger.log("WARNING: there are several dates in article \""+article.getTitle()+"\"");
+//TODO faut régler ça					
+						else
+						{	EntityDate ed = (EntityDate)dates.get(0);
+							List<AbstractEntity<?>> persons = ents.getEntitiesByType(EntityType.PERSON);
+							if(persons.isEmpty())
+								logger.log("WARNING: there is a date ("+ed.getValue()+") but no persons in article \""+article.getTitle()+"\"");
+							else
+							{	Event event = new Event(ed);
+								events.add(event);
+								eventNbr++;
+								for(AbstractEntity<?> entity: persons)
+								{	EntityPerson person = (EntityPerson)entity;
+									event.addPerson(person);
+								}
+								List<AbstractEntity<?>> organizations = ents.getEntitiesByType(EntityType.ORGANIZATION);
+								for(AbstractEntity<?> entity: organizations)
+								{	EntityOrganization organization = (EntityOrganization)entity;
+									event.addOrganization(organization);
+								}
+								List<AbstractEntity<?>> locations = ents.getEntitiesByType(EntityType.LOCATION);
+								for(AbstractEntity<?> entity: locations)
+								{	EntityLocation location = (EntityLocation)entity;
+									event.addLocation(location);
+								}
+								logger.log(Arrays.asList("Event found for article \""+article.getTitle()+"\"",event.toString()));
+							}
+						}
+					}
+				}
+				
+			logger.log("Total number of events for this article: "+events.size());
 			logger.decreaseOffset();
 		}
 		
-// TODO donner le choix de travailler par texte entier plutot que par simple phrase ?
-// (ça peut être du au non-traitement des coréférences)
-		
 		logger.decreaseOffset();
-		logger.log("Event extraction complete");
+		logger.log("Event extraction complete: "+eventNbr+" events detected in "+articles.size()+" articles");
 		return result;
 	}
 	
