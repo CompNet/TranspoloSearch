@@ -25,7 +25,6 @@ import java.net.URL;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.Iterator;
@@ -685,19 +684,14 @@ public class Extractor
 					{	Event event;
 						if(dates.size()>1)
 						{	logger.log("There are several ("+dates.size()+") dates in the article >> merging them");
-							Collections.sort(dates, new Comparator<AbstractEntity<T>>()
-							{	@Override
-								public int compare(AbstractEntity<?> o1,AbstractEntity<?> o2)
-								{	Comparable<?> v1 = o1.getValue();
-									Comparable<?> v2 = o2.getValue();
-									int result = v1.compareTo(v2);	
-									return result;
-								}
-							});
-							logger.log(dates.toString());
-							EntityDate esd = (EntityDate)dates.get(0);
-							EntityDate eed = (EntityDate)dates.get(dates.size()-1);
-							event = new Event(esd,eed);
+							Iterator<AbstractEntity<?>> it = dates.iterator();
+							EntityDate ed = (EntityDate)it.next();
+							event = new Event(ed);
+							while(it.hasNext())
+							{	ed = (EntityDate)it.next();
+								fr.univ_avignon.transpolosearch.tools.time.Date d = ed.getValue(); 
+								event.mergeDate(d);
+							}
 						}
 						else
 						{	EntityDate esd = (EntityDate)dates.get(0);

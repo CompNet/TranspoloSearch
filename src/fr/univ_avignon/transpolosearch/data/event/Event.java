@@ -138,6 +138,74 @@ public class Event
 	{	return endDate;
 	}
 	
+	/**
+	 * Combines the specified date to the existing ones in
+	 * this event. If the date is more extreme than one of
+	 * the bounds, it becomes the new bound. Same thing if
+	 * it is more <i>precise</i>.
+	 * 
+	 * @param date
+	 * 		The date to merge to this event current dates.
+	 */
+	public void mergeDate(Date date)
+	{	// init
+		if(startDate==null)
+			startDate = date;
+		else
+		{	int year1 = startDate.getYear();
+			int year2 = date.getYear();
+			int month1 = startDate.getMonth();
+			int month2 = date.getMonth();
+			int day1 = startDate.getDay();
+			int day2 = date.getDay();
+			
+			// check date vs start date
+			if(year1==0)
+				startDate = date;
+			else if(year2<year1)
+			{	if(endDate==null)
+					endDate = startDate;
+				startDate = date;
+			}	
+			else if(year2==year1)
+			{	if(month1==0)
+					startDate = date;
+				else if(month2<month1)
+				{	if(endDate==null)
+						endDate = startDate;
+					startDate = date;
+				}
+				else if(month2==month1)
+				{	if(day1==0)
+						startDate = date;
+					else if(day2<day1)
+					{	if(endDate==null)
+							endDate = startDate;
+						startDate = date;
+					}
+				}
+			}
+			
+			// check date vs end date
+			if(startDate!=date && endDate!=null)
+			{	year1 = endDate.getYear();
+				month1 = endDate.getMonth();
+				day1 = endDate.getDay();
+				
+				if(year2>year1)
+					endDate = date;
+				else if(year2==year1)
+				{	if(month2>month1)
+						endDate = date;
+					else if(month2==month1)
+					{	if(day2>day1)
+							endDate = date;
+					}
+				}
+			}
+		}
+	}
+	
 	/////////////////////////////////////////////////////////////////
 	// LOCATIONS		/////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
@@ -209,7 +277,7 @@ public class Event
 	{	String normalizedName = organization.getValue();
 		if(normalizedName==null)
 			normalizedName = organization.getStringValue();
-		locations.add(normalizedName);
+		organizations.add(normalizedName);
 	}
 	
 	/**
@@ -252,7 +320,7 @@ public class Event
 	{	String normalizedName = person.getValue();
 		if(normalizedName==null)
 			normalizedName = person.getStringValue();
-		locations.add(normalizedName);
+		persons.add(normalizedName);
 	}
 	
 	/**

@@ -36,7 +36,7 @@ import fr.univ_avignon.transpolosearch.tools.xml.XmlNames;
  * @author Yasa Akbulut
  * @author Vincent Labatut
  */
-public abstract class AbstractEntity<T extends Comparable<T>> implements Comparable<AbstractEntity<?>>
+public abstract class AbstractEntity<T extends Comparable<T>> implements Comparable<AbstractEntity<T>>
 {	
 	/**
 	 * General constructor for an entity.
@@ -522,7 +522,7 @@ public abstract class AbstractEntity<T extends Comparable<T>> implements Compara
 	// COMPARABLE		/////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
 	@Override
-	public int compareTo(AbstractEntity<?> o)
+	public int compareTo(AbstractEntity<T> o)
 	{	int startPos = o.getStartPos();
 		int result = this.startPos - startPos;
 		if(result==0)
@@ -533,6 +533,22 @@ public abstract class AbstractEntity<T extends Comparable<T>> implements Compara
 				result = this.valueStr.compareTo(valueStr);
 			}
 		}
+		return result;
+	}
+	
+	/**
+	 * Compare the value of this entity to that
+	 * of the specified entity. Both entities
+	 * must contain values of the same type.
+	 * 
+	 * @param entity
+	 * 		The other entity.
+	 * @return
+	 * 		An integer classically representing the result of the comparison.
+	 */
+	public int compareValueTo(AbstractEntity<T> entity)
+	{	T value = entity.getValue();
+		int result = this.value.compareTo(value);
 		return result;
 	}
 	
