@@ -25,6 +25,7 @@ import java.net.URL;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.Iterator;
@@ -681,34 +682,50 @@ public class Extractor
 				{	List<AbstractEntity<?>> dates = ents.getEntitiesByType(EntityType.DATE);
 					// only go on if there is at least one date
 					if(!dates.isEmpty())
-					{	if(dates.size()>1)
-							logger.log("WARNING: there are several dates in article \""+article.getTitle()+"\"");
-//TODO faut régler ça					
+					{	Event event;
+						if(dates.size()>1)
+						{	logger.log("There are several ("+dates.size()+") dates in the article >> merging them");
+							Collections.sort(dates, new Comparator<AbstractEntity<T>>()
+							{	@Override
+								public int compare(AbstractEntity<?> o1,AbstractEntity<?> o2)
+								{	Comparable<?> v1 = o1.getValue();
+									Comparable<?> v2 = o2.getValue();
+									int result = v1.compareTo(v2);	
+									return result;
+								}
+							});
+							logger.log(dates.toString());
+							EntityDate esd = (EntityDate)dates.get(0);
+							EntityDate eed = (EntityDate)dates.get(dates.size()-1);
+							event = new Event(esd,eed);
+						}
 						else
-						{	EntityDate ed = (EntityDate)dates.get(0);
-							List<AbstractEntity<?>> persons = ents.getEntitiesByType(EntityType.PERSON);
-							if(persons.isEmpty())
-								logger.log("WARNING: there is a date ("+ed.getValue()+") but no persons in article \""+article.getTitle()+"\"");
-							else
-							{	Event event = new Event(ed);
-								events.add(event);
-								eventNbr++;
-								for(AbstractEntity<?> entity: persons)
-								{	EntityPerson person = (EntityPerson)entity;
-									event.addPerson(person);
-								}
-								List<AbstractEntity<?>> organizations = ents.getEntitiesByType(EntityType.ORGANIZATION);
-								for(AbstractEntity<?> entity: organizations)
-								{	EntityOrganization organization = (EntityOrganization)entity;
-									event.addOrganization(organization);
-								}
-								List<AbstractEntity<?>> locations = ents.getEntitiesByType(EntityType.LOCATION);
-								for(AbstractEntity<?> entity: locations)
-								{	EntityLocation location = (EntityLocation)entity;
-									event.addLocation(location);
-								}
-								logger.log(Arrays.asList("Event found for article \""+article.getTitle()+"\"",event.toString()));
+						{	EntityDate esd = (EntityDate)dates.get(0);
+							event = new Event(esd);
+						}
+						
+						List<AbstractEntity<?>> persons = ents.getEntitiesByType(EntityType.PERSON);
+						if(persons.isEmpty())
+							logger.log("WARNING: there is a date ("+event.getStartDate()+") but no persons in article \""+article.getTitle()+"\"");
+						else
+						{	events.add(event);
+							eventNbr++;
+							
+							for(AbstractEntity<?> entity: persons)
+							{	EntityPerson person = (EntityPerson)entity;
+								event.addPerson(person);
 							}
+							List<AbstractEntity<?>> organizations = ents.getEntitiesByType(EntityType.ORGANIZATION);
+							for(AbstractEntity<?> entity: organizations)
+							{	EntityOrganization organization = (EntityOrganization)entity;
+								event.addOrganization(organization);
+							}
+							List<AbstractEntity<?>> locations = ents.getEntitiesByType(EntityType.LOCATION);
+							for(AbstractEntity<?> entity: locations)
+							{	EntityLocation location = (EntityLocation)entity;
+								event.addLocation(location);
+							}
+							logger.log(Arrays.asList("Event found for article \""+article.getTitle()+"\"",event.toString()));
 						}
 					}
 				}

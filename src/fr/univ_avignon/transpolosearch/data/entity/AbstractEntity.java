@@ -36,7 +36,7 @@ import fr.univ_avignon.transpolosearch.tools.xml.XmlNames;
  * @author Yasa Akbulut
  * @author Vincent Labatut
  */
-public abstract class AbstractEntity<T> implements Comparable<AbstractEntity<?>>
+public abstract class AbstractEntity<T extends Comparable<T>> implements Comparable<AbstractEntity<?>>
 {	
 	/**
 	 * General constructor for an entity.

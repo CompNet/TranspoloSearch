@@ -383,9 +383,7 @@ public class Date implements Comparable<Date>
 					{	if((day==0 && date.day!=0) || (day!=0 && date.day==0))
 							throw new IllegalArgumentException("The dates '"+this+"' and '"+date+"' cannot be compared, because the day is unknown for exactly one of them");
 						else
-						{	result = day - date.day;
-							
-						}
+							result = day - date.day;
 					}
 				}
 			}
