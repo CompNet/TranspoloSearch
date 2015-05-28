@@ -23,6 +23,12 @@ import java.util.List;
 
 import org.jdom2.Element;
 
+import fr.univ_avignon.transpolosearch.data.entity.EntityDate;
+import fr.univ_avignon.transpolosearch.data.entity.EntityFunction;
+import fr.univ_avignon.transpolosearch.data.entity.EntityLocation;
+import fr.univ_avignon.transpolosearch.data.entity.EntityOrganization;
+import fr.univ_avignon.transpolosearch.data.entity.EntityPerson;
+import fr.univ_avignon.transpolosearch.data.entity.EntityProduction;
 import fr.univ_avignon.transpolosearch.data.article.Article;
 import fr.univ_avignon.transpolosearch.recognition.RecognizerName;
 import fr.univ_avignon.transpolosearch.tools.xml.XmlNames;
@@ -89,6 +95,9 @@ public abstract class AbstractEntity<T extends Comparable<T>> implements Compara
 		{	case DATE:
 				result = new EntityDate(startPos, endPos, source, valueStr, null);
 				break;
+			case FUNCTION:
+				result = new EntityFunction(startPos, endPos, source, valueStr, null);
+				break;
 			case LOCATION:
 				result = new EntityLocation(startPos, endPos, source, valueStr, null);
 				break;
@@ -97,6 +106,9 @@ public abstract class AbstractEntity<T extends Comparable<T>> implements Compara
 				break;
 			case PERSON:
 				result = new EntityPerson(startPos, endPos, source, valueStr, null);
+				break;
+			case PRODUCTION:
+				result = new EntityProduction(startPos, endPos, source, valueStr, null);
 				break;
 		}
 		
