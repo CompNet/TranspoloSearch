@@ -516,6 +516,9 @@ public abstract class AbstractEntity<T extends Comparable<T>> implements Compara
 		{	case DATE:
 				result = EntityDate.importFromElement(element,source);
 				break;
+			case FUNCTION:
+				result = EntityFunction.importFromElement(element,source);
+				break;
 			case LOCATION:
 				result = EntityLocation.importFromElement(element,source);
 				break;
@@ -524,6 +527,9 @@ public abstract class AbstractEntity<T extends Comparable<T>> implements Compara
 				break;
 			case PERSON:
 				result = EntityPerson.importFromElement(element,source);
+				break;
+			case PRODUCTION:
+				result = EntityProduction.importFromElement(element,source);
 				break;
 		}
 		
