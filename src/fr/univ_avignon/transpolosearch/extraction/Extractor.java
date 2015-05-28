@@ -336,7 +336,7 @@ public class Extractor
 		// init
 		List<Article> result = new ArrayList<Article>();
 		ArticleRetriever articleRetriever = new ArticleRetriever(true); //TODO cache disabled for debugging
-		articleRetriever.setLanguage(ArticleLanguage.FR); // we know the articles will be in French
+		articleRetriever.setLanguage(ArticleLanguage.FR); // we know the articles will be in French (should be genralized later)
 
 		// retrieve articles
 		Iterator<URL> it = urls.iterator();
