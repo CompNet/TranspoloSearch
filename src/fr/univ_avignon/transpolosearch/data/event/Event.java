@@ -29,6 +29,7 @@ import fr.univ_avignon.transpolosearch.data.entity.EntityDate;
 import fr.univ_avignon.transpolosearch.data.entity.EntityLocation;
 import fr.univ_avignon.transpolosearch.data.entity.EntityOrganization;
 import fr.univ_avignon.transpolosearch.data.entity.EntityPerson;
+import fr.univ_avignon.transpolosearch.tools.string.StringTools;
 import fr.univ_avignon.transpolosearch.tools.time.Date;
 
 /**
@@ -210,7 +211,7 @@ public class Event
 	// LOCATIONS		/////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
 	/** List of strings representing the locations associated to this event */
-	private final Set<String> locations = new TreeSet<String>();
+	private final Set<String> locations = new TreeSet<String>(StringTools.COMPARATOR); //TODO comparator should be removed if we use ids instead of plain names
 	
 	/**
 	 * Returns the set of locations associated
@@ -253,7 +254,7 @@ public class Event
 	// ORGANIZATIONS	/////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
 	/** List of strings representing the organizations associated to this event */
-	private final Set<String> organizations = new TreeSet<String>();
+	private final Set<String> organizations = new TreeSet<String>(StringTools.COMPARATOR);
 	
 	/**
 	 * Returns the set of organizations associated
@@ -296,7 +297,7 @@ public class Event
 	// PERSONS			/////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
 	/** List of strings representing the persons associated to this event */
-	private final Set<String> persons = new TreeSet<String>();
+	private final Set<String> persons = new TreeSet<String>(StringTools.COMPARATOR);
 	
 	/**
 	 * Returns the set of persons associated
