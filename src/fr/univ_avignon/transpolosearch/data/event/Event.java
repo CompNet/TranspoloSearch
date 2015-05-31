@@ -211,7 +211,7 @@ public class Event
 	// LOCATIONS		/////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
 	/** List of strings representing the locations associated to this event */
-	private final Set<String> locations = new TreeSet<String>(StringTools.COMPARATOR); //TODO comparator should be removed if we use ids instead of plain names
+	private final Set<String> locations = new TreeSet<String>(StringTools.COMPARATOR); //TODO comparator should be removed if we use ids instead of plain names. same thing in the other sets
 	
 	/**
 	 * Returns the set of locations associated
