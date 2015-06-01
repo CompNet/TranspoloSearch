@@ -135,6 +135,8 @@ public class FileNames
 	public final static String FI_DEMONYMS = "demonyms" + FileNames.EX_TEXT;
 	/** File containing cached search results */
 	public final static String FI_SEARCH_RESULTS = "search" + FileNames.EX_TEXT;
+	/** Configuration file */
+	public final static String FI_CONFIGURATION = "config" + FileNames.EX_TEXT;
 	
 //	/**
 //	 * Returns the filename used to store the
