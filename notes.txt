@@ -20,3 +20,9 @@ https://developers.google.com/custom-search/docs/structured_data#page_dates
 
 démo de google
 https://developers.google.com/apis-explorer/#p/customsearch/v1/search.cse.list?cx=006268084831734919523%253A-ss85cic7fg&q=C%25C3%25A9cile+Helle&_h=3&
+
+--------------------------------------------------------------
+--------------------------------------------------------------
+--------------------------------------------------------------
+API duck duck go :
+https://duckduckgo.com/api
