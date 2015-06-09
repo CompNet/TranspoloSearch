@@ -147,11 +147,17 @@ public class Event
 	 * 
 	 * @param date
 	 * 		The date to merge to this event current dates.
+	 * @return
+	 * 		{@code true} iff one of the start/end dates of
+	 * 		this event was modified during the processed.
 	 */
-	public void mergeDate(Date date)
-	{	// init
+	public boolean mergeDate(Date date)
+	{	boolean changedStart = false;
+		boolean changedEnd = false;
 		if(startDate==null)
-			startDate = date;
+		{	startDate = date;
+			changedStart = true;
+		}
 		else
 		{	int year1 = startDate.getYear();
 			int year2 = date.getYear();
@@ -162,49 +168,80 @@ public class Event
 			
 			// check date vs start date
 			if(year1==0)
-				startDate = date;
+			{	startDate = date;
+				changedStart = true;
+			}
 			else if(year2<year1)
 			{	if(endDate==null)
-					endDate = startDate;
+				{	endDate = startDate;
+					changedEnd = true;
+				}
 				startDate = date;
+				changedStart = true;
 			}	
 			else if(year2==year1)
 			{	if(month1==0)
-					startDate = date;
+				{	startDate = date;
+					changedStart = true;
+				}
 				else if(month2<month1)
 				{	if(endDate==null)
-						endDate = startDate;
+					{	endDate = startDate;
+						changedEnd = true;
+					}
 					startDate = date;
+					changedStart = true;
 				}
 				else if(month2==month1)
 				{	if(day1==0)
-						startDate = date;
+					{	startDate = date;
+						changedStart = true;
+					}
 					else if(day2<day1)
 					{	if(endDate==null)
-							endDate = startDate;
+						{	endDate = startDate;
+							changedEnd = true;
+						}
 						startDate = date;
+						changedStart = true;
 					}
 				}
 			}
 			
 			// check date vs end date
-			if(startDate!=date && endDate!=null)
-			{	year1 = endDate.getYear();
-				month1 = endDate.getMonth();
-				day1 = endDate.getDay();
-				
-				if(year2>year1)
-					endDate = date;
-				else if(year2==year1)
-				{	if(month2>month1)
-						endDate = date;
-					else if(month2==month1)
-					{	if(day2>day1)
-							endDate = date;
+			if(!changedStart && !changedEnd)
+			{	if(endDate==null)
+				{	endDate = date;
+					changedEnd = true;
+				}
+			
+				else
+				{	year1 = endDate.getYear();
+					month1 = endDate.getMonth();
+					day1 = endDate.getDay();
+					
+					if(year2>year1)
+					{	endDate = date;
+						changedEnd = true;
+					}
+					else if(year2==year1)
+					{	if(month2>month1)
+						{	endDate = date;
+							changedEnd = true;
+						}
+						else if(month2==month1)
+						{	if(day2>day1)
+							{	endDate = date;
+								changedEnd = true;
+							}
+						}
 					}
 				}
 			}
 		}
+		
+		boolean result = changedEnd || changedStart;
+		return result; 
 	}
 	
 	/////////////////////////////////////////////////////////////////

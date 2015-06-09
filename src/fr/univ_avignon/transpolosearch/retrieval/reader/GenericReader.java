@@ -112,8 +112,17 @@ public class GenericReader extends ArticleReader
 			
 			// identify the content element
 			logger.log("Get the main element of the document");
-			Element bodyElt = document.getElementsByTag(HtmlNames.ELT_BODY).get(0);
+			List<Element> bodyElts = document.getElementsByTag(HtmlNames.ELT_BODY);
+			if(bodyElts.isEmpty())
+			{	logger.log("ERROR: The HTML source code does not contain a BODY tag for URL "+url);
+				throw new ReaderException("The HTML source code does not contain a BODY tag for URL "+url);
+			}
+			Element bodyElt = bodyElts.get(0);
 			Element contentElt = getContentElement(bodyElt);
+			if(contentElt==null)
+			{	logger.log("ERROR: Could not identify the main element of the document of URL "+url);
+				throw new ReaderException("Could not identify the main element for URL "+url);
+			}
 
 			// get raw and linked texts
 			logger.log("Get raw and linked texts");
@@ -304,9 +313,14 @@ public class GenericReader extends ArticleReader
 			while(!queue.isEmpty());
 		}
 		
-		String text = result.text();
-		float size = text.length();
-		logger.log("Selected element: "+size+" characters ("+size/totalLength*100+"%)");
+		if(result!=null)
+		{	String text = result.text();
+			float size = text.length();
+			logger.log("Selected element: "+size+" characters ("+size/totalLength*100+"%)");
+		}
+		else
+			logger.log("WARNING: could not select any element");
+		
 		logger.decreaseOffset();
 		return result;
 	}

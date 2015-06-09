@@ -509,18 +509,24 @@ public abstract class ArticleReader
 	 */
 	protected void processParagraphElement(Element element, StringBuilder rawStr, StringBuilder linkedStr)
 	{	// possibly add a new line character first (if the last one is not already a newline)
-		if(rawStr.length()>0 && rawStr.charAt(rawStr.length()-1)!='\n')
-		{	rawStr.append("\n");
-			linkedStr.append("\n");
+		if(rawStr.length()>0)
+		{	char c = rawStr.charAt(rawStr.length()-1);
+			if(c!='\n')
+			{	rawStr.append("\n");
+				linkedStr.append("\n");
+			}
 		}
 		
 		// recursive processing
 		processAnyElement(element,rawStr,linkedStr);
 		
 		// possibly add a new line character (if the last one is not already a newline)
-		if(rawStr.length()>0 && rawStr.charAt(rawStr.length()-1)!='\n')
-		{	rawStr.append("\n");
-			linkedStr.append("\n");
+		if(rawStr.length()>0)
+		{	char c = rawStr.charAt(rawStr.length()-1);
+			if(c!='\n')
+			{	rawStr.append("\n");
+				linkedStr.append("\n");
+			}
 		}
 	}
 
@@ -540,9 +546,12 @@ public abstract class ArticleReader
 	{	boolean result = true;
 		
 		// possibly modify the previous characters 
-		if(rawStr.length()>0 && rawStr.charAt(rawStr.length()-1)=='\n')
-		{	rawStr.deleteCharAt(rawStr.length()-1);
-			linkedStr.deleteCharAt(linkedStr.length()-1);
+		if(rawStr.length()>0)
+		{	char c = rawStr.charAt(rawStr.length()-1);
+			if(c=='\n')
+			{	rawStr.deleteCharAt(rawStr.length()-1);
+				linkedStr.deleteCharAt(linkedStr.length()-1);
+			}
 		}
 		
 		// insert quotes
@@ -562,9 +571,12 @@ public abstract class ArticleReader
 		}
 		
 		// possibly modify the ending characters 
-		if(rawStr.length()>0 && rawStr.charAt(rawStr.length()-1)=='\n')
-		{	rawStr.deleteCharAt(rawStr.length()-1);
-			linkedStr.deleteCharAt(linkedStr.length()-1);
+		if(rawStr.length()>0)
+		{	char c = rawStr.charAt(rawStr.length()-1);
+			if(c=='\n')
+			{	rawStr.deleteCharAt(rawStr.length()-1);
+				linkedStr.deleteCharAt(linkedStr.length()-1);
+			}
 		}
 
 		// insert quotes
@@ -910,14 +922,17 @@ public abstract class ArticleReader
 				processAnyElement(colElt, rawStr, linkedStr);
 				
 				// possibly add final dot and space. 
-				if(rawStr.charAt(rawStr.length()-1)!=' ')
-				{	if(rawStr.charAt(rawStr.length()-1)=='.')
-					{	rawStr.append(" ");
-						linkedStr.append(" ");
-					}
-					else
-					{	rawStr.append(". ");
-						linkedStr.append(". ");
+				if(rawStr.length()>0)
+				{	char c = rawStr.charAt(rawStr.length()-1);
+					if(c!=' ')
+					{	if(rawStr.charAt(rawStr.length()-1)=='.')
+						{	rawStr.append(" ");
+							linkedStr.append(" ");
+						}
+						else
+						{	rawStr.append(". ");
+							linkedStr.append(". ");
+						}
 					}
 				}
 			}
