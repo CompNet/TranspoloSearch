@@ -265,8 +265,8 @@ public class Test
 		
 		String keywords = "Cécile Helle";
 		String website = null;
-		Date startDate = df.parse("20150413");
-		Date endDate = df.parse("20150419");
+		Date startDate = df.parse("20150330");
+		Date endDate = df.parse("20150426");
 		boolean strictSearch = true;
 		String compulsoryExpression = "Helle";
 		
