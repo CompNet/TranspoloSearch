@@ -19,12 +19,15 @@ package fr.univ_avignon.transpolosearch.extraction;
  */
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.Iterator;
@@ -132,26 +135,32 @@ public class Extractor
 		logger.increaseOffset();
 		
 		// perform the Web search
-		List<URL> urls = performWebSearch(keywords, website, startDate, endDate, strictSearch);
+		List<URL> originalUrls = performWebSearch(keywords, website, startDate, endDate, strictSearch);
 		
 		// filter Web pages (remove PDFs, an so on)
-		filterUrls(urls);
+		List<URL> filteredUrls = new ArrayList<URL>(originalUrls);
+		filterUrls(filteredUrls);
 		
 		// retrieve the corresponding articles
-		List<Article> articles = retrieveArticles(urls);
+		List<Article> originalArticles = retrieveArticles(filteredUrls);
 		
 		// detect the entities
-		List<Entities> entities = detectEntities(articles);
+		List<Entities> originalEntities = detectEntities(originalArticles);
 		
 		// possibly filter the articles depending on the dates
-		filterArticles(articles,entities,startDate,endDate,strictSearch,compulsoryExpression);
+		List<Article> filteredArticles = new ArrayList<Article>(originalArticles);
+		List<Entities> filteredentities = new ArrayList<Entities>(originalEntities);
+		filterArticles(filteredArticles,filteredentities,startDate,endDate,strictSearch,compulsoryExpression);
 		
 		// displays the remaining articles with their entities
-		displayRemainingEntities(articles,entities); //TODO for debug only
+		displayRemainingEntities(filteredArticles,filteredentities); //TODO for debug only
 		
 		// extract events from the remaining articles and entities
 		boolean bySentence = false; //TODO for debug
-		extractEvents(articles,entities,bySentence);
+		List<List<Event>> events = extractEvents(filteredArticles,filteredentities,bySentence);
+		
+		// export the events as a table
+		exportEvents(originalUrls, filteredUrls, originalArticles, filteredArticles, events);
 		
 		logger.decreaseOffset();
 		logger.log("Information extraction over");
@@ -307,7 +316,7 @@ public class Extractor
 		}
 		
 		logger.decreaseOffset();
-		logger.log("Filtering complete");
+		logger.log("Filtering complete: "+urls.size()+" pages kept");
 	}
 	
 	/////////////////////////////////////////////////////////////////
@@ -594,7 +603,7 @@ public class Extractor
 	}
 	
 	/////////////////////////////////////////////////////////////////
-	// EVENT EXTRACTION		/////////////////////////////////////////
+	// EVENTS PROCESSING	/////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
 	/**
 	 * Takes a list of articles and a list of the corresponding entities,
@@ -733,15 +742,15 @@ public class Extractor
 		return result;
 	}
 	
-	/**
-	 * Takes a list of entities and returns the list of
-	 * corresponding strings.
-	 * 
-	 * @param entities
-	 * 		List of entities.
-	 * @return
-	 * 		List of the associated strings.
-	 */
+//	/**
+//	 * Takes a list of entities and returns the list of
+//	 * corresponding strings.
+//	 * 
+//	 * @param entities
+//	 * 		List of entities.
+//	 * @return
+//	 * 		List of the associated strings.
+//	 */
 //	private List<String> extractEntityNames(List<AbstractEntity<?>> entities)
 //	{	List<String> result = new ArrayList<String>();
 //		
@@ -753,4 +762,178 @@ public class Extractor
 //		
 //		return result;
 //	}
+	
+	/**
+	 * Record the result of the search as a CSV file.
+	 * 
+	 * @param originalUrls
+	 * 		List of treated URLs.
+	 * @param filteredUrls
+	 * 		List of remaning URLs after filtering.
+	 * @param originalArticles
+	 * 		List of treated articles.
+	 * @param filteredArticles
+	 * 		List of remaning articles after filtering.
+	 * @param events
+	 * 		List of detected events.
+	 * 
+	 * @throws UnsupportedEncodingException
+	 * 		Problem while accessing to the result file.
+	 * @throws FileNotFoundException
+	 * 		Problem while accessing to the result file.
+	 */
+	private void exportEvents(List<URL> originalUrls, List<URL> filteredUrls, List<Article> originalArticles, List<Article> filteredArticles, List<List<Event>> events) throws UnsupportedEncodingException, FileNotFoundException
+	{	String filePath = FileNames.FO_OUTPUT + File.separator + FileNames.FI_EVENT_TABLE;
+		logger.log("Recording the avents as a CVS file: "+filePath);
+		logger.decreaseOffset();
+		
+		PrintWriter pw = FileTools.openTextFileWrite(filePath);
+		
+		// write header
+		List<String> colNames = Arrays.asList(
+			"Rang",
+			"Titre page",
+			"Adresse",
+			"Date",
+			"Contenu",
+			"Actif",
+			"Concerne CH",
+			"Type support",
+			"Source",
+			"Type contenu",
+			"Thème",
+			"Evénement",
+			"Date",
+			"Heure",
+			"Pertinence Période",
+			"Lieu",
+			"Commentaires",
+			"Rang événement"
+		);
+		Iterator<String> it = colNames.iterator();
+		while(it.hasNext())
+		{	String colName = it.next();
+			pw.print(colName);
+			if(it.hasNext())
+				pw.print(",");
+		}
+		pw.println();
+		
+		// write data
+		logger.log("Treat each article separately");
+		int i = 1;
+		int j = 1;
+		for(URL url: originalUrls)
+		{	String urlStr = url.toString();
+			String address = "\""+urlStr+"\"";
+			int indexUrl = filteredUrls.indexOf(url);
+			
+			// URL not processed
+			if(indexUrl==-1)
+			{	if(urlStr.endsWith(FileNames.EX_PDF))
+					pw.print(
+						i+",,"+
+						address+",,,,,"+
+						"PDF,,,,,,,,,"+
+						"URL filtrée,"
+					);
+				else
+					pw.print(
+						i+",,"+
+						address+",,,,,,,,,,,,,,"+
+						"URL filtrée,"
+					);
+			}
+			
+			// URL processed
+			else
+			{	Article article = originalArticles.get(indexUrl);
+				String title = "\""+article.getTitle()+"\"";
+				int indexArticle = filteredArticles.indexOf(article);
+				
+				// article not processed
+				if(indexArticle==-1)
+				{	pw.print(
+						i+","+
+						title+","+
+						address+",,,,"+
+						"Non,,,,,,,,,,"+
+						"Article filtré,"
+					);
+				}
+				
+				// article processed
+				else
+				{	List<Event> eventList = events.get(indexArticle);
+
+					// no event detected for this article
+					if(eventList.isEmpty())
+						pw.print(
+							i+","+
+							title+","+
+							address+",,,,"+
+							"Oui,,,,,,,,,,"+
+							"Aucun évènement détecté,"+j
+						);
+
+					// at least one event detected
+					else
+					{	for(Event event: eventList)
+						{	// get the dates
+							fr.univ_avignon.transpolosearch.tools.time.Date startDate = event.getStartDate();
+							fr.univ_avignon.transpolosearch.tools.time.Date endDate = event.getEndDate();
+							String date = startDate.toString();
+							if(endDate!=null)
+								date = date + "-" + endDate.toString();
+							
+							// get the locations
+							String locations = "\"";
+							{	Collection<String> locs = event.getLocations();
+								Iterator<String> itLoc = locs.iterator();
+								while(itLoc.hasNext())
+								{	String loc = itLoc.next();
+									locations = locations + loc;
+									if(itLoc.hasNext())
+										locations = locations + ", ";
+								}
+								locations = locations + "\"";
+							}
+							
+							// get the persons/organizations
+							String persOrgs = "\"";
+							Collection<String> all = new ArrayList<String>();
+							all.addAll(event.getPersons());
+							all.addAll(event.getOrganizations());
+							Iterator<String> itPo = all.iterator();
+							while(itPo.hasNext())
+							{	String ent = itPo.next();
+								persOrgs = persOrgs + ent;
+								if(itPo.hasNext())
+									persOrgs = persOrgs + ", ";
+							}
+							persOrgs = persOrgs + "\"";
+						
+							// write the row
+							pw.print(
+								i+","+
+								title+","+
+								address+",,,,"+
+								"Oui,,,,,,"+
+								date+",,,"+
+								locations+","+
+								persOrgs+","+j
+							);
+						}
+					}
+					j++;
+				}
+			}
+			
+			pw.println();
+			i++;
+		}
+		
+		pw.close();
+		logger.decreaseOffset();
+	}
 }

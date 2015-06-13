@@ -119,7 +119,8 @@ public class OpenCalais extends AbstractModellessInternalRecognizer<List<String>
 	/////////////////////////////////////////////////////////////////
 	/** List of languages this recognizer can treat */
 	private static final List<ArticleLanguage> HANDLED_LANGUAGES = Arrays.asList(
-		ArticleLanguage.EN
+		ArticleLanguage.EN,
+		ArticleLanguage.FR
 	);
 
 	@Override

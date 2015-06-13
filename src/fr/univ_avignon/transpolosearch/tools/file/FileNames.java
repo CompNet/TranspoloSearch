@@ -137,6 +137,8 @@ public class FileNames
 	public final static String FI_SEARCH_RESULTS = "search" + FileNames.EX_TEXT;
 	/** Configuration file */
 	public final static String FI_CONFIGURATION = "config" + FileNames.EX_TEXT;
+	/** Configuration file */
+	public final static String FI_EVENT_TABLE = "event-table" + FileNames.EX_CSV;
 	
 //	/**
 //	 * Returns the filename used to store the
@@ -155,6 +157,8 @@ public class FileNames
 	/////////////////////////////////////////////////////////////////
 	// EXTENSIONS	/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
+	/** Comma-separated values (CSV) file extension */
+	public final static String EX_CSV = ".csv";
 	/** PDF file extension */
 	public final static String EX_PDF = ".pdf";
 	/** XML Schema file extension */
