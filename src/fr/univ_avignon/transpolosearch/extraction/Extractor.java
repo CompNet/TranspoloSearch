@@ -147,7 +147,7 @@ public class Extractor
 		// detect the entities
 		List<Entities> originalEntities = detectEntities(originalArticles);
 		
-		// possibly filter the articles depending on the dates
+		// possibly filter the articles depending on the dates and compulsory expression
 		List<Article> filteredArticles = new ArrayList<Article>(originalArticles);
 		List<Entities> filteredentities = new ArrayList<Entities>(originalEntities);
 		filterArticles(filteredArticles,filteredentities,startDate,endDate,strictSearch,compulsoryExpression);
