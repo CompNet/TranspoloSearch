@@ -686,7 +686,7 @@ public class Extractor
 					}
 				}
 				
-				else
+				else // by article
 				{	List<AbstractEntity<?>> dates = ents.getEntitiesByType(EntityType.DATE);
 					// only go on if there is at least one date
 					if(!dates.isEmpty())
