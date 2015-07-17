@@ -709,7 +709,7 @@ public class Extractor
 						
 						List<AbstractEntity<?>> persons = ents.getEntitiesByType(EntityType.PERSON);
 						if(persons.isEmpty())
-							logger.log("WARNING: there is a date ("+event.getStartDate()+") but no persons in article \""+article.getTitle()+"\"");
+							logger.log("WARNING: there is a date ("+event.getStartDate()+") but no person in article \""+article.getTitle()+"\"");
 						else
 						{	events.add(event);
 							eventNbr++;
