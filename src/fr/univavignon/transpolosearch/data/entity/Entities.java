@@ -200,8 +200,8 @@ public class Entities
 		
 		for(AbstractEntity<?> entity: entities)
 		{	if(entity.containsPosition(startPos) || entity.containsPosition(endPos-1)
-				|| (entity.startPos>=startPos && entity.startPos<=endPos)
-				|| (entity.endPos>=startPos && entity.endPos<=endPos))
+				|| (entity.startPos>=startPos && entity.startPos<endPos)
+				|| (entity.endPos>=startPos && entity.endPos<endPos))
 				result.add(entity);
 		}
 		
