@@ -1,0 +1,135 @@
+package fr.univavignon.transpolosearch.data.entity;
+
+/*
+ * TranspoloSearch
+ * Copyright 2015 Vincent Labatut
+ * 
+ * This file is part of TranspoloSearch.
+ * 
+ * TranspoloSearch is free software: you can redistribute it and/or modify it under 
+ * the terms of the GNU General Public License as published by the Free Software 
+ * Foundation, either version 2 of the License, or (at your option) any later version.
+ * 
+ * TranspoloSearch is distributed in the hope that it will be useful, but WITHOUT ANY 
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A 
+ * PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with TranspoloSearch. If not, see <http://www.gnu.org/licenses/>.
+ */
+
+import org.jdom2.Attribute;
+import org.jdom2.Element;
+
+import fr.univavignon.transpolosearch.recognition.RecognizerName;
+import fr.univavignon.transpolosearch.tools.xml.XmlNames;
+
+/**
+ * Class representing a production entity.
+ * 
+ * @author Vincent Labatut
+ * @author Sabrine Ayachi
+ */
+public class EntityProduction extends AbstractEntity<String>
+{	
+	/**
+	 * Builds a new production entity.
+	 * 
+	 * @param startPos
+	 * 		Starting position in the text.
+	 * @param endPos
+	 * 		Ending position in the text.
+	 * @param source
+	 * 		Tool which detected this entity.
+	 * @param valueStr
+	 * 		String representation in the text.
+	 * @param value
+	 * 		Actual value of the entity (can be the same as {@link #valueStr}).
+	 */
+	public EntityProduction(int startPos, int endPos, RecognizerName source, String valueStr, String value)
+	{	super(startPos, endPos, source, valueStr, value);
+	}
+	
+	/**
+	 * Builds a new date production without a value.
+	 * 
+	 * @param startPos
+	 * 		Starting position in the text.
+	 * @param endPos
+	 * 		Ending position in the text.
+	 * @param source
+	 * 		Tool which detected this entity.
+	 * @param valueStr
+	 * 		String representation in the text.
+	 */
+	public EntityProduction(int startPos, int endPos, RecognizerName source, String valueStr)
+	{	super(startPos, endPos, source, valueStr, null);
+	}
+	
+	/////////////////////////////////////////////////////////////////
+	// TYPE				/////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////
+	@Override
+	public EntityType getType()
+	{	return EntityType.PRODUCTION;
+	}
+
+	/////////////////////////////////////////////////////////////////
+	// XML				/////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////
+	@Override
+	public Element exportAsElement()
+	{	Element result = new Element(XmlNames.ELT_ENTITY);
+		
+		Attribute startAttr = new Attribute(XmlNames.ATT_START, Integer.toString(startPos));
+		result.setAttribute(startAttr);
+		
+		Attribute endAttr = new Attribute(XmlNames.ATT_END, Integer.toString(endPos));
+		result.setAttribute(endAttr);
+
+		Attribute typeAttr = new Attribute(XmlNames.ATT_TYPE, getType().toString());
+		result.setAttribute(typeAttr);
+		
+		Element stringElt = new Element(XmlNames.ELT_STRING);
+		stringElt.setText(valueStr);
+		result.addContent(stringElt);
+		
+		if(value!=null)
+		{	Element valueElt = new Element(XmlNames.ELT_VALUE);
+			valueElt.setText(value);
+			result.addContent(valueElt);
+		}
+		
+		return result;
+	}
+
+	/**
+	 * Builds a production entity from the specified
+	 * XML element.
+	 * 
+	 * @param element
+	 * 		XML element representing the entity.
+	 * @param source
+	 * 		Name of the NER tool which detected the entity.
+	 * @return
+	 * 		The production entity corresponding to the specified element.
+	 */
+	public static EntityProduction importFromElement(Element element, RecognizerName source)
+	{	String startStr = element.getAttributeValue(XmlNames.ATT_START);
+		int startPos = Integer.parseInt(startStr);
+		
+		String endStr = element.getAttributeValue(XmlNames.ATT_END);
+		int endPos = Integer.parseInt(endStr);
+		
+		Element stringElt = element.getChild(XmlNames.ELT_STRING);
+		String valueStr = stringElt.getText();
+		
+		Element valueElt = element.getChild(XmlNames.ELT_VALUE);
+		String value = null;
+		if(valueElt!=null)
+			value = valueElt.getText();
+		
+		EntityProduction result =  new EntityProduction(startPos, endPos, source, valueStr, value);
+		return result;
+	}
+}
