@@ -2,7 +2,7 @@ TranspoloSearch
 =======
 *Web-based information extraction for political science*
 
-* Copyright 2015 Vincent Labatut
+* Copyright 2015-17 Vincent Labatut
 
 TranspoloSearch is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation. For source availability and license information see `licence.txt`
 
@@ -31,3 +31,4 @@ Here are the dependencies for TranspoloSearch:
 * Certain classes (mainly those related to Named Entity Recognition) were taken from our own tool [Nerwip](https://github.com/CompNet/Nerwip) (and sometimes modified)
 
 ## References
+[MLE'15] [Le Web comme miroir du travail politique quotidien ? Reconstituer l'écho médiatique en ligne des événements d'un agenda d'élu](http://agorantic.univ-avignon.fr/wp-content/uploads/sites/13/2014/10/Publications-Agorantic1.pdf). G. Marrel, V. Labatut & M. El Bèze. 13ème Congrès de l'Association Française de Science Politique (AFSP), 2015, 25p.
