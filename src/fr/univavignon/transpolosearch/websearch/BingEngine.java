@@ -18,78 +18,90 @@ package fr.univavignon.transpolosearch.websearch;
  * along with TranspoloSearch. If not, see <http://www.gnu.org/licenses/>.
  */
 
-import com.google.api.client.http.HttpTransport;
-import com.google.api.client.http.javanet.NetHttpTransport;
-import com.google.api.client.json.JsonFactory;
-import com.google.api.client.json.gson.GsonFactory;
-import com.google.api.services.customsearch.Customsearch;
-import com.google.api.services.customsearch.model.Result;
-import com.google.api.services.customsearch.model.Search;
-
+import fr.univavignon.transpolosearch.tools.file.FileNames;
+import fr.univavignon.transpolosearch.tools.web.WebTools;
 import fr.univavignon.transpolosearch.tools.keys.KeyHandler;
 
 import java.io.IOException;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
+
+import org.apache.http.HttpResponse;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
 
 /**
- * This class uses Google to search the Web. More
- * precisely, it uses the Google Custom Search API.
+ * This class uses Bing to search the Web. More
+ * precisely, it uses the Bing Search API v5.
  * <br/>
  * See the public fields for a description of the
  * modifiable search parameters.
- * <br/>
- * This code is inspired by the 
- * <a href="http://weblog4j.com/2014/06/03/having-fun-with-google-custom-search-api-and-java/">weblog4j.com post</a> 
- * of Niraj Singh.
  * 
  * @author Vincent Labatut
  */
-public class GoogleEngine extends AbstractEngine
+public class BingEngine extends AbstractEngine
 {
 	/**
 	 * Initializes the object used to search
-	 * the Web with the Google Custom Search (GCS) API.
+	 * the Web with the Bing Search API.
 	 */
-	public GoogleEngine()
-	{	// Set up the HTTP transport and JSON factory
-		HttpTransport httpTransport = new NetHttpTransport();
-		//JsonFactory jsonFactory = new GsonFactory();
-		JsonFactory jsonFactory = GsonFactory.getDefaultInstance();
-		
-		// builds the builder and set the application name
-		//HttpRequestInitializer initializer = (HttpRequestInitializer)new CommonGoogleClientRequestInitializer(API_KEY);
-		builder = new Customsearch.Builder(httpTransport, jsonFactory, null);
-		builder.setApplicationName(APP_NAME);
+	public BingEngine()
+	{	// nothing to do here
 	}
 
 	/////////////////////////////////////////////////////////////////
 	// SERVICE		/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
-	/** Object used to format dates in the query */
-	private final static DateFormat DATE_FORMAT = new SimpleDateFormat("yyyyMMdd");
-	/** Name of the GCS application */
-	private static final String APP_NAME = "TranspoloSearch";
-	/** Name of the API key */
-	private static final String API_KEY_NAME = "GoogleProject";
-	/** Name of the application key */
-	private static final String APP_KEY_NAME = "GoogleEngine";
-    /** GCS API key */ 
-	private static final String API_KEY = KeyHandler.KEYS.get(API_KEY_NAME);
-    /** Application id */
-	private static final String APP_KEY = KeyHandler.KEYS.get(APP_KEY_NAME);
-	/** Number of results returned for one request */
-	private static final long PAGE_SIZE = 10; // max seems to be only 10!
-   
+	/** Number of results on a page */
+	private static final int NBR_RESULTS = 50;
+	/** URL of the Bing Search service */
+	private static final String SERVICE_URL = "https://api.cognitive.microsoft.com/bing/v5.0/search";
+	/** Query to send to the service */
+	private static final String SERVICE_PARAM_QUERY = "&q=";
+	/** Number of results to return */
+	private static final String SERVICE_PARAM_COUNT = "count="+NBR_RESULTS; //max is 50
+	/** Number of results to skip */
+	private static final String SERVICE_PARAM_OFFSET = "&offset=";
+	/** Country/language */
+	private static final String SERVICE_PARAM_LANGUAGE = "&mkt=fr-FR";
+	/** Response filter */
+	private static final String SERVICE_PARAM_FILTER = "&responseFilter=Webpages,News";
+	/** Query a specific Website */
+	private static final String QUERY_PARAM_WEBSITE = "site:";
+//	/** Object used to format dates in the query */
+//	private final static DateFormat DATE_FORMAT = new SimpleDateFormat("yyyyMMdd");
+//	/** Name of the GCS application */
+//	private static final String APP_NAME = "TranspoloSearch";
+	/** Name of the first API key */
+	private static final String API_KEY1_NAME = "MicrosoftSearch1";
+	/** Name of the second API key */
+	private static final String API_KEY2_NAME = "MicrosoftSearch2";
+    /** First API key */ 
+	private static final String API_KEY1 = KeyHandler.KEYS.get(API_KEY1_NAME);
+    /** Second API key */
+	private static final String APP_KEY2 = KeyHandler.KEYS.get(API_KEY2_NAME);
+//	/** Number of results returned for one request */
+//	private static final long PAGE_SIZE = 10; // max seems to be only 10!
+	/** Maximal number of results (can be less if Bing does not provide) */
+	public int MAX_RES_NBR = 100;
+	
 	/////////////////////////////////////////////////////////////////
 	// DATA			/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
 	/** Textual name of this engine */
-	private static final String ENGINE_NAME = "Google Custom Search";
+	private static final String ENGINE_NAME = "Bing Search";
 
 	@Override
 	public String getName()
@@ -107,48 +119,99 @@ public class GoogleEngine extends AbstractEngine
 //	public boolean sortByDate = false;
 //	/** Date range the search should focus on. It should take the form YYYYMMDD:YYYYMMDD, or {@code null} for no limit. If {@link #sortByDate} is set to {@code false}, this range is ignored. */
 //	public String dateRange = null;
-	/** Maximal number of results (can be less if google does not provide) */
+	/** Maximal number of results (can be less if google doesn't provide) */
 	public int resultNumber = 100;
-
-	/////////////////////////////////////////////////////////////////
-	// BUILDER		/////////////////////////////////////////////////
-	/////////////////////////////////////////////////////////////////
-	/** Object used to build GoogleEngine instances */
-	private Customsearch.Builder builder;
 	
 	/////////////////////////////////////////////////////////////////
 	// SEARCH		/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
 	@Override
 	public List<URL> search(String keywords, String website, Date startDate, Date endDate)  throws IOException
-	{	logger.log("Applying Google Custom Search");
+	{	logger.log("Applying Bing Search");
 		logger.increaseOffset();
 		
-		// init GCS parameters
-		String sortCriterion;
-		if(startDate==null && endDate==null)
-		{	sortCriterion = null;
-		}
-		else if(startDate!=null && endDate!=null)
-		{	String dateRange = DATE_FORMAT.format(startDate)+":"+DATE_FORMAT.format(endDate);
-			sortCriterion = "date:r:" + dateRange;
-		}
-		else
-		{	logger.log("WARNING: one date is null, so we ignore both dates in the search");
-			sortCriterion = null;
+		List<URL> result = new ArrayList<URL>();
+		
+		// init search parameters
+		String baseUrl = SERVICE_URL 
+				+ SERVICE_PARAM_COUNT 
+				+ SERVICE_PARAM_LANGUAGE
+				+ SERVICE_PARAM_FILTER;
+		String baseQuery = "";
+		if(website!=null)
+			baseQuery = QUERY_PARAM_WEBSITE + website;
+		
+		if(startDate!=null && endDate!=null)
+		{	Calendar cal = Calendar.getInstance();
+	    	cal.setTime(startDate);
+	    	int year = cal.get(Calendar.YEAR);
+	    	int month = cal.get(Calendar.MONTH) + 1;
+	    	int day = cal.get(Calendar.DAY_OF_MONTH);
+	    	LocalDate currentLocalDate = LocalDate.of(year, month, day);
+	    	cal.setTime(endDate);
+	    	year = cal.get(Calendar.YEAR);
+	    	month = cal.get(Calendar.MONTH) + 1;
+	    	day = cal.get(Calendar.DAY_OF_MONTH);
+	    	LocalDate endLocalDate = LocalDate.of(year, month, day);
+	    	
+	    	// process separately each day of the considered time period
+	    	while(currentLocalDate.isBefore(endLocalDate))
+	    	{	int lastRes = 0;
+	    		
+	    		// repeat because of the pagination system
+	    		do
+	    		{	// setup query
+	    			String query = baseQuery 
+    					+ " " + currentLocalDate.getDayOfMonth() 
+    					+ "/" + currentLocalDate.getMonthValue()
+    					+ "/" + currentLocalDate.getYear();
+	    			// setup url
+	    			String url = baseUrl + SERVICE_PARAM_OFFSET + lastRes
+	    				+ SERVICE_PARAM_QUERY + URLEncoder.encode(keywords, "UTF-8");
+	    			logger.log("URL: "+url);
+	    			
+	    			// query the server	
+	    			HttpClient httpclient = new DefaultHttpClient();   
+	    			HttpGet request = new HttpGet(url);
+	    			request.setHeader("Ocp-Apim-Subscription-Key", API_KEY1);
+	    			HttpResponse response = httpclient.execute(request);
+	    			
+	    			// parse the JSON response
+	    			String answer = WebTools.readAnswer(response);
+					JSONParser parser = new JSONParser();
+					JSONObject jsonData = (JSONObject)parser.parse(answer);
+
+					JSONObject property = (JSONObject) jsonData.get("property");
+					if(property!=null)
+					{	JSONObject notable = (JSONObject) property.get("/common/topic/notable_types");
+						JSONArray values = (JSONArray) notable.get("values");
+						JSONObject value = (JSONObject)values.get(0);
+						result = (String) value.get("id");
+					}
+					
+					
+	    			lastRes = lastRes + NBR_RESULTS;
+	    		}
+	    		while(result.size()<MAX_RES_NBR);
+	    		
+	    		// deal with the next day
+	    		currentLocalDate = currentLocalDate.plusDays(1);
+	    	}
+			
 		}
 		
-		// display GCS parameters
-		logger.log("Parameters:");
-		logger.increaseOffset();
-			logger.log("keywords="+keywords);
-			logger.log("website="+website);
-			logger.log("pageCountry="+pageCountry);
-			logger.log("pageLanguage="+pageLanguage);
-			logger.log("PAGE_SIZE="+PAGE_SIZE);
-			logger.log("resultNumber="+resultNumber);
-			logger.log("sortCriterion="+sortCriterion);
-		logger.decreaseOffset();
+		
+		
+		
+		
+		
+		
+		
+
+		
+		
+		
+		
 
 		// perform search
 		List<Result> resList = searchGoogle(keywords,website,sortCriterion);
@@ -182,7 +245,7 @@ public class GoogleEngine extends AbstractEngine
 	 * @param keywords
 	 * 		Kewords to search.
 	 * @param website
-	 * 		Target site, or {@code null} to search the whole Web.
+	 * 		Target site, or {@ode null} to search the whole Web.
 	 * @param sortCriterion
 	 * 		Criterion used for sorting (and possibly a range),
 	 * 		or {@code null} to use the default (relevance).
@@ -193,7 +256,7 @@ public class GoogleEngine extends AbstractEngine
 	 * 		Problem while searching Google.
 	 */
 	public List<Result> searchGoogle(String keywords, String website, String sortCriterion)  throws IOException
-	{	// init the other variables
+	{			// init the other variables
 		List<Result> result = new ArrayList<Result>();
 		long start = 1;
 		
@@ -208,8 +271,8 @@ public class GoogleEngine extends AbstractEngine
 					// create the GCS object
 					Customsearch customsearch = builder.build();//new Customsearch(httpTransport, jsonFactory,null);
 					Customsearch.Cse.List list = customsearch.cse().list(keywords);				
-					list.setKey(API_KEY);
-					list.setCx(APP_KEY);
+					list.setKey(API_KEY1);
+					list.setCx(APP_KEY2);
 					list.setCr(pageCountry);
 					list.setLr(pageLanguage);
 					list.setNum(PAGE_SIZE);
@@ -223,7 +286,7 @@ public class GoogleEngine extends AbstractEngine
 					logger.log("Send request");
 					Search search = list.execute();
 					
-//TODO handle search in order to catch possible problems, such as 403					
+//TODO traiter search pour récupérer les éventuels problèmes, genre 403					
 					
 					// add the results to the list
 					response = search.getItems();

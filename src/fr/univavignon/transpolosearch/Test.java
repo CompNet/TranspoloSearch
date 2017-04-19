@@ -78,10 +78,10 @@ public class Test
 //		testRetrievalGeneric();
 		
 		// search
-//		testGoogleSearch();
+		testGoogleSearch();
 		
 		// whole process
-		testExtractor();
+//		testExtractor();
 		
 		logger.close();
 	}

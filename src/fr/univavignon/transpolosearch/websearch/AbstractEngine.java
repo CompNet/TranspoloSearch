@@ -64,13 +64,13 @@ public abstract class AbstractEngine
 	 * @param keywords
 	 * 		Person we want to look for.
 	 * @param website
-	 * 		Target site, or {@ode null} to search the whole Web.
+	 * 		Target site, or {@code null} to search the whole Web.
 	 * @param startDate
 	 * 		Start of the period we want to consider, 
-	 * 		or {@code null} for no contraint.
+	 * 		or {@code null} for no constraint.
 	 * @param endDate
 	 * 		End of the period we want to consider,
-	 * 		or {@code null} for no contraint.
+	 * 		or {@code null} for no constraint.
 	 * @return
 	 * 		List of results taking the form of URLs.
 	 * 
