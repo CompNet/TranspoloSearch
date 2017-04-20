@@ -2,7 +2,7 @@ package fr.univavignon.transpolosearch.websearch;
 
 /*
  * TranspoloSearch
- * Copyright 2015 Vincent Labatut
+ * Copyright 2015-17 Vincent Labatut
  * 
  * This file is part of TranspoloSearch.
  * 
@@ -18,29 +18,29 @@ package fr.univavignon.transpolosearch.websearch;
  * along with TranspoloSearch. If not, see <http://www.gnu.org/licenses/>.
  */
 
-import fr.univavignon.transpolosearch.tools.file.FileNames;
 import fr.univavignon.transpolosearch.tools.web.WebTools;
 import fr.univavignon.transpolosearch.tools.keys.KeyHandler;
 
 import java.io.IOException;
 import java.net.URL;
 import java.net.URLEncoder;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.List;
-import java.util.Locale;
 
 import org.apache.http.HttpResponse;
+import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 
 /**
  * This class uses Bing to search the Web. More
@@ -64,38 +64,32 @@ public class BingEngine extends AbstractEngine
 	/////////////////////////////////////////////////////////////////
 	// SERVICE		/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
-	/** Number of results on a page */
-	private static final int NBR_RESULTS = 50;
+	/** Number of results returned for one request (max: 50) */
+	private static final int PAGE_SIZE = 50;
 	/** URL of the Bing Search service */
 	private static final String SERVICE_URL = "https://api.cognitive.microsoft.com/bing/v5.0/search";
 	/** Query to send to the service */
 	private static final String SERVICE_PARAM_QUERY = "&q=";
 	/** Number of results to return */
-	private static final String SERVICE_PARAM_COUNT = "count="+NBR_RESULTS; //max is 50
+	private static final String SERVICE_PARAM_COUNT = "?count="+PAGE_SIZE;
 	/** Number of results to skip */
 	private static final String SERVICE_PARAM_OFFSET = "&offset=";
 	/** Country/language */
-	private static final String SERVICE_PARAM_LANGUAGE = "&mkt=fr-FR";
+	private static final String SERVICE_PARAM_LANGUAGE = "&mkt="+BingEngine.PAGE_LANG+"-"+BingEngine.PAGE_CNTRY;
 	/** Response filter */
 	private static final String SERVICE_PARAM_FILTER = "&responseFilter=Webpages,News";
 	/** Query a specific Website */
 	private static final String QUERY_PARAM_WEBSITE = "site:";
-//	/** Object used to format dates in the query */
-//	private final static DateFormat DATE_FORMAT = new SimpleDateFormat("yyyyMMdd");
-//	/** Name of the GCS application */
-//	private static final String APP_NAME = "TranspoloSearch";
+	/** Object used to format dates */
+	private final static DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-mm-dd");
 	/** Name of the first API key */
 	private static final String API_KEY1_NAME = "MicrosoftSearch1";
-	/** Name of the second API key */
-	private static final String API_KEY2_NAME = "MicrosoftSearch2";
+//	/** Name of the second API key */
+//	private static final String API_KEY2_NAME = "MicrosoftSearch2";
     /** First API key */ 
 	private static final String API_KEY1 = KeyHandler.KEYS.get(API_KEY1_NAME);
-    /** Second API key */
-	private static final String APP_KEY2 = KeyHandler.KEYS.get(API_KEY2_NAME);
-//	/** Number of results returned for one request */
-//	private static final long PAGE_SIZE = 10; // max seems to be only 10!
-	/** Maximal number of results (can be less if Bing does not provide) */
-	public int MAX_RES_NBR = 100;
+//    /** Second API key */
+//	private static final String APP_KEY2 = KeyHandler.KEYS.get(API_KEY2_NAME);
 	
 	/////////////////////////////////////////////////////////////////
 	// DATA			/////////////////////////////////////////////////
@@ -112,15 +106,11 @@ public class BingEngine extends AbstractEngine
 	// PARAMETERS	/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
     /** Focus on pages hosted in a certain country */
-	public String pageCountry = "countryFR";
+	public static final String PAGE_CNTRY = "FR";
 	/** Focus on pages in a certain language */
-	public String pageLanguage = "lang_fr";
-//	/** Whether the result should be sorted by date, or not (in this case: by relevance). If {@link #sortByDate} is not {@code null}, only the specified time range is treated. */
-//	public boolean sortByDate = false;
-//	/** Date range the search should focus on. It should take the form YYYYMMDD:YYYYMMDD, or {@code null} for no limit. If {@link #sortByDate} is set to {@code false}, this range is ignored. */
-//	public String dateRange = null;
-	/** Maximal number of results (can be less if google doesn't provide) */
-	public int resultNumber = 100;
+	public static final String PAGE_LANG = "fr";
+	/** Maximal number of results (can be less if Bing does not provide) */
+	public int MAX_RES_NBR = 200;
 	
 	/////////////////////////////////////////////////////////////////
 	// SEARCH		/////////////////////////////////////////////////
@@ -129,20 +119,29 @@ public class BingEngine extends AbstractEngine
 	public List<URL> search(String keywords, String website, Date startDate, Date endDate)  throws IOException
 	{	logger.log("Applying Bing Search");
 		logger.increaseOffset();
-		
 		List<URL> result = new ArrayList<URL>();
 		
 		// init search parameters
+		logger.log("Keywords: "+keywords);
 		String baseUrl = SERVICE_URL 
 				+ SERVICE_PARAM_COUNT 
 				+ SERVICE_PARAM_LANGUAGE
 				+ SERVICE_PARAM_FILTER;
 		String baseQuery = "";
-		if(website!=null)
-			baseQuery = QUERY_PARAM_WEBSITE + website;
+		if(website==null)
+			logger.log("No website specified");
+		else
+		{	logger.log("Search restricted to website: "+website);
+			baseQuery = QUERY_PARAM_WEBSITE + website + " " ;
+		}
+		baseQuery = baseQuery + keywords;
 		
+		// if there is a time range constraint
 		if(startDate!=null && endDate!=null)
-		{	Calendar cal = Calendar.getInstance();
+		{	logger.log("Dates detected: "+startDate+"-"+endDate);
+			logger.increaseOffset();
+			
+			Calendar cal = Calendar.getInstance();
 	    	cal.setTime(startDate);
 	    	int year = cal.get(Calendar.YEAR);
 	    	int month = cal.get(Calendar.MONTH) + 1;
@@ -155,160 +154,178 @@ public class BingEngine extends AbstractEngine
 	    	LocalDate endLocalDate = LocalDate.of(year, month, day);
 	    	
 	    	// process separately each day of the considered time period
-	    	while(currentLocalDate.isBefore(endLocalDate))
-	    	{	int lastRes = 0;
-	    		
-	    		// repeat because of the pagination system
-	    		do
-	    		{	// setup query
-	    			String query = baseQuery 
-    					+ " " + currentLocalDate.getDayOfMonth() 
-    					+ "/" + currentLocalDate.getMonthValue()
-    					+ "/" + currentLocalDate.getYear();
-	    			// setup url
-	    			String url = baseUrl + SERVICE_PARAM_OFFSET + lastRes
-	    				+ SERVICE_PARAM_QUERY + URLEncoder.encode(keywords, "UTF-8");
-	    			logger.log("URL: "+url);
-	    			
-	    			// query the server	
-	    			HttpClient httpclient = new DefaultHttpClient();   
-	    			HttpGet request = new HttpGet(url);
-	    			request.setHeader("Ocp-Apim-Subscription-Key", API_KEY1);
-	    			HttpResponse response = httpclient.execute(request);
-	    			
-	    			// parse the JSON response
-	    			String answer = WebTools.readAnswer(response);
-					JSONParser parser = new JSONParser();
-					JSONObject jsonData = (JSONObject)parser.parse(answer);
-
-					JSONObject property = (JSONObject) jsonData.get("property");
-					if(property!=null)
-					{	JSONObject notable = (JSONObject) property.get("/common/topic/notable_types");
-						JSONArray values = (JSONArray) notable.get("values");
-						JSONObject value = (JSONObject)values.get(0);
-						result = (String) value.get("id");
-					}
-					
-					
-	    			lastRes = lastRes + NBR_RESULTS;
+	    	while(currentLocalDate.isBefore(endLocalDate) || currentLocalDate.isEqual(endLocalDate))
+	    	{	logger.log("Processing date "+currentLocalDate);
+				try
+	    		{	searchBing(baseUrl, baseQuery, currentLocalDate, result);
 	    		}
-	    		while(result.size()<MAX_RES_NBR);
+	    		catch(ParseException e)
+		    	{	e.printStackTrace();
+	    			throw new IOException(e.getMessage());	
+		    	}
 	    		
 	    		// deal with the next day
 	    		currentLocalDate = currentLocalDate.plusDays(1);
 	    	}
+			logger.decreaseOffset();
+		}
+		
+		// if there is no time constraint
+		else
+		{	logger.log("No date detected");
 			
+			try
+			{	searchBing(baseUrl, baseQuery, null, result);
+			}
+			catch(ParseException e)
+	    	{	e.printStackTrace();
+				throw new IOException(e.getMessage());	
+	    	}
 		}
 		
-		
-		
-		
-		
-		
-		
-		
-
-		
-		
-		
-		
-
-		// perform search
-		List<Result> resList = searchGoogle(keywords,website,sortCriterion);
-	
-		// convert result list
-		logger.log("Results obtained:");
-		logger.increaseOffset();
-		List<URL> result = new ArrayList<URL>();
-		for(Result res: resList)
-		{	String title = res.getHtmlTitle();
-			String urlStr = res.getLink();
-			logger.log(title+" - "+urlStr);
-			URL url = new URL(urlStr);
-			result.add(url);
-		}
-		logger.decreaseOffset();
-		
-		logger.log("Search terminated: "+result.size()+"/"+resultNumber+" results retrieved");
+		logger.log("Search terminated: "+result.size()+"/"+MAX_RES_NBR+" results retrieved");
 		logger.decreaseOffset();
 		return result;
 	}
-
 	
 	/**
-	 * Performs a search using Google Custom Search.
-	 * The search is performed only on the specified site.
-	 * <br/>
-	 * See the public fields of this class for a
-	 * description of the modifiable search parameters.
+	 * Invokes Bing Search API using the specified search parameters,
+	 * and completes the list of results accordingly.
 	 * 
-	 * @param keywords
-	 * 		Kewords to search.
-	 * @param website
-	 * 		Target site, or {@ode null} to search the whole Web.
-	 * @param sortCriterion
-	 * 		Criterion used for sorting (and possibly a range),
-	 * 		or {@code null} to use the default (relevance).
-	 * @return
-	 * 		List of results presented using Google's class.
+	 * @param baseUrl
+	 * 		Base URL (to be completed).
+	 * @param baseQuery
+	 * 		Base query (to be completed, too).
+	 * @param targetedDate
+	 * 		Date of the searched articles (can be {@code null}, if none).
+	 * @param result
+	 * 		Current list of URL.
 	 * 
+	 * @throws ClientProtocolException
+	 * 		Problem while invoking Bing.
 	 * @throws IOException
-	 * 		Problem while searching Google.
+	 * 		Problem while invoking Bing.
+	 * @throws ParseException
+	 * 		Problem while parsing Bing JSON results.
 	 */
-	public List<Result> searchGoogle(String keywords, String website, String sortCriterion)  throws IOException
-	{			// init the other variables
-		List<Result> result = new ArrayList<Result>();
-		long start = 1;
-		
-		// repeat because of the pagination system
-		logger.log("Retrieving the result pages:");
-		logger.increaseOffset();
-			try
-			{	List<Result> response = null;
-				do
-				{	logger.log("Starting at position "+start+"/"+resultNumber);
-					
-					// create the GCS object
-					Customsearch customsearch = builder.build();//new Customsearch(httpTransport, jsonFactory,null);
-					Customsearch.Cse.List list = customsearch.cse().list(keywords);				
-					list.setKey(API_KEY1);
-					list.setCx(APP_KEY2);
-					list.setCr(pageCountry);
-					list.setLr(pageLanguage);
-					list.setNum(PAGE_SIZE);
-					if(sortCriterion!=null)
-						list.setSort(sortCriterion);
-					if(website!=null)
-						list.setSiteSearch(website);
-					list.setStart(start);
-		            
-					// send the request
-					logger.log("Send request");
-					Search search = list.execute();
-					
-//TODO traiter search pour récupérer les éventuels problèmes, genre 403					
-					
-					// add the results to the list
-					response = search.getItems();
-					if(response==null)
-						logger.log("No more result could be retrieved");
-					else
-					{	logger.log("Retrieved "+response.size()+"/"+PAGE_SIZE+" items (total: "+result.size()+"/"+resultNumber+")");
-						result.addAll(response);
-					
-						// udpate parameter
-						start = start + PAGE_SIZE;
+	private void searchBing(String baseUrl, String baseQuery, LocalDate targetedDate, List<URL> result) throws ClientProtocolException, IOException, ParseException
+	{	// repeat because of the pagination system
+		int lastRes = 0;
+		do
+		{	logger.log("Getting results "+lastRes+"-"+(lastRes+PAGE_SIZE-1));
+			
+			// setup query
+			String query = baseQuery;
+			if(targetedDate!=null)
+				query = query
+				+ " " + String.format("%02d",targetedDate.getDayOfMonth()) 
+				+ "/" + String.format("%02d",targetedDate.getMonthValue())
+				+ "/" + targetedDate.getYear();
+			logger.log("Query: \""+query+"\"");
+			// setup url
+			String url = baseUrl + SERVICE_PARAM_OFFSET + lastRes
+				+ SERVICE_PARAM_QUERY + URLEncoder.encode(query, "UTF-8");
+			logger.log("URL: "+url);
+			
+			// query the server	
+			HttpClient httpclient = new DefaultHttpClient();   
+			HttpGet request = new HttpGet(url);
+			request.setHeader("Ocp-Apim-Subscription-Key", API_KEY1);
+			HttpResponse response = httpclient.execute(request);
+			
+			// parse the JSON response
+			String answer = WebTools.readAnswer(response);
+			JSONParser parser = new JSONParser();
+			JSONObject jsonData = (JSONObject)parser.parse(answer);
+			
+			// web results
+			{	JSONObject webRes = (JSONObject)jsonData.get("webPages");
+				if(webRes==null)
+					logger.log("WARNING: could not find any web results for this query");
+				else
+				{	JSONArray valueArray = (JSONArray)webRes.get("value");
+					logger.log("Found "+valueArray.size()+" web results for this query");
+					logger.increaseOffset();
+					int i = 1;
+					for(Object val: valueArray)
+					{	logger.log("Processing web result "+i+"/"+valueArray.size());
+						logger.increaseOffset();
+						JSONObject value = (JSONObject)val;
+						String urlStr = (String)value.get("url");
+						logger.log("url: "+urlStr);
+						URL resUrl = new URL(urlStr);
+						result.add(resUrl);
+						logger.decreaseOffset();
+						i++;
 					}
+					logger.increaseOffset();
 				}
-				while(result.size()<resultNumber && response!=null);
 			}
-			catch(IOException e)
-			{	//e.printStackTrace();
-				if(start<resultNumber)
-					logger.log("Could not reach the specified number of results ("+result.size()+"/"+resultNumber+")");
+
+			// news results
+			{	JSONObject newsRes = (JSONObject)jsonData.get("news");
+				if(newsRes==null)
+					logger.log("WARNING: could not find any news results for this query");
+				else
+				{	JSONArray valueArray = (JSONArray)newsRes.get("value");
+					logger.log("Found "+valueArray.size()+" news results for this query");
+					logger.increaseOffset();
+					int i = 1;
+					for(Object val: valueArray)
+					{	logger.log("Processing news result "+i+"/"+valueArray.size());
+						logger.increaseOffset();
+						JSONObject value = (JSONObject)val;
+						String urlStr = (String)value.get("url");
+						logger.log("url: "+urlStr);
+						String dateStr = (String)value.get("datePublished");
+						dateStr = dateStr.substring(0,10); // yyyy-mm-dd = 10 chars
+						logger.log("date: "+dateStr);
+						boolean keepArticle = true;
+						if(dateStr!=null && targetedDate!=null)
+						{	LocalDate artDate = LocalDate.parse(dateStr, DATE_FORMATTER);
+							keepArticle = artDate.equals(targetedDate);
+						}
+						if(keepArticle)
+						{	URL resUrl = new URL(urlStr);
+							result.add(resUrl);
+							logger.log("No publication date, or equal to the targeted date >> keeping the article");
+						}
+						else
+							logger.log("The article publication date is not compatible with the targeted date >> article ignored");
+						logger.decreaseOffset();
+						i++;
+					}
+					logger.increaseOffset();
+				}
 			}
-		logger.decreaseOffset();
+			
+			// go to next result page
+			lastRes = lastRes + PAGE_SIZE;
+		}
+		while(result.size()<MAX_RES_NBR);
+	}
+
+	/////////////////////////////////////////////////////////////////
+	// TEST			/////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////
+	/**
+	 * Method used to test/debug this class.
+	 * 
+	 * @param args
+	 * 		None needed.
+	 * @throws Exception
+	 * 		All exceptions are thrown.
+	 */
+	public static void main(String[] args) throws Exception
+	{	BingEngine engine = new BingEngine();
 		
-        return result;
+		String keywords = "François Hollande";
+		String website = null;//"http://lemonde.fr";
+		Date startDate = new GregorianCalendar(2016,3,1).getTime();//null;
+		Date endDate = new GregorianCalendar(2016,3,2).getTime();//null;
+		
+		List<URL> result = engine.search(keywords, website, startDate, endDate);
+		
+		System.out.println(result);
 	}
 }

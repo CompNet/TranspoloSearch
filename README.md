@@ -28,6 +28,7 @@ Here are the dependencies for TranspoloSearch:
 * A bunch of JARs from the [Google APIs Client Library for Java](https://developers.google.com/api-client-library/java/apis/customsearch/v1)
 * [jsoup](http://jsoup.org/) to handle HTML files 
 * [Apache Commons Codec](https://commons.apache.org/proper/commons-codec/)
+* [JSON.simple](https://code.google.com/archive/p/json-simple/) to parse JSON documents
 * Certain classes (mainly those related to Named Entity Recognition) were taken from our own tool [Nerwip](https://github.com/CompNet/Nerwip) (and sometimes modified)
 
 ## References

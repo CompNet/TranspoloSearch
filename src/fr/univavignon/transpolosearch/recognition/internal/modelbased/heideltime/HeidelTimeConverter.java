@@ -2,7 +2,7 @@ package fr.univavignon.transpolosearch.recognition.internal.modelbased.heideltim
 
 /*
  * TranspoloSearch
- * Copyright 2015 Vincent Labatut
+ * Copyright 2015-17 Vincent Labatut
  * 
  * This file is part of TranspoloSearch.
  * 

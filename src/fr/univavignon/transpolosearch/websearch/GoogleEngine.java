@@ -2,7 +2,7 @@ package fr.univavignon.transpolosearch.websearch;
 
 /*
  * TranspoloSearch
- * Copyright 2015 Vincent Labatut
+ * Copyright 2015-17 Vincent Labatut
  * 
  * This file is part of TranspoloSearch.
  * 
@@ -100,15 +100,15 @@ public class GoogleEngine extends AbstractEngine
 	// PARAMETERS	/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
     /** Focus on pages hosted in a certain country */
-	public String pageCountry = "countryFR";
+	public static final String PAGE_CNTRY = "countryFR";
 	/** Focus on pages in a certain language */
-	public String pageLanguage = "lang_fr";
+	public static final String PAGE_LANG = "lang_fr";
 //	/** Whether the result should be sorted by date, or not (in this case: by relevance). If {@link #sortByDate} is not {@code null}, only the specified time range is treated. */
 //	public boolean sortByDate = false;
 //	/** Date range the search should focus on. It should take the form YYYYMMDD:YYYYMMDD, or {@code null} for no limit. If {@link #sortByDate} is set to {@code false}, this range is ignored. */
 //	public String dateRange = null;
 	/** Maximal number of results (can be less if google does not provide) */
-	public int resultNumber = 100;
+	public static final int MAX_RES_NBR = 100;
 
 	/////////////////////////////////////////////////////////////////
 	// BUILDER		/////////////////////////////////////////////////
@@ -143,10 +143,10 @@ public class GoogleEngine extends AbstractEngine
 		logger.increaseOffset();
 			logger.log("keywords="+keywords);
 			logger.log("website="+website);
-			logger.log("pageCountry="+pageCountry);
-			logger.log("pageLanguage="+pageLanguage);
+			logger.log("pageCountry="+PAGE_CNTRY);
+			logger.log("pageLanguage="+PAGE_LANG);
 			logger.log("PAGE_SIZE="+PAGE_SIZE);
-			logger.log("resultNumber="+resultNumber);
+			logger.log("resultNumber="+MAX_RES_NBR);
 			logger.log("sortCriterion="+sortCriterion);
 		logger.decreaseOffset();
 
@@ -166,11 +166,10 @@ public class GoogleEngine extends AbstractEngine
 		}
 		logger.decreaseOffset();
 		
-		logger.log("Search terminated: "+result.size()+"/"+resultNumber+" results retrieved");
+		logger.log("Search terminated: "+result.size()+"/"+MAX_RES_NBR+" results retrieved");
 		logger.decreaseOffset();
 		return result;
 	}
-
 	
 	/**
 	 * Performs a search using Google Custom Search.
@@ -180,7 +179,7 @@ public class GoogleEngine extends AbstractEngine
 	 * description of the modifiable search parameters.
 	 * 
 	 * @param keywords
-	 * 		Kewords to search.
+	 * 		Keywords to search.
 	 * @param website
 	 * 		Target site, or {@code null} to search the whole Web.
 	 * @param sortCriterion
@@ -203,15 +202,15 @@ public class GoogleEngine extends AbstractEngine
 			try
 			{	List<Result> response = null;
 				do
-				{	logger.log("Starting at position "+start+"/"+resultNumber);
+				{	logger.log("Starting at position "+start+"/"+MAX_RES_NBR);
 					
 					// create the GCS object
 					Customsearch customsearch = builder.build();//new Customsearch(httpTransport, jsonFactory,null);
 					Customsearch.Cse.List list = customsearch.cse().list(keywords);				
 					list.setKey(API_KEY);
 					list.setCx(APP_KEY);
-					list.setCr(pageCountry);
-					list.setLr(pageLanguage);
+					list.setCr(PAGE_CNTRY);
+					list.setLr(PAGE_LANG);
 					list.setNum(PAGE_SIZE);
 					if(sortCriterion!=null)
 						list.setSort(sortCriterion);
@@ -230,19 +229,19 @@ public class GoogleEngine extends AbstractEngine
 					if(response==null)
 						logger.log("No more result could be retrieved");
 					else
-					{	logger.log("Retrieved "+response.size()+"/"+PAGE_SIZE+" items (total: "+result.size()+"/"+resultNumber+")");
+					{	logger.log("Retrieved "+response.size()+"/"+PAGE_SIZE+" items (total: "+result.size()+"/"+MAX_RES_NBR+")");
 						result.addAll(response);
 					
 						// udpate parameter
 						start = start + PAGE_SIZE;
 					}
 				}
-				while(result.size()<resultNumber && response!=null);
+				while(result.size()<MAX_RES_NBR && response!=null);
 			}
 			catch(IOException e)
 			{	//e.printStackTrace();
-				if(start<resultNumber)
-					logger.log("Could not reach the specified number of results ("+result.size()+"/"+resultNumber+")");
+				if(start<MAX_RES_NBR)
+					logger.log("Could not reach the specified number of results ("+result.size()+"/"+MAX_RES_NBR+")");
 			}
 		logger.decreaseOffset();
 		

@@ -2,7 +2,7 @@ package fr.univavignon.transpolosearch.extraction;
 
 /*
  * TranspoloSearch
- * Copyright 2015 Vincent Labatut
+ * Copyright 2015-17 Vincent Labatut
  * 
  * This file is part of TranspoloSearch.
  * 
@@ -180,10 +180,10 @@ public class Extractor
 	private void initDefaultSearchEngines()
 	{	// set up the google custom search
 		GoogleEngine googleEngine = new GoogleEngine();
-		googleEngine.pageCountry = "countryFR";
-		googleEngine.pageLanguage = "lang_fr";
-		googleEngine.resultNumber = 200;
 		engines.add(googleEngine);
+		
+		// set up Bing
+		//  TODO
 		
 		// set up duck duck go
 		// TODO

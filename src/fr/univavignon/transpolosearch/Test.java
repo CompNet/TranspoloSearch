@@ -2,7 +2,7 @@ package fr.univavignon.transpolosearch;
 
 /*
  * TranspoloSearch
- * Copyright 2015 Vincent Labatut
+ * Copyright 2015-17 Vincent Labatut
  * 
  * This file is part of TranspoloSearch.
  * 
@@ -85,6 +85,12 @@ public class Test
 		
 		logger.close();
 	}
+	
+	/////////////////////////////////////////////////////////////////
+	// LOGGER		/////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////
+	/** Common object used for logging */
+	private static HierarchicalLogger logger = HierarchicalLoggerManager.getHierarchicalLogger();
 	
 	/////////////////////////////////////////////////////////////////
 	// RETRIEVAL	/////////////////////////////////////////////////
@@ -219,7 +225,6 @@ public class Test
 		GoogleEngine gs = new GoogleEngine();
 	
 		// parameters
-		gs.resultNumber = 200;
 		String keywords = "Cécile Helle";
 		String website = null;
 		String sortCriterion = "date:r:20150101:20150131";
@@ -228,7 +233,7 @@ public class Test
 		List<Result> result = gs.searchGoogle(keywords, website, sortCriterion);
 		
 		List<String> msgs = new ArrayList<String>();
-		logger.log("Displaying results: "+result.size()+"/"+gs.resultNumber);
+		logger.log("Displaying results: "+result.size()+"/"+gs.MAX_RES_NBR);
 		logger.increaseOffset();
 			int i = 0;
 			for(Result res: result)
@@ -253,7 +258,7 @@ public class Test
 	// WHOLE PROCESS	/////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
 	/**
-	 * Tests the whole information extractin process.
+	 * Tests the whole information extraction process.
 	 * 
 	 * @throws Exception
 	 * 		Something went wrong during the search. 
@@ -272,10 +277,4 @@ public class Test
 		
 		extractor.performExtraction(keywords, website, startDate, endDate, strictSearch, compulsoryExpression);
 	}
-	
-	/////////////////////////////////////////////////////////////////
-	// LOGGER		/////////////////////////////////////////////////
-	/////////////////////////////////////////////////////////////////
-	/** Common object used for logging */
-	private static HierarchicalLogger logger = HierarchicalLoggerManager.getHierarchicalLogger();
 }
