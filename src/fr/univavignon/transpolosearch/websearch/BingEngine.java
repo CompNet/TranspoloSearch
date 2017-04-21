@@ -291,7 +291,7 @@ public class BingEngine extends AbstractEngine
 						logger.decreaseOffset();
 						i++;
 					}
-					logger.increaseOffset();
+					logger.decreaseOffset();
 				}
 			}
 			

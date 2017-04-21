@@ -19,13 +19,11 @@ package fr.univavignon.transpolosearch.websearch;
  */
 
 import fr.univavignon.transpolosearch.tools.web.WebTools;
-import fr.univavignon.transpolosearch.tools.keys.KeyHandler;
 
 import java.io.IOException;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -60,36 +58,26 @@ public class QwantEngine extends AbstractEngine
 	/////////////////////////////////////////////////////////////////
 	// SERVICE		/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
-	/** Number of results returned for one request (max: 50) */
-	private static final int PAGE_SIZE = 50;
+	/** Number of results returned for one request (max: 10?) */
+	private static final int PAGE_SIZE = 10;
 	/** URL of the Qwant Search service */
-	private static final String SERVICE_URL = "https://api.cognitive.microsoft.com/bing/v5.0/search";
+	private static final String SERVICE_URL = "https://api.qwant.com/api/search/";
+// https://api.qwant.com/api/search/web?locale=fr_fr&offset=10&q=Fran%C3%A7ois%20hollande%2001%2f04%2f2016
 // https://api.qwant.com/api/search/news?locale=en_us&offset=10&q=francois%20hollande	
 // https://github.com/asciimoo/searx/blob/master/searx/engines/qwant.py
 // https://dyrk.org/2015/12/07/lorsque-qwant-offre-une-api-aux-pirates/
-// 
+	/** Response filter */
+	private static final String SERVICE_PARAM_FILTER = "web";
+	/** Country/language */
+	private static final String SERVICE_PARAM_LANGUAGE = "&locale="+QwantEngine.PAGE_LANG+"_"+QwantEngine.PAGE_CNTRY;
 	/** Query to send to the service */
 	private static final String SERVICE_PARAM_QUERY = "&q=";
 	/** Number of results to return */
 	private static final String SERVICE_PARAM_COUNT = "?count="+PAGE_SIZE;
 	/** Number of results to skip */
 	private static final String SERVICE_PARAM_OFFSET = "&offset=";
-	/** Country/language */
-	private static final String SERVICE_PARAM_LANGUAGE = "&mkt="+QwantEngine.PAGE_LANG+"-"+QwantEngine.PAGE_CNTRY;
-	/** Response filter */
-	private static final String SERVICE_PARAM_FILTER = "&responseFilter=Webpages,News";
 	/** Query a specific Website */
 	private static final String QUERY_PARAM_WEBSITE = "site:";
-	/** Object used to format dates */
-	private final static DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-mm-dd");
-	/** Name of the first API key */
-	private static final String API_KEY1_NAME = "MicrosoftSearch1";
-//	/** Name of the second API key */
-//	private static final String API_KEY2_NAME = "MicrosoftSearch2";
-    /** First API key */ 
-	private static final String API_KEY1 = KeyHandler.KEYS.get(API_KEY1_NAME);
-//    /** Second API key */
-//	private static final String APP_KEY2 = KeyHandler.KEYS.get(API_KEY2_NAME);
 	
 	/////////////////////////////////////////////////////////////////
 	// DATA			/////////////////////////////////////////////////
@@ -106,7 +94,7 @@ public class QwantEngine extends AbstractEngine
 	// PARAMETERS	/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
     /** Focus on pages hosted in a certain country */
-	public static final String PAGE_CNTRY = "FR";
+	public static final String PAGE_CNTRY = "fr";
 	/** Focus on pages in a certain language */
 	public static final String PAGE_LANG = "fr";
 	/** Maximal number of results (can be less if Qwant does not provide) */
@@ -124,9 +112,9 @@ public class QwantEngine extends AbstractEngine
 		// init search parameters
 		logger.log("Keywords: "+keywords);
 		String baseUrl = SERVICE_URL 
-				+ SERVICE_PARAM_COUNT 
-				+ SERVICE_PARAM_LANGUAGE
-				+ SERVICE_PARAM_FILTER;
+				+ SERVICE_PARAM_FILTER 
+				+ SERVICE_PARAM_COUNT
+				+ SERVICE_PARAM_LANGUAGE;
 		String baseQuery = "";
 		if(website==null)
 			logger.log("No website specified");
@@ -211,6 +199,7 @@ public class QwantEngine extends AbstractEngine
 	private void searchQwant(String baseUrl, String baseQuery, LocalDate targetedDate, List<URL> result) throws ClientProtocolException, IOException, ParseException
 	{	// repeat because of the pagination system
 		int lastRes = 0;
+		boolean goOn = true;
 		do
 		{	logger.log("Getting results "+lastRes+"-"+(lastRes+PAGE_SIZE-1));
 			
@@ -230,79 +219,49 @@ public class QwantEngine extends AbstractEngine
 			// query the server	
 			HttpClient httpclient = new DefaultHttpClient();   
 			HttpGet request = new HttpGet(url);
-			request.setHeader("Ocp-Apim-Subscription-Key", API_KEY1);
 			HttpResponse response = httpclient.execute(request);
 			
 			// parse the JSON response
 			String answer = WebTools.readAnswer(response);
 			JSONParser parser = new JSONParser();
-			JSONObject jsonData = (JSONObject)parser.parse(answer);
-			
-			// web results
-			{	JSONObject webRes = (JSONObject)jsonData.get("webPages");
-				if(webRes==null)
-					logger.log("WARNING: could not find any web results for this query");
+			JSONObject mainJson = (JSONObject)parser.parse(answer);
+			JSONObject dataJson = (JSONObject)mainJson.get("data");
+			JSONObject resultJson = (JSONObject)dataJson.get("result");
+			if(resultJson==null)
+			{	logger.log("WARNING: could not find any web results for this query");
+				goOn = false;
+			}
+			else
+			{	JSONArray itemsJson = (JSONArray)resultJson.get("items");
+				logger.log("Found "+itemsJson.size()+" web results for this query");
+				if(itemsJson.isEmpty())
+				{	logger.log("WARNING: could not find any web results for this query");
+					goOn = false;
+				}
 				else
-				{	JSONArray valueArray = (JSONArray)webRes.get("value");
-					logger.log("Found "+valueArray.size()+" web results for this query");
-					logger.increaseOffset();
+				{	logger.increaseOffset();
 					int i = 1;
-					for(Object val: valueArray)
-					{	logger.log("Processing web result "+i+"/"+valueArray.size());
+					for(Object item: itemsJson)
+					{	logger.log("Processing web result "+i+"/"+itemsJson.size());
 						logger.increaseOffset();
-						JSONObject value = (JSONObject)val;
-						String urlStr = (String)value.get("url");
+						JSONObject itemJson = (JSONObject)item;
+						String title = (String)itemJson.get("title");
+						logger.log("title: "+title);
+						String urlStr = (String)itemJson.get("url");
 						logger.log("url: "+urlStr);
 						URL resUrl = new URL(urlStr);
 						result.add(resUrl);
 						logger.decreaseOffset();
 						i++;
 					}
-					logger.increaseOffset();
+					logger.decreaseOffset();
 				}
 			}
-
-			// news results
-			{	JSONObject newsRes = (JSONObject)jsonData.get("news");
-				if(newsRes==null)
-					logger.log("WARNING: could not find any news results for this query");
-				else
-				{	JSONArray valueArray = (JSONArray)newsRes.get("value");
-					logger.log("Found "+valueArray.size()+" news results for this query");
-					logger.increaseOffset();
-					int i = 1;
-					for(Object val: valueArray)
-					{	logger.log("Processing news result "+i+"/"+valueArray.size());
-						logger.increaseOffset();
-						JSONObject value = (JSONObject)val;
-						String urlStr = (String)value.get("url");
-						logger.log("url: "+urlStr);
-						String dateStr = (String)value.get("datePublished");
-						dateStr = dateStr.substring(0,10); // yyyy-mm-dd = 10 chars
-						logger.log("date: "+dateStr);
-						boolean keepArticle = true;
-						if(dateStr!=null && targetedDate!=null)
-						{	LocalDate artDate = LocalDate.parse(dateStr, DATE_FORMATTER);
-							keepArticle = artDate.equals(targetedDate);
-						}
-						if(keepArticle)
-						{	URL resUrl = new URL(urlStr);
-							result.add(resUrl);
-							logger.log("No publication date, or equal to the targeted date >> keeping the article");
-						}
-						else
-							logger.log("The article publication date is not compatible with the targeted date >> article ignored");
-						logger.decreaseOffset();
-						i++;
-					}
-					logger.increaseOffset();
-				}
-			}
-			
+						
 			// go to next result page
 			lastRes = lastRes + PAGE_SIZE;
 		}
-		while(result.size()<MAX_RES_NBR);
+		while(result.size()<MAX_RES_NBR && goOn);
 	}
 
 	/////////////////////////////////////////////////////////////////
@@ -318,28 +277,15 @@ public class QwantEngine extends AbstractEngine
 	 */
 	public static void main(String[] args) throws Exception
 	{	
-//		QwantEngine engine = new QwantEngine();
-//		
-//		String keywords = "François Hollande";
-//		String website = null;//"http://lemonde.fr";
-//		Date startDate = new GregorianCalendar(2016,3,1).getTime();//null;
-//		Date endDate = new GregorianCalendar(2016,3,2).getTime();//null;
-//		
-//		List<URL> result = engine.search(keywords, website, startDate, endDate);
-//		
-//		System.out.println(result);
+		QwantEngine engine = new QwantEngine();
 		
+		String keywords = "François Hollande";
+		String website = null;//"http://lemonde.fr";
+		Date startDate = null;//new GregorianCalendar(2016,3,1).getTime();
+		Date endDate = null;//new GregorianCalendar(2016,3,2).getTime();
 		
-		// check the URL returned by Qwant
-//		String urlStr = "http://www.bing.com/cr?IG=C688D700F2FC417AA9B10AA9F7337042&CID=24569A2FBE076C2425F49044BFE06DBD&rd=1&h=VUF8nVTYmDh6zzfje1tbK4pq9WLYMHZZsZtHW0Y5jI0&v=1&r=http%3a%2f%2fwww.closermag.fr%2farticle%2ffrancois-hollande-danse-avec-barack-obama-et-devient-la-risee-de-twitter-photo-604494&p=DevEx,5093.1";
-//		HttpClient httpclient = new DefaultHttpClient();   
-//		HttpGet request = new HttpGet(urlStr);
-//		HttpResponse response = httpclient.execute(request);
-//		String answer = WebTools.readAnswer(response);
-//		PrintWriter pw = FileTools.openTextFileWrite(FileNames.FO_OUTPUT+File.separator+"test.html");
-//		pw.print(answer);
-//		pw.close();
+		List<URL> result = engine.search(keywords, website, startDate, endDate);
 		
-		System.out.println();
+		System.out.println(result);
 	}
 }
