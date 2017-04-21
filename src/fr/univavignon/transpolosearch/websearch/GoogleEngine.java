@@ -40,9 +40,6 @@ import java.util.List;
  * This class uses Google to search the Web. More
  * precisely, it uses the Google Custom Search API.
  * <br/>
- * See the public fields for a description of the
- * modifiable search parameters.
- * <br/>
  * This code is inspired by the 
  * <a href="http://weblog4j.com/2014/06/03/having-fun-with-google-custom-search-api-and-java/">weblog4j.com post</a> 
  * of Niraj Singh.

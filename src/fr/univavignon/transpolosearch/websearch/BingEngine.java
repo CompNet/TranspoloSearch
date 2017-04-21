@@ -29,7 +29,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.GregorianCalendar;
 import java.util.List;
 
 import org.apache.http.HttpResponse;
@@ -45,9 +44,6 @@ import org.json.simple.parser.ParseException;
 /**
  * This class uses Bing to search the Web. More
  * precisely, it uses the Bing Search API v5.
- * <br/>
- * See the public fields for a description of the
- * modifiable search parameters.
  * 
  * @author Vincent Labatut
  */
@@ -317,15 +313,29 @@ public class BingEngine extends AbstractEngine
 	 * 		All exceptions are thrown.
 	 */
 	public static void main(String[] args) throws Exception
-	{	BingEngine engine = new BingEngine();
+	{	
+//		BingEngine engine = new BingEngine();
+//		
+//		String keywords = "François Hollande";
+//		String website = null;//"http://lemonde.fr";
+//		Date startDate = new GregorianCalendar(2016,3,1).getTime();//null;
+//		Date endDate = new GregorianCalendar(2016,3,2).getTime();//null;
+//		
+//		List<URL> result = engine.search(keywords, website, startDate, endDate);
+//		
+//		System.out.println(result);
 		
-		String keywords = "François Hollande";
-		String website = null;//"http://lemonde.fr";
-		Date startDate = new GregorianCalendar(2016,3,1).getTime();//null;
-		Date endDate = new GregorianCalendar(2016,3,2).getTime();//null;
 		
-		List<URL> result = engine.search(keywords, website, startDate, endDate);
+		// check the URL returned by Bing
+//		String urlStr = "http://www.bing.com/cr?IG=C688D700F2FC417AA9B10AA9F7337042&CID=24569A2FBE076C2425F49044BFE06DBD&rd=1&h=VUF8nVTYmDh6zzfje1tbK4pq9WLYMHZZsZtHW0Y5jI0&v=1&r=http%3a%2f%2fwww.closermag.fr%2farticle%2ffrancois-hollande-danse-avec-barack-obama-et-devient-la-risee-de-twitter-photo-604494&p=DevEx,5093.1";
+//		HttpClient httpclient = new DefaultHttpClient();   
+//		HttpGet request = new HttpGet(urlStr);
+//		HttpResponse response = httpclient.execute(request);
+//		String answer = WebTools.readAnswer(response);
+//		PrintWriter pw = FileTools.openTextFileWrite(FileNames.FO_OUTPUT+File.separator+"test.html");
+//		pw.print(answer);
+//		pw.close();
 		
-		System.out.println(result);
+		System.out.println();
 	}
 }
