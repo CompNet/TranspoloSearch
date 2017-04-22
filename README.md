@@ -32,7 +32,10 @@ Here are the dependencies for TranspoloSearch:
 * Certain classes (mainly those related to Named Entity Recognition) were taken from our own tool [Nerwip](https://github.com/CompNet/Nerwip) (and sometimes modified)
 
 ## Todo
-* Add Duck Duck Go as a search engine. As of 2016/04/21, the Instant Answer API is too restricted to return results we could use in TranspoloSearch. See [this page](https://api.duckduckgo.com/api) for a description of the API. 
+* Add the Duck Duck Go search engine. As of 2016/04/21, the Instant Answer API is too restricted to return results we could use in TranspoloSearch. See [this page](https://api.duckduckgo.com/api) for a description of the API.
+* Add the Yahoo search engine. Apparently, Yahoo is powered by Bing since 2011, so not worth it since we already have Bing.
+* Add the Baidu search engine. As of 2016/04/22, the documentation is in Chinese only (https://www.programmableweb.com/api/baidu).
+* Add the Yandex search engine. Need to register an IP, and does not allow searching in a specific language (see https://tech.yandex.com/xml/ and https://yandex.com/support/search/robots/search-api.html and https://yandex.com/support/search/how-to-search/search-operators.html).
 
 ## References
 [MLE'15] [Le Web comme miroir du travail politique quotidien ? Reconstituer l'écho médiatique en ligne des événements d'un agenda d'élu](http://agorantic.univ-avignon.fr/wp-content/uploads/sites/13/2014/10/Publications-Agorantic1.pdf). G. Marrel, V. Labatut & M. El Bèze. 13ème Congrès de l'Association Française de Science Politique (AFSP), 2015, 25p.
