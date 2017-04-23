@@ -278,3 +278,13 @@ public class Test
 		extractor.performExtraction(keywords, website, startDate, endDate, strictSearch, compulsoryExpression);
 	}
 }
+
+
+/**
+ * TODO
+ * - integrate Facebook
+ *   http://facebook4j.github.io/en/index.html#source_code
+ *   http://facebook4j.github.io/en/code-examples.html
+ *   https://developers.facebook.com/docs/graph-api/using-graph-api
+ *   
+ */

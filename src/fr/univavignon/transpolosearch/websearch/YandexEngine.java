@@ -18,9 +18,11 @@ package fr.univavignon.transpolosearch.websearch;
  * along with TranspoloSearch. If not, see <http://www.gnu.org/licenses/>.
  */
 
+import fr.univavignon.transpolosearch.tools.keys.KeyHandler;
 import fr.univavignon.transpolosearch.tools.web.WebTools;
 
 import java.io.IOException;
+import java.io.StringReader;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.time.LocalDate;
@@ -34,50 +36,61 @@ import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.jdom2.Document;
+import org.jdom2.Element;
+import org.jdom2.JDOMException;
+import org.jdom2.input.SAXBuilder;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
 /**
- * This class uses Qwant to search the Web.
+ * This class uses Yandex to search the Web.
  * It takes advantage of the undocumented API.
  * <br/>
  * URL used as resources:
- * https://api.qwant.com/api/search/web?locale=fr_fr&offset=10&q=Fran%C3%A7ois%20hollande%2001%2f04%2f2016
- * https://api.qwant.com/api/search/news?locale=en_us&offset=10&q=francois%20hollande	
- * https://github.com/asciimoo/searx/blob/master/searx/engines/qwant.py
- * https://dyrk.org/2015/12/07/lorsque-qwant-offre-une-api-aux-pirates/
+ * https://tech.yandex.com/xml/
+ * https://yandex.com/support/search/robots/search-api.html
+ * https://yandex.com/support/search/how-to-search/search-operators.html
  * 
  * @author Vincent Labatut
  */
-public class QwantEngine extends AbstractEngine
+public class YandexEngine extends AbstractEngine
 {
 	/**
 	 * Initializes the object used to search
-	 * the Web with the Qwant API.
+	 * the Web with the Yandex API.
 	 */
-	public QwantEngine()
+	public YandexEngine()
 	{	// nothing to do here
 	}
 
 	/////////////////////////////////////////////////////////////////
 	// SERVICE		/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
-	/** Number of results returned for one request (max: 10?) */
-	private static final int PAGE_SIZE = 10;
-	/** URL of the Qwant Search service */
-	private static final String SERVICE_URL = "https://api.qwant.com/api/search/";
-	/** Response filter */
-	private static final String SERVICE_PARAM_FILTER = "web";
-	/** Country/language */
-	private static final String SERVICE_PARAM_LANGUAGE = "&locale="+QwantEngine.PAGE_LANG+"_"+QwantEngine.PAGE_CNTRY;
+	/** Name of the API user */
+	private static final String API_USER_NAME = "YandexUser";
+    /** API user */ 
+	private static final String API_USER = KeyHandler.KEYS.get(API_USER_NAME);
+	/** Name of the API key */
+	private static final String API_KEY_NAME = "YandexKey";
+    /** API key */ 
+	private static final String API_KEY = KeyHandler.KEYS.get(API_KEY_NAME);
+	/** URL of the Yandex Search service */
+	private static final String SERVICE_URL = "https://yandex.com/search/xml&maxpassages=1";
+    /** Service authorization */ 
+	private static final String SERVICE_PARAM_AUTH = "&user="+API_USER+"&key="+API_KEY;
 	/** Query to send to the service */
-	private static final String SERVICE_PARAM_QUERY = "&q=";
-	/** Number of results to return */
-	private static final String SERVICE_PARAM_COUNT = "?count="+PAGE_SIZE;
-	/** Number of results to skip */
-	private static final String SERVICE_PARAM_OFFSET = "&offset=";
+	private static final String SERVICE_PARAM_QUERY = "&query=";
+	/** Number of the page of results */
+	private static final String SERVICE_PARAM_PAGE = "&page=";
+	/** Query a specific date range */
+	private static final String QUERY_PARAM_DATE = "date:"; // date:20071215..20080101
+	/** Date range separator */
+	private static final String QUERY_PARAM_DATE_SEP = "..";
+	/** Query a specific language */
+	private static final String QUERY_PARAM_LANGUAGE = "lang:"+YandexEngine.PAGE_LANG;
 	/** Query a specific Website */
 	private static final String QUERY_PARAM_WEBSITE = "site:";
 	
@@ -85,7 +98,7 @@ public class QwantEngine extends AbstractEngine
 	// DATA			/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
 	/** Textual name of this engine */
-	private static final String ENGINE_NAME = "Qwant Search";
+	private static final String ENGINE_NAME = "Yandex Search";
 
 	@Override
 	public String getName()
@@ -95,11 +108,9 @@ public class QwantEngine extends AbstractEngine
 	/////////////////////////////////////////////////////////////////
 	// PARAMETERS	/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
-    /** Focus on pages hosted in a certain country */
-	public static final String PAGE_CNTRY = "fr";
-	/** Focus on pages in a certain language */
+	/** Focus the search on pages in a certain language */
 	public static final String PAGE_LANG = "fr";
-	/** Maximal number of results (can be less if Qwant does not provide) */
+	/** Maximal number of results (can be less if Yandex does not provide) */
 	public int MAX_RES_NBR = 200;
 	
 	/////////////////////////////////////////////////////////////////
@@ -107,70 +118,49 @@ public class QwantEngine extends AbstractEngine
 	/////////////////////////////////////////////////////////////////
 	@Override
 	public List<URL> search(String keywords, String website, Date startDate, Date endDate)  throws IOException
-	{	logger.log("Applying Qwant Search");
+	{	logger.log("Applying Yandex Search");
 		logger.increaseOffset();
 		List<URL> result = new ArrayList<URL>();
 		
 		// init search parameters
 		logger.log("Keywords: "+keywords);
-		String baseUrl = SERVICE_URL 
-				+ SERVICE_PARAM_FILTER 
-				+ SERVICE_PARAM_COUNT
-				+ SERVICE_PARAM_LANGUAGE;
-		String baseQuery = keywords;
+		String baseUrl = SERVICE_URL + SERVICE_PARAM_AUTH; 
+//				+ SERVICE_PARAM_PAGE + "1" 
+//				+ SERVICE_PARAM_QUERY + "query";
+		String query = QUERY_PARAM_LANGUAGE + " " + keywords;
 		if(website==null)
 			logger.log("No website specified");
 		else
 		{	logger.log("Search restricted to website: "+website);
-			baseQuery = QUERY_PARAM_WEBSITE + website + " " + baseQuery;
+			query = QUERY_PARAM_WEBSITE + website + " " + query;
 		}
 		
-		// if there is a time range constraint
+		// if there is a time range constraint: complete the request with the appropriate parameter
 		if(startDate!=null && endDate!=null)
 		{	logger.log("Dates detected: "+startDate+"-"+endDate);
-			logger.increaseOffset();
-			
+			//	format: 20071215..20080101
 			Calendar cal = Calendar.getInstance();
 	    	cal.setTime(startDate);
 	    	int year = cal.get(Calendar.YEAR);
 	    	int month = cal.get(Calendar.MONTH) + 1;
 	    	int day = cal.get(Calendar.DAY_OF_MONTH);
-	    	LocalDate currentLocalDate = LocalDate.of(year, month, day);
+	    	String startDateStr = year+String.format("%02d",month)+String.format("%02d",day);
 	    	cal.setTime(endDate);
 	    	year = cal.get(Calendar.YEAR);
 	    	month = cal.get(Calendar.MONTH) + 1;
 	    	day = cal.get(Calendar.DAY_OF_MONTH);
-	    	LocalDate endLocalDate = LocalDate.of(year, month, day);
-	    	
-	    	// process separately each day of the considered time period
-	    	while(currentLocalDate.isBefore(endLocalDate) || currentLocalDate.isEqual(endLocalDate))
-	    	{	logger.log("Processing date "+currentLocalDate);
-				try
-	    		{	searchQwant(baseUrl, baseQuery, currentLocalDate, result);
-	    		}
-	    		catch(ParseException e)
-		    	{	e.printStackTrace();
-	    			throw new IOException(e.getMessage());	
-		    	}
-	    		
-	    		// deal with the next day
-	    		currentLocalDate = currentLocalDate.plusDays(1);
-	    	}
-			logger.decreaseOffset();
+	    	String endDateStr = year+String.format("%02d",month)+String.format("%02d",day);
+	    	query = query + " " + QUERY_PARAM_DATE + startDateStr + QUERY_PARAM_DATE_SEP + endDateStr;	    	
 		}
 		
-		// if there is no time constraint
-		else
-		{	logger.log("No date detected");
-			
-			try
-			{	searchQwant(baseUrl, baseQuery, null, result);
-			}
-			catch(ParseException e)
-	    	{	e.printStackTrace();
-				throw new IOException(e.getMessage());	
-	    	}
+		// process the request
+		try
+		{	searchYandex(baseUrl, query, result);
 		}
+		catch(JDOMException e)
+    	{	e.printStackTrace();
+			throw new IOException(e.getMessage());	
+    	}
 		
 		logger.log("Search terminated: "+result.size()+"/"+MAX_RES_NBR+" results retrieved");
 		logger.decreaseOffset();
@@ -178,42 +168,34 @@ public class QwantEngine extends AbstractEngine
 	}
 	
 	/**
-	 * Invokes Qwant Search API using the specified search parameters,
+	 * Invokes Yandex Search API using the specified search parameters,
 	 * and completes the list of results accordingly.
 	 * 
 	 * @param baseUrl
 	 * 		Base URL (to be completed).
-	 * @param baseQuery
+	 * @param query
 	 * 		Base query (to be completed, too).
-	 * @param targetedDate
-	 * 		Date of the searched articles (can be {@code null}, if none).
 	 * @param result
 	 * 		Current list of URL.
 	 * 
 	 * @throws ClientProtocolException
-	 * 		Problem while invoking Qwant.
+	 * 		Problem while invoking Yandex.
 	 * @throws IOException
-	 * 		Problem while invoking Qwant.
-	 * @throws ParseException
-	 * 		Problem while parsing Qwant JSON results.
+	 * 		Problem while invoking Yandex.
+	 * @throws JDOMException
+	 * 		Problem while parsing Yandex JSON results.
 	 */
-	private void searchQwant(String baseUrl, String baseQuery, LocalDate targetedDate, List<URL> result) throws ClientProtocolException, IOException, ParseException
+	private void searchYandex(String baseUrl, String query, List<URL> result) throws ClientProtocolException, IOException, JDOMException
 	{	// repeat because of the pagination system
-		int lastRes = 0;
+		int page = 0;
 		boolean goOn = true;
 		do
-		{	logger.log("Getting results "+lastRes+"-"+(lastRes+PAGE_SIZE-1));
+		{	logger.log("Getting page "+ page +" of the results");
 			
 			// setup query
-			String query = baseQuery;
-			if(targetedDate!=null)
-				query = query
-				+ " " + String.format("%02d",targetedDate.getDayOfMonth()) 
-				+ "/" + String.format("%02d",targetedDate.getMonthValue())
-				+ "/" + targetedDate.getYear();
 			logger.log("Query: \""+query+"\"");
 			// setup url
-			String url = baseUrl + SERVICE_PARAM_OFFSET + lastRes
+			String url = baseUrl + SERVICE_PARAM_PAGE + page
 				+ SERVICE_PARAM_QUERY + URLEncoder.encode(query, "UTF-8");
 			logger.log("URL: "+url);
 			
@@ -222,45 +204,36 @@ public class QwantEngine extends AbstractEngine
 			HttpGet request = new HttpGet(url);
 			HttpResponse response = httpclient.execute(request);
 			
-			// parse the JSON response
+			// parse the XML response
 			String answer = WebTools.readAnswer(response);
-			JSONParser parser = new JSONParser();
-			JSONObject mainJson = (JSONObject)parser.parse(answer);
-			JSONObject dataJson = (JSONObject)mainJson.get("data");
-			JSONObject resultJson = (JSONObject)dataJson.get("result");
-			if(resultJson==null)
-			{	logger.log("WARNING: could not find any web results for this query");
-				goOn = false;
+			SAXBuilder sb = new SAXBuilder();
+			Document doc = sb.build(new StringReader(answer));
+			Element rootElt = doc.getRootElement();
+			Element responseElt = rootElt.getChild("response");
+			Element errorElt = responseElt.getChild("error");
+			if(errorElt==null)
+			{	Element resultsElt = responseElt.getChild("results");
+				Element groupingElt = resultsElt.getChild("grouping");
+				List<Element> groupElts = groupingElt.getChildren("group");
+				for(Element groupElt: groupElts)
+				{	List<Element> docElts = groupElt.getChildren("doc");
+					for(Element docElt: docElts)
+					{	Element urlElt = docElt.getChild("url");
+						String urlStr = urlElt.getTextTrim();
+						URL val = new URL(urlStr);
+						result.add(val);
+					}
+				}
+				
+				// go to next result page
+				page++;
 			}
 			else
-			{	JSONArray itemsJson = (JSONArray)resultJson.get("items");
-				logger.log("Found "+itemsJson.size()+" web results for this query");
-				if(itemsJson.isEmpty())
-				{	logger.log("WARNING: could not find any web results for this query");
-					goOn = false;
-				}
-				else
-				{	logger.increaseOffset();
-					int i = 1;
-					for(Object item: itemsJson)
-					{	logger.log("Processing web result "+i+"/"+itemsJson.size());
-						logger.increaseOffset();
-						JSONObject itemJson = (JSONObject)item;
-						String title = (String)itemJson.get("title");
-						logger.log("title: "+title);
-						String urlStr = (String)itemJson.get("url");
-						logger.log("url: "+urlStr);
-						URL resUrl = new URL(urlStr);
-						result.add(resUrl);
-						logger.decreaseOffset();
-						i++;
-					}
-					logger.decreaseOffset();
-				}
+			{	goOn = false;
+				String errorCode = errorElt.getAttributeValue("code");
+				String errorMsg = errorElt.getTextTrim();
+				logger.log("Error: \""+errorMsg+"\" (code="+errorCode+")");
 			}
-						
-			// go to next result page
-			lastRes = lastRes + PAGE_SIZE;
 		}
 		while(result.size()<MAX_RES_NBR && goOn);
 	}
@@ -278,7 +251,7 @@ public class QwantEngine extends AbstractEngine
 	 */
 	public static void main(String[] args) throws Exception
 	{	
-		QwantEngine engine = new QwantEngine();
+		YandexEngine engine = new YandexEngine();
 		
 		String keywords = "François Hollande";
 		String website = null;//"http://lemonde.fr";
