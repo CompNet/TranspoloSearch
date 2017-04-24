@@ -26,15 +26,35 @@ import com.google.api.services.customsearch.Customsearch;
 import com.google.api.services.customsearch.model.Result;
 import com.google.api.services.customsearch.model.Search;
 
+import facebook4j.Facebook;
+import facebook4j.FacebookException;
+import facebook4j.FacebookFactory;
+import facebook4j.Post;
+import facebook4j.ResponseList;
+import facebook4j.auth.AccessToken;
+import facebook4j.conf.Configuration;
+import facebook4j.conf.ConfigurationBuilder;
 import fr.univavignon.transpolosearch.tools.keys.KeyHandler;
+import fr.univavignon.transpolosearch.tools.web.WebTools;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
+import java.net.URLConnection;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
+
+import org.apache.http.HttpResponse;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.params.HttpClientParams;
+import org.apache.http.impl.client.DefaultHttpClient;
 
 /**
  * This class uses the Facebook API to search the Web.
@@ -52,15 +72,16 @@ public class FacebookEngine extends AbstractSocialEngine
 	 * Initializes the object used to search Facebook.
 	 */
 	public FacebookEngine()
-	{	// Set up the HTTP transport and JSON factory
-		HttpTransport httpTransport = new NetHttpTransport();
-		//JsonFactory jsonFactory = new GsonFactory();
-		JsonFactory jsonFactory = GsonFactory.getDefaultInstance();
-		
-		// builds the builder and set the application name
-		//HttpRequestInitializer initializer = (HttpRequestInitializer)new CommonGoogleClientRequestInitializer(API_KEY);
-		builder = new Customsearch.Builder(httpTransport, jsonFactory, null);
-		builder.setApplicationName(APP_NAME);
+	{	ConfigurationBuilder cb = new ConfigurationBuilder();
+		cb.setDebugEnabled(true);
+		cb.setOAuthAppId(KeyHandler.KEYS.get(APP_ID));
+		cb.setOAuthAppSecret(KeyHandler.KEYS.get(APP_SECRET));
+		cb.setOAuthAccessToken("**************************************************");
+		cb.setOAuthPermissions("email, publish_stream, id, name, first_name, last_name, read_stream , generic");
+		cb.setUseSSL(true); 
+		cb.setJSONStoreEnabled(true);
+		Configuration config = cb.build();
+		factory = new FacebookFactory(config);
 	}
 
 	/////////////////////////////////////////////////////////////////
@@ -68,16 +89,12 @@ public class FacebookEngine extends AbstractSocialEngine
 	/////////////////////////////////////////////////////////////////
 	/** Object used to format dates in the query */
 	private final static DateFormat DATE_FORMAT = new SimpleDateFormat("yyyyMMdd");
-	/** Name of the GCS application */
-	private static final String APP_NAME = "TranspoloSearch";
-	/** Name of the API key */
-	private static final String API_KEY_NAME = "GoogleProject";
+	/** Name of the id of the FB app */
+	private static final String APP_ID = "FacebookAppId";
+	/** Name of the FB app secret */
+	private static final String APP_SECRET = "FacebookAppSecret";
 	/** Name of the application key */
 	private static final String APP_KEY_NAME = "GoogleEngine";
-    /** GCS API key */ 
-	private static final String API_KEY = KeyHandler.KEYS.get(API_KEY_NAME);
-    /** Application id */
-	private static final String APP_KEY = KeyHandler.KEYS.get(APP_KEY_NAME);
 	/** Number of results returned for one request */
 	private static final long PAGE_SIZE = 10; // max seems to be only 10!
    
@@ -110,7 +127,7 @@ public class FacebookEngine extends AbstractSocialEngine
 	// BUILDER		/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
 	/** Object used to build Facebook instances */
-	private Customsearch.Builder builder;
+	private FacebookFactory factory;
 	
 	/////////////////////////////////////////////////////////////////
 	// SEARCH		/////////////////////////////////////////////////
@@ -119,6 +136,26 @@ public class FacebookEngine extends AbstractSocialEngine
 	public List<URL> search(String keywords, String website, Date startDate, Date endDate)  throws IOException
 	{	logger.log("Searching Facebook");
 		logger.increaseOffset();
+		
+		String query = "";
+		
+		Facebook facebook = factory.getInstance();
+		try
+		{	ResponseList<Post> results =  facebook.getPosts(query);
+			for(Post post: results)
+			{	String msg = post.getMessage();
+				
+			}
+		} 
+		catch (FacebookException e) 
+		{	e.printStackTrace();
+			throw new IOException(e.getMessage());
+		}
+		
+		
+		
+		
+		
 		
 		// init GCS parameters
 		String sortCriterion;
@@ -241,5 +278,39 @@ public class FacebookEngine extends AbstractSocialEngine
 		logger.decreaseOffset();
 		
         return result;
+	}
+	public static void main(String[] args) throws Exception
+	{	String url = "https://www.facebook.com/v2.9/dialog/oauth?client_id=437488563263592&redirect_uri="+URLEncoder.encode("https://www.facebook.com/connect/login_success.html","UTF-8"); 
+		HttpClient httpclient = new DefaultHttpClient();
+		HttpClientParams.setRedirecting(httpclient.getParams(), false);
+		HttpGet request = new HttpGet(url);
+		HttpResponse response = httpclient.execute(request);
+		int responseCode = response.getStatusLine().getStatusCode();
+		System.out.println(responseCode);
+		
+		url = response.getLastHeader("Location").getValue();
+		System.out.println(url);
+		HttpClient httpclient2 = new DefaultHttpClient();
+		HttpClientParams.setRedirecting(httpclient2.getParams(), false);
+		request = new HttpGet(url);
+		response = httpclient2.execute(request);
+		
+		
+//		URLConnection con = new URL( url ).openConnection();
+//		System.out.println( "orignal url: " + con.getURL() );
+//		con.connect();
+//		System.out.println( "connected url: " + con.getURL() );
+//		InputStream is = con.getInputStream();
+//		System.out.println( "redirected url: " + con.getURL() );
+//		is.close();
+		
+		
+		
+//		System.out.println(URLDecoder.decode("/login.php?skip_api_login=1&amp;api_key=437488563263592&amp;signed_next=1&amp;next=https%3A%2F%2Fwww.facebook.com%2Fv2.9%2Fdialog%2Foauth%3Fredirect_uri%3Dhttps%253A%252F%252Fwww.facebook.com%252Fconnect%252Flogin_success.html%26client_id%3D437488563263592%26ret%3Dlogin%26logger_id%3D959c8cc5-cfb7-0729-835f-b52bf88829af&amp;cancel_url=https%3A%2F%2Fwww.facebook.com%2Fconnect%2Flogin_success.html%3Ferror%3Daccess_denied%26error_code%3D200%26error_description%3DPermissions%2Berror%26error_reason%3Duser_denied%23_%3D_&amp;display=page&amp;locale=fr_FR&amp;logger_id=959c8cc5-cfb7-0729-835f-b52bf88829af&amp;_fb_noscript=1"));
+		
+		// parse the JSON response
+//		String answer = WebTools.readAnswer(response);
+//		System.out.println(answer);
+		
 	}
 }
