@@ -25,7 +25,6 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.net.URL;
 import java.net.URLEncoder;
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -40,10 +39,6 @@ import org.jdom2.Document;
 import org.jdom2.Element;
 import org.jdom2.JDOMException;
 import org.jdom2.input.SAXBuilder;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
 
 /**
  * This class uses Yandex to search the Web.
@@ -78,7 +73,7 @@ public class YandexEngine extends AbstractEngine
     /** API key */ 
 	private static final String API_KEY = KeyHandler.KEYS.get(API_KEY_NAME);
 	/** URL of the Yandex Search service */
-	private static final String SERVICE_URL = "https://yandex.com/search/xml&maxpassages=1";
+	private static final String SERVICE_URL = "https://yandex.com/search/xml?maxpassages=1";
     /** Service authorization */ 
 	private static final String SERVICE_PARAM_AUTH = "&user="+API_USER+"&key="+API_KEY;
 	/** Query to send to the service */
@@ -205,6 +200,7 @@ public class YandexEngine extends AbstractEngine
 			HttpResponse response = httpclient.execute(request);
 			
 			// parse the XML response
+			logger.increaseOffset();
 			String answer = WebTools.readAnswer(response);
 			SAXBuilder sb = new SAXBuilder();
 			Document doc = sb.build(new StringReader(answer));
@@ -220,6 +216,7 @@ public class YandexEngine extends AbstractEngine
 					for(Element docElt: docElts)
 					{	Element urlElt = docElt.getChild("url");
 						String urlStr = urlElt.getTextTrim();
+						logger.log("Adding URL: "+urlStr);
 						URL val = new URL(urlStr);
 						result.add(val);
 					}
@@ -234,6 +231,7 @@ public class YandexEngine extends AbstractEngine
 				String errorMsg = errorElt.getTextTrim();
 				logger.log("Error: \""+errorMsg+"\" (code="+errorCode+")");
 			}
+			logger.decreaseOffset();
 		}
 		while(result.size()<MAX_RES_NBR && goOn);
 	}
