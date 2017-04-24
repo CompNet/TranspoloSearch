@@ -1,4 +1,4 @@
-package fr.univavignon.transpolosearch.websearch;
+package fr.univavignon.transpolosearch.search.web;
 
 /*
  * TranspoloSearch
@@ -51,7 +51,7 @@ import org.jdom2.input.SAXBuilder;
  * 
  * @author Vincent Labatut
  */
-public class YandexEngine extends AbstractEngine
+public class YandexEngine extends AbstractWebEngine
 {
 	/**
 	 * Initializes the object used to search

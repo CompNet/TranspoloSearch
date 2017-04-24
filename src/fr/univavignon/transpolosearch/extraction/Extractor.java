@@ -53,13 +53,13 @@ import fr.univavignon.transpolosearch.recognition.RecognizerException;
 import fr.univavignon.transpolosearch.recognition.combiner.straightcombiner.StraightCombiner;
 import fr.univavignon.transpolosearch.retrieval.ArticleRetriever;
 import fr.univavignon.transpolosearch.retrieval.reader.ReaderException;
+import fr.univavignon.transpolosearch.search.web.AbstractWebEngine;
+import fr.univavignon.transpolosearch.search.web.GoogleEngine;
 import fr.univavignon.transpolosearch.tools.file.FileNames;
 import fr.univavignon.transpolosearch.tools.file.FileTools;
 import fr.univavignon.transpolosearch.tools.log.HierarchicalLogger;
 import fr.univavignon.transpolosearch.tools.log.HierarchicalLoggerManager;
 import fr.univavignon.transpolosearch.tools.string.StringTools;
-import fr.univavignon.transpolosearch.websearch.AbstractEngine;
-import fr.univavignon.transpolosearch.websearch.GoogleEngine;
 
 /**
  * This class handles the main search, i.e. it :
@@ -170,7 +170,7 @@ public class Extractor
 	// WEB SEARCH	/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
 	/** List of engines used for the Web search */
-	private final List<AbstractEngine> engines = new ArrayList<AbstractEngine>();
+	private final List<AbstractWebEngine> engines = new ArrayList<AbstractWebEngine>();
 	
 	/**
 	 * Initializes the default search engines.
@@ -265,7 +265,7 @@ public class Extractor
 					return result;
 				}	
 			});
-			for(AbstractEngine engine: engines)
+			for(AbstractWebEngine engine: engines)
 			{	logger.log("Applying search engine "+engine.getName());
 				logger.increaseOffset();
 					List<URL> temp = engine.search(keywords,website,startDate,endDate);

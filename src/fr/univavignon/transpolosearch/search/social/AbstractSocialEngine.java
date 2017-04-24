@@ -1,4 +1,4 @@
-package fr.univavignon.transpolosearch.websearch;
+package fr.univavignon.transpolosearch.search.social;
 
 /*
  * TranspoloSearch
@@ -28,11 +28,11 @@ import fr.univavignon.transpolosearch.tools.log.HierarchicalLoggerManager;
 
 /**
  * This class represents a search engine one can use to return
- * a list of articles.
+ * a list of posts from a specific social media.
  * 
  * @author Vincent Labatut
  */
-public abstract class AbstractEngine
+public abstract class AbstractSocialEngine
 {	
 	/////////////////////////////////////////////////////////////////
 	// LOGGER		/////////////////////////////////////////////////

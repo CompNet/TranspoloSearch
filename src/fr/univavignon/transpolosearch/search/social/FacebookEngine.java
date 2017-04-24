@@ -1,4 +1,4 @@
-package fr.univavignon.transpolosearch.websearch;
+package fr.univavignon.transpolosearch.search.social;
 
 /*
  * TranspoloSearch
@@ -37,22 +37,21 @@ import java.util.Date;
 import java.util.List;
 
 /**
- * This class uses Google to search the Web. More
- * precisely, it uses the Google Custom Search API.
+ * This class uses the Facebook API to search the Web.
  * <br/>
- * This code is inspired by the 
- * <a href="http://weblog4j.com/2014/06/03/having-fun-with-google-custom-search-api-and-java/">weblog4j.com post</a> 
- * of Niraj Singh.
+ * Resources: 
+ * http://facebook4j.github.io/en/index.html#source_code
+ * http://facebook4j.github.io/en/code-examples.html
+ * https://developers.facebook.com/docs/graph-api/using-graph-api
  * 
  * @author Vincent Labatut
  */
-public class GoogleEngine extends AbstractEngine
+public class FacebookEngine extends AbstractSocialEngine
 {
 	/**
-	 * Initializes the object used to search
-	 * the Web with the Google Custom Search (GCS) API.
+	 * Initializes the object used to search Facebook.
 	 */
-	public GoogleEngine()
+	public FacebookEngine()
 	{	// Set up the HTTP transport and JSON factory
 		HttpTransport httpTransport = new NetHttpTransport();
 		//JsonFactory jsonFactory = new GsonFactory();
@@ -86,7 +85,7 @@ public class GoogleEngine extends AbstractEngine
 	// DATA			/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
 	/** Textual name of this engine */
-	private static final String ENGINE_NAME = "Google Custom Search";
+	private static final String ENGINE_NAME = "Facebook Search";
 
 	@Override
 	public String getName()
@@ -104,13 +103,13 @@ public class GoogleEngine extends AbstractEngine
 //	public boolean sortByDate = false;
 //	/** Date range the search should focus on. It should take the form YYYYMMDD:YYYYMMDD, or {@code null} for no limit. If {@link #sortByDate} is set to {@code false}, this range is ignored. */
 //	public String dateRange = null;
-	/** Maximal number of results (can be less if google does not provide) */
+	/** Maximal number of results (can be less if facebook does not provide) */
 	public static final int MAX_RES_NBR = 100;
 
 	/////////////////////////////////////////////////////////////////
 	// BUILDER		/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
-	/** Object used to build GoogleEngine instances */
+	/** Object used to build Facebook instances */
 	private Customsearch.Builder builder;
 	
 	/////////////////////////////////////////////////////////////////
@@ -118,7 +117,7 @@ public class GoogleEngine extends AbstractEngine
 	/////////////////////////////////////////////////////////////////
 	@Override
 	public List<URL> search(String keywords, String website, Date startDate, Date endDate)  throws IOException
-	{	logger.log("Applying Google Custom Search");
+	{	logger.log("Searching Facebook");
 		logger.increaseOffset();
 		
 		// init GCS parameters
@@ -148,7 +147,7 @@ public class GoogleEngine extends AbstractEngine
 		logger.decreaseOffset();
 
 		// perform search
-		List<Result> resList = searchGoogle(keywords,website,sortCriterion);
+		List<Result> resList = searchFacebook(keywords,website,sortCriterion);
 	
 		// convert result list
 		logger.log("Results obtained:");
@@ -169,8 +168,7 @@ public class GoogleEngine extends AbstractEngine
 	}
 	
 	/**
-	 * Performs a search using Google Custom Search.
-	 * The search is performed only on the specified site.
+	 * Performs a search on Facebook using its API.
 	 * <br/>
 	 * See the public fields of this class for a
 	 * description of the modifiable search parameters.
@@ -183,12 +181,12 @@ public class GoogleEngine extends AbstractEngine
 	 * 		Criterion used for sorting (and possibly a range),
 	 * 		or {@code null} to use the default (relevance).
 	 * @return
-	 * 		List of results presented using Google's class.
+	 * 		List of results.
 	 * 
 	 * @throws IOException
-	 * 		Problem while searching Google.
+	 * 		Problem while searching Facebook.
 	 */
-	public List<Result> searchGoogle(String keywords, String website, String sortCriterion)  throws IOException
+	public List<Result> searchFacebook(String keywords, String website, String sortCriterion)  throws IOException
 	{	// init the other variables
 		List<Result> result = new ArrayList<Result>();
 		long start = 1;

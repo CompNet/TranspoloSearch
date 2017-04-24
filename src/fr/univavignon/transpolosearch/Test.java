@@ -48,9 +48,9 @@ import com.google.api.services.customsearch.model.Result;
 import fr.univavignon.transpolosearch.extraction.Extractor;
 import fr.univavignon.transpolosearch.retrieval.ArticleRetriever;
 import fr.univavignon.transpolosearch.retrieval.reader.ArticleReader;
+import fr.univavignon.transpolosearch.search.web.GoogleEngine;
 import fr.univavignon.transpolosearch.tools.log.HierarchicalLogger;
 import fr.univavignon.transpolosearch.tools.log.HierarchicalLoggerManager;
-import fr.univavignon.transpolosearch.websearch.GoogleEngine;
 
 /**
  * This class is used to launch some processes
@@ -278,13 +278,3 @@ public class Test
 		extractor.performExtraction(keywords, website, startDate, endDate, strictSearch, compulsoryExpression);
 	}
 }
-
-
-/**
- * TODO
- * - integrate Facebook
- *   http://facebook4j.github.io/en/index.html#source_code
- *   http://facebook4j.github.io/en/code-examples.html
- *   https://developers.facebook.com/docs/graph-api/using-graph-api
- *   
- */

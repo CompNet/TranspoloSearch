@@ -1,4 +1,4 @@
-package fr.univavignon.transpolosearch.websearch;
+package fr.univavignon.transpolosearch.search.web;
 
 /*
  * TranspoloSearch
@@ -51,7 +51,7 @@ import org.json.simple.parser.ParseException;
  * 
  * @author Vincent Labatut
  */
-public class QwantEngine extends AbstractEngine
+public class QwantEngine extends AbstractWebEngine
 {
 	/**
 	 * Initializes the object used to search
