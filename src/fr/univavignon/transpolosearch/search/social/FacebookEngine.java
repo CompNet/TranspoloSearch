@@ -63,6 +63,7 @@ import org.apache.http.impl.client.DefaultHttpClient;
  * http://facebook4j.github.io/en/index.html#source_code
  * http://facebook4j.github.io/en/code-examples.html
  * https://developers.facebook.com/docs/graph-api/using-graph-api
+ * http://stackoverflow.com/questions/13165589/facebook-api-access-with-username-password-via-client-software#
  * 
  * @author Vincent Labatut
  */
