@@ -35,7 +35,7 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -223,8 +223,8 @@ public class BingEngine extends AbstractWebEngine
 				+ SERVICE_PARAM_QUERY + URLEncoder.encode(query, "UTF-8");
 			logger.log("URL: "+url);
 			
-			// query the server	
-			HttpClient httpclient = new DefaultHttpClient();   
+			// query the server
+			HttpClient httpclient = HttpClientBuilder.create().build();
 			HttpGet request = new HttpGet(url);
 			request.setHeader("Ocp-Apim-Subscription-Key", API_KEY1);
 			HttpResponse response = httpclient.execute(request);

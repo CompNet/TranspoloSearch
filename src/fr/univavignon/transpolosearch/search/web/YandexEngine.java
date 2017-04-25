@@ -34,7 +34,7 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.jdom2.Document;
 import org.jdom2.Element;
 import org.jdom2.JDOMException;
@@ -195,7 +195,7 @@ public class YandexEngine extends AbstractWebEngine
 			logger.log("URL: "+url);
 			
 			// query the server	
-			HttpClient httpclient = new DefaultHttpClient();   
+			HttpClient httpclient = HttpClientBuilder.create().build();
 			HttpGet request = new HttpGet(url);
 			HttpResponse response = httpclient.execute(request);
 			
