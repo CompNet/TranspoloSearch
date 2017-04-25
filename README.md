@@ -35,7 +35,7 @@ Here are the dependencies for TranspoloSearch:
 * Add the Duck Duck Go search engine. As of 2016/04/21, the Instant Answer API is too restricted to return results we could use in TranspoloSearch. See [this page](https://api.duckduckgo.com/api) for a description of the API. Also, it is powered by other search engines already integrated in TranspoloSearch.
 * Add the Yahoo search engine. Apparently, Yahoo is powered by Bing since 2011, so not worth it since we already have Bing.
 * Add the Baidu search engine. As of 2016/04/22, the documentation is in Chinese only (https://www.programmableweb.com/api/baidu).
-* Add Facebook support.
+* Add Facebook support. As of 2016/04/25, Facebook does not allow searching public posts anymore, so supporting this service has no interest right now.
 * Add Twitter support.
 
 ## References

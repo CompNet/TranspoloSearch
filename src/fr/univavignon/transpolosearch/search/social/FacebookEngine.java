@@ -113,6 +113,7 @@ public class FacebookEngine extends AbstractSocialEngine
 		cb.setOAuthAppSecret(KeyHandler.KEYS.get(APP_SECRET));
 		cb.setOAuthAccessToken(accessToken);
 		cb.setOAuthPermissions("email, publish_stream, id, name, first_name, last_name, read_stream , generic");
+		cb.setAppSecretProofEnabled(true);
 		cb.setUseSSL(true); 
 		cb.setJSONStoreEnabled(true);
 		Configuration config = cb.build();
@@ -194,8 +195,11 @@ public class FacebookEngine extends AbstractSocialEngine
 		URL currentUrl = currentPage.getUrl();
 		String newUrl = currentUrl.toString();
 		logger.log(newUrl);
-		int idx = newUrl.indexOf(URL_PARAM_ACCESS);
-		String result = newUrl.substring(idx+URL_PARAM_ACCESS.length(),newUrl.length());
+		int startIdx = newUrl.indexOf(URL_PARAM_ACCESS);
+		int endIdx = newUrl.indexOf("&", startIdx+1);
+		if(endIdx==-1)
+			endIdx = newUrl.length();
+		String result = newUrl.substring(startIdx+URL_PARAM_ACCESS.length(),endIdx);
 		logger.log("Access token: "+result);
 	    
 		wc.close();
@@ -253,7 +257,8 @@ System.out.println(msg);
 			}
 		} 
 		catch (FacebookException e) 
-		{	e.printStackTrace();
+		{	//System.err.println(e.getMessage());
+			e.printStackTrace();
 			throw new IOException(e.getMessage());
 		}
 //		
