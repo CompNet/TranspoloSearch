@@ -63,8 +63,6 @@ public abstract class AbstractSocialEngine
 	 * 
 	 * @param keywords
 	 * 		Person we want to look for.
-	 * @param website
-	 * 		Target site, or {@code null} to search the whole Web.
 	 * @param startDate
 	 * 		Start of the period we want to consider, 
 	 * 		or {@code null} for no constraint.
@@ -77,5 +75,5 @@ public abstract class AbstractSocialEngine
 	 * @throws IOException
 	 * 		Problem while searching the Web.
 	 */
-	public abstract List<URL> search(String keywords, String website, Date startDate, Date endDate)  throws IOException;
+	public abstract List<URL> search(String keywords, Date startDate, Date endDate)  throws IOException;
 }

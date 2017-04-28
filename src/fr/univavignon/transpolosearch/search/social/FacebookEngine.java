@@ -35,11 +35,15 @@ import com.google.api.services.customsearch.Customsearch;
 import com.google.api.services.customsearch.model.Result;
 import com.google.api.services.customsearch.model.Search;
 
+import facebook4j.Comment;
 import facebook4j.Facebook;
 import facebook4j.FacebookException;
 import facebook4j.FacebookFactory;
+import facebook4j.PagableList;
 import facebook4j.Page;
+import facebook4j.Paging;
 import facebook4j.Post;
+import facebook4j.Reading;
 import facebook4j.ResponseList;
 import facebook4j.User;
 import facebook4j.auth.AccessToken;
@@ -244,23 +248,56 @@ public class FacebookEngine extends AbstractSocialEngine
 	// SEARCH		/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
 	@Override
-	public List<URL> search(String keywords, String website, Date startDate, Date endDate)  throws IOException
+	public List<URL> search(String keywords, Date startDate, Date endDate)  throws IOException
 	{	logger.log("Searching Facebook");
 		logger.increaseOffset();
 		
-		String query = keywords;
+		String query = keywords;//TODO add logging...
+		Reading reading = null;
+		if(startDate!=null && endDate!=null)
+		{	reading = new Reading();
+			reading.since(startDate);
+			reading.until(endDate);
+		}
 		
 		Facebook facebook = factory.getInstance();
 		try
-		{	ResponseList<Page> pages =  facebook.searchPages(query);
+		{	ResponseList<Page> pages =  facebook.searchPages(query,reading);
 			if(!pages.isEmpty())
-			{	Page page = pages.get(0);
-				String pageId = page.getId();
-				ResponseList<Post> posts = facebook.getPosts(pageId);
+			{	Page firstPage = pages.get(0);
+				String pageId = firstPage.getId();
+				List<Post> posts = new ArrayList<Post>();
+				Paging<Post> paging;
+				
+				// get all the targeted page of posts
+				ResponseList<Post> postPage = facebook.getPosts(pageId);
+		        do 
+		        {	// add the post of the current page to the overall list
+		        	posts.addAll(postPage);
+		        	
+		        	// try to get the next page of comments
+		            paging = postPage.getPaging();
+		            postPage = null;
+		            if(paging!=null)
+		            	postPage = facebook.fetchNext(paging);
+		        } 
+		        while(postPage!= null);
+				
+		        // get the comment associated to all the targeted posts
 				for(Post post: posts)
-				{	String msg = post.getMessage();
-System.out.println(msg);
+				{	// get the text message
+					String msg = post.getMessage();
+					logger.log("Message: \""+msg+"\"");
+					
+					// retrieve the comments associated to the message
+					List<Comment> comments = getComments(post,facebook);
 				}
+				
+				
+				
+				
+
+				
 				
 				//TODO http://stackoverflow.com/questions/24696250/take-comments-from-a-post-with-facebook4j
 				
@@ -334,6 +371,40 @@ System.out.println(msg);
 //		logger.log("Search terminated: "+result.size()+"/"+MAX_RES_NBR+" results retrieved");
 //		logger.decreaseOffset();
 		return result;
+	}
+	
+	/**
+	 * Gets all the comments for the specified post.
+	 *  
+	 * @param post
+	 * 		Post of interest.
+	 * @param facebook
+	 * 		Current Facebook instance.
+	 * @return
+	 * 		The list of all comments associated to the post.
+	 * 
+	 * @throws FacebookException
+	 * 		Problem while accessing the comments.
+	 */
+	public List<Comment> getComments(Post post, Facebook facebook) throws FacebookException 
+	{	List<Comment> result = new ArrayList<>();
+		Paging<Comment> paging;
+		
+		// get the first page of comments
+        PagableList<Comment> commentPage = post.getComments();
+        do 
+        {	// add the comments of the current page to the result list
+        	result.addAll(commentPage);
+        	
+        	// try to get the next page of comments
+            paging = commentPage.getPaging();
+            commentPage = null;
+            if(paging!=null)
+            	commentPage = facebook.fetchNext(paging);
+        } 
+        while(commentPage!= null);
+	    
+	    return result;
 	}
 	
 	/**
