@@ -38,8 +38,10 @@ import com.google.api.services.customsearch.model.Search;
 import facebook4j.Facebook;
 import facebook4j.FacebookException;
 import facebook4j.FacebookFactory;
+import facebook4j.Page;
 import facebook4j.Post;
 import facebook4j.ResponseList;
+import facebook4j.User;
 import facebook4j.auth.AccessToken;
 import facebook4j.conf.Configuration;
 import facebook4j.conf.ConfigurationBuilder;
@@ -113,6 +115,7 @@ public class FacebookEngine extends AbstractSocialEngine
 		cb.setOAuthAppSecret(KeyHandler.KEYS.get(APP_SECRET));
 		cb.setOAuthAccessToken(accessToken);
 		cb.setOAuthPermissions("email, publish_stream, id, name, first_name, last_name, read_stream , generic");
+		cb.setAppSecretProofEnabled(true);
 		cb.setUseSSL(true); 
 		cb.setJSONStoreEnabled(true);
 		Configuration config = cb.build();
@@ -194,8 +197,11 @@ public class FacebookEngine extends AbstractSocialEngine
 		URL currentUrl = currentPage.getUrl();
 		String newUrl = currentUrl.toString();
 		logger.log(newUrl);
-		int idx = newUrl.indexOf(URL_PARAM_ACCESS);
-		String result = newUrl.substring(idx+URL_PARAM_ACCESS.length(),newUrl.length());
+		int startIdx = newUrl.indexOf(URL_PARAM_ACCESS);
+		int endIdx = newUrl.indexOf("&", startIdx+1);
+		if(endIdx==-1)
+			endIdx = newUrl.length();
+		String result = newUrl.substring(startIdx+URL_PARAM_ACCESS.length(),endIdx);
 		logger.log("Access token: "+result);
 	    
 		wc.close();
@@ -246,14 +252,35 @@ public class FacebookEngine extends AbstractSocialEngine
 		
 		Facebook facebook = factory.getInstance();
 		try
-		{	ResponseList<Post> results =  facebook.getPosts(query);
-			for(Post post: results)
-			{	String msg = post.getMessage();
+		{	ResponseList<Page> pages =  facebook.searchPages(query);
+			if(!pages.isEmpty())
+			{	Page page = pages.get(0);
+				String pageId = page.getId();
+				ResponseList<Post> posts = facebook.getPosts(pageId);
+				for(Post post: posts)
+				{	String msg = post.getMessage();
 System.out.println(msg);
+				}
+				
+				//TODO http://stackoverflow.com/questions/24696250/take-comments-from-a-post-with-facebook4j
+				
+				// pagination
+//				ResponseList<Option> page1 = facebook.getQuestionOptions(questionId);
+//
+//				// Getting Next page
+//				Paging<Option> paging1 = page1.getPaging();
+//				ResponseList<Option> page2 = facebook.fetchNext(paging1);
+//
+//				// Getting Previous page
+//				Paging<Option> paging2 = page2.getPaging();
+//				page1 = facebook.fetchPrevious(paging2);
+				
+				
 			}
 		} 
 		catch (FacebookException e) 
-		{	e.printStackTrace();
+		{	//System.err.println(e.getMessage());
+			e.printStackTrace();
 			throw new IOException(e.getMessage());
 		}
 //		
