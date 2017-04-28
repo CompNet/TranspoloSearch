@@ -249,7 +249,7 @@ public class FacebookEngine extends AbstractSocialEngine
 		{	ResponseList<Post> results =  facebook.getPosts(query);
 			for(Post post: results)
 			{	String msg = post.getMessage();
-System.out.println(msg);			
+System.out.println(msg);
 			}
 		} 
 		catch (FacebookException e) 

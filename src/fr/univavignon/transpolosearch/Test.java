@@ -265,7 +265,7 @@ public class Test
 	 */
 	private static void testExtractor() throws Exception
 	{	Extractor extractor = new Extractor();
-	
+		
 		DateFormat df = new SimpleDateFormat("yyyyMMdd");
 		
 		String keywords = "Cécile Helle";
@@ -278,3 +278,6 @@ public class Test
 		extractor.performExtraction(keywords, website, startDate, endDate, strictSearch, compulsoryExpression);
 	}
 }
+
+// dates: 6/3 >> 10/3
+// pers: C. Helle + M. Aubry + A. Hidalgo
