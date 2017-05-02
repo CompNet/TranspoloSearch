@@ -65,7 +65,9 @@ import java.nio.charset.StandardCharsets;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
@@ -252,7 +254,7 @@ public class FacebookEngine extends AbstractSocialEngine
 	{	logger.log("Searching Facebook");
 		logger.increaseOffset();
 		
-		String query = keywords;//TODO add logging...
+		String query = keywords;
 		Reading reading = null;
 		if(startDate!=null && endDate!=null)
 		{	reading = new Reading();
@@ -262,28 +264,53 @@ public class FacebookEngine extends AbstractSocialEngine
 		
 		Facebook facebook = factory.getInstance();
 		try
-		{	ResponseList<Page> pages =  facebook.searchPages(query,reading);
-			if(!pages.isEmpty())
-			{	Page firstPage = pages.get(0);
+		{	logger.log("Look for the FB page corresponding to \""+keywords+"\"");
+			logger.increaseOffset();
+			ResponseList<Page> pages =  facebook.searchPages(query);
+			if(pages.isEmpty())
+				logger.log("No page found at all");
+			else
+			{	logger.log("Found "+pages.size()+" pages: using the first one");
+				Page firstPage = pages.get(0);
 				String pageId = firstPage.getId();
+				logger.log("Title="+firstPage.getName()+", id="+pageId);
 				List<Post> posts = new ArrayList<Post>();
 				Paging<Post> paging;
 				
 				// get all the targeted page of posts
-				ResponseList<Post> postPage = facebook.getPosts(pageId);
+				logger.log("Retrieving the posts of this FB page");
+				if(startDate!=null && endDate!=null)
+					logger.log("For the period "+startDate+"--"+endDate);
+				logger.increaseOffset();
+				int i = 1;
+				ResponseList<Post> postPage = facebook.getPosts(pageId,reading);
 		        do 
-		        {	// add the post of the current page to the overall list
-		        	posts.addAll(postPage);
+		        {	logger.log("Processing post page #"+i);
+					logger.increaseOffset();
+		        	i++;
+		        	
+		        	// add the post of the current page to the overall list
+		        	logger.log("Found "+postPage.size()+" posts in the current page");
+		        	for(Post post: postPage)
+		        		logger.log(post.getCreatedTime()+": "+post.getMessage());
+					posts.addAll(postPage);
 		        	
 		        	// try to get the next page of comments
-		            paging = postPage.getPaging();
+					paging = postPage.getPaging();
 		            postPage = null;
 		            if(paging!=null)
+		            {	logger.log("Getting the next page of posts");
 		            	postPage = facebook.fetchNext(paging);
+		            }
+					logger.decreaseOffset();
 		        } 
 		        while(postPage!= null);
+				logger.log("Total posts found: "+posts.size());
+				logger.decreaseOffset();
 				
-		        // get the comment associated to all the targeted posts
+		        // get the comments associated to all the targeted posts
+				logger.log("Retrieving the comments for each post");
+				logger.increaseOffset();
 				for(Post post: posts)
 				{	// get the text message
 					String msg = post.getMessage();
@@ -292,27 +319,7 @@ public class FacebookEngine extends AbstractSocialEngine
 					// retrieve the comments associated to the message
 					List<Comment> comments = getComments(post,facebook);
 				}
-				
-				
-				
-				
-
-				
-				
-				//TODO http://stackoverflow.com/questions/24696250/take-comments-from-a-post-with-facebook4j
-				
-				// pagination
-//				ResponseList<Option> page1 = facebook.getQuestionOptions(questionId);
-//
-//				// Getting Next page
-//				Paging<Option> paging1 = page1.getPaging();
-//				ResponseList<Option> page2 = facebook.fetchNext(paging1);
-//
-//				// Getting Previous page
-//				Paging<Option> paging2 = page2.getPaging();
-//				page1 = facebook.fetchPrevious(paging2);
-				
-				
+				logger.decreaseOffset();
 			}
 		} 
 		catch (FacebookException e) 
@@ -320,56 +327,9 @@ public class FacebookEngine extends AbstractSocialEngine
 			e.printStackTrace();
 			throw new IOException(e.getMessage());
 		}
-//		
-//		
-//		
-//		
-//		
-//		
-//		// init GCS parameters
-//		String sortCriterion;
-//		if(startDate==null && endDate==null)
-//		{	sortCriterion = null;
-//		}
-//		else if(startDate!=null && endDate!=null)
-//		{	String dateRange = DATE_FORMAT.format(startDate)+":"+DATE_FORMAT.format(endDate);
-//			sortCriterion = "date:r:" + dateRange;
-//		}
-//		else
-//		{	logger.log("WARNING: one date is null, so we ignore both dates in the search");
-//			sortCriterion = null;
-//		}
-//		
-//		// display GCS parameters
-//		logger.log("Parameters:");
-//		logger.increaseOffset();
-//			logger.log("keywords="+keywords);
-//			logger.log("website="+website);
-//			logger.log("pageCountry="+PAGE_CNTRY);
-//			logger.log("pageLanguage="+PAGE_LANG);
-//			logger.log("PAGE_SIZE="+PAGE_SIZE);
-//			logger.log("resultNumber="+MAX_RES_NBR);
-//			logger.log("sortCriterion="+sortCriterion);
-//		logger.decreaseOffset();
-//
-//		// perform search
-//		List<Result> resList = searchFacebook(keywords,website,sortCriterion);
-//	
-//		// convert result list
-//		logger.log("Results obtained:");
-//		logger.increaseOffset();
+
 		List<URL> result = new ArrayList<URL>();
-//		for(Result res: resList)
-//		{	String title = res.getHtmlTitle();
-//			String urlStr = res.getLink();
-//			logger.log(title+" - "+urlStr);
-//			URL url = new URL(urlStr);
-//			result.add(url);
-//		}
-//		logger.decreaseOffset();
-//		
-//		logger.log("Search terminated: "+result.size()+"/"+MAX_RES_NBR+" results retrieved");
-//		logger.decreaseOffset();
+		logger.decreaseOffset();
 		return result;
 	}
 	
@@ -387,177 +347,58 @@ public class FacebookEngine extends AbstractSocialEngine
 	 * 		Problem while accessing the comments.
 	 */
 	public List<Comment> getComments(Post post, Facebook facebook) throws FacebookException 
-	{	List<Comment> result = new ArrayList<>();
+	{	logger.log("Retrieving comments");
+		logger.increaseOffset();
+		List<Comment> result = new ArrayList<>();
 		Paging<Comment> paging;
 		
 		// get the first page of comments
         PagableList<Comment> commentPage = post.getComments();
+        int i = 1;
         do 
-        {	// add the comments of the current page to the result list
+        {	logger.log("Comment page #"+i);
+			logger.increaseOffset();
+			i++;
+			
+			// add the comments of the current page to the result list
         	result.addAll(commentPage);
+        	logger.log("Found "+commentPage.size()+" comments on the current page");
+        	List<String> commentsStr = new ArrayList<String>();
+        	for(Comment comment: commentPage)
+        		commentsStr.add(comment.getMessage());
+			logger.log(commentsStr);
         	
         	// try to get the next page of comments
             paging = commentPage.getPaging();
             commentPage = null;
             if(paging!=null)
-            	commentPage = facebook.fetchNext(paging);
-        } 
+            {	logger.log("Getting the next page of comments");
+        		commentPage = facebook.fetchNext(paging);
+            }
+            logger.decreaseOffset();
+		} 
         while(commentPage!= null);
+		logger.log("Total comments found for this post: "+result.size());
 	    
+		logger.decreaseOffset();
 	    return result;
 	}
 	
+	/////////////////////////////////////////////////////////////////
+	// TEST			/////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////
 	/**
-	 * Performs a search on Facebook using its API.
-	 * <br/>
-	 * See the public fields of this class for a
-	 * description of the modifiable search parameters.
+	 * Method used to test/debug this class.
 	 * 
-	 * @param keywords
-	 * 		Keywords to search.
-	 * @param website
-	 * 		Target site, or {@code null} to search the whole Web.
-	 * @param sortCriterion
-	 * 		Criterion used for sorting (and possibly a range),
-	 * 		or {@code null} to use the default (relevance).
-	 * @return
-	 * 		List of results.
-	 * 
-	 * @throws IOException
-	 * 		Problem while searching Facebook.
+	 * @param args
+	 * 		None needed.
+	 * @throws Exception
+	 * 		All exceptions are thrown.
 	 */
-	public List<Result> searchFacebook(String keywords, String website, String sortCriterion)  throws IOException
-	{	// init the other variables
-		List<Result> result = new ArrayList<Result>();
-		long start = 1;
-		
-		// repeat because of the pagination system
-		logger.log("Retrieving the result pages:");
-		logger.increaseOffset();
-			try
-			{	List<Result> response = null;
-				do
-				{	logger.log("Starting at position "+start+"/"+MAX_RES_NBR);
-					
-					// create the GCS object
-					Customsearch customsearch = builder.build();//new Customsearch(httpTransport, jsonFactory,null);
-					Customsearch.Cse.List list = customsearch.cse().list(keywords);				
-					list.setKey(API_KEY);
-					list.setCx(APP_KEY);
-					list.setCr(PAGE_CNTRY);
-					list.setLr(PAGE_LANG);
-					list.setNum(PAGE_SIZE);
-					if(sortCriterion!=null)
-						list.setSort(sortCriterion);
-					if(website!=null)
-						list.setSiteSearch(website);
-					list.setStart(start);
-		            
-					// send the request
-					logger.log("Send request");
-					Search search = list.execute();
-					
-//TODO handle search in order to catch possible problems, such as 403					
-					
-					// add the results to the list
-					response = search.getItems();
-					if(response==null)
-						logger.log("No more result could be retrieved");
-					else
-					{	logger.log("Retrieved "+response.size()+"/"+PAGE_SIZE+" items (total: "+result.size()+"/"+MAX_RES_NBR+")");
-						result.addAll(response);
-					
-						// udpate parameter
-						start = start + PAGE_SIZE;
-					}
-				}
-				while(result.size()<MAX_RES_NBR && response!=null);
-			}
-			catch(IOException e)
-			{	//e.printStackTrace();
-				if(start<MAX_RES_NBR)
-					logger.log("Could not reach the specified number of results ("+result.size()+"/"+MAX_RES_NBR+")");
-			}
-		logger.decreaseOffset();
-		
-        return result;
-	}
 	public static void main(String[] args) throws Exception
-	{	
-//		String username = KeyHandler.KEYS.get(USER_LOGIN);
-//		String password = KeyHandler.KEYS.get(USER_PASSWORD);	
-////		login(username,password);
-//		
-//		WebClient wc = new WebClient();
-//		WebClientOptions opt = wc.getOptions();
-//		opt.setCssEnabled(false);
-//		opt.setJavaScriptEnabled(false);
-//		
-//		// go to the FB homepage
-//		String url = "https://www.facebook.com/v2.9/dialog/oauth?client_id=437488563263592&response_type=token&redirect_uri="+URLEncoder.encode("https://www.facebook.com/connect/login_success.html","UTF-8"); 
-//		HtmlPage page = wc.getPage(url);
-//		HtmlForm form = (HtmlForm) page.getElementById("login_form");
-//		// setup the login and password
-//		form.getInputByName("email").setValueAttribute(username);
-//		form.getInputByName("pass").setValueAttribute(password);
-//		// search the ok button and click
-////		HtmlPage home = null;
-//		HtmlButton button = form.getButtonByName("login");
-//		button.click();
-////		Iterator<DomNode> it = form.getDescendants().iterator();
-////		boolean goOn = true;
-////		while(it.hasNext() && goOn)
-////		{	DomNode node = it.next();
-////			if(node instanceof HtmlSubmitInput) 
-////			{	//home = 
-////				((HtmlSubmitInput) node).click();
-////				goOn = false;
-////			}
-////		}
-//		HtmlPage currentPage = (HtmlPage) wc.getCurrentWindow().getEnclosedPage();
-//		System.out.println(currentPage.getUrl());
-//		String newUrl = currentPage.getUrl().toString();
-//		int idx = newUrl.indexOf("access_token=");
-//		String code = newUrl.substring(idx+5,newUrl.length());
-//		System.out.println(code);
-//		
-////		String url = "https://www.facebook.com/v2.9/dialog/oauth?client_id=437488563263592&redirect_uri="+URLEncoder.encode("https://www.facebook.com/connect/login_success.html","UTF-8"); 
-////		HttpClient httpclient = HttpClientBuilder.create().build();
-////		HttpGet request = new HttpGet(url);
-////		Builder requestConfigBuilder = RequestConfig.custom();
-////		requestConfigBuilder.setRedirectsEnabled(false);
-////		request.setConfig(requestConfigBuilder.build());
-////		HttpResponse response = httpclient.execute(request);
-////		int responseCode = response.getStatusLine().getStatusCode();
-////		System.out.println(responseCode);
-//		
-////		url = response.getLastHeader("Location").getValue();
-////		System.out.println(url);
-////		HttpClient httpclient2 = HttpClientBuilder.create().build();
-////		request = new HttpGet(url);
-////		requestConfigBuilder = RequestConfig.custom();
-////		requestConfigBuilder.setRedirectsEnabled(false);
-////		request.setConfig(requestConfigBuilder.build());
-////		response = httpclient2.execute(request);
-//		
-//		
-////		URLConnection con = new URL( url ).openConnection();
-////		System.out.println( "orignal url: " + con.getURL() );
-////		con.connect();
-////		System.out.println( "connected url: " + con.getURL() );
-////		InputStream is = con.getInputStream();
-////		System.out.println( "redirected url: " + con.getURL() );
-////		is.close();
-//		
-//		
-//		
-////		System.out.println(URLDecoder.decode("/login.php?skip_api_login=1&amp;api_key=437488563263592&amp;signed_next=1&amp;next=https%3A%2F%2Fwww.facebook.com%2Fv2.9%2Fdialog%2Foauth%3Fredirect_uri%3Dhttps%253A%252F%252Fwww.facebook.com%252Fconnect%252Flogin_success.html%26client_id%3D437488563263592%26ret%3Dlogin%26logger_id%3D959c8cc5-cfb7-0729-835f-b52bf88829af&amp;cancel_url=https%3A%2F%2Fwww.facebook.com%2Fconnect%2Flogin_success.html%3Ferror%3Daccess_denied%26error_code%3D200%26error_description%3DPermissions%2Berror%26error_reason%3Duser_denied%23_%3D_&amp;display=page&amp;locale=fr_FR&amp;logger_id=959c8cc5-cfb7-0729-835f-b52bf88829af&amp;_fb_noscript=1"));
-//		
-//		// parse the JSON response
-////		String answer = WebTools.readAnswer(response);
-////		System.out.println(answer);
-		
+	{	Date startDate = new GregorianCalendar(2017,3,6).getTime();//null;
+		Date endDate = new GregorianCalendar(2017,3,10).getTime();//null;
 		FacebookEngine fe = new FacebookEngine();
-		fe.search("François Hollande", null, null, null);
+		fe.search("François Hollande", startDate, endDate);
 	}
 }

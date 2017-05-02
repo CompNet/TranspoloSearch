@@ -21,6 +21,7 @@ package fr.univavignon.transpolosearch.tools.log;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -263,7 +264,9 @@ public class HierarchicalLogger
      */
     public void log(Collection<String> msg)
     {	if(enabled)
-    	{	Logger logger = getLogger();
+    	{	if(msg==null || msg.isEmpty())
+    			msg = Arrays.asList("");
+    		Logger logger = getLogger();
     		Object params[] = {msg,getOffset()};
     		logger.log(Level.INFO,msg.iterator().next(),params);
     	}
