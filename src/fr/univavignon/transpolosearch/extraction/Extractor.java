@@ -76,7 +76,7 @@ public class Extractor
 {	
 	/**
 	 * Builds and initializes an extractor object,
-	 * using the default parameter. 
+	 * using the default parameters. 
 	 * <br/>
 	 * Override/modify the methods called here, 
 	 * in order to change these parameters.
@@ -423,7 +423,7 @@ public class Extractor
 	/**
 	 * Removes from the list the articles concerning events
 	 * not contained in the specified date range. Also removes
-	 * the article not containing the compulsory expression.
+	 * the articles not containing the compulsory expression.
 	 *  
 	 * @param articles
 	 * 		List of articles to process.
@@ -764,7 +764,7 @@ public class Extractor
 //	}
 	
 	/**
-	 * Record the result of the search as a CSV file.
+	 * Records the results of the event search as a CSV file.
 	 * 
 	 * @param originalUrls
 	 * 		List of treated URLs.
