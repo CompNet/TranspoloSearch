@@ -21,20 +21,11 @@ package fr.univavignon.transpolosearch.search.social;
 import com.gargoylesoftware.htmlunit.FailingHttpStatusCodeException;
 import com.gargoylesoftware.htmlunit.WebClient;
 import com.gargoylesoftware.htmlunit.WebClientOptions;
-import com.gargoylesoftware.htmlunit.html.DomNode;
-import com.gargoylesoftware.htmlunit.html.HtmlAnchor;
 import com.gargoylesoftware.htmlunit.html.HtmlButton;
 import com.gargoylesoftware.htmlunit.html.HtmlForm;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
-import com.gargoylesoftware.htmlunit.html.HtmlSubmitInput;
-import com.google.api.client.http.HttpTransport;
-import com.google.api.client.http.javanet.NetHttpTransport;
-import com.google.api.client.json.JsonFactory;
-import com.google.api.client.json.gson.GsonFactory;
-import com.google.api.services.customsearch.Customsearch;
-import com.google.api.services.customsearch.model.Result;
-import com.google.api.services.customsearch.model.Search;
 
+import facebook4j.Category;
 import facebook4j.Comment;
 import facebook4j.Facebook;
 import facebook4j.FacebookException;
@@ -45,43 +36,21 @@ import facebook4j.Paging;
 import facebook4j.Post;
 import facebook4j.Reading;
 import facebook4j.ResponseList;
-import facebook4j.User;
-import facebook4j.auth.AccessToken;
 import facebook4j.conf.Configuration;
 import facebook4j.conf.ConfigurationBuilder;
 import fr.univavignon.transpolosearch.tools.keys.KeyHandler;
-import fr.univavignon.transpolosearch.tools.web.WebTools;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.MalformedURLException;
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.net.URLConnection;
-import java.net.URLDecoder;
 import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.GregorianCalendar;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Locale;
-
-import org.apache.http.HttpResponse;
-import org.apache.http.NameValuePair;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.config.RequestConfig;
-import org.apache.http.client.config.RequestConfig.Builder;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.params.HttpClientParams;
-import org.apache.http.client.utils.URIBuilder;
-import org.apache.http.client.utils.URLEncodedUtils;
-import org.apache.http.impl.client.HttpClientBuilder;
+import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * This class uses the Facebook API to search the Web.
@@ -250,9 +219,10 @@ public class FacebookEngine extends AbstractSocialEngine
 	// SEARCH		/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
 	@Override
-	public List<URL> search(String keywords, Date startDate, Date endDate)  throws IOException
+	public List<String> search(String keywords, Date startDate, Date endDate)  throws IOException
 	{	logger.log("Searching Facebook");
 		logger.increaseOffset();
+		List<String> result = new ArrayList<String>();
 		
 		String query = keywords;
 		Reading reading = null;
@@ -270,65 +240,124 @@ public class FacebookEngine extends AbstractSocialEngine
 			if(pages.isEmpty())
 				logger.log("No page found at all");
 			else
-			{	logger.log("Found "+pages.size()+" pages: using the first one");
+			{	logger.log("Found at least "+pages.size()+" pages: using the first one");
 				Page firstPage = pages.get(0);
 				String pageId = firstPage.getId();
 				logger.log("Title="+firstPage.getName()+", id="+pageId);
-				List<Post> posts = new ArrayList<Post>();
-				Paging<Post> paging;
 				
-				// get all the targeted page of posts
-				logger.log("Retrieving the posts of this FB page");
-				if(startDate!=null && endDate!=null)
-					logger.log("For the period "+startDate+"--"+endDate);
-				logger.increaseOffset();
-				int i = 1;
-				ResponseList<Post> postPage = facebook.getPosts(pageId,reading);
-		        do 
-		        {	logger.log("Processing post page #"+i);
-					logger.increaseOffset();
-		        	i++;
-		        	
-		        	// add the post of the current page to the overall list
-		        	logger.log("Found "+postPage.size()+" posts in the current page");
-		        	for(Post post: postPage)
-		        		logger.log(post.getCreatedTime()+": "+post.getMessage());
-					posts.addAll(postPage);
-		        	
-		        	// try to get the next page of comments
-					paging = postPage.getPaging();
-		            postPage = null;
-		            if(paging!=null)
-		            {	logger.log("Getting the next page of posts");
-		            	postPage = facebook.fetchNext(paging);
-		            }
-					logger.decreaseOffset();
-		        } 
-		        while(postPage!= null);
-				logger.log("Total posts found: "+posts.size());
-				logger.decreaseOffset();
+				// get all the posts of the targeted page
+				List<Post> pagePosts = getPosts(pageId, facebook, reading);
 				
 		        // get the comments associated to all the targeted posts
-				logger.log("Retrieving the comments for each post");
+				List<Comment> pageComments = new ArrayList<Comment>();
+				logger.log("Retrieving the comments for each post (for specified period, if any)");
 				logger.increaseOffset();
-				for(Post post: posts)
-				{	// get the text message
+				for(Post post: pagePosts)
+				{	// get the message text
 					String msg = post.getMessage();
 					logger.log("Message: \""+msg+"\"");
+					result.add(msg);
 					
 					// retrieve the comments associated to the message
-					List<Comment> comments = getComments(post,facebook);
+					List<Comment> comments = getComments(post, facebook, reading);
+					pageComments.addAll(comments);
+				}
+				logger.decreaseOffset();
+				
+				// get the authors of all the comments
+				Set<String> authorIds = new TreeSet<String>();
+				logger.log("Retrieving the authors for each comment");
+				logger.increaseOffset();
+				for(Comment comment: pageComments)
+				{	Category auth = comment.getFrom();
+					String authId = auth.getId();
+					if(!authorIds.contains(authId))
+					{	String authName = auth.getName();
+						logger.log(authName+" ("+authId+")");
+						authorIds.add(authId);
+					}
+				}
+				logger.decreaseOffset();
+				
+				// get the authors posts for this period
+				logger.log("Retrieving the posts of the authors (for the specified period, if any)");
+				logger.increaseOffset();
+				for(String authId: authorIds)
+				{	logger.log("Processing id"+authId);
+					logger.increaseOffset();
+					List<Post> authPosts = getPosts(authId, facebook, reading);
+					for(Post post: authPosts)
+					{	// get the message text
+						String msg = post.getMessage();
+						logger.log("Message: \""+msg+"\"");
+						result.add(msg);
+						
+						// we do not get the comments, this time
+					}
+					logger.decreaseOffset();
 				}
 				logger.decreaseOffset();
 			}
+			
+			logger.decreaseOffset();
 		} 
 		catch (FacebookException e) 
 		{	//System.err.println(e.getMessage());
 			e.printStackTrace();
 			throw new IOException(e.getMessage());
 		}
-
-		List<URL> result = new ArrayList<URL>();
+		
+		logger.decreaseOffset();
+		return result;
+	}
+	
+	/**
+	 * Gets all the posts for the specified page or user.
+	 *  
+	 * @param id
+	 * 		Id of the page or user of of interest.
+	 * @param facebook
+	 * 		Current Facebook instance.
+	 * @param reading
+	 * 		Graph API reading options (in our case: dates).
+	 * @return
+	 * 		The list of all posts associated to the page or user.
+	 * 
+	 * @throws FacebookException
+	 * 		Problem while accessing the comments.
+	 */
+	private List<Post> getPosts(String id, Facebook facebook, Reading reading) throws FacebookException
+	{	logger.log("Retrieving the posts of the FB page/user of id "+id);
+		logger.increaseOffset();
+		
+		List<Post> result = new ArrayList<Post>();
+		Paging<Post> paging;
+		
+		int i = 1;
+		ResponseList<Post> postPage = facebook.getPosts(id,reading);
+        do 
+        {	logger.log("Processing post page #"+i);
+			logger.increaseOffset();
+        	i++;
+        	
+        	// add the post of the current page to the overall list
+        	logger.log("Found "+postPage.size()+" posts in the current page");
+        	for(Post post: postPage)
+        		logger.log(post.getCreatedTime()+": "+post.getMessage());
+        	result.addAll(postPage);
+        	
+        	// try to get the next page of posts
+			paging = postPage.getPaging();
+            postPage = null;
+            if(paging!=null)
+            {	logger.log("Getting the next page of posts");
+            	postPage = facebook.fetchNext(paging);
+            }
+			logger.decreaseOffset();
+        } 
+        while(postPage!= null);
+        
+		logger.log("Total posts found for the targeted page/user: "+result.size());
 		logger.decreaseOffset();
 		return result;
 	}
@@ -340,39 +369,46 @@ public class FacebookEngine extends AbstractSocialEngine
 	 * 		Post of interest.
 	 * @param facebook
 	 * 		Current Facebook instance.
+	 * @param reading
+	 * 		Graph API reading options (in our case: dates).
 	 * @return
 	 * 		The list of all comments associated to the post.
 	 * 
 	 * @throws FacebookException
 	 * 		Problem while accessing the comments.
 	 */
-	public List<Comment> getComments(Post post, Facebook facebook) throws FacebookException 
+	private List<Comment> getComments(Post post, Facebook facebook, Reading reading) throws FacebookException 
 	{	logger.log("Retrieving comments");
 		logger.increaseOffset();
-		List<Comment> result = new ArrayList<>();
+		
+		List<Comment> result = new ArrayList<Comment>();
 		Paging<Comment> paging;
 		
 		// get the first page of comments
-        PagableList<Comment> commentPage = post.getComments();
         int i = 1;
+//        PagableList<Comment> commentPage = post.getComments();
+        String postId = post.getId();
+        PagableList<Comment> commentPage = facebook.getPostComments(postId, reading);
         do 
         {	logger.log("Comment page #"+i);
 			logger.increaseOffset();
 			i++;
 			
-			// add the comments of the current page to the result list
+			// add the comments of the current result page to the result list
         	result.addAll(commentPage);
-        	logger.log("Found "+commentPage.size()+" comments on the current page");
+        	logger.log("Found "+commentPage.size()+" comments on the current result page");
         	List<String> commentsStr = new ArrayList<String>();
         	for(Comment comment: commentPage)
         		commentsStr.add(comment.getMessage());
 			logger.log(commentsStr);
         	
+			// TODO we could go and fetch the answers to these comments, but that does not seem necessary 
+			
         	// try to get the next page of comments
             paging = commentPage.getPaging();
             commentPage = null;
             if(paging!=null)
-            {	logger.log("Getting the next page of comments");
+            {	logger.log("Getting the next result page");
         		commentPage = facebook.fetchNext(paging);
             }
             logger.decreaseOffset();
@@ -396,8 +432,8 @@ public class FacebookEngine extends AbstractSocialEngine
 	 * 		All exceptions are thrown.
 	 */
 	public static void main(String[] args) throws Exception
-	{	Date startDate = new GregorianCalendar(2017,3,6).getTime();//null;
-		Date endDate = new GregorianCalendar(2017,3,10).getTime();//null;
+	{	Date startDate = new GregorianCalendar(2017,4,7).getTime();//new GregorianCalendar(2017,3,6).getTime();//null;
+		Date endDate = new GregorianCalendar(2017,4,8).getTime();//new GregorianCalendar(2017,3,10).getTime();//null;
 		FacebookEngine fe = new FacebookEngine();
 		fe.search("François Hollande", startDate, endDate);
 	}

@@ -19,7 +19,6 @@ package fr.univavignon.transpolosearch.search.social;
  */
 
 import java.io.IOException;
-import java.net.URL;
 import java.util.Date;
 import java.util.List;
 
@@ -70,10 +69,10 @@ public abstract class AbstractSocialEngine
 	 * 		End of the period we want to consider,
 	 * 		or {@code null} for no constraint.
 	 * @return
-	 * 		List of results taking the form of URLs.
+	 * 		List of posts and comments.
 	 * 
 	 * @throws IOException
 	 * 		Problem while searching the Web.
 	 */
-	public abstract List<URL> search(String keywords, Date startDate, Date endDate)  throws IOException;
+	public abstract List<String> search(String keywords, Date startDate, Date endDate)  throws IOException;
 }
