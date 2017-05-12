@@ -43,6 +43,10 @@ public class FileNames
 	public final static String FO_LOG = "log";
 	/** Output folder */
 	public final static String FO_OUTPUT = "out";	//actual folder
+		/** Folder containing cached web search results */
+		public final static String FO_WEB_SEARCH_RESULTS = FO_OUTPUT + File.separator + "web_search";
+		/** Folder containing cached social media search results */
+		public final static String FO_SOCIAL_SEARCH_RESULTS = FO_OUTPUT + File.separator + "social_search";
 	/** Resources folder */
 	public final static String FO_RESOURCES = "res";
 		/** Folder used to store certain cached files */
@@ -127,10 +131,8 @@ public class FileNames
 	public final static String FI_UNKNOWN_TYPES = "fb.unknown" + FileNames.EX_TEXT;
 	/** List of location-related adjectives */
 	public final static String FI_DEMONYMS = "demonyms" + FileNames.EX_TEXT;
-	/** File containing cached web search results */
-	public final static String FI_WEB_SEARCH_RESULTS = "web_search" + FileNames.EX_TEXT;
-	/** File containing cached social media search results */
-	public final static String FI_SOCIAL_SEARCH_RESULTS = "social_search" + FileNames.EX_TEXT;
+	/** File containing cached search results */
+	public final static String FI_SEARCH_RESULTS = "search" + FileNames.EX_TEXT;
 	/** Configuration file */
 	public final static String FI_CONFIGURATION = "config" + FileNames.EX_TEXT;
 	/** Configuration file */

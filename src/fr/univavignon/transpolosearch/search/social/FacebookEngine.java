@@ -250,7 +250,7 @@ public class FacebookEngine extends AbstractSocialEngine
 				
 		        // get the comments associated to all the targeted posts
 				List<Comment> pageComments = new ArrayList<Comment>();
-				logger.log("Retrieving the comments for each post (for specified period, if any)");
+				logger.log("Retrieving the comments for each post (for the specified period, if any)");
 				logger.increaseOffset();
 				for(Post post: pagePosts)
 				{	// get the message text
@@ -269,7 +269,12 @@ public class FacebookEngine extends AbstractSocialEngine
 				logger.log("Retrieving the authors for each comment");
 				logger.increaseOffset();
 				for(Comment comment: pageComments)
-				{	Category auth = comment.getFrom();
+				{	// add the comment content to the result list
+					String msg = comment.getMessage();
+					result.add(msg);
+					
+					// get the author
+					Category auth = comment.getFrom();
 					String authId = auth.getId();
 					if(!authorIds.contains(authId))
 					{	String authName = auth.getName();
@@ -306,6 +311,14 @@ public class FacebookEngine extends AbstractSocialEngine
 			e.printStackTrace();
 			throw new IOException(e.getMessage());
 		}
+		
+		// remove the line breaks
+		List<String> temp = new ArrayList<String>();
+		for(String msg: result)
+		{	msg = msg.replaceAll("\\s+", " ");
+			temp.add(msg);
+		}
+		result = temp;
 		
 		logger.decreaseOffset();
 		return result;
