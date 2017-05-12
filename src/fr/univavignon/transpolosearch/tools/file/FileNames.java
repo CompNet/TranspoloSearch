@@ -42,13 +42,7 @@ public class FileNames
 	/** Log folder */
 	public final static String FO_LOG = "log";
 	/** Output folder */
-//	public final static String FO_OUTPUT = "out";	//actual folder
-//	public final static String FO_OUTPUT = "C:/Users/Vincent/Documents/Dropbox/Nerwip2/out";
-//	public final static String FO_OUTPUT = "C:/Users/Vincent/Documents/Dropbox/NetExtraction/Data2";
-//	public final static String FO_OUTPUT = "C:/Temp";
-	public final static String FO_OUTPUT = "out";
-//	public final static String FO_OUTPUT = "/home/vlabatut/Dropbox/Nerwip2/out";
-//	public final static String FO_OUTPUT = "/home/vlabatut/Nerwip2/out/Temp";
+	public final static String FO_OUTPUT = "out";	//actual folder
 	/** Resources folder */
 	public final static String FO_RESOURCES = "res";
 		/** Folder used to store certain cached files */
@@ -133,12 +127,14 @@ public class FileNames
 	public final static String FI_UNKNOWN_TYPES = "fb.unknown" + FileNames.EX_TEXT;
 	/** List of location-related adjectives */
 	public final static String FI_DEMONYMS = "demonyms" + FileNames.EX_TEXT;
-	/** File containing cached search results */
-	public final static String FI_SEARCH_RESULTS = "search" + FileNames.EX_TEXT;
+	/** File containing cached web search results */
+	public final static String FI_WEB_SEARCH_RESULTS = "web_search" + FileNames.EX_TEXT;
+	/** File containing cached social media search results */
+	public final static String FI_SOCIAL_SEARCH_RESULTS = "social_search" + FileNames.EX_TEXT;
 	/** Configuration file */
 	public final static String FI_CONFIGURATION = "config" + FileNames.EX_TEXT;
 	/** Configuration file */
-	public final static String FI_EVENT_TABLE = "event-table" + FileNames.EX_CSV;
+	public final static String FI_EVENT_TABLE = "event_table" + FileNames.EX_CSV;
 	
 //	/**
 //	 * Returns the filename used to store the

@@ -23,6 +23,8 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
+import java.net.MalformedURLException;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -37,6 +39,8 @@ import java.util.Set;
 import java.util.TreeSet;
 
 import org.xml.sax.SAXException;
+
+import com.gargoylesoftware.htmlunit.FailingHttpStatusCodeException;
 
 import fr.univavignon.transpolosearch.data.article.Article;
 import fr.univavignon.transpolosearch.data.article.ArticleLanguage;
@@ -53,8 +57,13 @@ import fr.univavignon.transpolosearch.recognition.RecognizerException;
 import fr.univavignon.transpolosearch.recognition.combiner.straightcombiner.StraightCombiner;
 import fr.univavignon.transpolosearch.retrieval.ArticleRetriever;
 import fr.univavignon.transpolosearch.retrieval.reader.ReaderException;
+import fr.univavignon.transpolosearch.search.social.AbstractSocialEngine;
+import fr.univavignon.transpolosearch.search.social.FacebookEngine;
 import fr.univavignon.transpolosearch.search.web.AbstractWebEngine;
+import fr.univavignon.transpolosearch.search.web.BingEngine;
 import fr.univavignon.transpolosearch.search.web.GoogleEngine;
+import fr.univavignon.transpolosearch.search.web.QwantEngine;
+import fr.univavignon.transpolosearch.search.web.YandexEngine;
 import fr.univavignon.transpolosearch.tools.file.FileNames;
 import fr.univavignon.transpolosearch.tools.file.FileTools;
 import fr.univavignon.transpolosearch.tools.log.HierarchicalLogger;
@@ -170,28 +179,41 @@ public class Extractor
 	// WEB SEARCH	/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
 	/** List of engines used for the Web search */
-	private final List<AbstractWebEngine> engines = new ArrayList<AbstractWebEngine>();
+	private final List<AbstractWebEngine> webEngines = new ArrayList<AbstractWebEngine>();
+	/** URL comparator (apparently, the default one is not appropriate? Can't remember why I added this...) */
+	private final static Comparator<URL> URL_COMPARATOR = new Comparator<URL>()
+	{	@Override
+		public int compare(URL url1, URL url2)
+		{	int result = url1.toString().compareTo(url2.toString());
+			return result;
+		}	
+	};
 	
 	/**
 	 * Initializes the default search engines.
-	 * Currently: only Google Custom Search.
-	 * (others can easily be added).
+	 * Currently: Google, Bing, Qwant, Yandex.
 	 */
 	private void initDefaultSearchEngines()
 	{	// set up the google custom search
 		GoogleEngine googleEngine = new GoogleEngine();
-		engines.add(googleEngine);
+		webEngines.add(googleEngine);
 		
 		// set up Bing
-		//  TODO
+		BingEngine bingEngine = new BingEngine();
+		webEngines.add(bingEngine);
 		
-		// set up duck duck go
-		// TODO
+		// set up Qwant
+		QwantEngine qwantEngine = new QwantEngine();
+		webEngines.add(qwantEngine);
+		
+		// set up Yandex
+		YandexEngine yandexEngine = new YandexEngine();
+		webEngines.add(yandexEngine);
 	}
 	
 	/**
-	 * Peforms the Web search using the specified parameters and
-	 * each one of the engines registered in the {@code engines}
+	 * Performs the Web search using the specified parameters and
+	 * each one of the engines registered in the {@link #webEngines}
 	 * list.
 	 * 
 	 * @param keywords
@@ -200,13 +222,13 @@ public class Extractor
 	 * 		Target site, or {@ode null} to search the whole Web.
 	 * @param startDate
 	 * 		Start of the period we want to consider, 
-	 * 		or {@code null} for no contraint.
+	 * 		or {@code null} for no constraint.
 	 * @param endDate
 	 * 		End of the period we want to consider,
-	 * 		or {@code null} for no contraint.
+	 * 		or {@code null} for no constraint.
 	 * @param strictSearch
 	 * 		If {@code true}, both dates will be used directly in the Web search.
-	 * 		Otherwise, they will be used <i>a posteri</i> to filter the detected events.
+	 * 		Otherwise, they will be used <i>a posteriori</i> to filter the detected events.
 	 * 		If one of the dates is {@code null}, this parameter has no effect.
 	 * @return
 	 * 		List of results taking the form of URLs.
@@ -216,82 +238,91 @@ public class Extractor
 	 */
 	private List<URL> performWebSearch(String keywords, String website, Date startDate, Date endDate, boolean strictSearch) throws IOException
 	{	boolean cachedSearch = true; //TODO for debug
-		String cacheFilePath = FileNames.FO_OUTPUT + File.separator + FileNames.FI_SEARCH_RESULTS;
-		File cacheFile = new File(cacheFilePath);
+		String cacheFolderPath = FileNames.FO_OUTPUT + File.separator + FileNames.FI_WEB_SEARCH_RESULTS;
 		
-		List<URL> result;
-		
-		// use cached results
-		if(cachedSearch && cacheFile.exists())
-		{	logger.log("Loading the previous search results");
-			result = new ArrayList<URL>();
-			Scanner sc = FileTools.openTextFileRead(cacheFile);
-			while(sc.hasNextLine())
-			{	String urlStr = sc.nextLine();
-				URL url = new URL(urlStr);
-				result.add(url);
-			}
-			logger.log("Total number of pages loaded: "+result.size());
-		}
-		
-		// search the results
-		else
-		{	logger.log("Applying iteratively each search engine");
-			logger.increaseOffset();
-			
-			// log stuff
-			logger.log("Parameters:");
-			logger.increaseOffset();
-				logger.log("keywords="+keywords);
-				logger.log("startDate="+startDate);
-				logger.log("endDate="+endDate);
-				String txt = "strictSearch="+strictSearch;
-				if(!strictSearch)
-					txt = txt + "(dates are ignored here, because the search is not strict)";
-				logger.log(txt);
-			logger.decreaseOffset();
-			
-			// nullify dates if the search is not strict
+		// log stuff
+		logger.log("Parameters:");
+		logger.increaseOffset();
+			logger.log("keywords="+keywords);
+			logger.log("startDate="+startDate);
+			logger.log("endDate="+endDate);
+			String txt = "strictSearch="+strictSearch;
 			if(!strictSearch)
-			{	startDate = null;
-				endDate = null;
-			}
-			
-			// apply each search engine
-			Set<URL> set = new TreeSet<URL>(new Comparator<URL>()
-			{	@Override
-				public int compare(URL url1, URL url2)
-				{	int result = url1.toString().compareTo(url2.toString());
-					return result;
-				}	
-			});
-			for(AbstractWebEngine engine: engines)
-			{	logger.log("Applying search engine "+engine.getName());
-				logger.increaseOffset();
-					List<URL> temp = engine.search(keywords,website,startDate,endDate);
-					set.addAll(temp);
-				logger.decreaseOffset();
-			}
-			
-			result = new ArrayList<URL>(set);
-			logger.log("Total number of pages found: "+result.size());
-			
-			String filePath = FileNames.FO_OUTPUT + File.separator + FileNames.FI_SEARCH_RESULTS;
-			logger.log("Recording all URLs in text file \""+filePath+"\"");
-			PrintWriter pw = FileTools.openTextFileWrite(filePath);
-			for(URL url: result)
-				pw.println(url.toString());
-			pw.close();
-			
-			logger.decreaseOffset();
+				txt = txt + "(dates are ignored here, because the search is not strict)";
+			logger.log(txt);
+		logger.decreaseOffset();
+		
+		// nullify dates if the search is not strict
+		if(!strictSearch)
+		{	startDate = null;
+			endDate = null;
 		}
 		
+		// apply each search engine
+		logger.log("Applying iteratively each search engine");
+		logger.increaseOffset();
+			Set<URL> overallSet = new TreeSet<URL>(URL_COMPARATOR);
+			
+			for(AbstractWebEngine engine: webEngines)
+			{	Set<URL> engineSet = new TreeSet<URL>(URL_COMPARATOR);
+				
+				// possible use cached results
+				String cacheFilePath = cacheFolderPath + engine.getName();
+				File cacheFolder = new File(cacheFilePath);
+				cacheFolder.mkdirs();
+				cacheFilePath = cacheFilePath + File.separator + FileNames.FI_WEB_SEARCH_RESULTS;
+				File cacheFile = new File(cacheFilePath);
+				if(cachedSearch && cacheFile.exists())
+				{	logger.log("Loading the previous search results from file "+cacheFilePath);
+					Scanner sc = FileTools.openTextFileRead(cacheFile);
+					while(sc.hasNextLine())
+					{	String urlStr = sc.nextLine();
+						URL url = new URL(urlStr);
+						engineSet.add(url);
+					}
+					logger.log("Number of URLs loaded: "+engineSet.size());
+				}
+				
+				// search the results
+				else
+				{	logger.log("Applying search engine "+engine.getName());
+					logger.increaseOffset();
+						// apply the engine
+						List<URL> temp = engine.search(keywords,website,startDate,endDate);
+						engineSet.addAll(temp);
+						
+						// possibly record its results
+						if(cachedSearch)
+						{	logger.log("Recording all URLs in text file \""+cacheFilePath+"\"");
+							PrintWriter pw = FileTools.openTextFileWrite(cacheFile);
+							for(URL url: engineSet)
+								pw.println(url.toString());
+							pw.close();
+						}
+					logger.decreaseOffset();
+				}
+				
+				// add to the overall list of URL
+				overallSet.addAll(engineSet);
+			}
+		logger.decreaseOffset();
+		logger.log("Total number of pages found: "+overallSet.size());
+		
+		// record the complete list of URLs (not for cache, just as a result)
+		String cacheFilePath = cacheFolderPath + File.separator + FileNames.FI_WEB_SEARCH_RESULTS;
+		logger.log("Recording all URLs in text file \""+cacheFilePath+"\"");
+		PrintWriter pw = FileTools.openTextFileWrite(cacheFilePath);
+		for(URL url: overallSet)
+			pw.println(url.toString());
+		pw.close();
+		
+		List<URL> result = new ArrayList<URL>(overallSet);
 		return result;
 	}
 	
 	/**
 	 * Removes from the specified list the URLs
-	 * which are not treatable.
+	 * which cannot be processed.
 	 * 
 	 * @param urls
 	 * 		List of Web addresses.
@@ -329,7 +360,7 @@ public class Extractor
 	 * @param urls
 	 * 		List of URLs to process.
 	 * @return
-	 * 		The list of corresponding article objets.
+	 * 		The list of corresponding article objects.
 	 * 
 	 * @throws IOException
 	 * 		Problem while retrieving a Web page.
@@ -366,6 +397,122 @@ public class Extractor
 		
 		logger.decreaseOffset();
 		logger.log("Article retrieval complete");
+		return result;
+	}
+	
+	/////////////////////////////////////////////////////////////////
+	// SOCIAL MEDIA	/////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////
+	/** List of engines used to search social medias */
+	private final List<AbstractSocialEngine> socialMedias = new ArrayList<AbstractSocialEngine>();
+	
+	/**
+	 * Initializes the default search engines for social medias.
+	 * Currently: only Facebook.
+	 */
+	private void initDefaultSocialMedias()
+	{	// set up Facebook
+		try
+		{	FacebookEngine facebookEngine = new FacebookEngine();
+			socialMedias.add(facebookEngine);
+		} 
+		catch (FailingHttpStatusCodeException | IOException | URISyntaxException e) 
+		{	e.printStackTrace();
+		}
+	}
+	
+	/**
+	 * Performs the Web search using the specified parameters and
+	 * each one of the engines registered in the {@link #socialMedias}
+	 * list.
+	 * 
+	 * @param keywords
+	 * 		Person we want to look for.
+	 * @param website
+	 * 		Target site, or {@ode null} to search the whole Web.
+	 * @param startDate
+	 * 		Start of the period we want to consider, 
+	 * 		or {@code null} for no constraint.
+	 * @param endDate
+	 * 		End of the period we want to consider,
+	 * 		or {@code null} for no constraint.
+	 * @return
+	 * 		List of results taking the form of URLs.
+	 * 
+	 * @throws IOException
+	 * 		Problem accessing the Web.
+	 */
+	private List<URL> performSocialSearch(String keywords, String website, Date startDate, Date endDate) throws IOException
+	{	boolean cachedSearch = true; //TODO for debug
+		String cacheFolderPath = FileNames.FO_OUTPUT + File.separator + FileNames.FI_SOCIAL_SEARCH_RESULTS;
+		
+		// log stuff
+		logger.log("Parameters:");
+		logger.increaseOffset();
+			logger.log("keywords="+keywords);
+			logger.log("startDate="+startDate);
+			logger.log("endDate="+endDate);
+		logger.decreaseOffset();
+		
+		// apply each search engine
+		logger.log("Applying iteratively each search engine");
+		logger.increaseOffset();
+			Set<URL> overallSet = new TreeSet<URL>(URL_COMPARATOR);
+			
+			for(AbstractWebEngine engine: webEngines)
+			{	Set<URL> engineSet = new TreeSet<URL>(URL_COMPARATOR);
+				
+				// possible use cached results
+				String cacheFilePath = cacheFolderPath + engine.getName();
+				File cacheFolder = new File(cacheFilePath);
+				cacheFolder.mkdirs();
+				cacheFilePath = cacheFilePath + File.separator + FileNames.FI_WEB_SEARCH_RESULTS;
+				File cacheFile = new File(cacheFilePath);
+				if(cachedSearch && cacheFile.exists())
+				{	logger.log("Loading the previous search results from file "+cacheFilePath);
+					Scanner sc = FileTools.openTextFileRead(cacheFile);
+					while(sc.hasNextLine())
+					{	String urlStr = sc.nextLine();
+						URL url = new URL(urlStr);
+						engineSet.add(url);
+					}
+					logger.log("Number of URLs loaded: "+engineSet.size());
+				}
+				
+				// search the results
+				else
+				{	logger.log("Applying search engine "+engine.getName());
+					logger.increaseOffset();
+						// apply the engine
+						List<URL> temp = engine.search(keywords,website,startDate,endDate);
+						engineSet.addAll(temp);
+						
+						// possibly record its results
+						if(cachedSearch)
+						{	logger.log("Recording all URLs in text file \""+cacheFilePath+"\"");
+							PrintWriter pw = FileTools.openTextFileWrite(cacheFile);
+							for(URL url: engineSet)
+								pw.println(url.toString());
+							pw.close();
+						}
+					logger.decreaseOffset();
+				}
+				
+				// add to the overall list of URL
+				overallSet.addAll(engineSet);
+			}
+		logger.decreaseOffset();
+		logger.log("Total number of pages found: "+overallSet.size());
+		
+		// record the complete list of URLs (not for cache, just as a result)
+		String cacheFilePath = cacheFolderPath + File.separator + FileNames.FI_WEB_SEARCH_RESULTS;
+		logger.log("Recording all URLs in text file \""+cacheFilePath+"\"");
+		PrintWriter pw = FileTools.openTextFileWrite(cacheFilePath);
+		for(URL url: overallSet)
+			pw.println(url.toString());
+		pw.close();
+		
+		List<URL> result = new ArrayList<URL>(overallSet);
 		return result;
 	}
 	

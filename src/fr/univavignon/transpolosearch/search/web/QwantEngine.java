@@ -85,7 +85,7 @@ public class QwantEngine extends AbstractWebEngine
 	// DATA			/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
 	/** Textual name of this engine */
-	private static final String ENGINE_NAME = "Qwant Search";
+	private static final String ENGINE_NAME = "Qwant";
 
 	@Override
 	public String getName()

@@ -22,7 +22,10 @@ import fr.univavignon.transpolosearch.tools.web.WebTools;
 import fr.univavignon.transpolosearch.tools.keys.KeyHandler;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLConnection;
 import java.net.URLEncoder;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -91,7 +94,7 @@ public class BingEngine extends AbstractWebEngine
 	// DATA			/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
 	/** Textual name of this engine */
-	private static final String ENGINE_NAME = "Bing Search";
+	private static final String ENGINE_NAME = "Bing";
 
 	@Override
 	public String getName()
@@ -249,7 +252,7 @@ public class BingEngine extends AbstractWebEngine
 						JSONObject value = (JSONObject)val;
 						String urlStr = (String)value.get("url");
 						logger.log("url: "+urlStr);
-						URL resUrl = new URL(urlStr);
+						URL resUrl = convertUrl(urlStr);
 						result.add(resUrl);
 						logger.decreaseOffset();
 						i++;
@@ -282,7 +285,7 @@ public class BingEngine extends AbstractWebEngine
 							keepArticle = artDate.equals(targetedDate);
 						}
 						if(keepArticle)
-						{	URL resUrl = new URL(urlStr);
+						{	URL resUrl = convertUrl(urlStr);
 							result.add(resUrl);
 							logger.log("No publication date, or equal to the targeted date >> keeping the article");
 						}
@@ -300,42 +303,65 @@ public class BingEngine extends AbstractWebEngine
 		}
 		while(result.size()<MAX_RES_NBR);
 	}
-
+	
+	/**
+	 * Receives an URL return by Bing and retrieve
+	 * the corresponding actual URL.
+	 * 
+	 * @param urlStr
+	 * 		Bing URL.
+	 * @return
+	 * 		Actual URL.
+	 * 
+	 * @throws MalformedURLException
+	 * 		Problem with the Bing URL.
+	 * @throws IOException
+	 * 		Problem while accessing the Bing URL.
+	 */
+	private URL convertUrl(String urlStr) throws MalformedURLException, IOException
+	{	URLConnection con = new URL(urlStr).openConnection();
+		con.connect();
+		InputStream is = con.getInputStream();
+		URL result = con.getURL();
+		is.close();
+		return result;
+	}
+	
 	/////////////////////////////////////////////////////////////////
 	// TEST			/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
-	/**
-	 * Method used to test/debug this class.
-	 * 
-	 * @param args
-	 * 		None needed.
-	 * @throws Exception
-	 * 		All exceptions are thrown.
-	 */
-	public static void main(String[] args) throws Exception
-	{	
-//		BingEngine engine = new BingEngine();
+//	/**
+//	 * Method used to test/debug this class.
+//	 * 
+//	 * @param args
+//	 * 		None needed.
+//	 * @throws Exception
+//	 * 		All exceptions are thrown.
+//	 */
+//	public static void main(String[] args) throws Exception
+//	{	
+////		BingEngine engine = new BingEngine();
+////		
+////		String keywords = "François Hollande";
+////		String website = null;//"http://lemonde.fr";
+////		Date startDate = new GregorianCalendar(2016,3,1).getTime();//null;
+////		Date endDate = new GregorianCalendar(2016,3,2).getTime();//null;
+////		
+////		List<URL> result = engine.search(keywords, website, startDate, endDate);
+////		
+////		System.out.println(result);
 //		
-//		String keywords = "François Hollande";
-//		String website = null;//"http://lemonde.fr";
-//		Date startDate = new GregorianCalendar(2016,3,1).getTime();//null;
-//		Date endDate = new GregorianCalendar(2016,3,2).getTime();//null;
 //		
-//		List<URL> result = engine.search(keywords, website, startDate, endDate);
-//		
-//		System.out.println(result);
-		
-		
-		// check the URL returned by Bing
+//		// check the URL returned by Bing
 //		String urlStr = "http://www.bing.com/cr?IG=C688D700F2FC417AA9B10AA9F7337042&CID=24569A2FBE076C2425F49044BFE06DBD&rd=1&h=VUF8nVTYmDh6zzfje1tbK4pq9WLYMHZZsZtHW0Y5jI0&v=1&r=http%3a%2f%2fwww.closermag.fr%2farticle%2ffrancois-hollande-danse-avec-barack-obama-et-devient-la-risee-de-twitter-photo-604494&p=DevEx,5093.1";
-//		HttpClient httpclient = new DefaultHttpClient();   
-//		HttpGet request = new HttpGet(urlStr);
-//		HttpResponse response = httpclient.execute(request);
-//		String answer = WebTools.readAnswer(response);
-//		PrintWriter pw = FileTools.openTextFileWrite(FileNames.FO_OUTPUT+File.separator+"test.html");
-//		pw.print(answer);
-//		pw.close();
-		
-		System.out.println();
-	}
+////		HttpClient httpclient = new DefaultHttpClient();   
+////		HttpGet request = new HttpGet(urlStr);
+////		HttpResponse response = httpclient.execute(request);
+////		String answer = WebTools.readAnswer(response);
+////		PrintWriter pw = FileTools.openTextFileWrite(FileNames.FO_OUTPUT+File.separator+"test.html");
+////		pw.print(answer);
+////		pw.close();
+//		
+//		System.out.println();
+//	}
 }
