@@ -57,9 +57,6 @@ public abstract class AbstractWebEngine
 	/////////////////////////////////////////////////////////////////
 	/**
 	 * Performs a search using the corresponding engine.
-	 * <br/>
-	 * See the public fields of this class for a
-	 * description of the modifiable search parameters.
 	 * 
 	 * @param keywords
 	 * 		Person we want to look for.

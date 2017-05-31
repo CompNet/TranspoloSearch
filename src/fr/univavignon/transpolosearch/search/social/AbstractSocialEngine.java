@@ -55,10 +55,12 @@ public abstract class AbstractSocialEngine
 	// SEARCH		/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
 	/**
-	 * Performs a search using the corresponding engine.
-	 * <br/>
-	 * See the public fields of this class for a
-	 * description of the modifiable search parameters.
+	 * Performs a search using the corresponding engine. The method
+	 * returns the posts published on the page corresponding to the 
+	 * specified keywords, as weel as the direct comments of these
+	 * posts. If {@code extendedSearch} is {@code true}, the method
+	 * also returns the posts of the commenting users for the same
+	 * period.
 	 * 
 	 * @param keywords
 	 * 		Person we want to look for.
@@ -68,11 +70,14 @@ public abstract class AbstractSocialEngine
 	 * @param endDate
 	 * 		End of the period we want to consider,
 	 * 		or {@code null} for no constraint.
+	 * @param extendedSearch
+	 * 		If {@code true}, the method returns the posts by the commenting
+	 * 		users, for the specified period. 
 	 * @return
 	 * 		List of posts and comments.
 	 * 
 	 * @throws IOException
 	 * 		Problem while searching the Web.
 	 */
-	public abstract List<String> search(String keywords, Date startDate, Date endDate)  throws IOException;
+	public abstract List<SocialMediaPost> search(String keywords, Date startDate, Date endDate, boolean extendedSearch)  throws IOException;
 }

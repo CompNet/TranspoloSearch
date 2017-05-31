@@ -219,10 +219,10 @@ public class FacebookEngine extends AbstractSocialEngine
 	// SEARCH		/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
 	@Override
-	public List<String> search(String keywords, Date startDate, Date endDate)  throws IOException
+	public List<SocialMediaPost> search(String keywords, Date startDate, Date endDate, boolean extendedSearch)  throws IOException
 	{	logger.log("Searching Facebook");
 		logger.increaseOffset();
-		List<String> result = new ArrayList<String>();
+		List<SocialMediaPost> result = new ArrayList<SocialMediaPost>();
 		
 		String query = keywords;
 		Reading reading = null;
@@ -249,43 +249,45 @@ public class FacebookEngine extends AbstractSocialEngine
 				List<Post> pagePosts = getPosts(pageId, facebook, reading);
 				
 		        // get the comments associated to all the targeted posts
-				List<Comment> pageComments = new ArrayList<Comment>();
+				Set<String> authorIds = new TreeSet<String>();
 				logger.log("Retrieving the comments for each post (for the specified period, if any)");
 				logger.increaseOffset();
 				for(Post post: pagePosts)
 				{	// get the message text
 					String msg = post.getMessage();
+					msg = msg.replaceAll("\\s+", " ");
 					logger.log("Message: \""+msg+"\"");
-					result.add(msg);
+					// get the meta-data
+					Date date = post.getCreatedTime();
+					Category auth = post.getFrom();
+					String authName = auth.getName();
+					// create the post object
+					SocialMediaPost p = new SocialMediaPost(authName, date, msg);
+					result.add(p);
 					
 					// retrieve the comments associated to the message
 					List<Comment> comments = getComments(post, facebook, reading);
-					pageComments.addAll(comments);
-				}
-				logger.decreaseOffset();
-				
-				// get the authors of all the comments
-				Set<String> authorIds = new TreeSet<String>();
-				logger.log("Retrieving the authors for each comment");
-				logger.increaseOffset();
-				for(Comment comment: pageComments)
-				{	// add the comment content to the result list
-					String msg = comment.getMessage();
-					result.add(msg);
-					
-					// get the author
-					Category auth = comment.getFrom();
-					String authId = auth.getId();
-					if(!authorIds.contains(authId))
-					{	String authName = auth.getName();
-						logger.log(authName+" ("+authId+")");
+					// add them to the current post
+					for(Comment comment: comments)
+					{	// get the message text
+						msg = comment.getMessage();
+						msg = msg.replaceAll("\\s+", " ");
+						// get the meta-data
+						date = post.getCreatedTime();
+						auth = post.getFrom();
+						authName = auth.getName();
+						// create the post object
+						SocialMediaPost com = new SocialMediaPost(authName, date, msg);
+						p.comments.add(com);
+						// add to the comment author to the list
+						String authId = auth.getId();
 						authorIds.add(authId);
 					}
 				}
 				logger.decreaseOffset();
 				
 				// get the authors posts for this period
-				logger.log("Retrieving the posts of the authors (for the specified period, if any)");
+				logger.log("Retrieving the posts of the commenting authors (for the specified period, if any)");
 				logger.increaseOffset();
 				for(String authId: authorIds)
 				{	logger.log("Processing id"+authId);
@@ -294,10 +296,17 @@ public class FacebookEngine extends AbstractSocialEngine
 					for(Post post: authPosts)
 					{	// get the message text
 						String msg = post.getMessage();
+						msg = msg.replaceAll("\\s+", " ");
 						logger.log("Message: \""+msg+"\"");
-						result.add(msg);
+						// get the meta-data
+						Date date = post.getCreatedTime();
+						Category auth = post.getFrom();
+						String authName = auth.getName();
+						// create the post object
+						SocialMediaPost p = new SocialMediaPost(authName, date, msg);
+						result.add(p);
 						
-						// we do not get the comments, this time
+						// TODO we do not get the comments, this time (we could if needed)
 					}
 					logger.decreaseOffset();
 				}
@@ -311,14 +320,6 @@ public class FacebookEngine extends AbstractSocialEngine
 			e.printStackTrace();
 			throw new IOException(e.getMessage());
 		}
-		
-		// remove the line breaks
-		List<String> temp = new ArrayList<String>();
-		for(String msg: result)
-		{	msg = msg.replaceAll("\\s+", " ");
-			temp.add(msg);
-		}
-		result = temp;
 		
 		logger.decreaseOffset();
 		return result;
@@ -415,7 +416,7 @@ public class FacebookEngine extends AbstractSocialEngine
         		commentsStr.add(comment.getMessage());
 			logger.log(commentsStr);
         	
-			// TODO we could go and fetch the answers to these comments, but that does not seem necessary 
+			// TODO we could go and fetch the answers to these comments, but that does not seem necessary
 			
         	// try to get the next page of comments
             paging = commentPage.getPaging();
@@ -448,6 +449,6 @@ public class FacebookEngine extends AbstractSocialEngine
 	{	Date startDate = new GregorianCalendar(2017,4,7).getTime();//new GregorianCalendar(2017,3,6).getTime();//null;
 		Date endDate = new GregorianCalendar(2017,4,8).getTime();//new GregorianCalendar(2017,3,10).getTime();//null;
 		FacebookEngine fe = new FacebookEngine();
-		fe.search("François Hollande", startDate, endDate);
+		fe.search("François Hollande", startDate, endDate, true);
 	}
 }
