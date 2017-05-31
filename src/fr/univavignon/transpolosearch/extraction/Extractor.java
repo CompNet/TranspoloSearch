@@ -29,10 +29,14 @@ import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Scanner;
 import java.util.Set;
 import java.util.TreeSet;
@@ -143,14 +147,16 @@ public class Extractor
 		logger.increaseOffset();
 		
 		// perform the Web search
-		List<URL> originalUrls = performWebSearch(keywords, website, startDate, endDate, strictSearch);
+		Map<String,List<String>> originalUrls = performWebSearch(keywords, website, startDate, endDate, strictSearch);
 		
-		// filter Web pages (remove PDFs, an so on)
-		List<URL> filteredUrls = new ArrayList<URL>(originalUrls);
+		// filter Web pages (remove PDFs, and so on)
+		List<String> filteredUrls = new ArrayList<String>(originalUrls.keySet());
 		filterUrls(filteredUrls);
 		
 		// retrieve the corresponding articles
 		List<Article> originalArticles = retrieveArticles(filteredUrls);
+		
+		//TODO social search
 		
 		// detect the entities
 		List<Entities> originalEntities = detectEntities(originalArticles);
@@ -230,12 +236,13 @@ public class Extractor
 	 * 		Otherwise, they will be used <i>a posteriori</i> to filter the detected events.
 	 * 		If one of the dates is {@code null}, this parameter has no effect.
 	 * @return
-	 * 		List of results taking the form of URLs.
+	 * 		List of results taking the form of a map associating URLs (as strings) with
+	 * 		search engine names.
 	 * 
 	 * @throws IOException
 	 * 		Problem accessing the Web.
 	 */
-	private List<URL> performWebSearch(String keywords, String website, Date startDate, Date endDate, boolean strictSearch) throws IOException
+	private Map<String,List<String>> performWebSearch(String keywords, String website, Date startDate, Date endDate, boolean strictSearch) throws IOException
 	{	boolean cachedSearch = true; //TODO for debug
 		
 		// log stuff
@@ -259,7 +266,7 @@ public class Extractor
 		// apply each search engine
 		logger.log("Applying iteratively each search engine");
 		logger.increaseOffset();
-			Set<URL> overallSet = new TreeSet<URL>(URL_COMPARATOR);
+			Map<String,List<String>> result = new HashMap<String,List<String>>();
 			
 			for(AbstractWebEngine engine: webEngines)
 			{	Set<URL> engineSet = new TreeSet<URL>(URL_COMPARATOR);
@@ -301,20 +308,38 @@ public class Extractor
 				}
 				
 				// add to the overall list of URL
-				overallSet.addAll(engineSet);
+				for(URL url: engineSet)
+				{	String urlStr = url.toString();
+					List<String> list = result.get(urlStr);
+					if(list==null)
+					{	list = new ArrayList<String>();
+						result.put(urlStr, list);
+					}
+					list.add(engine.getName());
+				}
 			}
 		logger.decreaseOffset();
-		logger.log("Total number of pages found: "+overallSet.size());
+		logger.log("Total number of pages found: "+result.size());
 		
 		// record the complete list of URLs (not for cache, just as a result)
 		String cacheFilePath = FileNames.FO_WEB_SEARCH_RESULTS + File.separator + FileNames.FI_SEARCH_RESULTS;
-		logger.log("Recording all URLs in text file \""+cacheFilePath+"\"");
+		logger.log("Recording all URLs in CSV file \""+cacheFilePath+"\"");
 		PrintWriter pw = FileTools.openTextFileWrite(cacheFilePath);
-		for(URL url: overallSet)
-			pw.println(url.toString());
+		pw.println("URL,Engines");
+		for(Entry<String,List<String>> entry: result.entrySet())
+		{	String urlStr = entry.getKey();
+			List<String> engineList = entry.getValue();
+			String val = "\"";
+			for(String engineName: engineList)
+				val = val + engineName + ", ";
+			if(!val.isEmpty())
+				val = val.substring(0, val.length()-2);
+			val = val + "\"";
+			pw.println(urlStr+","+val);
+		
+		}
 		pw.close();
 		
-		List<URL> result = new ArrayList<URL>(overallSet);
 		return result;
 	}
 	
@@ -325,25 +350,25 @@ public class Extractor
 	 * @param urls
 	 * 		List of Web addresses.
 	 */
-	private void filterUrls(List<URL> urls)
+	private void filterUrls(List<String> urls)
 	{	logger.log("Filtering the retrieved URL to remove those we can't treat");
 		logger.increaseOffset();
 		
-		Iterator<URL> it = urls.iterator();
+		Iterator<String> it = urls.iterator();
 		while(it.hasNext())
-		{	URL url = it.next();
-			String urlStr = url.toString();
+		{	String url = it.next();
 			
-			// we don't propcess PDF files
-			if(urlStr.endsWith(FileNames.EX_PDF))
-			{	logger.log("The following URL points towards a PDF, we can't use it: "+urlStr);
+			// we don't process PDF files
+			if(url.endsWith(FileNames.EX_PDF))
+			{	logger.log("The following URL points towards a PDF, we can't use it: "+url);
 				it.remove();
 			}
 			
 			else
-				logger.log("We keep the URL "+urlStr);
+				logger.log("We keep the URL "+url);
 		}
 		
+		Collections.sort(urls);
 		logger.decreaseOffset();
 		logger.log("Filtering complete: "+urls.size()+" pages kept");
 	}
@@ -367,22 +392,22 @@ public class Extractor
 	 * @throws SAXException
 	 * 		Problem while retrieving a Web page.
 	 */
-	private List<Article> retrieveArticles(List<URL> urls) throws IOException, ParseException, SAXException
+	private List<Article> retrieveArticles(List<String> urls) throws IOException, ParseException, SAXException
 	{	logger.log("Starting the article retrieval");
 		logger.increaseOffset();
 		
 		// init
 		List<Article> result = new ArrayList<Article>();
 		ArticleRetriever articleRetriever = new ArticleRetriever(true); //TODO cache disabled for debugging
-		articleRetriever.setLanguage(ArticleLanguage.FR); // we know the articles will be in French (should be genralized later)
+		articleRetriever.setLanguage(ArticleLanguage.FR); // we know the articles will be in French (should be generalized later)
 
 		// retrieve articles
-		Iterator<URL> it = urls.iterator();
+		Iterator<String> it = urls.iterator();
 		int i = 0;
 		while(it.hasNext())
-		{	URL url = it.next();
+		{	String url = it.next();
 			i++;
-			logger.log("Retrieving article ("+i+"/"+urls.size()+") at URL "+url.toString());
+			logger.log("Retrieving article ("+i+"/"+urls.size()+") at URL "+url);
 			try
 			{	Article article = articleRetriever.process(url);
 				result.add(article);
@@ -912,11 +937,11 @@ public class Extractor
 	 * @param originalUrls
 	 * 		List of treated URLs.
 	 * @param filteredUrls
-	 * 		List of remaning URLs after filtering.
+	 * 		List of remaining URLs after filtering.
 	 * @param originalArticles
 	 * 		List of treated articles.
 	 * @param filteredArticles
-	 * 		List of remaning articles after filtering.
+	 * 		List of remaining articles after filtering.
 	 * @param events
 	 * 		List of detected events.
 	 * 
@@ -925,33 +950,36 @@ public class Extractor
 	 * @throws FileNotFoundException
 	 * 		Problem while accessing to the result file.
 	 */
-	private void exportEvents(List<URL> originalUrls, List<URL> filteredUrls, List<Article> originalArticles, List<Article> filteredArticles, List<List<Event>> events) throws UnsupportedEncodingException, FileNotFoundException
+	private void exportEvents(Map<String,List<String>> originalUrls, List<String> filteredUrls, List<Article> originalArticles, List<Article> filteredArticles, List<List<Event>> events) throws UnsupportedEncodingException, FileNotFoundException
 	{	String filePath = FileNames.FO_OUTPUT + File.separator + FileNames.FI_EVENT_TABLE;
 		logger.log("Recording the avents as a CVS file: "+filePath);
 		logger.decreaseOffset();
+		
+		List<String> urls = new ArrayList<String>(originalUrls.keySet());
+		Collections.sort(urls);
 		
 		PrintWriter pw = FileTools.openTextFileWrite(filePath);
 		
 		// write header
 		List<String> colNames = Arrays.asList(
-			"Rang",
-			"Titre page",
-			"Adresse",
+			"Rank",
+			"Page title",
+			"Url",
 			"Date",
-			"Contenu",
-			"Actif",
-			"Concerne CH",
-			"Type support",
+			"Content",
+			"Active",
+			"Contains keyword",
+			"Support type",
 			"Source",
-			"Type contenu",
-			"Thème",
-			"Evénement",
+			"Content type",
+			"Theme",
+			"Event",
 			"Date",
-			"Heure",
-			"Pertinence Période",
-			"Lieu",
-			"Commentaires",
-			"Rang événement"
+			"Hour",
+			"Period relevance",
+			"Location",
+			"Comments",
+			"Event rank"
 		);
 		Iterator<String> it = colNames.iterator();
 		while(it.hasNext())
@@ -966,25 +994,24 @@ public class Extractor
 		logger.log("Treat each article separately");
 		int i = 1;
 		int j = 1;
-		for(URL url: originalUrls)
-		{	String urlStr = url.toString();
-			String address = "\""+urlStr+"\"";
+		for(String url: urls)
+		{	String address = "\""+url+"\"";
 			int indexUrl = filteredUrls.indexOf(url);
 			
 			// URL not processed
 			if(indexUrl==-1)
-			{	if(urlStr.endsWith(FileNames.EX_PDF))
+			{	if(url.endsWith(FileNames.EX_PDF))
 					pw.print(
 						i+",,"+
 						address+",,,,,"+
 						"PDF,,,,,,,,,"+
-						"URL filtrée,"
+						"Filtered URL,"
 					);
 				else
 					pw.print(
 						i+",,"+
 						address+",,,,,,,,,,,,,,"+
-						"URL filtrée,"
+						"Filtered URL,"
 					);
 			}
 			
@@ -1000,8 +1027,8 @@ public class Extractor
 						i+","+
 						title+","+
 						address+",,,,"+
-						"Non,,,,,,,,,,"+
-						"Article filtré,"
+						"No,,,,,,,,,,"+
+						"Filtere article,"
 					);
 				}
 				
@@ -1015,8 +1042,8 @@ public class Extractor
 							i+","+
 							title+","+
 							address+",,,,"+
-							"Oui,,,,,,,,,,"+
-							"Aucun évènement détecté,"+j
+							"Yes,,,,,,,,,,"+
+							"No event detected,"+j
 						);
 
 					// at least one event detected
@@ -1061,7 +1088,7 @@ public class Extractor
 								i+","+
 								title+","+
 								address+",,,,"+
-								"Oui,,,,,,"+
+								"Yes,,,,,,"+
 								date+",,,"+
 								locations+","+
 								persOrgs+","+j
