@@ -274,8 +274,9 @@ public class Test
 		Date endDate = df.parse("20150426");
 		boolean strictSearch = true;
 		String compulsoryExpression = "Helle";
+		boolean extendedSocialSearch = true;
 		
-		extractor.performExtraction(keywords, website, startDate, endDate, strictSearch, compulsoryExpression);
+		extractor.performExtraction(keywords, website, startDate, endDate, strictSearch, compulsoryExpression, extendedSocialSearch);
 	}
 }
 

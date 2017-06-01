@@ -62,6 +62,7 @@ import fr.univavignon.transpolosearch.retrieval.ArticleRetriever;
 import fr.univavignon.transpolosearch.retrieval.reader.ReaderException;
 import fr.univavignon.transpolosearch.search.social.AbstractSocialEngine;
 import fr.univavignon.transpolosearch.search.social.FacebookEngine;
+import fr.univavignon.transpolosearch.search.social.SocialMediaPost;
 import fr.univavignon.transpolosearch.search.web.AbstractWebEngine;
 import fr.univavignon.transpolosearch.search.web.BingEngine;
 import fr.univavignon.transpolosearch.search.web.GoogleEngine;
@@ -98,6 +99,7 @@ public class Extractor
 	 */
 	public Extractor() throws RecognizerException
 	{	initDefaultSearchEngines();
+		initDefaultSocialEngines();
 		initDefaultRecognizer();
 	}
 	
@@ -119,10 +121,10 @@ public class Extractor
 	 * 		Target site, or {@ode null} to search the whole Web.
 	 * @param startDate
 	 * 		Start of the period we want to consider, 
-	 * 		or {@code null} for no contraint.
+	 * 		or {@code null} for no constraint.
 	 * @param endDate
 	 * 		End of the period we want to consider,
-	 * 		or {@code null} for no contraint.
+	 * 		or {@code null} for no constraint.
 	 * @param strictSearch
 	 * 		If {@code true}, both dates will be used directly in the Web search.
 	 * 		Otherwise, they will be used <i>a posteri</i> to filter the detected events.
@@ -130,6 +132,11 @@ public class Extractor
 	 * @param compulsoryExpression
 	 * 		String expression which must be present in the article,
 	 * 		or {@code null} if there's no such constraint.
+	 * @param extendedSocialSearch
+	 * 		Whether the social media search should retrieve the posts published by the
+	 * 		users commenting the posts of interest, for the considered period. If 
+	 * 		{@code false}, only the posts on the targeted page and their direct comments
+	 * 		are returned. 
 	 * 
 	 * @throws IOException 
 	 * 		Problem accessing the Web or a file.
@@ -142,36 +149,50 @@ public class Extractor
 	 * @throws RecognizerException 
 	 * 		Problem while detecting the entities.
 	 */
-	public void performExtraction(String keywords, String website, Date startDate, Date endDate, boolean strictSearch, String compulsoryExpression) throws IOException, ReaderException, ParseException, SAXException, RecognizerException
+	public void performExtraction(String keywords, String website, Date startDate, Date endDate, boolean strictSearch, String compulsoryExpression, boolean extendedSocialSearch) throws IOException, ReaderException, ParseException, SAXException, RecognizerException
 	{	logger.log("Starting the information extraction");
 		logger.increaseOffset();
 		
 		// perform the Web search
+		logger.log("Performing the Web search");
 		Map<String,List<String>> originalUrls = performWebSearch(keywords, website, startDate, endDate, strictSearch);
-		
 		// filter Web pages (remove PDFs, and so on)
 		List<String> filteredUrls = new ArrayList<String>(originalUrls.keySet());
 		filterUrls(filteredUrls);
-		
 		// retrieve the corresponding articles
 		List<Article> originalArticles = retrieveArticles(filteredUrls);
-		
-		//TODO social search
-		
 		// detect the entities
 		List<Entities> originalEntities = detectEntities(originalArticles);
-		
 		// possibly filter the articles depending on the dates and compulsory expression
 		List<Article> filteredArticles = new ArrayList<Article>(originalArticles);
-		List<Entities> filteredentities = new ArrayList<Entities>(originalEntities);
-		filterArticles(filteredArticles,filteredentities,startDate,endDate,strictSearch,compulsoryExpression);
-		
+		List<Entities> filteredEntities = new ArrayList<Entities>(originalEntities);
+		filterArticles(filteredArticles,filteredEntities,startDate,endDate,strictSearch,compulsoryExpression);
 		// displays the remaining articles with their entities
-		displayRemainingEntities(filteredArticles,filteredentities); //TODO for debug only
+		displayRemainingEntities(filteredArticles,filteredEntities); //TODO for debug only
+		
+		// perform the social search
+		logger.log("Performing the social media search");
+		List<SocialMediaPost> originalPosts = performSocialSearch(keywords, website, startDate, endDate, extendedSocialSearch);
+		// convert the posts to articles for later use
+		List<Article> convertedPosts = convertPosts(originalPosts);
+		// detect the entities
+		List<Entities> postEntities = detectEntities(convertedPosts);
+		
+		// merge the web and social articles
+		List<Article> allArticles = new ArrayList<Article>();
+		allArticles.addAll(filteredArticles);
+		allArticles.addAll(convertedPosts);
+		List<Entities> allEntities = new ArrayList<Entities>();
+		allEntities.addAll(filteredEntities);
+		allEntities.addAll(postEntities);
+		
+		
+		
+		//TODO
 		
 		// extract events from the remaining articles and entities
 		boolean bySentence = false; //TODO for debug
-		List<List<Event>> events = extractEvents(filteredArticles,filteredentities,bySentence);
+		List<List<Event>> events = extractEvents(filteredArticles,filteredEntities,bySentence);
 		
 		// export the events as a table
 		exportEvents(originalUrls, filteredUrls, originalArticles, filteredArticles, events);
@@ -245,7 +266,7 @@ public class Extractor
 	private Map<String,List<String>> performWebSearch(String keywords, String website, Date startDate, Date endDate, boolean strictSearch) throws IOException
 	{	boolean cachedSearch = true; //TODO for debug
 		
-		// log stuff
+		// log search parameters
 		logger.log("Parameters:");
 		logger.increaseOffset();
 			logger.log("keywords="+keywords);
@@ -269,7 +290,7 @@ public class Extractor
 			Map<String,List<String>> result = new HashMap<String,List<String>>();
 			
 			for(AbstractWebEngine engine: webEngines)
-			{	Set<URL> engineSet = new TreeSet<URL>(URL_COMPARATOR);
+			{	Set<URL> urls = new TreeSet<URL>(URL_COMPARATOR);
 				
 				// possibly use cached results
 				String cacheFilePath = FileNames.FO_WEB_SEARCH_RESULTS + engine.getName();
@@ -283,9 +304,9 @@ public class Extractor
 					while(sc.hasNextLine())
 					{	String urlStr = sc.nextLine();
 						URL url = new URL(urlStr);
-						engineSet.add(url);
+						urls.add(url);
 					}
-					logger.log("Number of URLs loaded: "+engineSet.size());
+					logger.log("Number of URLs loaded: "+urls.size());
 				}
 				
 				// search the results
@@ -294,21 +315,21 @@ public class Extractor
 					logger.increaseOffset();
 						// apply the engine
 						List<URL> temp = engine.search(keywords,website,startDate,endDate);
-						engineSet.addAll(temp);
+						urls.addAll(temp);
 						
 						// possibly record its results
 						if(cachedSearch)
 						{	logger.log("Recording all URLs in text file \""+cacheFilePath+"\"");
 							PrintWriter pw = FileTools.openTextFileWrite(cacheFile);
-							for(URL url: engineSet)
+							for(URL url: urls)
 								pw.println(url.toString());
 							pw.close();
 						}
 					logger.decreaseOffset();
 				}
 				
-				// add to the overall list of URL
-				for(URL url: engineSet)
+				// add to the overall map of URLs
+				for(URL url: urls)
 				{	String urlStr = url.toString();
 					List<String> list = result.get(urlStr);
 					if(list==null)
@@ -360,7 +381,7 @@ public class Extractor
 			
 			// we don't process PDF files
 			if(url.endsWith(FileNames.EX_PDF))
-			{	logger.log("The following URL points towards a PDF, we can't use it: "+url);
+			{	logger.log("The following URL points towards a PDF, we cannot currently use it: "+url);
 				it.remove();
 			}
 			
@@ -424,7 +445,7 @@ public class Extractor
 	}
 	
 	/////////////////////////////////////////////////////////////////
-	// SOCIAL MEDIA	/////////////////////////////////////////////////
+	// SOCIAL MEDIA SEARCH	/////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
 	/** List of engines used to search social medias */
 	private final List<AbstractSocialEngine> socialEngines = new ArrayList<AbstractSocialEngine>();
@@ -433,7 +454,7 @@ public class Extractor
 	 * Initializes the default search engines for social medias.
 	 * Currently: only Facebook.
 	 */
-	private void initDefaultSocialMedias()
+	private void initDefaultSocialEngines()
 	{	// set up Facebook
 		try
 		{	FacebookEngine facebookEngine = new FacebookEngine();
@@ -459,15 +480,17 @@ public class Extractor
 	 * @param endDate
 	 * 		End of the period we want to consider,
 	 * 		or {@code null} for no constraint.
+	 * @param extendedSearch
+	 * 		Whether or not to look for the posts of the commenting users. 
 	 * @return
 	 * 		List of results taking the form of URLs.
 	 * 
 	 * @throws IOException
 	 * 		Problem accessing the Web.
 	 */
-	private List<String> performSocialSearch(String keywords, String website, Date startDate, Date endDate) throws IOException
+	private List<SocialMediaPost> performSocialSearch(String keywords, String website, Date startDate, Date endDate, boolean extendedSearch) throws IOException
 	{	boolean cachedSearch = true; //TODO for debug
-		// log stuff
+		// log search parameters
 		logger.log("Parameters:");
 		logger.increaseOffset();
 			logger.log("keywords="+keywords);
@@ -475,15 +498,13 @@ public class Extractor
 			logger.log("endDate="+endDate);
 		logger.decreaseOffset();
 		
-//TODO definir une sdd pour les msg, contenant auteur et date (et autres ?)		
-		
 		// apply each search engine
-		logger.log("Applying iteratively each search engine");
+		logger.log("Applying iteratively each social engine");
 		logger.increaseOffset();
-			List<String> overallList = new ArrayList<String>();
+			List<SocialMediaPost> result = new ArrayList<SocialMediaPost>();
 			
 			for(AbstractSocialEngine engine: socialEngines)
-			{	List<String> engineList = new ArrayList<String>();
+			{	List<SocialMediaPost> posts = new ArrayList<SocialMediaPost>();
 				
 				// possibly use cached results
 				String cacheFilePath = FileNames.FO_SOCIAL_SEARCH_RESULTS + engine.getName();
@@ -495,10 +516,10 @@ public class Extractor
 				{	logger.log("Loading the previous search results from file "+cacheFilePath);
 					Scanner sc = FileTools.openTextFileRead(cacheFile);
 					while(sc.hasNextLine())
-					{	String str = sc.nextLine();
-						engineList.add(str);
+					{	SocialMediaPost post = SocialMediaPost.readFromText(sc);
+						posts.add(post);
 					}
-					logger.log("Number of messages loaded: "+engineList.size());
+					logger.log("Number of posts loaded (not counting the comments): "+posts.size());
 				}
 				
 				// search the results
@@ -506,35 +527,47 @@ public class Extractor
 				{	logger.log("Applying search engine "+engine.getName());
 					logger.increaseOffset();
 						// apply the engine
-						List<String> temp = engine.search(keywords,startDate,endDate);
-						engineList.addAll(temp);
+						posts = engine.search(keywords,startDate,endDate, extendedSearch);
 						
 						// possibly record its results
 						if(cachedSearch)
-						{	logger.log("Recording all messages in text file \""+cacheFilePath+"\"");
+						{	logger.log("Recording all posts in text file \""+cacheFilePath+"\"");
 							PrintWriter pw = FileTools.openTextFileWrite(cacheFile);
-							for(String string: engineList)
-								pw.println(string);
+							for(SocialMediaPost post: posts)
+								post.writeAsText(pw);
 							pw.close();
 						}
 					logger.decreaseOffset();
 				}
 				
 				// add to the overall list of URL
-				overallList.addAll(engineList);
+				result.addAll(posts);
 			}
 		logger.decreaseOffset();
-		logger.log("Total number of messages found: "+overallList.size());
+		logger.log("Total number of posts found: "+result.size());
 		
-		// record the complete list of URLs (not for cache, just as a result)
-		String cacheFilePath = FileNames.FO_SOCIAL_SEARCH_RESULTS + File.separator + FileNames.FI_SEARCH_RESULTS;
-		logger.log("Recording all messages in text file \""+cacheFilePath+"\"");
-		PrintWriter pw = FileTools.openTextFileWrite(cacheFilePath);
-		for(String string: overallList)
-			pw.println(string);
-		pw.close();
+		return result;
+	}
+	
+	/**
+	 * Convert each social media post from the specified list to
+	 * a proper article. The comments are simply concatenated as new
+	 * paragraphs, at the end of the post.
+	 * 
+	 * @param posts
+	 * 		List of post to convert.
+	 * @return
+	 * 		Resulting list of articles.
+	 */
+	private List<Article> convertPosts(List<SocialMediaPost> posts)
+	{	List<Article> result = new ArrayList<Article>();
 		
-		return overallList;
+		for(SocialMediaPost post: posts)
+		{	Article article = post.convert();
+			result.add(article);
+		}
+		
+		return result;
 	}
 	
 	/////////////////////////////////////////////////////////////////
@@ -952,7 +985,7 @@ public class Extractor
 	 */
 	private void exportEvents(Map<String,List<String>> originalUrls, List<String> filteredUrls, List<Article> originalArticles, List<Article> filteredArticles, List<List<Event>> events) throws UnsupportedEncodingException, FileNotFoundException
 	{	String filePath = FileNames.FO_OUTPUT + File.separator + FileNames.FI_EVENT_TABLE;
-		logger.log("Recording the avents as a CVS file: "+filePath);
+		logger.log("Recording the events as a CVS file: "+filePath);
 		logger.decreaseOffset();
 		
 		List<String> urls = new ArrayList<String>(originalUrls.keySet());

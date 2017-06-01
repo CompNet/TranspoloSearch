@@ -258,11 +258,13 @@ public class FacebookEngine extends AbstractSocialEngine
 					msg = msg.replaceAll("\\s+", " ");
 					logger.log("Message: \""+msg+"\"");
 					// get the meta-data
+					String id = post.getId();
 					Date date = post.getCreatedTime();
 					Category auth = post.getFrom();
 					String authName = auth.getName();
 					// create the post object
-					SocialMediaPost p = new SocialMediaPost(authName, date, msg);
+					SocialMediaPost p = new SocialMediaPost(id, authName, date, getName(), msg);
+					p.url = post.getLink();
 					result.add(p);
 					
 					// retrieve the comments associated to the message
@@ -273,11 +275,12 @@ public class FacebookEngine extends AbstractSocialEngine
 						msg = comment.getMessage();
 						msg = msg.replaceAll("\\s+", " ");
 						// get the meta-data
-						date = post.getCreatedTime();
-						auth = post.getFrom();
+						id = comment.getId();
+						date = comment.getCreatedTime();
+						auth = comment.getFrom();
 						authName = auth.getName();
 						// create the post object
-						SocialMediaPost com = new SocialMediaPost(authName, date, msg);
+						SocialMediaPost com = new SocialMediaPost(id, authName, date, getName(), msg);
 						p.comments.add(com);
 						// add to the comment author to the list
 						String authId = auth.getId();
@@ -299,11 +302,13 @@ public class FacebookEngine extends AbstractSocialEngine
 						msg = msg.replaceAll("\\s+", " ");
 						logger.log("Message: \""+msg+"\"");
 						// get the meta-data
+						String id = post.getId();
 						Date date = post.getCreatedTime();
 						Category auth = post.getFrom();
 						String authName = auth.getName();
 						// create the post object
-						SocialMediaPost p = new SocialMediaPost(authName, date, msg);
+						SocialMediaPost p = new SocialMediaPost(id, authName, date, getName(), msg);
+						p.url = post.getLink();
 						result.add(p);
 						
 						// TODO we do not get the comments, this time (we could if needed)
