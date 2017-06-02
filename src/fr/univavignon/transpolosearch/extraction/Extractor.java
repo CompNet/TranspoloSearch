@@ -26,6 +26,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -35,6 +36,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Scanner;
@@ -116,7 +118,7 @@ public class Extractor
 	 * Launches the main search.
 	 * 
 	 * @param keywords
-	 * 		Person we want to look for.
+	 * 		Person we want to look up.
 	 * @param website
 	 * 		Target site, or {@ode null} to search the whole Web.
 	 * @param startDate
@@ -155,52 +157,142 @@ public class Extractor
 		
 		// perform the Web search
 		logger.log("Performing the Web search");
+		performWebExtraction(keywords, website, startDate, endDate, strictSearch, compulsoryExpression);
+		
+		// perform the social search
+		logger.log("Performing the social media search");
+		performSocialExtraction(keywords, startDate, endDate, extendedSocialSearch);
+		
+		logger.decreaseOffset();
+		logger.log("Information extraction over");
+	}
+
+	/**
+	 * Launches the main search.
+	 * 
+	 * @param keywords
+	 * 		Person we want to look up.
+	 * @param website
+	 * 		Target site, or {@ode null} to search the whole Web.
+	 * @param startDate
+	 * 		Start of the period we want to consider, 
+	 * 		or {@code null} for no constraint.
+	 * @param endDate
+	 * 		End of the period we want to consider,
+	 * 		or {@code null} for no constraint.
+	 * @param strictSearch
+	 * 		If {@code true}, both dates will be used directly in the Web search.
+	 * 		Otherwise, they will be used <i>a posteri</i> to filter the detected events.
+	 * 		If one of the dates is {@code null}, this parameter has no effect.
+	 * @param compulsoryExpression
+	 * 		String expression which must be present in the article,
+	 * 		or {@code null} if there's no such constraint.
+	 * 
+	 * @throws IOException 
+	 * 		Problem accessing the Web or a file.
+	 * @throws SAXException 
+	 * 		Problem while retrieving a Web page.
+	 * @throws ParseException 
+	 * 		Problem while retrieving a Web page.
+	 * @throws ReaderException 
+	 * 		Problem while retrieving a Web page.
+	 * @throws RecognizerException 
+	 * 		Problem while detecting the entities.
+	 */
+	public void performWebExtraction(String keywords, String website, Date startDate, Date endDate, boolean strictSearch, String compulsoryExpression) throws IOException, ReaderException, ParseException, SAXException, RecognizerException
+	{	logger.log("Starting the web extraction");
+		logger.increaseOffset();
+		
+		// perform the Web search
 		Map<String,List<String>> originalUrls = performWebSearch(keywords, website, startDate, endDate, strictSearch);
+
 		// filter Web pages (remove PDFs, and so on)
 		List<String> filteredUrls = new ArrayList<String>(originalUrls.keySet());
 		filterUrls(filteredUrls);
+		
 		// retrieve the corresponding articles
 		List<Article> originalArticles = retrieveArticles(filteredUrls);
+		
 		// detect the entities
 		List<Entities> originalEntities = detectEntities(originalArticles);
+		
 		// possibly filter the articles depending on the dates and compulsory expression
 		List<Article> filteredArticles = new ArrayList<Article>(originalArticles);
 		List<Entities> filteredEntities = new ArrayList<Entities>(originalEntities);
 		filterArticles(filteredArticles,filteredEntities,startDate,endDate,strictSearch,compulsoryExpression);
+		
 		// displays the remaining articles with their entities
 		displayRemainingEntities(filteredArticles,filteredEntities); //TODO for debug only
-		
-		// perform the social search
-		logger.log("Performing the social media search");
-		List<SocialMediaPost> originalPosts = performSocialSearch(keywords, website, startDate, endDate, extendedSocialSearch);
-		// convert the posts to articles for later use
-		List<Article> convertedPosts = convertPosts(originalPosts);
-		// detect the entities
-		List<Entities> postEntities = detectEntities(convertedPosts);
-		
-		// merge the web and social articles
-		List<Article> allArticles = new ArrayList<Article>();
-		allArticles.addAll(filteredArticles);
-		allArticles.addAll(convertedPosts);
-		List<Entities> allEntities = new ArrayList<Entities>();
-		allEntities.addAll(filteredEntities);
-		allEntities.addAll(postEntities);
-		
-		
-		
-		//TODO
 		
 		// extract events from the remaining articles and entities
 		boolean bySentence = false; //TODO for debug
 		List<List<Event>> events = extractEvents(filteredArticles,filteredEntities,bySentence);
 		
 		// export the events as a table
-		exportEvents(originalUrls, filteredUrls, originalArticles, filteredArticles, events);
+		exportWebEvents(originalUrls, filteredUrls, originalArticles, filteredArticles, events);
 		
 		logger.decreaseOffset();
-		logger.log("Information extraction over");
+		logger.log("Web extraction over");
 	}
+	
+	/////////////////////////////////////////////////////////////////
+	// PROCESS		/////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////
+	/**
+	 * Launches the main search.
+	 * 
+	 * @param keywords
+	 * 		Person we want to look up.
+	 * @param startDate
+	 * 		Start of the period we want to consider, 
+	 * 		or {@code null} for no constraint.
+	 * @param endDate
+	 * 		End of the period we want to consider,
+	 * 		or {@code null} for no constraint.
+	 * @param extendedSocialSearch
+	 * 		Whether the social media search should retrieve the posts published by the
+	 * 		users commenting the posts of interest, for the considered period. If 
+	 * 		{@code false}, only the posts on the targeted page and their direct comments
+	 * 		are returned. 
+	 * 
+	 * @throws IOException 
+	 * 		Problem accessing the Web or a file.
+	 * @throws SAXException 
+	 * 		Problem while retrieving a Web page.
+	 * @throws ParseException 
+	 * 		Problem while retrieving a Web page.
+	 * @throws ReaderException 
+	 * 		Problem while retrieving a Web page.
+	 * @throws RecognizerException 
+	 * 		Problem while detecting the entities.
+	 */
+	public void performSocialExtraction(String keywords, Date startDate, Date endDate, boolean extendedSocialSearch) throws IOException, ReaderException, ParseException, SAXException, RecognizerException
+	{	logger.log("Starting the social media extraction");
+		logger.increaseOffset();
+		
+		// perform the social search
+		List<SocialMediaPost> originalPosts = performSocialSearch(keywords, startDate, endDate, extendedSocialSearch);
 
+		// convert the posts to articles for later use
+		List<Article> convertedPosts = convertPosts(originalPosts);
+		
+		// detect the entities
+		List<Entities> postEntities = detectEntities(convertedPosts);
+		
+		// displays the remaining articles with their entities
+		displayRemainingEntities(convertedPosts,postEntities); //TODO for debug only
+		
+		// extract events from the remaining articles and entities
+		boolean bySentence = false; //TODO for debug
+		List<List<Event>> events = extractEvents(convertedPosts, postEntities, bySentence);
+		
+		// export the events as a table
+		exportSocialEvents(originalPosts, convertedPosts, events);
+		
+		logger.decreaseOffset();
+		logger.log("Social media extraction over");
+	}
+	
 	/////////////////////////////////////////////////////////////////
 	// WEB SEARCH	/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
@@ -472,8 +564,6 @@ public class Extractor
 	 * 
 	 * @param keywords
 	 * 		Person we want to look for.
-	 * @param website
-	 * 		Target site, or {@ode null} to search the whole Web.
 	 * @param startDate
 	 * 		Start of the period we want to consider, 
 	 * 		or {@code null} for no constraint.
@@ -488,7 +578,7 @@ public class Extractor
 	 * @throws IOException
 	 * 		Problem accessing the Web.
 	 */
-	private List<SocialMediaPost> performSocialSearch(String keywords, String website, Date startDate, Date endDate, boolean extendedSearch) throws IOException
+	private List<SocialMediaPost> performSocialSearch(String keywords, Date startDate, Date endDate, boolean extendedSearch) throws IOException
 	{	boolean cachedSearch = true; //TODO for debug
 		// log search parameters
 		logger.log("Parameters:");
@@ -965,7 +1055,7 @@ public class Extractor
 //	}
 	
 	/**
-	 * Records the results of the event search as a CSV file.
+	 * Records the results of the web search as a CSV file.
 	 * 
 	 * @param originalUrls
 	 * 		List of treated URLs.
@@ -983,8 +1073,8 @@ public class Extractor
 	 * @throws FileNotFoundException
 	 * 		Problem while accessing to the result file.
 	 */
-	private void exportEvents(Map<String,List<String>> originalUrls, List<String> filteredUrls, List<Article> originalArticles, List<Article> filteredArticles, List<List<Event>> events) throws UnsupportedEncodingException, FileNotFoundException
-	{	String filePath = FileNames.FO_OUTPUT + File.separator + FileNames.FI_EVENT_TABLE;
+	private void exportWebEvents(Map<String,List<String>> originalUrls, List<String> filteredUrls, List<Article> originalArticles, List<Article> filteredArticles, List<List<Event>> events) throws UnsupportedEncodingException, FileNotFoundException
+	{	String filePath = FileNames.FO_WEB_SEARCH_RESULTS + File.separator + FileNames.FI_EVENT_TABLE;
 		logger.log("Recording the events as a CVS file: "+filePath);
 		logger.decreaseOffset();
 		
@@ -1011,7 +1101,7 @@ public class Extractor
 			"Hour",
 			"Period relevance",
 			"Location",
-			"Comments",
+			"Persons/Organizations",
 			"Event rank"
 		);
 		Iterator<String> it = colNames.iterator();
@@ -1026,7 +1116,6 @@ public class Extractor
 		// write data
 		logger.log("Treat each article separately");
 		int i = 1;
-		int j = 1;
 		for(String url: urls)
 		{	String address = "\""+url+"\"";
 			int indexUrl = filteredUrls.indexOf(url);
@@ -1061,7 +1150,7 @@ public class Extractor
 						title+","+
 						address+",,,,"+
 						"No,,,,,,,,,,"+
-						"Filtere article,"
+						"Filtered article,"
 					);
 				}
 				
@@ -1076,59 +1165,18 @@ public class Extractor
 							title+","+
 							address+",,,,"+
 							"Yes,,,,,,,,,,"+
-							"No event detected,"+j
+							"No event detected,0"
 						);
 
 					// at least one event detected
 					else
-					{	for(Event event: eventList)
-						{	// get the dates
-							fr.univavignon.transpolosearch.tools.time.Date startDate = event.getStartDate();
-							fr.univavignon.transpolosearch.tools.time.Date endDate = event.getEndDate();
-							String date = startDate.toString();
-							if(endDate!=null)
-								date = date + "-" + endDate.toString();
-							
-							// get the locations
-							String locations = "\"";
-							{	Collection<String> locs = event.getLocations();
-								Iterator<String> itLoc = locs.iterator();
-								while(itLoc.hasNext())
-								{	String loc = itLoc.next();
-									locations = locations + loc;
-									if(itLoc.hasNext())
-										locations = locations + ", ";
-								}
-								locations = locations + "\"";
-							}
-							
-							// get the persons/organizations
-							String persOrgs = "\"";
-							Collection<String> all = new ArrayList<String>();
-							all.addAll(event.getPersons());
-							all.addAll(event.getOrganizations());
-							Iterator<String> itPo = all.iterator();
-							while(itPo.hasNext())
-							{	String ent = itPo.next();
-								persOrgs = persOrgs + ent;
-								if(itPo.hasNext())
-									persOrgs = persOrgs + ", ";
-							}
-							persOrgs = persOrgs + "\"";
-						
-							// write the row
-							pw.print(
-								i+","+
-								title+","+
-								address+",,,,"+
-								"Yes,,,,,,"+
-								date+",,,"+
-								locations+","+
-								persOrgs+","+j
-							);
+					{	for(int j=0;j<events.size();j++)
+						{	Event event = eventList.get(j);
+							String beginning = i+","+title+","+address+",,,,"+"Yes,,,,,"; 
+							String ending = convertEvent2Csv(event);
+							pw.print(beginning+","+ending+","+(j+1));
 						}
 					}
-					j++;
 				}
 			}
 			
@@ -1138,5 +1186,147 @@ public class Extractor
 		
 		pw.close();
 		logger.decreaseOffset();
+	}
+	
+	/**
+	 * Records the results of the social media search as a CSV file.
+	 * 
+	 * @param originalPosts
+	 * 		Posts originally retrieved.
+	 * @param convertedPosts
+	 * 		List of articles representing the above posts.
+	 * @param events
+	 * 		List of detected events.
+	 * 
+	 * @throws UnsupportedEncodingException
+	 * 		Problem while accessing to the result file.
+	 * @throws FileNotFoundException
+	 * 		Problem while accessing to the result file.
+	 */
+	private void exportSocialEvents(List<SocialMediaPost> originalPosts, List<Article> convertedPosts, List<List<Event>> events) throws UnsupportedEncodingException, FileNotFoundException
+	{	String filePath = FileNames.FO_SOCIAL_SEARCH_RESULTS + File.separator + FileNames.FI_EVENT_TABLE;
+		logger.log("Recording the events as a CVS file: "+filePath);
+		logger.decreaseOffset();
+		SimpleDateFormat sdf = new SimpleDateFormat("dd/mm/yyyyy",Locale.FRANCE); //TODO we suppose we deal with french articles
+		
+		PrintWriter pw = FileTools.openTextFileWrite(filePath);
+		
+		// write header
+		List<String> colNames = Arrays.asList(
+			"Title",
+			"ID",
+			"Url",
+			"Date",
+			"Content",
+			"Source",
+			"Event",
+			"Date",
+			"Hour",
+			"Location",
+			"Persons/Organizations",
+			"Event rank"
+		);
+		Iterator<String> it = colNames.iterator();
+		while(it.hasNext())
+		{	String colName = it.next();
+			pw.print(colName);
+			if(it.hasNext())
+				pw.print(",");
+		}
+		pw.println();
+		
+		// write data
+		logger.log("Treat each post separately");
+		for(int i=0;i<originalPosts.size();i++)
+		{	// get the data
+			SocialMediaPost post = originalPosts.get(i);
+			Article article = convertedPosts.get(i);
+			List<Event> eventList = events.get(i);
+			
+			// title and id
+			String beginningStr = "\""+article.getTitle()+"\"";
+			beginningStr = beginningStr + ","+post.id;
+			
+			// url
+			String url = article.getUrl().toString();
+			if(url==null)
+				beginningStr = beginningStr + ",";
+			else
+				beginningStr = beginningStr + ",\""+url+"\"";
+			
+			// date
+			Date date = article.getPublishingDate();
+			String dateStr = sdf.format(date);
+			beginningStr = beginningStr + ","+dateStr;
+			
+			// content
+			beginningStr = beginningStr + ",\""+article.getRawText()+"\"";
+			
+			// source
+			beginningStr = beginningStr + ","+post.source;
+
+			// events
+			if(eventList.isEmpty())
+				pw.print(beginningStr+",No event detected,,,,,");
+			else
+			{	for(int j=0;j<events.size();j++)
+				{	Event event = eventList.get(j);
+					String ending = convertEvent2Csv(event);
+					pw.print(beginningStr+","+ending+","+(j+1));
+				}
+			}
+			
+			pw.println();
+		}
+		
+		pw.close();
+		logger.decreaseOffset();
+	}
+	
+	/**
+	 * Converts an event to a CSV-compatible representation.
+	 * 
+	 * @param event
+	 * 		Event of interest.
+	 * @return
+	 * 		String representing the event in a CSV file.
+	 */
+	private String convertEvent2Csv(Event event)
+	{	// get the dates
+		fr.univavignon.transpolosearch.tools.time.Date startDate = event.getStartDate();
+		fr.univavignon.transpolosearch.tools.time.Date endDate = event.getEndDate();
+		String dateStr = startDate.toString();
+		if(endDate!=null)
+			dateStr = dateStr + "-" + endDate.toString();
+		
+		// get the locations
+		String locations = "\"";
+		{	Collection<String> locs = event.getLocations();
+			Iterator<String> itLoc = locs.iterator();
+			while(itLoc.hasNext())
+			{	String loc = itLoc.next();
+				locations = locations + loc;
+				if(itLoc.hasNext())
+					locations = locations + ", ";
+			}
+			locations = locations + "\"";
+		}
+		
+		// get the persons/organizations
+		String persOrgs = "\"";
+		Collection<String> all = new ArrayList<String>();
+		all.addAll(event.getPersons());
+		all.addAll(event.getOrganizations());
+		Iterator<String> itPo = all.iterator();
+		while(itPo.hasNext())
+		{	String ent = itPo.next();
+			persOrgs = persOrgs + ent;
+			if(itPo.hasNext())
+				persOrgs = persOrgs + ", ";
+		}
+		persOrgs = persOrgs + "\"";
+		
+		String result = dateStr+",,,"+locations+","+persOrgs;
+		return result;
 	}
 }
