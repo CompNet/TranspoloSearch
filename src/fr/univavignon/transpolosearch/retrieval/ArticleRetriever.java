@@ -168,7 +168,14 @@ public class ArticleRetriever
 			
 			// use the reader to get the text
 			reader.setCacheEnabled(readerCache);
-			result = reader.read(url,language);
+			try
+			{	result = reader.read(url,language);
+			}
+			catch(Exception e)
+			{	logger.decreaseOffset();
+				logger.decreaseOffset();
+				throw e;
+			}
 			logger.decreaseOffset();
 			
 			// then record the contents
@@ -230,7 +237,9 @@ public class ArticleRetriever
 			result = Article.read(name);
 		}
 		
-		logger.decreaseOffset();
+		finally
+		{	logger.decreaseOffset();
+		}
 		logger.log("Retrieval done for article "+name);
 		return result;
 	}

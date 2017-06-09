@@ -277,17 +277,17 @@ public class Extractor
 		List<Article> convertedPosts = convertPosts(originalPosts);
 		
 		// detect the entities
-		List<Entities> postEntities = detectEntities(convertedPosts);
-		
-		// displays the remaining articles with their entities
-		displayRemainingEntities(convertedPosts,postEntities); //TODO for debug only
-		
-		// extract events from the remaining articles and entities
-		boolean bySentence = false; //TODO for debug
-		List<List<Event>> events = extractEvents(convertedPosts, postEntities, bySentence);
-		
-		// export the events as a table
-		exportSocialEvents(originalPosts, convertedPosts, events);
+//		List<Entities> postEntities = detectEntities(convertedPosts);
+//		
+//		// displays the remaining articles with their entities
+//		displayRemainingEntities(convertedPosts,postEntities); //TODO for debug only
+//		
+//		// extract events from the remaining articles and entities
+//		boolean bySentence = false; //TODO for debug
+//		List<List<Event>> events = extractEvents(convertedPosts, postEntities, bySentence);
+//		
+//		// export the events as a table
+//		exportSocialEvents(originalPosts, convertedPosts, events);
 		
 		logger.decreaseOffset();
 		logger.log("Social media extraction over");
@@ -385,7 +385,7 @@ public class Extractor
 			{	Set<URL> urls = new TreeSet<URL>(URL_COMPARATOR);
 				
 				// possibly use cached results
-				String cacheFilePath = FileNames.FO_WEB_SEARCH_RESULTS + engine.getName();
+				String cacheFilePath = FileNames.FO_WEB_SEARCH_RESULTS + File.separator + engine.getName();
 				File cacheFolder = new File(cacheFilePath);
 				cacheFolder.mkdirs();
 				cacheFilePath = cacheFilePath + File.separator + FileNames.FI_SEARCH_RESULTS;
@@ -435,6 +435,8 @@ public class Extractor
 		logger.log("Total number of pages found: "+result.size());
 		
 		// record the complete list of URLs (not for cache, just as a result)
+		File folder = new File(FileNames.FO_WEB_SEARCH_RESULTS);
+		folder.mkdirs();
 		String cacheFilePath = FileNames.FO_WEB_SEARCH_RESULTS + File.separator + FileNames.FI_SEARCH_RESULTS;
 		logger.log("Recording all URLs in CSV file \""+cacheFilePath+"\"");
 		PrintWriter pw = FileTools.openTextFileWrite(cacheFilePath);
@@ -512,15 +514,16 @@ public class Extractor
 		// init
 		List<Article> result = new ArrayList<Article>();
 		ArticleRetriever articleRetriever = new ArticleRetriever(true); //TODO cache disabled for debugging
-		articleRetriever.setLanguage(ArticleLanguage.FR); // we know the articles will be in French (should be generalized later)
+		articleRetriever.setLanguage(ArticleLanguage.FR); // TODO we know the articles will be in French (should be generalized later)
 
 		// retrieve articles
 		Iterator<String> it = urls.iterator();
+		int nbr = urls.size();
 		int i = 0;
 		while(it.hasNext())
 		{	String url = it.next();
 			i++;
-			logger.log("Retrieving article ("+i+"/"+urls.size()+") at URL "+url);
+			logger.log("Retrieving article ("+i+"/"+nbr+") at URL "+url);
 			try
 			{	Article article = articleRetriever.process(url);
 				result.add(article);
@@ -1207,7 +1210,7 @@ public class Extractor
 	{	String filePath = FileNames.FO_SOCIAL_SEARCH_RESULTS + File.separator + FileNames.FI_EVENT_TABLE;
 		logger.log("Recording the events as a CVS file: "+filePath);
 		logger.decreaseOffset();
-		SimpleDateFormat sdf = new SimpleDateFormat("dd/mm/yyyyy",Locale.FRANCE); //TODO we suppose we deal with french articles
+		SimpleDateFormat sdf = new SimpleDateFormat("dd/mm/yyyyy",Locale.FRANCE); //TODO we suppose we deal with French articles, but this should be generalized later
 		
 		PrintWriter pw = FileTools.openTextFileWrite(filePath);
 		

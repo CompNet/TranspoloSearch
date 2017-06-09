@@ -44,9 +44,9 @@ import fr.univavignon.transpolosearch.tools.time.Date;
  * A basic event should contain at least either two acting entity (person or
  * organization), or one acting entity and a date.
  * <br/>
- * TODO This is a very basic version, that should be improved later. From now,
- * entity are compared just by matching their names <i>exactly</i>: hierarchies are not
- * taken into account, or the various version of proper name.
+ * TODO This is a very basic version, that should be improved later. As of now,
+ * entities are compared just by matching their names <i>exactly</i>: hierarchies are not
+ * taken into account, nor are the various versions of proper names.
  * <ul>
  *  <li>Change the name of the current entity classes to "entity mentions" (which they are) and create an actual entity class</li>
  *  <li>Maybe change the "value" field in the current entities to a full object, and define an actual entity class</li>

@@ -75,4 +75,12 @@ public abstract class AbstractWebEngine
 	 * 		Problem while searching the Web.
 	 */
 	public abstract List<URL> search(String keywords, String website, Date startDate, Date endDate)  throws IOException;
+
+	/////////////////////////////////////////////////////////////////
+	// STRING		/////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////
+	@Override
+	public String toString()
+	{	return getName();
+	}
 }

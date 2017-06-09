@@ -37,6 +37,8 @@ import java.util.zip.GZIPInputStream;
 import java.util.zip.Inflater;
 import java.util.zip.InflaterInputStream;
 
+import javax.net.ssl.SSLHandshakeException;
+
 import org.jsoup.HttpStatusException;
 import org.jsoup.Jsoup;
 import org.jsoup.UnsupportedMimeTypeException;
@@ -147,6 +149,11 @@ public abstract class ArticleReader
 		{	result = URLEncoder.encode(address,"UTF-8");
 			// reverse the transformation :
 			// String original = URLDecoder.decode(result, "UTF-8");
+		
+			// needed if the URL is longer than the max length authorized by the OS for folder names
+			if(result.length()>255)	
+				result = result.substring(0,255);
+
 		}
 		catch (UnsupportedEncodingException e)
 		{	e.printStackTrace();
@@ -353,7 +360,7 @@ public abstract class ArticleReader
 		logger.log("Retrieve HTML source code");
 		
 		// check if the cache can/must be used
-		String folderPath = FileNames.FO_OUTPUT + File.separator + name;
+		String folderPath = FileNames.FO_WEB_PAGES + File.separator + name;
 		File originalFile = new File(folderPath + File.separator + FileNames.FI_ORIGINAL_PAGE);
 		if(cache && originalFile.exists())
 		{	logger.log("Cache enabled and HTML already retrieved >> we use the cached file ("+originalFile.getName()+")");
@@ -393,12 +400,21 @@ public abstract class ArticleReader
 				}
 				catch(HttpStatusException e)
 				{	logger.log(Arrays.asList(
-						"WARNING: Could not download the page, the server returned an error "+e.getStatusCode()+" .",
+						"WARNING: Could not download the page, the server returned an error "+e.getStatusCode()+".",
 						"Error message: "+e.getMessage()
 					));
 				}
 				catch(UnknownHostException e)
-				{	logger.log("WARNING: Could not download the page, the IP address of the server could not be determined");
+				{	logger.log(Arrays.asList(
+						"WARNING: Could not download the page, the IP address of the server could not be determined.",
+						"Error message: "+e.getMessage()
+					));
+				}
+				catch(SSLHandshakeException e)
+				{	logger.log(Arrays.asList(
+						"WARNING: Security error when connecting to the URL.",
+						"Error message: "+e.getMessage()
+					));
 				}
 			}
 			while(again);

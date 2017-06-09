@@ -253,6 +253,7 @@ public class BingEngine extends AbstractWebEngine
 						String urlStr = (String)value.get("url");
 						logger.log("url: "+urlStr);
 						URL resUrl = convertUrl(urlStr);
+						logger.log("converted to: "+resUrl);
 						result.add(resUrl);
 						logger.decreaseOffset();
 						i++;
@@ -319,11 +320,21 @@ public class BingEngine extends AbstractWebEngine
 	 * 		Problem while accessing the Bing URL.
 	 */
 	private URL convertUrl(String urlStr) throws MalformedURLException, IOException
-	{	URLConnection con = new URL(urlStr).openConnection();
+	{	URL result = null; 
+		URLConnection con = new URL(urlStr).openConnection();
 		con.connect();
-		InputStream is = con.getInputStream();
-		URL result = con.getURL();
-		is.close();
+		InputStream is = null;
+		try
+		{	is = con.getInputStream();
+		}
+		catch(IOException e)
+		{	//	
+		}
+		finally
+		{	result = con.getURL();
+			if(is!=null)
+				is.close();
+		}
 		return result;
 	}
 	

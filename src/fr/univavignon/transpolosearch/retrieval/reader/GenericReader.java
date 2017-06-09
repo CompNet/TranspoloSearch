@@ -48,6 +48,8 @@ import java.util.zip.GZIPInputStream;
 import java.util.zip.Inflater;
 import java.util.zip.InflaterInputStream;
 
+import javax.net.ssl.SSLHandshakeException;
+
 import org.apache.http.ParseException;
 import org.apache.http.client.ClientProtocolException;
 import org.jsoup.Jsoup;
@@ -105,12 +107,20 @@ public class GenericReader extends ArticleReader
 			}
 					
 			// get its title
-			Element titleElt = document.getElementsByTag(HtmlNames.ELT_TITLE).get(0);
-			String title = titleElt.text();
-			title = removeGtst(title);
-			logger.log("Get title: "+title);
+			String title = null;
+			Elements titleElts = document.getElementsByTag(HtmlNames.ELT_TITLE);
+			if(titleElts.isEmpty())
+				logger.log("The page has no title");
+			else
+			{	Element titleElt = titleElts.get(0);
+				title = titleElt.text();
+				title = removeGtst(title);
+				logger.log("Get title: "+title);
+			}
 			
 			// identify the content element
+//if(url.toString().equalsIgnoreCase("http://www.lamarseillaise.fr/vaucluse/developpement-durable/58144-avignon-ca-bouge-autour-du-technopole-de-l-agroparc"))
+//	System.out.println();
 			logger.log("Get the main element of the document");
 			List<Element> bodyElts = document.getElementsByTag(HtmlNames.ELT_BODY);
 			if(bodyElts.isEmpty())
@@ -131,6 +141,11 @@ public class GenericReader extends ArticleReader
 			
 			// processing each element in the content part
 			processAnyElement(contentElt, rawStr, linkedStr);
+			if(title==null)
+			{	title = rawStr.substring(0, Math.min(20,rawStr.length()));
+				if(title.isEmpty())
+					title = "Empty page";
+			}
 			
 			// create article object
 			result = new Article(name);

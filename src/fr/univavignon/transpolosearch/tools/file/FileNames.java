@@ -43,9 +43,11 @@ public class FileNames
 	public final static String FO_LOG = "log";
 	/** Output folder */
 	public final static String FO_OUTPUT = "out";	//actual folder
-		/** Folder containing cached web search results */
+		/** Folder containing web search results */
 		public final static String FO_WEB_SEARCH_RESULTS = FO_OUTPUT + File.separator + "web_search";
-		/** Folder containing cached social media search results */
+			/** Folder containing cached web pages */
+			public final static String FO_WEB_PAGES = FO_WEB_SEARCH_RESULTS + File.separator + "_pages";
+		/** Folder containing social media search results */
 		public final static String FO_SOCIAL_SEARCH_RESULTS = FO_OUTPUT + File.separator + "social_search";
 	/** Resources folder */
 	public final static String FO_RESOURCES = "res";

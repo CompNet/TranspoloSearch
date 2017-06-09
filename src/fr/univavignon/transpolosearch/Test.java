@@ -78,10 +78,10 @@ public class Test
 //		testRetrievalGeneric();
 		
 		// search
-		testGoogleSearch();
+//		testGoogleSearch();
 		
 		// whole process
-//		testExtractor();
+		testExtractor();
 		
 		logger.close();
 	}
@@ -270,8 +270,8 @@ public class Test
 		
 		String keywords = "Cécile Helle";
 		String website = null;
-		Date startDate = df.parse("20150330");
-		Date endDate = df.parse("20150426");
+		Date startDate = df.parse("20170306");
+		Date endDate = df.parse("20170310");
 		boolean strictSearch = true;
 		String compulsoryExpression = "Helle";
 		boolean extendedSocialSearch = true;

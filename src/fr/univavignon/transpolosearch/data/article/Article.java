@@ -319,7 +319,7 @@ public class Article
 	 * variables.
 	 */
 	private void initFiles()
-	{	folderPath = FileNames.FO_OUTPUT + File.separator + name;
+	{	folderPath = FileNames.FO_WEB_PAGES + File.separator + name;
 		originalFile = new File(folderPath + File.separator + FileNames.FI_ORIGINAL_PAGE);
 		rawFile = new File(folderPath + File.separator + FileNames.FI_RAW_TEXT);
 		linkedFile = new File(folderPath + File.separator + FileNames.FI_LINKED_TEXT);
@@ -411,7 +411,7 @@ public class Article
 //		for(int i=0;i<name.length();i++)
 //			System.out.println(i+": '"+name.charAt(i)+"'=='"+"Ahmet_Davutoglu".charAt(i)+"' >> "+(name.charAt(i)=="Ahmet_Davutoglu".charAt(i)));
 		
-		String folderPath = FileNames.FO_OUTPUT + File.separator + name;
+		String folderPath = FileNames.FO_WEB_PAGES + File.separator + name;
 //		File originalFile = new File(folderPath + File.separator + FileNames.FI_ORIGINAL_PAGE);
 		File rawFile = new File(folderPath + File.separator + FileNames.FI_RAW_TEXT);
 		File linkedFile = new File(folderPath + File.separator + FileNames.FI_LINKED_TEXT);

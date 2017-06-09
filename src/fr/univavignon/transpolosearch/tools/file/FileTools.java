@@ -430,4 +430,23 @@ public class FileTools
 		List<File> result =  new ArrayList<File>(Arrays.asList(files));
 		return result;
 	}
+	
+	/////////////////////////////////////////////////////////////////
+	// FILENAMES		/////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////
+	/**
+	 * Naive method converting some string to a valid filename. The
+	 * transformation is not bijective: several distinct strings can
+	 * lead to the same filename. The method basically replaces everything
+	 * that is neither a letter or a digit by an underscore.
+	 * 
+	 * @param name
+	 * 		Original string.
+	 * @return
+	 * 		File-compatible version of the specified string.
+	 */
+	public static String convertToFilename(String name)
+	{	String result = name.replaceAll("\\W+", "_");
+		return result;
+	}
 }
