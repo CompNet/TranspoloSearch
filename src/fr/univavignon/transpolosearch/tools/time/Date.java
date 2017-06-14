@@ -1,29 +1,28 @@
 package fr.univavignon.transpolosearch.tools.time;	
 
 /*
- * TranspoloSearch
- * Copyright 2015-17 Vincent Labatut
+ * Nerwip - Named Entity Extraction in Wikipedia Pages
+ * Copyright 2011-17 Vincent Labatut et al.
  * 
- * This file is part of TranspoloSearch.
+ * This file is part of Nerwip - Named Entity Extraction in Wikipedia Pages.
  * 
- * TranspoloSearch is free software: you can redistribute it and/or modify it under 
- * the terms of the GNU General Public License as published by the Free Software 
- * Foundation, either version 2 of the License, or (at your option) any later version.
+ * Nerwip - Named Entity Extraction in Wikipedia Pages is free software: you can 
+ * redistribute it and/or modify it under the terms of the GNU General Public License 
+ * as published by the Free Software Foundation, either version 2 of the License, or
+ * (at your option) any later version.
  * 
- * TranspoloSearch is distributed in the hope that it will be useful, but WITHOUT ANY 
- * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A 
- * PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * Nerwip - Named Entity Extraction in Wikipedia Pages is distributed in the hope 
+ * that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty 
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public 
+ * License for more details.
  * 
  * You should have received a copy of the GNU General Public License
- * along with TranspoloSearch. If not, see <http://www.gnu.org/licenses/>.
+ * along with Nerwip - Named Entity Extraction in Wikipedia Pages.  
+ * If not, see <http://www.gnu.org/licenses/>.
  */
 
-import java.util.Arrays;
 import java.util.Calendar;
-import java.util.List;
 import java.util.Locale;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Represents a possibly partial date,
@@ -116,8 +115,8 @@ public class Date implements Comparable<Date>
 	/////////////////////////////////////////////////////////////////
 	// MONTH			/////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
-	/** List of month names in English */
-	private static final List<String> MONTHS = Arrays.asList("january","february","march","april","may","june","july","august","september","october","november","december");
+//	/** List of month names in English */
+//	private static final List<String> MONTHS = Arrays.asList("january","february","march","april","may","june","july","august","september","october","november","december");
 	/** Number of the month in the year (starting from 1) */
 	private int month = 0;
 	
@@ -158,15 +157,45 @@ public class Date implements Comparable<Date>
 //	}
 
 	/////////////////////////////////////////////////////////////////
+	// PROCESSING		/////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////
+	/**
+	 * Returns the date of western Easter for the specified year,
+	 * or {@code null} if the year is not a positive integer.
+	 * 
+	 * @param year
+	 * 		Year to process.
+	 * @return
+	 * 		Date of Easter for this year.
+	 */
+	public static Date getEasterDate(int year)
+	{	Date result = null;
+		
+		if(year>0)
+		{	int y = 2014;
+			int a = y % 19;
+			int b = y / 100;
+			int c = y % 100;
+			int d = b / 4;
+			int e = b % 4;
+			int g = (8 * b + 13) / 25;
+			int h = (19 * a + b - d - g + 15) % 30;
+			int j = c / 4;
+			int k = c % 4;
+			int m = (a + 11 * h) / 319;
+			int r = (2 * e + 2 * j - k - h + m + 32) % 7;
+			int n = (h - m + r + 90) / 25;
+			int p = (h - m + r + n + 19) % 32;
+			
+			result = new Date(p,n,year);
+		}
+		
+		return result;
+	}
+     
+	/////////////////////////////////////////////////////////////////
 	// TEXT				/////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
-	/** Pattern used to find years in text */
-	private static final Pattern YEAR_PATTERN = Pattern.compile("(\\D|^)(18|19|20)\\d\\d(\\D|$)");
-	/** Pattern used to find months in text */
-	private static final Pattern MONTH_PATTERN = Pattern.compile("january|february|march|april|may|june|july|august|september|october|november|december",Pattern.CASE_INSENSITIVE);
-	/** Pattern used to find days in text */
-	private static final Pattern DAY_PATTERN = Pattern.compile("(\\D|^)(([0-1]\\d)|[1-9]|30|31)(\\D|$)");
-	
 	@Override
 	public String toString()
 	{	String result = "";
@@ -228,91 +257,98 @@ public class Date implements Comparable<Date>
 		return result;
 	}
 	
-	/**
-	 * Parse a Wikipedia string representing a date.
-	 * <br/> 
-	 * TODO This should actually be generalized,
-	 * since we might parse different kinds of
-	 * format if using other sources than WP.
-	 *  
-	 * @param string
-	 * 		String containing the date.
-	 * @return
-	 * 		The corresponding custom date object.
-	 */
-	public static Date parse(String string)
-	{	int day = 0;
-		int month = 0;
-		int year = 0;
-//if(string.equals("October 6"))	//"March 10, 1969"
-//	System.out.println();
-		// purely numerical format
-//		if(string.contains("/"))
-//		{	String temp[] = string.split("/");
-//			int i = temp.length - 1;
-//			year = Integer.parseInt(temp[i]);
-//			if(i>0)
-//			{	i--;
-//				month = Integer.parseInt(temp[i]);
-//				if(i>0)
-//				{	i--;
-//					day = Integer.parseInt(temp[i]);
-//				}
+//	/** Pattern used to find years in text */
+//	private static final Pattern YEAR_PATTERN = Pattern.compile("(\\D|^)(18|19|20)\\d\\d(\\D|$)");
+//	/** Pattern used to find months in text */
+//	private static final Pattern MONTH_PATTERN = Pattern.compile("january|february|march|april|may|june|july|august|september|october|november|december",Pattern.CASE_INSENSITIVE);
+//	/** Pattern used to find days in text */
+//	private static final Pattern DAY_PATTERN = Pattern.compile("(\\D|^)(([0-1]\\d)|[1-9]|30|31)(\\D|$)");
+//	
+//	/**
+//	 * Parse a Wikipedia string representing a date.
+//	 * <br/> 
+//	 * TODO This should actually be generalized,
+//	 * since we might parse different kinds of
+//	 * format if using other sources than WP.
+//	 *  
+//	 * @param string
+//	 * 		String containing the date.
+//	 * @return
+//	 * 		The corresponding custom date object.
+//	 */
+//	public static Date parse(String string)
+//	{	int day = 0;
+//		int month = 0;
+//		int year = 0;
+////if(string.equals("October 6"))	//"March 10, 1969"
+////	System.out.println();
+//		// purely numerical format
+////		if(string.contains("/"))
+////		{	String temp[] = string.split("/");
+////			int i = temp.length - 1;
+////			year = Integer.parseInt(temp[i]);
+////			if(i>0)
+////			{	i--;
+////				month = Integer.parseInt(temp[i]);
+////				if(i>0)
+////				{	i--;
+////					day = Integer.parseInt(temp[i]);
+////				}
+////			}
+////		}
+////		
+////		// partly textual format
+////		else
+//		{	// year
+//			Matcher yearMatcher = YEAR_PATTERN.matcher(string);
+//			if(yearMatcher.find())
+//				year = retrieveInt(yearMatcher, string);
+////			else
+////				System.out.println("Date.parse: could not find a year in text '"+string+"'");
+//			
+//			// month
+//			Matcher monthMatcher = MONTH_PATTERN.matcher(string);
+//			if(monthMatcher.find())
+//			{	int monthStart = monthMatcher.start();
+//				int monthEnd = monthMatcher.end();
+//				String monthStr = string.substring(monthStart,monthEnd).toLowerCase();
+//				month = MONTHS.indexOf(monthStr)+1;
+//				
+//				// day
+//				Matcher dayMatcher = DAY_PATTERN.matcher(string);
+//				if(dayMatcher.find())
+//					day = retrieveInt(dayMatcher, string);
 //			}
 //		}
 //		
-//		// partly textual format
-//		else
-		{	// year
-			Matcher yearMatcher = YEAR_PATTERN.matcher(string);
-			if(yearMatcher.find())
-				year = retrieveInt(yearMatcher, string);
-//			else
-//				System.out.println("Date.parse: could not find a year in text '"+string+"'");
-			
-			// month
-			Matcher monthMatcher = MONTH_PATTERN.matcher(string);
-			if(monthMatcher.find())
-			{	int monthStart = monthMatcher.start();
-				int monthEnd = monthMatcher.end();
-				String monthStr = string.substring(monthStart,monthEnd).toLowerCase();
-				month = MONTHS.indexOf(monthStr)+1;
-				
-				// day
-				Matcher dayMatcher = DAY_PATTERN.matcher(string);
-				if(dayMatcher.find())
-					day = retrieveInt(dayMatcher, string);
-			}
-		}
-		
-		Date result = new Date(day,month,year);
-		return result;
-	}
+//		Date result = new Date(day,month,year);
+//		return result;
+//	}
+//	
+//	/**
+//	 * Method used when parsing WP dates,
+//	 * in order to get the integer value corresponding
+//	 * to a year, month or day.
+//	 * 
+//	 * @param matcher
+//	 * 		Matcher which has found something. 
+//	 * @param string
+//	 * 		Complete string.
+//	 * @return
+//	 * 		Integer value of the matched expression.
+//	 */
+//	private static int retrieveInt(Matcher matcher, String string)
+//	{	int yearStart = matcher.start();
+//		int yearEnd = matcher.end();
+//		String yearStr = string.substring(yearStart,yearEnd);
+//		if(!Character.isDigit(yearStr.charAt(0)))
+//			yearStr = yearStr.substring(1);
+//		if(!Character.isDigit(yearStr.charAt(yearStr.length()-1)))
+//			yearStr = yearStr.substring(0,yearStr.length()-1);
+//		int result = Integer.parseInt(yearStr);
+//		return result;
+//	}
 	
-	/**
-	 * Method used when parsing WP dates,
-	 * in order to get the integer value corresponding
-	 * to a year, month or day.
-	 * 
-	 * @param matcher
-	 * 		Matcher which has found something. 
-	 * @param string
-	 * 		Complete string.
-	 * @return
-	 * 		Integer value of the matched expression.
-	 */
-	private static int retrieveInt(Matcher matcher, String string)
-	{	int yearStart = matcher.start();
-		int yearEnd = matcher.end();
-		String yearStr = string.substring(yearStart,yearEnd);
-		if(!Character.isDigit(yearStr.charAt(0)))
-			yearStr = yearStr.substring(1);
-		if(!Character.isDigit(yearStr.charAt(yearStr.length()-1)))
-			yearStr = yearStr.substring(0,yearStr.length()-1);
-		int result = Integer.parseInt(yearStr);
-		return result;
-	}
-
 	/////////////////////////////////////////////////////////////////
 	// COMPARISON		/////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
@@ -361,7 +397,7 @@ public class Date implements Comparable<Date>
 		boolean result = d1.equals(d2);
 		return result;
 	}
-	
+
 	@Override
 	public int compareTo(Date date)
 	{	int result;
@@ -384,7 +420,9 @@ public class Date implements Comparable<Date>
 					{	if((day==0 && date.day!=0) || (day!=0 && date.day==0))
 							throw new IllegalArgumentException("The dates '"+this+"' and '"+date+"' cannot be compared, because the day is unknown for exactly one of them");
 						else
-							result = day - date.day;
+						{	result = day - date.day;
+							
+						}
 					}
 				}
 			}

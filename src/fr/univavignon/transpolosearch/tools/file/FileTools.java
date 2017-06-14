@@ -1,21 +1,24 @@
 package fr.univavignon.transpolosearch.tools.file;
 
 /*
- * TranspoloSearch
- * Copyright 2015-17 Vincent Labatut
+ * Nerwip - Named Entity Extraction in Wikipedia Pages
+ * Copyright 2011-17 Vincent Labatut et al.
  * 
- * This file is part of TranspoloSearch.
+ * This file is part of Nerwip - Named Entity Extraction in Wikipedia Pages.
  * 
- * TranspoloSearch is free software: you can redistribute it and/or modify it under 
- * the terms of the GNU General Public License as published by the Free Software 
- * Foundation, either version 2 of the License, or (at your option) any later version.
+ * Nerwip - Named Entity Extraction in Wikipedia Pages is free software: you can 
+ * redistribute it and/or modify it under the terms of the GNU General Public License 
+ * as published by the Free Software Foundation, either version 2 of the License, or
+ * (at your option) any later version.
  * 
- * TranspoloSearch is distributed in the hope that it will be useful, but WITHOUT ANY 
- * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A 
- * PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * Nerwip - Named Entity Extraction in Wikipedia Pages is distributed in the hope 
+ * that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty 
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public 
+ * License for more details.
  * 
  * You should have received a copy of the GNU General Public License
- * along with TranspoloSearch. If not, see <http://www.gnu.org/licenses/>.
+ * along with Nerwip - Named Entity Extraction in Wikipedia Pages.  
+ * If not, see <http://www.gnu.org/licenses/>.
  */
 
 import java.io.File;
@@ -32,6 +35,7 @@ import java.io.UnsupportedEncodingException;
 import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Scanner;
@@ -47,11 +51,27 @@ public class FileTools
 	/////////////////////////////////////////////////////////////////
 	// FILTERS			/////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
+	/** Filter focusing on raw.txt files */
+	public final static FilenameFilter FILTER_RAW_TEXT = createFilter(FileNames.FI_RAW_TEXT);
+	
 	/** Filter able to retain only directories */
 	public final static FileFilter FILTER_DIRECTORY = new FileFilter()
 	{	@Override
 		public boolean accept(File file)
 		{	boolean result = file.isDirectory();
+			return result;
+		}
+	};
+	
+	/** Filter able to retain only directories containing a raw.txt file */
+	public final static FileFilter FILTER_ARTICLES = new FileFilter()
+	{	@Override
+		public boolean accept(File file)
+		{	boolean result = false;
+			if(file.isDirectory())
+			{	String rf[] = file.list(FILTER_RAW_TEXT);
+				result = rf!=null && rf.length>0;
+			}
 			return result;
 		}
 	};
@@ -85,15 +105,20 @@ public class FileTools
 	 * 
 	 * @param filePath 
 	 * 		File to open.
+	 * @param encoding
+	 * 		Encoding of the text file, generally {@code "UTF-8"} 
+	 * 		or {@code "ISO-8859-1"}.
 	 * @return 
 	 * 		Scanner object ready to read the file.
 	 * 
 	 * @throws FileNotFoundException 
 	 * 		Problem while accessing the file.
+	 * @throws UnsupportedEncodingException 
+	 * 		Could not handle the encoding.
 	 */
-	public static Scanner openTextFileRead(String filePath) throws FileNotFoundException
+	public static Scanner openTextFileRead(String filePath, String encoding) throws FileNotFoundException, UnsupportedEncodingException
 	{	File file = new File(filePath);
-		Scanner result = openTextFileRead(file);
+		Scanner result = openTextFileRead(file, encoding);
 		return result;
 	}
 	
@@ -102,16 +127,21 @@ public class FileTools
 	 * 
 	 * @param file
 	 * 		File to open.
+	 * @param encoding
+	 * 		Encoding of the text file, generally {@code "UTF-8"} 
+	 * 		or {@code "ISO-8859-1"}.
 	 * @return 
 	 * 		Scanner object ready to read the file.
 	 * 
 	 * @throws FileNotFoundException
 	 * 		Problem while accessing the file.
+	 * @throws UnsupportedEncodingException
+	 * 		Could not handle the encoding.
 	 */
-	public static Scanner openTextFileRead(File file) throws FileNotFoundException
+	public static Scanner openTextFileRead(File file, String encoding) throws FileNotFoundException, UnsupportedEncodingException
 	{	FileInputStream fis = new FileInputStream(file);
 //		InputStreamReader isr = new InputStreamReader(fis,"UTF-8");
-		InputStreamReader isr = new InputStreamReader(fis);
+		InputStreamReader isr = new InputStreamReader(fis, encoding);
 		Scanner result = new Scanner(isr);
 		return result;
 	}
@@ -121,15 +151,20 @@ public class FileTools
 	 * 
 	 * @param file
 	 * 		File to be read.
+	 * @param encoding
+	 * 		Encoding of the text file, generally {@code "UTF-8"} 
+	 * 		or {@code "ISO-8859-1"}.
 	 * @return
 	 * 		String corresponding to the file content.
 	 * 
 	 * @throws FileNotFoundException
 	 * 		Problem while accessing the file.
+	 * @throws UnsupportedEncodingException 
+	 * 		Could not handle the encoding.
 	 */
-	public static String readTextFile(File file) throws FileNotFoundException
+	public static String readTextFile(File file, String encoding) throws FileNotFoundException, UnsupportedEncodingException
 	{	StringBuffer temp = new StringBuffer();
-		Scanner scanner = FileTools.openTextFileRead(file);
+		Scanner scanner = FileTools.openTextFileRead(file, encoding);
 		
 		while(scanner.hasNextLine())
 		{	String line = scanner.nextLine();
@@ -146,16 +181,21 @@ public class FileTools
 	 * 
 	 * @param filePath
 	 * 		Path of the file to be read.
+	 * @param encoding
+	 * 		Encoding of the text file, generally {@code "UTF-8"} 
+	 * 		or {@code "ISO-8859-1"}.
 	 * @return
 	 * 		String corresponding to the file content.
 	 * 
 	 * @throws FileNotFoundException
 	 * 		Problem while accessing the file.
+	 * @throws UnsupportedEncodingException 
+	 * 		Could not handle the encoding.
 	 */
-	public static String readTextFile(String filePath) throws FileNotFoundException
+	public static String readTextFile(String filePath, String encoding) throws FileNotFoundException, UnsupportedEncodingException
 	{	File file = new File(filePath);
 		
-		String result = readTextFile(file);
+		String result = readTextFile(file, encoding);
 		return result;
 	}
 	
@@ -163,40 +203,46 @@ public class FileTools
 	// WRITE			/////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
 	/**
-	 * Open the file at the specified path,
-	 * for writing.
+	 * Open the file at the specified path, for writing.
 	 * 
 	 * @param filePath
 	 * 		File to open.
+	 * @param encoding
+	 * 		Encoding of the text file, generally {@code "UTF-8"} 
+	 * 		or {@code "ISO-8859-1"}.
 	 * @return 
 	 * 		PrintWriter object ready to write in the file.
 	 * 
-	 * @throws UnsupportedEncodingException
-	 * 		Problem while accessing the file.
 	 * @throws FileNotFoundException
 	 * 		Problem while accessing the file.
+	 * @throws UnsupportedEncodingException
+	 * 		Could not handle the encoding.
 	 */
-	public static PrintWriter openTextFileWrite(String filePath) throws UnsupportedEncodingException, FileNotFoundException
+	public static PrintWriter openTextFileWrite(String filePath, String encoding) throws UnsupportedEncodingException, FileNotFoundException
 	{	File file = new File(filePath);
-		PrintWriter result = openTextFileWrite(file);
+		PrintWriter result = openTextFileWrite(file, encoding);
 		return result;
 	}
+	
 	/**
 	 * Open the specified file for writing.
 	 * 
 	 * @param file
 	 * 		File to open.
+	 * @param encoding
+	 * 		Encoding of the text file, generally {@code "UTF-8"} 
+	 * 		or {@code "ISO-8859-1"}.
 	 * @return 
 	 * 		PrintWriter object ready to write in the file.
 	 * 
-	 * @throws UnsupportedEncodingException
-	 * 		Problem while accessing the file.
 	 * @throws FileNotFoundException
 	 * 		Problem while accessing the file.
+	 * @throws UnsupportedEncodingException
+	 * 		Could not handle the encoding.
 	 */
-	public static PrintWriter openTextFileWrite(File file) throws UnsupportedEncodingException, FileNotFoundException
+	public static PrintWriter openTextFileWrite(File file, String encoding) throws UnsupportedEncodingException, FileNotFoundException
 	{	FileOutputStream fos = new FileOutputStream(file);
-		OutputStreamWriter osw = new OutputStreamWriter(fos,"UTF-8");
+		OutputStreamWriter osw = new OutputStreamWriter(fos,encoding);
 		PrintWriter result = new PrintWriter(osw);
 		return result;
 	}
@@ -208,16 +254,19 @@ public class FileTools
 	 * 		File to be created.
 	 * @param content
 	 * 		String corresponding to the file content.
+	 * @param encoding
+	 * 		Encoding of the text file, generally {@code "UTF-8"} 
+	 * 		or {@code "ISO-8859-1"}.
 	 * 
 	 * @throws IOException
 	 * 		Problem while accessing the file.
 	 */
-	public static void writeTextFile(File file, String content) throws IOException
+	public static void writeTextFile(File file, String content, String encoding) throws IOException
 	{	File folder = file.getParentFile();
 		if(!folder.exists())
 			folder.mkdirs();
 		
-		PrintWriter pw = FileTools.openTextFileWrite(file);
+		PrintWriter pw = FileTools.openTextFileWrite(file,encoding);
 		
 		pw.print(content);
 		
@@ -231,13 +280,16 @@ public class FileTools
 	 * 		Path of the file to be created.
 	 * @param content
 	 * 		String corresponding to the file content.
+	 * @param encoding
+	 * 		Encoding of the text file, generally {@code "UTF-8"} 
+	 * 		or {@code "ISO-8859-1"}.
 	 * 
 	 * @throws IOException
 	 * 		Problem while accessing the file.
 	 */
-	public static void writeTextFile(String filePath, String content) throws IOException
+	public static void writeTextFile(String filePath, String content, String encoding) throws IOException
 	{	File file = new File(filePath);
-		writeTextFile(file, content);
+		writeTextFile(file, content, encoding);
 	}
 	
 	/////////////////////////////////////////////////////////////////
@@ -358,6 +410,7 @@ public class FileTools
 	 * @return
 	 * 		{@code true} iff the original file could be copied.
 	 */
+	@SuppressWarnings("resource")
 	private static boolean copyFile(File sourceFile, File destFile)
 	{	boolean result = false;
 		
@@ -385,10 +438,9 @@ public class FileTools
 			}
 			finally
 			{	try
-				{
-					if(source != null)
+				{	if(source!=null)
 						source.close();
-					if(destination != null)
+					if(destination!=null)
 						destination.close();
 				}
 				catch (IOException e)
@@ -428,25 +480,36 @@ public class FileTools
 		};
 		File files[] = ff.listFiles(filter);
 		List<File> result =  new ArrayList<File>(Arrays.asList(files));
+		Collections.sort(result);
 		return result;
 	}
-	
-	/////////////////////////////////////////////////////////////////
-	// FILENAMES		/////////////////////////////////////////////
-	/////////////////////////////////////////////////////////////////
+
 	/**
-	 * Naive method converting some string to a valid filename. The
-	 * transformation is not bijective: several distinct strings can
-	 * lead to the same filename. The method basically replaces everything
-	 * that is neither a letter or a digit by an underscore.
-	 * 
-	 * @param name
-	 * 		Original string.
+	 * Returns a list of files whose name ends with the specified
+	 * suffix, and which are located in the specified folder.
+	 *  
+	 * @param folder
+	 * 		Folder directly containing the files.
+	 * @param suffix
+	 * 		End of the file name.
 	 * @return
-	 * 		File-compatible version of the specified string.
+	 * 		A list of files contained in the folder and whose name ends like the suffix.
 	 */
-	public static String convertToFilename(String name)
-	{	String result = name.replaceAll("\\W+", "_");
+	public static List<File> getFilesEndingWith(String folder, String suffix)
+	{	final String sfx = suffix.toLowerCase(Locale.ENGLISH);
+		File ff = new File(folder);
+		FileFilter filter = new FileFilter()
+		{	@Override
+			public boolean accept(File file)
+			{	String fileName = file.getName().toLowerCase(Locale.ENGLISH);
+				boolean result = fileName.endsWith(sfx);
+				result = result && !file.isDirectory();
+				return result;
+			}
+		};
+		File files[] = ff.listFiles(filter);
+		List<File> result =  new ArrayList<File>(Arrays.asList(files));
+		Collections.sort(result);
 		return result;
 	}
 }

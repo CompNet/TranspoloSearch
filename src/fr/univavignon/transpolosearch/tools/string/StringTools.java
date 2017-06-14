@@ -21,10 +21,16 @@ package fr.univavignon.transpolosearch.tools.string;
 import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.math3.util.Combinations;
 
 /**
  * This class contains various methods
@@ -75,6 +81,10 @@ public class StringTools
 //		System.out.println((int)(str.charAt(11))+" vs "+(int)(res.charAt(11)));
 //		System.out.println((int)(str.charAt(13))+" vs "+(int)(res.charAt(13)));
 //		System.out.println((int)(str.charAt(15))+" vs "+(int)(res.charAt(15)));
+		
+		// test expr
+//		List<Integer> list = extractValues("1,2,3,8,9,10-18,56,98,2,6,8");
+//		System.out.println(list);
 	}
 
 	/////////////////////////////////////////////////////////////////
@@ -180,6 +190,108 @@ public class StringTools
 		return result;
 	}
 
+	/////////////////////////////////////////////////////////////////
+	// CLEAN			/////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////
+	/**
+	 * Cleans the specified string, in order to remove characters
+	 * causing problems when detecting named entity mentions.
+	 *    
+	 * @param input
+	 * 		The string to process.
+	 * @return
+	 * 		Cleaned string.
+	 */
+	public static String cleanText(String input)
+	{	String output = input;
+		
+		String previous = output;
+		do
+		{	previous = output;
+			
+			// replace all white spaces by regular spaces
+			// new line and tabs are not affected
+			output = output.replaceAll("\\p{Z}", " "); // \p{Z} includes more different whitespaces than \s
+			
+			// move punctuation out of hyperlinks
+			String punctuation = "[ \\n\\.,;]";
+			output = output.replaceAll("<a ([^>]*?)>("+punctuation+"*)([^<]*?)("+punctuation+"*)</a>","$2<a $1>$3</a>$4");
+			output = output.replaceAll("<a ([^>]*?)>(\\()([^<]*?)(\\))</a>","$2<a $1>$3</a>$4");
+			output = output.replaceAll("<a ([^>]*?)>(\\[)([^<]*?)(\\])</a>","$2<a $1>$3</a>$4");
+			
+			// replace multiple consecutive spaces by a single one 
+			output = output.replaceAll("( )+", " ");
+			
+			// replace multiple consecutive newlines by a single one 
+			output = output.replaceAll("(\\n)+", "\n");
+			
+			// remove spaces at the end of lines 
+			output = output.replaceAll(" \\n", "\n");
+			
+			// replace multiple space-separated punctuations by single ones 
+//			output = output.replaceAll("; ;", ";");
+//			output = output.replaceAll(", ,", ",");
+//			output = output.replaceAll(": :", ":");
+//			output = output.replaceAll("\\. \\.", "\\.");
+			
+			// replace multiple consecutive punctuation marks by a single one 
+			output = output.replaceAll("([\\.,;:] )[\\.,;:]", "$1");
+	
+			// remove spaces before dots 
+			output = output.replaceAll(" \\.", ".");
+			
+			// remove spaces after opening parenthesis
+			output = output.replaceAll("\\( +", "(");
+			// remove spaces before closing parenthesis
+			output = output.replaceAll(" +\\)", ")");
+			
+			// remove various combinations of punctuation marks
+			output = output.replaceAll("\\(;", "(");
+	
+			// remove empty square brackets and parentheses
+			output = output.replaceAll("\\[\\]", "");
+			output = output.replaceAll("\\(\\)", "");
+			
+			// adds a final dot when it is missing at the end of a sentence (itself detected thanks to the new line)
+//			output = output.replaceAll("([^(\\.|\\-)])\\n", "$1.\n");
+			
+			// insert a space after a coma, when missing
+//			output = output.replaceAll(",([^ _])", ", $1");
+	
+			// insert a space after a semi-column, when missing
+//			output = output.replaceAll(";([^ _])", "; $1");
+			
+			// replace 2 single quotes by double quotes
+			output = output.replaceAll("''+", "\"");
+			
+			// replace ligatures by two characters
+			// note : the normalizer does not seem to work well for most ligature
+			// cf. http://stackoverflow.com/questions/7171377/separating-unicode-ligature-characters
+			output = output.replaceAll("œ", "oe");
+			output = output.replaceAll("Œ", "Oe");
+			output = output.replaceAll("æ", "ae");
+			output = output.replaceAll("Æ", "Ae");
+			output = output.replaceAll("ﬁ", "fi");
+			
+			// replace certain punctuation marks
+			output = output.replaceAll("« ", "\"");
+			output = output.replaceAll("«", "\"");
+			output = output.replaceAll(" »", "\"");
+			output = output.replaceAll("»", "\"");
+			output = output.replaceAll("’","'");
+			output = output.replaceAll("‒","-");	// \u2012
+			output = output.replaceAll("–","-");	// \u2013
+			output = output.replaceAll("—","-");	// \u2014
+			output = output.replaceAll("―","-");	// \u2015
+			output = output.replaceAll("⁓","-");	// \u2053
+			
+		}
+		while(!output.equals(previous));
+		
+		output = output.trim();
+		return output;
+	}
+	
 	/////////////////////////////////////////////////////////////////
 	// SPACES			/////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
@@ -319,36 +431,216 @@ public class StringTools
 	 */
 	public static List<String> splitText(String text, int maxSize)
 	{	List<String> result = new ArrayList<String>();
+		//System.out.println(text); // debug
 		
 		// identify the sentences
 		Matcher matcher = SENTENCE_PATTERN.matcher(text);
 		
-		// build the chunks
+		// init
 		int start = 0;
 		int prevEnd = 0;
-		while(matcher.find())
-		{	// for debug
-			String sentence = matcher.group();
-//			System.out.println(sentence);
-			
-			int curEnd = matcher.end();
-			if(curEnd-start > maxSize)
-			{	if(start==prevEnd)
-					// TODO we could force-split between words, it's better than nothing
-					throw new IllegalArgumentException("The sentence \""+sentence+"\" ("+sentence.length()+" chars) is too long to be split using maxSize="+maxSize);
-				String chunk = text.substring(start, prevEnd);
-				result.add(chunk);
-				start = prevEnd;
-			}
-			
-			prevEnd = curEnd;
+		//String sentence;
+		int curEnd;
+		boolean goOn = true;
+		if(matcher.find())
+		{	//sentence = matcher.group();
+			curEnd = matcher.end();
+		}
+		else
+		{	//sentence = text;
+			curEnd = text.length();
 		}
 		
-		if(start<text.length())
-			result.add(text.substring(start,text.length()));
+		// build the chunks
+		do
+		{	//System.out.println("Sentence: "+sentence); // debug
+			int length = curEnd - start;
+			
+			// sentence too long for maxSize
+			if(length > maxSize)
+			{	// if only one sentence: must split
+				if(start==prevEnd)
+				{	// we look for semicolons
+					int from = start;
+					do
+					{	from = text.indexOf(';', from+1);
+						if(from!=-1 && (from-start)<maxSize)
+							prevEnd = from;
+					}
+					while(from!=-1 && (from-start)<maxSize);
+					// if none found
+					if(start==prevEnd)
+					{	// we look for colons
+						from = start;
+						do
+						{	from = text.indexOf(',', from+1);
+							if(from!=-1 && (from-start)<maxSize)
+								prevEnd = from;
+						}
+						while(from!=-1 && (from-start)<maxSize);
+						// if none found, exception
+						if(start==prevEnd)
+						{	// TODO we could force-split between words, it's better than nothing
+							throw new IllegalArgumentException("The sentence \""+text.substring(start,curEnd)+"\" ("+(curEnd-start)+" chars) is too long and cannot be split for maxSize="+maxSize);
+						}
+						else
+							prevEnd ++;
+					}
+					else
+						prevEnd ++;
+				}
+				
+				// force the inclusion of a possible ending space
+				char c = text.charAt(prevEnd);
+				while(Character.isWhitespace(c))
+				{	prevEnd++;
+					c = text.charAt(prevEnd);
+				}
+				
+				// add the part of text to the result list
+				String part = text.substring(start, prevEnd);
+				result.add(part);
+				start = prevEnd;
+				//sentence = text.substring(prevEnd,curEnd);
+			}
+			
+			// get the next sentence
+			else
+			{	goOn = matcher.find();
+				if(goOn)
+				{	prevEnd = curEnd;
+					//sentence = matcher.group();
+					curEnd = matcher.end();
+				}
+			}
+		}
+		while(goOn);
 		
-		// for debug
-//		System.out.println("result:\n"+result);
+		if(start<text.length())
+		{	String part = text.substring(start);
+			result.add(part);
+		}
+		
+		//for(String str: result) // debug
+		//	System.out.print(str);
+		return result;
+	}
+	
+	/////////////////////////////////////////////////////////////////
+	// VALUES			/////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////
+	/**
+	 * Takes a string of the form 1,4,8,12-15,78 and returns the
+	 * corresponding values as an integer list (1,4,8,12,13,14,15,78).
+	 * 
+	 * @param expression
+	 * 		String expression.
+	 * @return
+	 * 		Corresponding integer list.
+	 */
+	public static List<Integer> extractValues(String expression)
+	{	Set<Integer> temp = new TreeSet<Integer>();
+		String s1[] = expression.split(",");
+		for(String str1: s1)
+		{	if(!str1.isEmpty())
+			{	String s2[] = str1.split("-");
+				if(s2.length==1)
+				{	int val = Integer.parseInt(str1);
+					temp.add(val);
+				}
+				else if(s2.length==2)
+				{	int start = Integer.parseInt(s2[0]);
+					int end = Integer.parseInt(s2[1]);
+					for(int val=start;val<=end;val++)
+						temp.add(val);
+				}
+				else
+					throw new IllegalArgumentException("Incorrect expression: "+expression);
+			}
+		}
+		
+		List<Integer> result = new ArrayList<Integer>(temp);
+		return result;
+	}
+	
+	/////////////////////////////////////////////////////////////////
+	// DISTANCE			/////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////
+    /**
+    * This method calculates the normalized Levenshtein  
+    * distance between two strings. It returns a value between 0 (similar)
+    * and 1 (maximally dissimilar)
+    * 
+    * @param str1
+    * 		The first string.
+    * @param str2
+    *       The second string.
+    * @return
+    * 		A real value between 0 and 1 corresponding to the normalized Levenshtein distance.
+    */
+	public static double getNormalizedLevenshtein(String str1, String str2) 
+	{	// process the regular distance
+		double dist = StringUtils.getLevenshteinDistance(str1, str2);
+	    //System.out.println("Levenshtein Distance between " + str1 + " and " + str2 + ":" + dist);
+		
+		// get the max length
+		int maxLength = Math.max(str1.length(), str2.length());
+		
+		double result = dist / maxLength ;
+		//System.out.println("Normalized Levenshtein Distance between " + str1 + " and " + str2 + " =  " + levNorm);
+		
+        return result;
+	}
+	
+	/////////////////////////////////////////////////////////////////
+	// PROPER NAMES		/////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////
+	/**
+	 * Generates all possible human names from a string representing
+	 * the full name. This methods allows considering various combinations
+	 * of lastname(s) and firstname(s).
+	 * 
+	 * @param names
+	 * 		All the surface forms of the entity, should contain several names 
+	 * 		separated by spaces.
+	 * @return
+	 * 		A list of strings corresponding to alternative forms of the 
+	 * 		original name.
+	 */
+	public static List<String> getPossibleNames(Set<String> names)
+	{	List<String> result = new ArrayList<String>();
+		for(String name: names)
+		{	if(!result.contains(name))
+				result.add(name);
+			String split[] = name.split(" ");
+			
+			for(int i=1;i<split.length;i++)
+			{	// fix the last names
+				String lastnames = "";
+				for(int j=i;j<split.length;j++)
+					lastnames = lastnames + split[j].trim() + " ";
+				lastnames = lastnames.trim();
+				
+				// we try to fix the last names and get all combinations of firstnames 
+				for(int j=1;j<i;j++)
+				{	Combinations combi = new Combinations(i,j);
+					Iterator<int[]> it = combi.iterator();
+					while(it.hasNext())
+					{	int indices[] = it.next();
+						String firstnames = "";
+						for(int index: indices)
+							firstnames = firstnames + split[index].trim() + " ";
+						String fullname = firstnames+lastnames;
+						if(!result.contains(fullname))
+							result.add(fullname);
+					}
+				}
+				
+				// we also try only the lastnames
+				if(!result.contains(lastnames))
+					result.add(lastnames);
+			}
+		}
 		
 		return result;
 	}
@@ -386,7 +678,8 @@ public class StringTools
 			result = result + "[...]";
 		result = result + string.substring(beginIndex, endIndex);
 		if(endIndex<string.length())
-			result = result + "[...]\n";
+			result = result + "[...]";
+		result = result + "\n";
 
 		for(int i=0;i<pos-beginIndex+5;i++)
 			result = result + " ";

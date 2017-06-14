@@ -1,21 +1,24 @@
 package fr.univavignon.transpolosearch.data.entity;
 
 /*
- * TranspoloSearch
- * Copyright 2015-17 Vincent Labatut
+ * Nerwip - Named Entity Extraction in Wikipedia Pages
+ * Copyright 2011-17 Vincent Labatut et al.
  * 
- * This file is part of TranspoloSearch.
+ * This file is part of Nerwip - Named Entity Extraction in Wikipedia Pages.
  * 
- * TranspoloSearch is free software: you can redistribute it and/or modify it under 
- * the terms of the GNU General Public License as published by the Free Software 
- * Foundation, either version 2 of the License, or (at your option) any later version.
+ * Nerwip - Named Entity Extraction in Wikipedia Pages is free software: you can 
+ * redistribute it and/or modify it under the terms of the GNU General Public License 
+ * as published by the Free Software Foundation, either version 2 of the License, or
+ * (at your option) any later version.
  * 
- * TranspoloSearch is distributed in the hope that it will be useful, but WITHOUT ANY 
- * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A 
- * PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * Nerwip - Named Entity Extraction in Wikipedia Pages is distributed in the hope 
+ * that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty 
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public 
+ * License for more details.
  * 
  * You should have received a copy of the GNU General Public License
- * along with TranspoloSearch. If not, see <http://www.gnu.org/licenses/>.
+ * along with Nerwip - Named Entity Extraction in Wikipedia Pages.  
+ * If not, see <http://www.gnu.org/licenses/>.
  */
 
 import java.io.File;
@@ -23,21 +26,22 @@ import java.io.IOException;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
+import java.util.TreeSet;
 
 import org.jdom2.Attribute;
 import org.jdom2.Element;
 import org.xml.sax.SAXException;
 
-import fr.univavignon.transpolosearch.data.entity.AbstractEntity;
-import fr.univavignon.transpolosearch.recognition.AbstractRecognizer;
-import fr.univavignon.transpolosearch.recognition.RecognizerName;
+import fr.univavignon.transpolosearch.data.entity.mention.AbstractMention;
+import fr.univavignon.transpolosearch.data.entity.mention.Mentions;
+import fr.univavignon.transpolosearch.processing.ProcessorName;
 import fr.univavignon.transpolosearch.tools.file.FileNames;
 import fr.univavignon.transpolosearch.tools.time.TimeFormatting;
 import fr.univavignon.transpolosearch.tools.xml.XmlNames;
@@ -53,155 +57,256 @@ import fr.univavignon.transpolosearch.tools.xml.XmlTools;
 public class Entities
 {	
 	/**
-	 * Builds an entities object with current
-	 * date and reference source.
+	 * Builds an Entities object with current
+	 * date and the reference resolver (and no
+	 * linker).
 	 */
 	public Entities()
-	{	initDate();
-		source = RecognizerName.REFERENCE;
+	{	initDates();
+		resolver = ProcessorName.REFERENCE;
+		linker = null;
 	}
 	
 	/**
-	 * Builds an entities object with current
-	 * date and specified source.
+	 * Builds a Entities object with current
+	 * date and specified resolver.
 	 * 
-	 * @param source
-	 * 		Source of the entities (a NER tool).
+	 * @param resolver
+	 * 		Resolver used on these entities.
 	 */
-	public Entities(RecognizerName source)
-	{	initDate();
-		this.source = source;
+	public Entities(ProcessorName resolver)
+	{	initDates();
+		this.resolver = resolver;
+		linker = null;
 	}
 	
 	/**
-	 * Builds an entities object with specified
-	 * date and source.
+	 * Builds a Entities object with current
+	 * date and specified resolver and linker.
 	 * 
-	 * @param source
-	 * 		Source of the entities (a NER tool).
-	 * @param date
-	 * 		Date the entities were detected.
+	 * @param resolver
+	 * 		Resolver used on these entities.
+	 * @param linker
+	 * 		Linker used on these entities.
 	 */
-	public Entities(RecognizerName source, Date date)
-	{	this.date = date;
-		this.source = source;
+	public Entities(ProcessorName resolver, ProcessorName linker)
+	{	initDates();
+		this.resolver = resolver;
+		this.linker = linker;
+	}
+	
+	/**
+	 * Builds a Entities object with specified
+	 * dates and linker.
+	 * 
+	 * @param resolver
+	 * 		Resolver used on these entities.
+	 * @param linker
+	 * 		Linker used on these entities.
+	 * @param creationDate
+	 * 		Date the entities were processed.
+	 * @param modificationDate
+	 * 		Date the entities were last processed.
+	 */
+	private Entities(ProcessorName resolver, ProcessorName linker, Date creationDate, Date modificationDate)
+	{	this.creationDate = creationDate;
+		this.modificationDate = modificationDate;
+		this.resolver = resolver;
+		this.linker = linker;
 	}
 	
 	/////////////////////////////////////////////////////////////////
-	// DATE				/////////////////////////////////////////////
+	// DATES			/////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
-	/** Date the entities were detected */
-	private Date date = null;
+	/** Date the entities were processed */
+	private Date creationDate = null;
+	/** Date the entities were last modified (mainly for manual annotation files) */
+	private Date modificationDate = null;
 	
 	/**
-	 * Sets the detection date
+	 * Sets the processing date
 	 * to the current time.
 	 */
-	private void initDate()
+	private void initDates()
 	{	Calendar cal = Calendar.getInstance();
-		date = cal.getTime();
+		creationDate = cal.getTime();
+		modificationDate = cal.getTime();
 	}
 	
 	/**
 	 * Returns the date these entities
-	 * were detected.
+	 * were processed.
 	 * 
 	 * @return
 	 * 		Date these entities were detected.
 	 */
-	public Date getDate()
-	{	return date;
+	public Date getCreationDate()
+	{	return creationDate;
+	}
+	
+	/**
+	 * Returns the date these entities
+	 * were last modified.
+	 * 
+	 * @return
+	 * 		Date these entities were modified.
+	 */
+	public Date getModificationDate()
+	{	return modificationDate;
 	}
 	
 	/**
 	 * Changes the date these entities
-	 * were detected.
+	 * were originally processed.
 	 * 
-	 * @param date
+	 * @param creationDate
 	 * 		Date of the detection.
 	 */
-	public void setDate(Date date)
-	{	this.date = date;
+	public void setCreationDate(Date creationDate)
+	{	this.creationDate = creationDate;
+	}
+	
+	/**
+	 * Changes the date these entities
+	 * were last modified.
+	 * 
+	 * @param modificationDate
+	 * 		Date of the modification.
+	 */
+	public void setModificationDate(Date modificationDate)
+	{	this.modificationDate = modificationDate;
 	}
 	
 	/////////////////////////////////////////////////////////////////
-	// SOURCE			/////////////////////////////////////////////
+	// RESOLVER			/////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
-	/** NER tool which detected these entities (or {@link RecognizerName#REFERENCE} for a manual annotations) */
-	private RecognizerName source = null;
+	/** Resolver used to process these entities (or {@link ProcessorName#REFERENCE} for manual annotations) */
+	private ProcessorName resolver = null;
 	
 	/**
-	 * Returns the NER tool which detected
+	 * Returns the resolver applied to
 	 * these entities.
 	 * 
 	 * @return
-	 * 		Name of the NER tool having detected these entities.
+	 * 		Name of the resolver used to process these entities.
 	 */
-	public RecognizerName getSource()
-	{	return source;
+	public ProcessorName getResolver()
+	{	return resolver;
 	}
 	
 	/**
-	 * Changes the NER tool which detected
+	 * Changes the resolver used to process these entities.
+	 * 
+	 * @param resolver
+	 * 		New name of the resolver used to process these entities.
+	 */
+	public void setResolver(ProcessorName resolver)
+	{	this.resolver = resolver;
+	}
+	
+	/////////////////////////////////////////////////////////////////
+	// LINKER			/////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////
+	/** Linker used to process these entities (or {@link ProcessorName#REFERENCE} for manual annotations) */
+	private ProcessorName linker = null;
+	
+	/**
+	 * Returns the linker which detected
 	 * these entities.
 	 * 
-	 * @param source
-	 * 		New name of the NER tool having detected these entities.
+	 * @return
+	 * 		Name of the linker used to process these entities.
 	 */
-	public void setSource(RecognizerName source)
-	{	this.source = source;
+	public ProcessorName getLinker()
+	{	return linker;
+	}
+	
+	/**
+	 * Changes the linker used to process these entities.
+	 * 
+	 * @param linker
+	 * 		New name of the linker used to process these entities.
+	 */
+	public void setLinker(ProcessorName linker)
+	{	this.linker = linker;
+	}
+	
+	/////////////////////////////////////////////////////////////////
+	// EDITOR			/////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////
+	/** Human person that originally annotated these entities (only relevant if the recognizer name is {@link ProcessorName#REFERENCE}) */
+	private String editor = null;
+	
+	/**
+	 * Returns the name of the person which
+	 * originally annotated these entities.
+	 * This is relevant only if the linker
+	 * name is {@link ProcessorName#REFERENCE},
+	 * otherwise the method returns {@code null}.
+	 * 
+	 * @return
+	 * 		Name of the editor's name, or {@code null}
+	 * 		if this is not a reference, of if this nale
+	 * 		was not previously set.
+	 */
+	public String getEditor()
+	{	return editor;
+	}
+	
+	/**
+	 * Changes the name of the person which originally 
+	 * annotated these entities.
+	 * 
+	 * @param editor
+	 * 		New editor name.
+	 */
+	public void setEditor(String editor)
+	{	this.editor = editor;
 	}
 	
 	/////////////////////////////////////////////////////////////////
 	// ENTITIES			/////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
-	/** List of entities */
-	private final List<AbstractEntity<?>> entities = new ArrayList<AbstractEntity<?>>();
+	/** Counter used to number entities */
+	private long nextInternalId = 0;
+	/** Set of entities */
+	private final Set<AbstractEntity> entities = new TreeSet<AbstractEntity>();
+	/** Entities by internal id */
+	private final Map<Long,AbstractEntity> entitiesById = new HashMap<Long,AbstractEntity>();
+	/** Named entities by external id */
+	private final Map<String,Map<String,Map<EntityType,AbstractNamedEntity>>> namedEntitiesByExternalId = new HashMap<String,Map<String,Map<EntityType,AbstractNamedEntity>>>();
+	/** Named entities by name */
+	private final Map<String,List<AbstractNamedEntity>> namedEntitiesByName = new HashMap<String,List<AbstractNamedEntity>>();
+	/** Valued entities by value */
+	private final Map<Comparable<?>,AbstractValuedEntity<?>> valuedEntitiesByValue = new HashMap<Comparable<?>,AbstractValuedEntity<?>>();
 	
 	/**
-	 * Returns the whole list
-	 * of detected entities.
+	 * Returns the whole set
+	 * of processed entities.
 	 * 
 	 * @return
-	 * 		List of entity objects.
+	 * 		Set of Entity objects.
 	 */
-	public List<AbstractEntity<?>> getEntities()
+	public Set<AbstractEntity> getEntities()
 	{	return entities;
 	}
 	
 	/**
-	 * Returns the entity at the specified position (in the list of 
-	 * entities, not in the text).
+	 * Returns the set of all entities of a certain types. Note that
+	 * the returned set is a collection of generic entities, not of
+	 * the specifically typed entities.
 	 * 
-	 * @param index
-	 * 		Position of the required entity.
+	 * @param type
+	 * 		Desired type. 
 	 * @return
-	 * 		Entity at the specified position.
+	 * 		All the entities possessing the specified type.
 	 */
-	public AbstractEntity<?> getEntityAt(int index)
-	{	AbstractEntity<?> result = entities.get(index);
-		return result;
-	}
-
-	/**
-	 * Returns the list of entities overlapping the specified range.
-	 * The parameters are expressed in terms of characters in the original
-	 * text.
-	 * 
-	 * @param startPos
-	 * 		Position of the first character in the specified range.
-	 * @param endPos
-	 * 		Position of the last character+1 in the specified range.
-	 * @return
-	 * 		List of the concerned entities.
-	 */
-	public List<AbstractEntity<?>> getEntitiesIn(int startPos, int endPos)
-	{	List<AbstractEntity<?>> result = new ArrayList<AbstractEntity<?>>();
+	public Set<AbstractEntity> getEntitiesByType(EntityType type)
+	{	Set<AbstractEntity> result = new TreeSet<AbstractEntity>();
 		
-		for(AbstractEntity<?> entity: entities)
-		{	if(entity.containsPosition(startPos) || entity.containsPosition(endPos-1)
-				|| (entity.startPos>=startPos && entity.startPos<endPos)
-				|| (entity.endPos>=startPos && entity.endPos<endPos))
+		for(AbstractEntity entity: entities)
+		{	EntityType eType = entity.getType();
+			if(eType==type)
 				result.add(entity);
 		}
 		
@@ -209,277 +314,283 @@ public class Entities
 	}
 	
 	/**
-	 * Adds a new entity in the list.
-	 * No redundance check is performed. 
+	 * Returns the entity with the specified internal id.
+	 * 
+	 * @param id
+	 * 		Unique internal id of the entity.
+	 * @return
+	 * 		Entity possessing the specified internal id, or {@code null]} if none does.
+	 */
+	public AbstractEntity getEntityById(long id)
+	{	AbstractEntity result = entitiesById.get(id);
+		return result;
+	}
+	
+	/**
+	 * Returns the map of named entities with the specified external id.
+	 * Indeed, the same external id can be shared by several distinct instance
+	 * of the entity, possessing each a different type.
+	 * 
+	 * @param id
+	 * 		Unique external id of the named entity.
+	 * @param knowledgeBase
+	 * 		Knowledge base which delivered the external id.
+	 * @return
+	 * 		Named entities possessing the specified external id (can be empty).
+	 */
+	public Map<EntityType,AbstractNamedEntity> getNamedEntityByExternalId(String id, String knowledgeBase)
+	{	Map<EntityType,AbstractNamedEntity> result = new HashMap<EntityType, AbstractNamedEntity>();
+		Map<String,Map<EntityType,AbstractNamedEntity>> map = namedEntitiesByExternalId.get(knowledgeBase);
+		if(map!=null)
+			result = map.get(id);
+		return result;
+	}
+
+	/**
+	 * Returns the named entity with the specified external id.
+	 * 
+	 * @param id
+	 * 		Unique external id of the named entity.
+	 * @param knowledgeBase
+	 * 		Knowledge base which delivered the external id.
+	 * @param type
+	 * 		Type of the desired entity.
+	 * @return
+	 * 		Named entity possessing the specified external id, or {@code null]} if none does.
+	 */
+	public AbstractNamedEntity getNamedEntityByExternalId(String id, String knowledgeBase, EntityType type)
+	{	AbstractNamedEntity result = null;
+		Map<String,Map<EntityType,AbstractNamedEntity>> map = namedEntitiesByExternalId.get(knowledgeBase);
+		if(map!=null)
+		{	Map<EntityType,AbstractNamedEntity> map2 = map.get(id);
+			if(map2!=null)
+				result = map2.get(type);
+		}
+		return result;
+	}
+
+	/**
+	 * Returns the first named entity found with at least one 
+	 * of the specified external id.
+	 * 
+	 * @param ids
+	 * 		Map associating knowledge bases and external ids.
+	 * @param type
+	 * 		Type of the desired entity.
+	 * @return
+	 * 		Named entity possessing at least one of the specified external id, 
+	 * 		or {@code null]} if none does.
+	 */
+	public AbstractNamedEntity getNamedEntityByExternalIds(Map<String,String> ids, EntityType type)
+	{	AbstractNamedEntity result = null;
+		
+		Iterator<Entry<String,String>> it = ids.entrySet().iterator();
+		while(result==null && it.hasNext())
+		{	Entry<String,String> entry = it.next();
+			String kb = entry.getKey();
+			String id = entry.getValue();
+			Map<String,Map<EntityType,AbstractNamedEntity>> map = namedEntitiesByExternalId.get(kb);
+			if(map!=null)
+			{	Map<EntityType,AbstractNamedEntity> map2 = map.get(id);
+				if(map2!=null)
+					result = map2.get(type);
+			}
+		}
+		
+		return result;
+	}
+
+	/**
+	 * Returns a list of named entity with the specified name.
+	 *  
+	 * @param name
+	 * 		Name of the targeted entity, which may not be unique.
+	 * @return
+	 * 		A list (possibly empty) of named entities with the specified name.
+	 */
+	public List<AbstractNamedEntity> getNamedEntitiesByName(String name)
+	{	List<AbstractNamedEntity> result = namedEntitiesByName.get(name);
+		if(result==null)
+			result = new ArrayList<AbstractNamedEntity>();
+		return result;
+	}
+
+	/**
+	 * Returns the valued entity with the specified value.
+	 * 
+	 * @param value
+	 * 		Value of the entity.
+	 * @return
+	 * 		Valued entity possessing the specified value, or {@code null]} if none does.
+	 */
+	public AbstractValuedEntity<?> getValuedEntityByValue(Comparable<?> value)
+	{	AbstractValuedEntity<?> result = valuedEntitiesByValue.get(value);
+		return result;
+	}
+	
+	/**
+	 * Adds a new entity to the list.
 	 * 
 	 * @param entity
 	 * 		Entity to add to the list.
 	 */
-	public void addEntity(AbstractEntity<?> entity)
-	{	entities.add(entity);
-	}
-	
-	/**
-	 * Adds a new entity in the list.
-	 * No redundance check is performed. 
-	 * 
-	 * @param entities
-	 * 		Entities to add to the list.
-	 */
-	public void addEntities(Entities entities)
-	{	this.entities.addAll(entities.getEntities());
-	}
-
-	/**
-	 * Removes the specified entity
-	 * from this list.
-	 * 
-	 * @param entity
-	 * 		Entity object to be removed from the list.
-	 */
-	public void removeEntity(AbstractEntity<?> entity)
-	{	entities.remove(entity);
-	}
-
-	/**
-	 * Returns a sublist containing only the entities of
-	 * a certain type.
-	 * 
-	 * @param type
-	 * 		The desired entity type.
-	 * @return
-	 * 		List of entities of this type.
-	 */
-	public List<AbstractEntity<?>> getEntitiesByType(EntityType type)
-	{	List<AbstractEntity<?>> result = new ArrayList<AbstractEntity<?>>();
-		for(AbstractEntity<?> entity: entities)
-		{	EntityType t = entity.getType();
-			if(t==type)
-				result.add(entity);
+	public void addEntity(AbstractEntity entity)
+	{	// possibly update the entity id
+		if(entity.internalId<0)
+		{	entity.internalId = nextInternalId;
+			nextInternalId++;
 		}
-		return result;
-	}
-	
-	/**
-	 * Sorts the entities in the list
-	 * depending on their position (first
-	 * to last).
-	 */
-	public void sortByPosition()
-	{	Collections.sort(entities);
-	}
-	
-	/**
-	 * Takes a list of entities of various types, and returns
-	 * only those with the specified type.
-	 * 
-	 * @param list
-	 * 		List of entities.
-	 * @param type
-	 * 		Entity type of interest.
-	 * @return
-	 * 		A sublist of the original entity list.
-	 */
-	public static List<AbstractEntity<?>> filterByType(List<AbstractEntity<?>> list, EntityType type)
-	{	List<AbstractEntity<?>> result = new ArrayList<AbstractEntity<?>>();
-		
-		for(AbstractEntity<?> entity: list)
-		{	EntityType t = entity.getType();
-			if(t==type)
-				result.add(entity);
-		}
-		
-		return result;
-	}
-	
-	/////////////////////////////////////////////////////////////////
-	// POSITIONS		/////////////////////////////////////////////
-	/////////////////////////////////////////////////////////////////
-	/**
-	 * Shifts to the right all entities located after 
-	 * position {@code start}, by {@code length} characters.
-	 * 
-	 * @param start
-	 * 		Starting position of the right shifting.
-	 * @param length
-	 * 		Magnitude of the shifting, in characters.
-	 * @param text
-	 * 		Full text of the concerned article (used
-	 * 		to update the entity string values.
-	 */
-	public void rightShiftEntityPositions(int start, int length, String text)
-	{	for(AbstractEntity<?> entity: entities)
-		{	// start position
-			int startPos = entity.getStartPos();
-			if(start<=startPos)
-				startPos = startPos + length;
-			
-			// end position
-			int endPos = entity.getEndPos();
-			if(start<endPos)
-				endPos = endPos + length;
-			
-			// update entity
-			entity.setStartPos(startPos);
-			entity.setEndPos(endPos);
-			String valueStr = text.substring(startPos,endPos);
-			entity.setStringValue(valueStr);
-		}
-	}
-	
-	/**
-	 * Shifts to the left all entities located after 
-	 * position {@code start}, by {@code length} characters.
-	 * 
-	 * @param start
-	 * 		Starting position of the left shifting.
-	 * @param length
-	 * 		Magnitude of the shifting, in characters.
-	 * @param text
-	 * 		Full text of the concerned article (used
-	 * 		to update the entity string values.
-	 */
-	public void leftShiftEntityPositions(int start, int length, String text)
-	{	Iterator<AbstractEntity<?>> it = entities.iterator();
-		while(it.hasNext())
-		{	AbstractEntity<?> entity = it.next();
-			
-			// start position
-			int startPos = entity.getStartPos();
-			if(start<=startPos)
-				startPos = Math.max(startPos-length, start);
-			
-			// end position
-			int endPos = entity.getEndPos();
-			if(start<endPos)
-				endPos = Math.max(endPos-length, start);
-			
-			// update entity
-			if(startPos==endPos)
-				it.remove();
+		else
+		{	if(entitiesById.containsKey(entity.internalId))
+				throw new IllegalArgumentException("This Entities object already contains an entity with the same internal id.");
 			else
-			{	entity.setStartPos(startPos);
-				entity.setEndPos(endPos);
-				String valueStr = text.substring(startPos,endPos);
-				entity.setStringValue(valueStr);
+				nextInternalId = Math.max(nextInternalId, entity.internalId+1);
+		}
+		
+		// add the entity
+		entities.add(entity);
+		entitiesById.put(entity.internalId,entity);
+		// add the named entity
+		if(entity instanceof AbstractNamedEntity)
+		{	// map by id
+			AbstractNamedEntity namedEntity = (AbstractNamedEntity)entity;
+			EntityType type = namedEntity.getType();
+			Set<Entry<String, String>> entrySet = namedEntity.getExternalIds().entrySet();
+			for(Entry<String, String> entry: entrySet)
+			{	String kb = entry.getKey();
+				String id = entry.getValue();
+				Map<String, Map<EntityType,AbstractNamedEntity>> map = namedEntitiesByExternalId.get(kb);
+				if(map==null)
+				{	map = new HashMap<String, Map<EntityType,AbstractNamedEntity>>();
+					namedEntitiesByExternalId.put(kb,map);
+				}
+				Map<EntityType,AbstractNamedEntity> map2 = map.get(id);
+				if(map2==null)
+				{	map2 = new HashMap<EntityType,AbstractNamedEntity>();
+					map.put(id,map2);
+				}
+				if(map2.containsKey(type))
+					throw new IllegalArgumentException("Trying to add a named entity possessing the same external id ("+kb+":"+id+") than an already existing one.");
+				else
+					map2.put(type,namedEntity);
+			}
+			// map by name
+			Set<String> names = namedEntity.getSurfaceForms();
+			for(String name: names)
+			{	List<AbstractNamedEntity> list = namedEntitiesByName.get(name);
+				if(list==null)
+				{	list = new ArrayList<AbstractNamedEntity>();
+					namedEntitiesByName.put(name,list);
+				}
+				list.add(namedEntity);
 			}
 		}
-	}
-
-	/////////////////////////////////////////////////////////////////
-	// ENTITY COMPARISON	/////////////////////////////////////////
-	/////////////////////////////////////////////////////////////////
-	/**
-	 * Checks if the specified entity overlaps (spatially) with one
-	 * of the entities present in this Entities object.
-	 * 
-	 * @param entity
-	 * 		Entity of interest.
-	 * @return
-	 * 		{@code true} iff it intersects an existing entity.
-	 */
-	public boolean isEntityOverlapping(AbstractEntity<?> entity)
-	{	boolean result = entity.overlapsWithOne(entities);
-		return result;
+		// add the valued entity
+		else if(entity instanceof AbstractValuedEntity)
+		{	AbstractValuedEntity<?> valuedEntity = (AbstractValuedEntity<?>)entity;
+			Comparable<?> value = valuedEntity.getValue();
+			if(valuedEntitiesByValue.containsKey(value))
+				throw new IllegalArgumentException("Trying to add a valued entity possessing the same value ("+value+") than an already existing one.");
+			else
+				valuedEntitiesByValue.put(value,valuedEntity);
+		}
 	}
 	
 	/**
-	 * Takes the output of several NER tools,
-	 * and compare the resulting entities.
-	 * The returned list contains maps of
-	 * overlapping entities, i.e. entites detected
-	 * by distinct NER tools, and which are considered
-	 * to be the same entity.
+	 * Remove an entity from this object.
 	 * 
-	 * @param entities
-	 * 		Entities detected by several tools.
-	 * @return
-	 * 		List of maps of equivalent entities.
+	 * @param entity
+	 * 		Entity to remove.
 	 */
-	public static List<Map<AbstractRecognizer,AbstractEntity<?>>> identifyOverlaps(Map<AbstractRecognizer,Entities> entities)
-	{	List<Map<AbstractRecognizer,AbstractEntity<?>>> result = new ArrayList<Map<AbstractRecognizer,AbstractEntity<?>>>();
+	public void removeEntity(AbstractEntity entity)
+	{	entities.remove(entity);
+		entitiesById.remove(entity.internalId);
 		
-		// sort all entities
-		for(Entities e: entities.values())
-			e.sortByPosition();
-		
-		// init iterators
-		Map<AbstractRecognizer,Iterator<AbstractEntity<?>>> iterators = new HashMap<AbstractRecognizer, Iterator<AbstractEntity<?>>>();
-		for(AbstractRecognizer recognizer: entities.keySet())
-		{	Entities e = entities.get(recognizer);
-			Iterator<AbstractEntity<?>> it = e.getEntities().iterator();
-			if(it.hasNext())
-				iterators.put(recognizer,it);
-		}
-		
-		// init current entities
-		Map<AbstractEntity<?>,AbstractRecognizer> current = new HashMap<AbstractEntity<?>, AbstractRecognizer>();
-		for(AbstractRecognizer recognizer: iterators.keySet())
-		{	Iterator<AbstractEntity<?>> it = iterators.get(recognizer);
-			AbstractEntity<?> entity = it.next();
-			current.put(entity,recognizer);
-		}
-		
-		// detect overlapping entities
-		while(iterators.size()>1)
-		{	// init map
-			Map<AbstractRecognizer,AbstractEntity<?>> map = new HashMap<AbstractRecognizer, AbstractEntity<?>>();
-			
-			// identify the first entity
-			Iterator<AbstractEntity<?>> it = current.keySet().iterator();
-			AbstractEntity<?> first = it.next();
-			while(it.hasNext())
-			{	AbstractEntity<?> entity = it.next();
-				if(entity.precedes(first))
-					first = entity;
-			}
-			
-			// compare other entities to the the first one
-			it = current.keySet().iterator();
-			Map<AbstractEntity<?>,AbstractRecognizer> newCurrent = new HashMap<AbstractEntity<?>, AbstractRecognizer>();
-			while(it.hasNext())
-			{	AbstractEntity<?> entity = it.next();
-				AbstractRecognizer recognizer = current.get(entity);
-				
-				if(entity.overlapsWith(first))
-				{	// update map
-					map.put(recognizer,entity);
-					
-					// update iterator and entity list
-					Iterator<AbstractEntity<?>> i = iterators.get(recognizer);
-					if(i.hasNext())
-					{	AbstractEntity<?> newEntity = i.next();
-						newCurrent.put(newEntity,recognizer);
-					}
-					else
-						iterators.remove(recognizer);
+		// remove the named entity
+		if(entity instanceof AbstractNamedEntity)
+		{	// map by id
+			AbstractNamedEntity namedEntity = (AbstractNamedEntity)entity;
+			EntityType type = namedEntity.getType();
+			Set<Entry<String, String>> entrySet = namedEntity.getExternalIds().entrySet();
+			for(Entry<String, String> entry: entrySet)
+			{	String kb = entry.getKey();
+				String id = entry.getValue();
+				Map<String, Map<EntityType,AbstractNamedEntity>> map = namedEntitiesByExternalId.get(kb);
+				if(map!=null)
+				{	Map<EntityType,AbstractNamedEntity> map2 = map.get(id);
+					if(map2!=null)
+						map2.remove(type);
 				}
-				else
-					newCurrent.put(entity,recognizer);
 			}
-			
-			// update entity list
-			current = newCurrent;
-			
-			result.add(map);
-		}
-		
-		// add the remaining entities
-		if(!iterators.isEmpty())
-		{	Entry<AbstractRecognizer,Iterator<AbstractEntity<?>>> entry = iterators.entrySet().iterator().next();
-			AbstractRecognizer recognizer = entry.getKey();
-			Iterator<AbstractEntity<?>> it = entry.getValue();
-			while(it.hasNext())
-			{	Map<AbstractRecognizer,AbstractEntity<?>> map = new HashMap<AbstractRecognizer, AbstractEntity<?>>();
-				AbstractEntity<?> entity = it.next();
-				map.put(recognizer,entity);
-				result.add(map);
+			// map by name
+			Set<String> names = namedEntity.getSurfaceForms();
+			for(String name: names)
+			{	List<AbstractNamedEntity> list = namedEntitiesByName.get(name);
+				if(list!=null)
+					list.remove(namedEntity);
 			}
 		}
 		
-		return result;
+		// remove the valued entity
+		else if(entity instanceof AbstractValuedEntity)
+		{	AbstractValuedEntity<?> valuedEntity = (AbstractValuedEntity<?>)entity;
+			Comparable<?> value = valuedEntity.getValue();
+			valuedEntitiesByValue.remove(value);
+		}
 	}
-
+	
+	/**
+	 * Adds the new entities to this existing collection, merging
+	 * the new ones with the existing ones when they are similar,
+	 * and updating the concerned mentions when merge occurs.
+	 * 
+	 * @param newEntities
+	 * 		New entities to insert in the existing collection.
+	 * @param mentions
+	 * 		Mentions referring to the new entities, to be updated.
+	 */
+	public void unifyEntities(Entities newEntities, Mentions mentions)
+	{	// init entity conversion map (new > old)
+		Map<AbstractNamedEntity,AbstractNamedEntity> map = new HashMap<AbstractNamedEntity,AbstractNamedEntity>();
+		for(AbstractEntity newEntity: newEntities.getEntities())
+		{	// only process named entities (ignore dates)
+			if(newEntity instanceof AbstractNamedEntity)
+			{	// get the new entity ids
+				AbstractNamedEntity namedEntity = (AbstractNamedEntity)newEntity;
+				EntityType type = namedEntity.getType();
+				Map<String,String> exIds = namedEntity.getExternalIds();
+				// look for an existing entity with similar ids
+				AbstractNamedEntity oldEntity = getNamedEntityByExternalIds(exIds,type);
+				// can be used later for substitution (oldEntry possibly null, here)
+				if(oldEntity!=null)
+				{	// possibly complete the old entity with the new one
+					oldEntity.completeWith(namedEntity);
+					// add to the conversion map
+					map.put(namedEntity, oldEntity);
+				}
+				// otherwise, if nothing found, add to existing collection
+				else
+				{	// this allows reseting the internal id to a value consistent with the existing collection
+					newEntity.setInternalId(-1);
+					// insert in the new collection
+					addEntity(newEntity);
+				}
+			}
+		}
+		
+		// use the map to update the mentions with the substitution entities
+		for(AbstractMention<?> mention: mentions.getMentions())
+		{	AbstractEntity entity = mention.getEntity();
+			// only focus on the named entities
+			if(entity instanceof AbstractNamedEntity)
+			{	AbstractNamedEntity namedEntity = (AbstractNamedEntity)entity;
+				AbstractNamedEntity oldEntity = map.get(namedEntity);
+				if(oldEntity!=null)
+					mention.setEntity(oldEntity);
+			}
+		}
+	}
+	
 	/////////////////////////////////////////////////////////////////
 	// FILE ACCESS		/////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
@@ -508,22 +619,33 @@ public class Entities
 		// load file
 		Element element = XmlTools.getRootFromFile(dataFile,schemaFile);
 		
-		// get source
-		String sourceStr = element.getAttributeValue(XmlNames.ATT_SOURCE);
-		RecognizerName source = RecognizerName.valueOf(sourceStr);
+		// get resolver
+		String resolverStr = element.getAttributeValue(XmlNames.ATT_RESOLVER);
+		ProcessorName resolver = ProcessorName.valueOf(resolverStr);
+		// possibly get linker
+		ProcessorName linker = null; 
+		String linkerStr = element.getAttributeValue(XmlNames.ATT_LINKER);
+		if(linkerStr!=null)
+			linker = ProcessorName.valueOf(linkerStr);
 		
-		// get date
-		String dateStr = element.getAttributeValue(XmlNames.ATT_DATE);
-		Date date = TimeFormatting.parseDate(dateStr);
+		// get dates
+		String creationDateStr = element.getAttributeValue(XmlNames.ATT_CREATION);
+		Date creationDate = TimeFormatting.parseXmlTime(creationDateStr);
+		String modificationDateStr = element.getAttributeValue(XmlNames.ATT_MODIFICATION);
+		Date modificationDate = TimeFormatting.parseXmlTime(modificationDateStr);
+		
+		// get editor
+		String editor = element.getAttributeValue(XmlNames.ATT_EDITOR);
 		
 		// get entities
-		Entities result = new Entities(source, date);
+		Entities result = new Entities(resolver, linker, creationDate, modificationDate);
+		result.setEditor(editor);
 		List<Element> elements = element.getChildren(XmlNames.ELT_ENTITY);
 		for(Element e: elements)
-		{	AbstractEntity<?> entity = AbstractEntity.importFromElement(e, source);
+		{	AbstractEntity entity = AbstractEntity.importFromElement(e);
 			result.addEntity(entity);
 		}
-		Collections.sort(result.entities);
+//		Collections.sort(result.entities);
 
 		return result;
 	}
@@ -546,18 +668,32 @@ public class Entities
 		// build xml document
 		Element element = new Element(XmlNames.ELT_ENTITIES);
 		
-		// insert source attribute
-		Attribute sourceAttr = new Attribute(XmlNames.ATT_SOURCE, source.toString());
-		element.setAttribute(sourceAttr);
+		// insert resolver attribute
+		Attribute resolverAttr = new Attribute(XmlNames.ATT_RESOLVER, resolver.toString());
+		element.setAttribute(resolverAttr);
+		// possibly insert linker attribute
+		if(linker!=null)
+		{	Attribute linkerAttr = new Attribute(XmlNames.ATT_LINKER, linker.toString());
+			element.setAttribute(linkerAttr);
+		}
 		
-		// insert date attribute
-		String dateStr = TimeFormatting.formatDate(date);
-		Attribute dateAttr = new Attribute(XmlNames.ATT_DATE, dateStr);
-		element.setAttribute(dateAttr);
+		// insert date attributes
+		String creationDateStr = TimeFormatting.formatXmlTime(creationDate);
+		Attribute creationDateAttr = new Attribute(XmlNames.ATT_CREATION, creationDateStr);
+		element.setAttribute(creationDateAttr);
+		String modificationDateStr = TimeFormatting.formatXmlTime(modificationDate);
+		Attribute modificationDateAttr = new Attribute(XmlNames.ATT_MODIFICATION, modificationDateStr);
+		element.setAttribute(modificationDateAttr);
+		
+		// insert editor attribute
+		if(editor!=null)
+		{	Attribute editorAttr = new Attribute(XmlNames.ATT_EDITOR, editor);
+			element.setAttribute(editorAttr);
+		}
 		
 		// insert entity elements
-		Collections.sort(entities);
-		for(AbstractEntity<?> entity: entities)
+//		Collections.sort(entities);
+		for(AbstractEntity entity: entities)
 		{	Element entityElt = entity.exportAsElement();
 			element.addContent(entityElt);
 		}

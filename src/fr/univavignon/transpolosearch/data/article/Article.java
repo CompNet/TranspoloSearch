@@ -26,6 +26,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -34,8 +35,8 @@ import org.jdom2.Element;
 import org.xml.sax.SAXException;
 
 import fr.univavignon.transpolosearch.data.article.ArticleLanguage;
-import fr.univavignon.transpolosearch.data.entity.Entities;
-import fr.univavignon.transpolosearch.recognition.AbstractRecognizer;
+import fr.univavignon.transpolosearch.data.entity.mention.Mentions;
+import fr.univavignon.transpolosearch.processing.InterfaceRecognizer;
 import fr.univavignon.transpolosearch.tools.file.FileNames;
 import fr.univavignon.transpolosearch.tools.file.FileTools;
 import fr.univavignon.transpolosearch.tools.string.StringTools;
@@ -59,9 +60,23 @@ public class Article
 	public Article(String name)
 	{	this.name = name;
 		
-		initFiles();
+		initFiles(FileNames.FO_WEB_PAGES);
 	}
-
+	
+	/**
+	 * Creates a new article.
+	 * 
+	 * @param name
+	 * 		Name of the article, also the name of its folder.
+	 * @param corpusFolder
+	 * 		Folder containing the corpus.
+	 */
+	public Article(String name, String corpusFolder)
+	{	this.name = name;
+		
+		initFiles(corpusFolder);
+	}
+	
 	/////////////////////////////////////////////////////////////////
 	// NAME				/////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
@@ -273,6 +288,35 @@ public class Article
 	}
 
 	/////////////////////////////////////////////////////////////////
+	// CATEGORIES		/////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////
+	/** Categories of the source page (military, science, etc.) */
+	private final List<ArticleCategory> categories = new ArrayList<ArticleCategory>();
+	
+	/**
+	 * Returns the categories of this article
+	 * (military, science, etc.).
+	 * 
+	 * @return
+	 * 		Categories of this article.
+	 */
+	public List<ArticleCategory> getCategories()
+	{	return categories;
+	}
+
+	/**
+	 * Changes the categories of this article
+	 * (military, science, etc.).
+	 * 
+	 * @param categories
+	 * 		New categories of this article.
+	 */
+	public void setCategories(Collection<ArticleCategory> categories)
+	{	this.categories.clear();
+		this.categories.addAll(categories);
+	}
+
+	/////////////////////////////////////////////////////////////////
 	// ORIGINAL PAGE	/////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
 	/** Original source code of the web page */
@@ -315,11 +359,13 @@ public class Article
 	private File propertiesFile = null;
 	
 	/**
-	 * Initializes all file-related
-	 * variables.
+	 * Initializes all file-related variables.
+	 * 
+	 * @param corpusFolder
+	 * 		Folder containing the corpus.
 	 */
-	private void initFiles()
-	{	folderPath = FileNames.FO_WEB_PAGES + File.separator + name;
+	private void initFiles(String corpusFolder)
+	{	folderPath = corpusFolder + File.separator + name;
 		originalFile = new File(folderPath + File.separator + FileNames.FI_ORIGINAL_PAGE);
 		rawFile = new File(folderPath + File.separator + FileNames.FI_RAW_TEXT);
 		linkedFile = new File(folderPath + File.separator + FileNames.FI_LINKED_TEXT);
@@ -394,6 +440,76 @@ public class Article
 	}
 
 	/////////////////////////////////////////////////////////////////
+	// CONTENT			/////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////
+	/**
+	 * Cleans both texts (raw and linked) of the article, in order to
+	 * remove non-standard space characters, punctuation, ligatures, which
+	 * could complicate the task of the recognizers, or any subsequent 
+	 * processing.
+	 * <br/>
+	 * This method is called when reading an Article from file, and when
+	 * retrieving an article from the Web. It should not be called if
+	 * the article has already been annotated (be it manually or automatically), 
+	 * because it does <i>not</i> update the position of mentions in
+	 * the corresponding files. Consequently, if some characters are added
+	 * or removed during the cleaning, the position of certain mentions
+	 * can become incorrect.
+	 */
+	public void cleanContent()
+	{	// raw text	
+		rawText = StringTools.cleanText(rawText);
+				
+		// linked text
+		linkedText = StringTools.cleanText(linkedText);
+		
+		// remove < and > signs
+		removeTagSigns();
+	}
+	
+	/**
+	 * Parses both raw and linked texts in order to remove the remaining {@code <} and
+	 * {@code >} signs (not belonging to an hyperlink, in the case of the linked text).
+	 */
+	private void removeTagSigns()
+	{	if(rawText.contains("<") || rawText.contains(">"))
+		{	StringBuffer rt = new StringBuffer();
+			StringBuffer lt = new StringBuffer();
+			int i = 0;
+			int j = 0;
+			while(i<rawText.length())
+			{	char c = rawText.charAt(i);
+				if(c=='<')
+				{	rt.append('(');
+					lt.append('(');
+				}
+				else if(c=='>')
+				{	rt.append(')');
+					lt.append(')');
+				}
+				else
+				{	rt.append(c);
+					c = linkedText.charAt(j); 
+					if(c=='<')
+					{	do
+						{	lt.append(c);
+							j++;
+							c = linkedText.charAt(j); 
+						}
+						while(c!='>');
+					}
+					lt.append(c);
+				}
+				i++;
+				j++;
+			}
+			
+			rawText = rt.toString();
+			linkedText = rt.toString();
+		}
+	}
+	
+	/////////////////////////////////////////////////////////////////
 	// READ				/////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
 	/**
@@ -424,12 +540,13 @@ public class Article
 	/**
 	 * Reads an article from file. The location
 	 * of the article is automatically inferred
-	 * from its name/title.
+	 * from its name/title. The article is read
+	 * in the default corpus folder.
 	 * 
 	 * @param name
 	 * 		Name/title of the article.
 	 * @return
-	 * 		The corresponding Article object.
+	 * 		The corresponding {@code Article} object.
 	 * 
 	 * @throws ParseException
 	 * 		Problem while accessing the article files.
@@ -440,35 +557,83 @@ public class Article
 	 */
 	public static Article read(String name) throws ParseException, SAXException, IOException
 	{	Article result = new Article(name);
-		
-		// properties
+		read(result);
+		return result;
+	}
+	/**
+	 * Reads an article from file. The location
+	 * of the article is automatically inferred
+	 * from its name/title. The article is read
+	 * in the specified corpus folder.
+	 * 
+	 * @param name
+	 * 		Name/title of the article.
+	 * @param corpusFolder
+	 * 		Folder containing the corpus.
+	 * @return
+	 * 		The corresponding {@code Article} object.
+	 * 
+	 * @throws ParseException
+	 * 		Problem while accessing the article files.
+	 * @throws SAXException
+	 * 		Problem while accessing the article files.
+	 * @throws IOException
+	 * 		Problem while accessing the article files.
+	 */
+	public static Article read(String name, String corpusFolder) throws ParseException, SAXException, IOException
+	{	Article result = new Article(name,corpusFolder);
+		read(result);
+		return result;
+	}
+	
+	/**
+	 * Method actually performing the article reading.
+	 * 
+	 * @param result
+	 * 		Blank article, to be filled with the read data.
+	 * 
+	 * @throws ParseException
+	 * 		Problem while accessing the article files.
+	 * @throws SAXException
+	 * 		Problem while accessing the article files.
+	 * @throws IOException
+	 * 		Problem while accessing the article files.
+	 */
+	private static void read(Article result) throws ParseException, SAXException, IOException
+	{	// properties
 		if(result.propertiesFile.exists())
 			result.readProperties();
 		else
-			// if the file does not exist, we create it
+		{	// if the file does not exist, we create it
+			result.initRetrievalDate();
 			result.writeProperties();
+		}
 		
 		// original page
 		if(result.originalFile.exists())
-		{	String originalPage = FileTools.readTextFile(result.originalFile);
+		{	String originalPage = FileTools.readTextFile(result.originalFile,"UTF-8");
 			result.setOriginalPage(originalPage);
 		}
 		
 		// raw text
-		String rawText = FileTools.readTextFile(result.rawFile);
-		rawText = StringTools.replaceSpaces(rawText);
+		String rawText = FileTools.readTextFile(result.rawFile,"UTF-8");
+		rawText = rawText.trim();
 		result.setRawText(rawText);
-
-		// raw text with hyperlinks
-		if(result.linkedFile.exists())
-		{	String linkedText = FileTools.readTextFile(result.linkedFile);
-			linkedText = StringTools.replaceSpaces(linkedText);
-			result.setLinkedText(linkedText);
-		}
-		else
-			result.setLinkedText(rawText);
 		
-		return result;
+		// raw text with hyperlinks
+		String linkedText = rawText;
+		if(result.linkedFile.exists())
+		{	linkedText = FileTools.readTextFile(result.linkedFile,"UTF-8");
+			linkedText = linkedText.trim();
+		}
+		result.setLinkedText(linkedText);
+		
+		// clean the texts
+		result.cleanContent();
+		// possibly re-record the article if its content was changed due to cleaning
+		boolean changed = !rawText.equals(result.getRawText()) || !linkedText.equals(result.getLinkedText());
+		if(changed)
+			result.write();
 	}
 	
 	/**
@@ -492,15 +657,19 @@ public class Article
 		
 		// article title
 		{	Element titleElt = root.getChild(XmlNames.ELT_TITLE);
-			String titleStr = titleElt.getTextTrim();
-			this.title = titleStr;
+			if(titleElt!=null)
+			{	String titleStr = titleElt.getTextTrim();
+				this.title = titleStr;
+			}
 		}
 
 		// origine url
 		{	Element urlElt = root.getChild(XmlNames.ELT_URL);
-			String urlStr = urlElt.getTextTrim();
-			URL url = new URL(urlStr);
-			this.url = url;
+			if(urlElt!=null)
+			{	String urlStr = urlElt.getTextTrim();
+				URL url = new URL(urlStr);
+				this.url = url;
+			}
 		}
 		
 		// language
@@ -548,6 +717,19 @@ public class Article
 				}
 			}
 		}
+		
+		// categories of biography
+		{	Element catElt = root.getChild(XmlNames.ELT_CATEGORY);
+			if(catElt!=null)
+			{	String catsStr = catElt.getTextTrim().toUpperCase(Locale.ENGLISH);
+				String temp[] = catsStr.split(" ");
+				categories.clear();
+				for(String catStr: temp)
+				{	ArticleCategory cat = ArticleCategory.valueOf(catStr);
+					categories.add(cat);
+				}
+			}
+		}
 	}
 
 	/////////////////////////////////////////////////////////////////
@@ -566,13 +748,13 @@ public class Article
 	{	// original html code
 // now already done in the reader class
 //		if(originalPage!=null)
-//			FileTools.writeTextFile(originalFile,originalPage);
+//			FileTools.writeTextFile(originalFile,originalPage,"UTF-8");
 
 		// raw text only
-		FileTools.writeTextFile(rawFile,rawText);
+		FileTools.writeTextFile(rawFile,rawText,"UTF-8");
 		
 		// raw text with hyperlinks
-		FileTools.writeTextFile(linkedFile,linkedText);
+		FileTools.writeTextFile(linkedFile,linkedText,"UTF-8");
 		
 		// properties
 		writeProperties();
@@ -597,13 +779,15 @@ public class Article
 		// build xml document
 		Element root = new Element(XmlNames.ELT_PROPERTIES);
 
-		// title
+		// article title
+		if(title!=null)
 		{	Element titleElt = new Element(XmlNames.ELT_TITLE);
 			titleElt.setText(title);
 			root.addContent(titleElt);
 		}
 		
 		// origine url
+		if(url!=null)
 		{	String urlStr = url.toString();
 			Element urlElt = new Element(XmlNames.ELT_URL);
 			urlElt.setText(urlStr);
@@ -654,19 +838,30 @@ public class Article
 				}
 		}
 		
+		// categories of biography
+		if(!categories.isEmpty())
+		{	String catStr = "";
+			for(ArticleCategory category: categories)
+				catStr = catStr + category.toString() + " ";
+			catStr = catStr.substring(0,catStr.length()-1);
+			Element catElt = new Element(XmlNames.ELT_CATEGORY);
+			catElt.setText(catStr);
+			root.addContent(catElt);
+		}
+		
 		// record file
 		XmlTools.makeFileFromRoot(propertiesFile,schemaFile,root);
 	}
 	
 	/////////////////////////////////////////////////////////////////
-	// ENTITIES			/////////////////////////////////////////////
+	// MENTIONS			/////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
 	/**
-	 * Returns the list of reference entities
+	 * Returns the list of reference mentions
 	 * for this article.
 	 * 
 	 * @return
-	 * 		The list of reference entities.
+	 * 		The list of reference mentions.
 	 * 		
 	 * @throws IOException
 	 * 		Problem while accessing the file.
@@ -675,22 +870,21 @@ public class Article
 	 * @throws ParseException 
 	 * 		Problem while accessing the file.
 	 */
-	public Entities getReferenceEntities() throws SAXException, IOException, ParseException
-	{	String path = folderPath + File.separator + FileNames.FI_ENTITY_LIST;
+	public Mentions getReferenceMentions() throws SAXException, IOException, ParseException
+	{	String path = folderPath + File.separator + FileNames.FI_MENTION_LIST;
 		File file = new File(path);
-		Entities result = Entities.readFromXml(file);
+		Mentions result = Mentions.readFromXml(file);
 		return result;
 	}
 	
 	/**
-	 * Returns the list of entities
-	 * for this article, as estimated
-	 * by the specified NER tool.
+	 * Returns the list of mentions for this article, as estimated
+	 * by the specified recognizer.
 	 * 
 	 * @param recognizer
-	 * 		Concerned NER tool.
+	 * 		Concerned recognizer.
 	 * @return
-	 * 		The list of reference entities.
+	 * 		The list of reference mentions.
 	 * 		
 	 * @throws IOException
 	 * 		Problem while accessing the file.
@@ -699,10 +893,19 @@ public class Article
 	 * @throws ParseException 
 	 * 		Problem while accessing the file.
 	 */
-	public Entities getEstimatedEntities(AbstractRecognizer recognizer) throws SAXException, IOException, ParseException
-	{	String path = folderPath + File.separator + recognizer.getFolder() + File.separator + FileNames.FI_ENTITY_LIST;
+	public Mentions getEstimatedMentions(InterfaceRecognizer recognizer) throws SAXException, IOException, ParseException
+	{	String path = folderPath + File.separator + recognizer.getRecognizerFolder() + File.separator + FileNames.FI_MENTION_LIST;
 		File file = new File(path);
-		Entities result = Entities.readFromXml(file);
+		Mentions result = Mentions.readFromXml(file);
+		return result;
+	}
+
+	/////////////////////////////////////////////////////////////////
+	// OBJECT			/////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////
+	@Override
+	public String toString()
+	{	String result = "["+name+"] "+title;
 		return result;
 	}
 }

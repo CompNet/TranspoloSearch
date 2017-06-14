@@ -136,7 +136,7 @@ public class HierarchicalLogger
 				
 				// file handler
 				String filename = FileNames.FO_LOG + File.separator 
-					+ TimeFormatting.formatCurrentTime() + "."
+					+ TimeFormatting.formatCurrentFileTime() + "."
 					+  loggerName + "." 
 					+ "%g"								// replaced by the file number during runtime
 					+ LOG_EXTENSION;
@@ -265,8 +265,8 @@ public class HierarchicalLogger
     public void log(Collection<String> msg)
     {	if(enabled)
     	{	if(msg==null || msg.isEmpty())
-    			msg = Arrays.asList("");
-    		Logger logger = getLogger();
+				msg = Arrays.asList("");
+			Logger logger = getLogger();
     		Object params[] = {msg,getOffset()};
     		logger.log(Level.INFO,msg.iterator().next(),params);
     	}
