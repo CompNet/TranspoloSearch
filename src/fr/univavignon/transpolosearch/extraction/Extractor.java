@@ -56,9 +56,15 @@ import fr.univavignon.transpolosearch.data.entity.EntityLocation;
 import fr.univavignon.transpolosearch.data.entity.EntityOrganization;
 import fr.univavignon.transpolosearch.data.entity.EntityPerson;
 import fr.univavignon.transpolosearch.data.entity.EntityType;
+import fr.univavignon.transpolosearch.data.entity.mention.AbstractMention;
+import fr.univavignon.transpolosearch.data.entity.mention.MentionDate;
+import fr.univavignon.transpolosearch.data.entity.mention.MentionLocation;
+import fr.univavignon.transpolosearch.data.entity.mention.MentionOrganization;
+import fr.univavignon.transpolosearch.data.entity.mention.MentionPerson;
+import fr.univavignon.transpolosearch.data.entity.mention.Mentions;
 import fr.univavignon.transpolosearch.data.event.Event;
-import fr.univavignon.transpolosearch.processing.AbstractRecognizer;
-import fr.univavignon.transpolosearch.processing.RecognizerException;
+import fr.univavignon.transpolosearch.processing.InterfaceRecognizer;
+import fr.univavignon.transpolosearch.processing.ProcessorException;
 import fr.univavignon.transpolosearch.processing.combiner.straightcombiner.StraightCombiner;
 import fr.univavignon.transpolosearch.retrieval.ArticleRetriever;
 import fr.univavignon.transpolosearch.retrieval.reader.ReaderException;
@@ -81,7 +87,7 @@ import fr.univavignon.transpolosearch.tools.string.StringTools;
  * <ol>
  * 	<li>Search: determines which articles are relevant, using one or several Web search engines.</li>
  * 	<li>Retrieval: retrieves them using our article reader.</li>
- * 	<li>Detection: detects the named entities they contain.</li>
+ * 	<li>Detection: detects the named entities they mention.</li>
  * 	<li>Save: records the corresponding events.</li>
  * <ol>
  * 
@@ -96,10 +102,10 @@ public class Extractor
 	 * Override/modify the methods called here, 
 	 * in order to change these parameters.
 	 * 
-	 * @throws RecognizerException
+	 * @throws ProcessorException
 	 * 		Problem while initializing the NER tool. 
 	 */
-	public Extractor() throws RecognizerException
+	public Extractor() throws ProcessorException
 	{	initDefaultSearchEngines();
 		initDefaultSocialEngines();
 		initDefaultRecognizer();
@@ -148,10 +154,10 @@ public class Extractor
 	 * 		Problem while retrieving a Web page.
 	 * @throws ReaderException 
 	 * 		Problem while retrieving a Web page.
-	 * @throws RecognizerException 
-	 * 		Problem while detecting the entities.
+	 * @throws ProcessorException 
+	 * 		Problem while detecting the entity mentions.
 	 */
-	public void performExtraction(String keywords, String website, Date startDate, Date endDate, boolean strictSearch, String compulsoryExpression, boolean extendedSocialSearch) throws IOException, ReaderException, ParseException, SAXException, RecognizerException
+	public void performExtraction(String keywords, String website, Date startDate, Date endDate, boolean strictSearch, String compulsoryExpression, boolean extendedSocialSearch) throws IOException, ReaderException, ParseException, SAXException, ProcessorException
 	{	logger.log("Starting the information extraction");
 		logger.increaseOffset();
 		
@@ -196,10 +202,10 @@ public class Extractor
 	 * 		Problem while retrieving a Web page.
 	 * @throws ReaderException 
 	 * 		Problem while retrieving a Web page.
-	 * @throws RecognizerException 
-	 * 		Problem while detecting the entities.
+	 * @throws ProcessorException 
+	 * 		Problem while detecting the entity mentions.
 	 */
-	public void performWebExtraction(String keywords, String website, Date startDate, Date endDate, boolean strictSearch, String compulsoryExpression) throws IOException, ReaderException, ParseException, SAXException, RecognizerException
+	public void performWebExtraction(String keywords, String website, Date startDate, Date endDate, boolean strictSearch, String compulsoryExpression) throws IOException, ReaderException, ParseException, SAXException, ProcessorException
 	{	logger.log("Starting the web extraction");
 		logger.increaseOffset();
 		
@@ -213,20 +219,20 @@ public class Extractor
 		// retrieve the corresponding articles
 		List<Article> originalArticles = retrieveArticles(filteredUrls);
 		
-		// detect the entities
-		List<Entities> originalEntities = detectEntities(originalArticles);
+		// detect the entity mentions
+		List<Mentions> originalMentions = detectMentions(originalArticles);
 		
 		// possibly filter the articles depending on the dates and compulsory expression
 		List<Article> filteredArticles = new ArrayList<Article>(originalArticles);
-		List<Entities> filteredEntities = new ArrayList<Entities>(originalEntities);
-		filterArticles(filteredArticles,filteredEntities,startDate,endDate,strictSearch,compulsoryExpression);
+		List<Mentions> filteredMentions = new ArrayList<Mentions>(originalMentions);
+		filterArticles(filteredArticles,filteredMentions,startDate,endDate,strictSearch,compulsoryExpression);
 		
-		// displays the remaining articles with their entities
-		displayRemainingEntities(filteredArticles,filteredEntities); //TODO for debug only
+		// displays the remaining articles with their mentions	//TODO maybe get the entities instead of the mention, eventually?
+		displayRemainingMentions(filteredArticles,filteredMentions); //TODO for debug only
 		
-		// extract events from the remaining articles and entities
+		// extract events from the remaining articles and mentions
 		boolean bySentence = false; //TODO for debug
-		List<List<Event>> events = extractEvents(filteredArticles,filteredEntities,bySentence);
+		List<List<Event>> events = extractEvents(filteredArticles,filteredMentions,bySentence);
 		
 		// export the events as a table
 		exportWebEvents(originalUrls, filteredUrls, originalArticles, filteredArticles, events);
@@ -263,10 +269,10 @@ public class Extractor
 	 * 		Problem while retrieving a Web page.
 	 * @throws ReaderException 
 	 * 		Problem while retrieving a Web page.
-	 * @throws RecognizerException 
-	 * 		Problem while detecting the entities.
+	 * @throws ProcessorException 
+	 * 		Problem while detecting the entity mentions.
 	 */
-	public void performSocialExtraction(String keywords, Date startDate, Date endDate, boolean extendedSocialSearch) throws IOException, ReaderException, ParseException, SAXException, RecognizerException
+	public void performSocialExtraction(String keywords, Date startDate, Date endDate, boolean extendedSocialSearch) throws IOException, ReaderException, ParseException, SAXException, ProcessorException
 	{	logger.log("Starting the social media extraction");
 		logger.increaseOffset();
 		
@@ -276,15 +282,15 @@ public class Extractor
 		// convert the posts to articles for later use
 		List<Article> convertedPosts = convertPosts(originalPosts);
 		
-		// detect the entities
-//		List<Entities> postEntities = detectEntities(convertedPosts);
+//		// detect the entity mentions
+//		List<Mentions> postMentions = detectMentions(convertedPosts);
 //		
-//		// displays the remaining articles with their entities
-//		displayRemainingEntities(convertedPosts,postEntities); //TODO for debug only
+//		// displays the remaining articles with their mentions
+//		displayRemainingMentions(convertedPosts,postMentions); //TODO for debug only
 //		
-//		// extract events from the remaining articles and entities
+//		// extract events from the remaining articles and mentions
 //		boolean bySentence = false; //TODO for debug
-//		List<List<Event>> events = extractEvents(convertedPosts, postEntities, bySentence);
+//		List<List<Event>> events = extractEvents(convertedPosts, postMentions, bySentence);
 //		
 //		// export the events as a table
 //		exportSocialEvents(originalPosts, convertedPosts, events);
@@ -392,7 +398,7 @@ public class Extractor
 				File cacheFile = new File(cacheFilePath);
 				if(cachedSearch && cacheFile.exists())
 				{	logger.log("Loading the previous search results from file "+cacheFilePath);
-					Scanner sc = FileTools.openTextFileRead(cacheFile);
+					Scanner sc = FileTools.openTextFileRead(cacheFile,"UTF-8");
 					while(sc.hasNextLine())
 					{	String urlStr = sc.nextLine();
 						URL url = new URL(urlStr);
@@ -412,7 +418,7 @@ public class Extractor
 						// possibly record its results
 						if(cachedSearch)
 						{	logger.log("Recording all URLs in text file \""+cacheFilePath+"\"");
-							PrintWriter pw = FileTools.openTextFileWrite(cacheFile);
+							PrintWriter pw = FileTools.openTextFileWrite(cacheFile,"UTF-8");
 							for(URL url: urls)
 								pw.println(url.toString());
 							pw.close();
@@ -439,7 +445,7 @@ public class Extractor
 		folder.mkdirs();
 		String cacheFilePath = FileNames.FO_WEB_SEARCH_RESULTS + File.separator + FileNames.FI_SEARCH_RESULTS;
 		logger.log("Recording all URLs in CSV file \""+cacheFilePath+"\"");
-		PrintWriter pw = FileTools.openTextFileWrite(cacheFilePath);
+		PrintWriter pw = FileTools.openTextFileWrite(cacheFilePath,"UTF-8");
 		pw.println("URL,Engines");
 		for(Entry<String,List<String>> entry: result.entrySet())
 		{	String urlStr = entry.getKey();
@@ -607,7 +613,7 @@ public class Extractor
 				File cacheFile = new File(cacheFilePath);
 				if(cachedSearch && cacheFile.exists())
 				{	logger.log("Loading the previous search results from file "+cacheFilePath);
-					Scanner sc = FileTools.openTextFileRead(cacheFile);
+					Scanner sc = FileTools.openTextFileRead(cacheFile,"UTF-8");
 					while(sc.hasNextLine())
 					{	SocialMediaPost post = SocialMediaPost.readFromText(sc);
 						posts.add(post);
@@ -625,7 +631,7 @@ public class Extractor
 						// possibly record its results
 						if(cachedSearch)
 						{	logger.log("Recording all posts in text file \""+cacheFilePath+"\"");
-							PrintWriter pw = FileTools.openTextFileWrite(cacheFile);
+							PrintWriter pw = FileTools.openTextFileWrite(cacheFile,"UTF-8");
 							for(SocialMediaPost post: posts)
 								post.writeAsText(pw);
 							pw.close();
@@ -666,44 +672,44 @@ public class Extractor
 	/////////////////////////////////////////////////////////////////
 	// ENTITIES		/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
-	/** Tool used to detect named entities in the text */ 
-	private AbstractRecognizer recognizer;
+	/** Tool used to recognize named entity mentions in the text */ 
+	private InterfaceRecognizer recognizer;
 	
 	/**
-	 * Initializes the named entity detection tool, 
+	 * Initializes the recognizer, 
 	 * which will be applied to identify names and dates in
 	 * the retrieved articles.
 	 * 
-	 * @throws RecognizerException
+	 * @throws ProcessorException
 	 * 		Problem while initializing the recognizer. 
 	 */
-	private void initDefaultRecognizer() throws RecognizerException
+	private void initDefaultRecognizer() throws ProcessorException
 	{	recognizer = new StraightCombiner();
 		recognizer.setCacheEnabled(true);//TODO false for debugging
 	}
 	
 	/**
-	 * Detects the entities present in each specified article.
+	 * Detects the entity mentions present in each specified article.
 	 * 
 	 * @param articles
 	 * 		The list of articles to process.
 	 * @return
-	 * 		A list of entites for each article.
-	 * @throws RecognizerException
+	 * 		A list of entity mentions for each article.
+	 * @throws ProcessorException
 	 * 		Problem while applying the NER tool.
 	 */
-	private List<Entities> detectEntities(List<Article> articles) throws RecognizerException
+	private List<Mentions> detectMentions(List<Article> articles) throws ProcessorException
 	{	logger.log("Detecting entities in all "+articles.size()+" articles");
 		logger.increaseOffset();
-		List<Entities> result = new ArrayList<Entities>();
+		List<Mentions> result = new ArrayList<Mentions>();
 		
 		for(Article article: articles)
 		{	logger.log("Processing article "+article.getTitle()+"("+article.getUrl()+")");
 			logger.increaseOffset();
-				Entities entities = recognizer.process(article);
-				result.add(entities);
+				Mentions mentions = recognizer.recognize(article);
+				result.add(mentions);
 				
-				logger.log("Found "+entities.getEntities().size()+" entities");
+				logger.log("Found "+mentions.getMentions().size()+" entities");
 			logger.decreaseOffset();
 		}
 		
@@ -721,8 +727,8 @@ public class Extractor
 	 *  
 	 * @param articles
 	 * 		List of articles to process.
-	 * @param entities
-	 * 		List of the entities detected in the listed articles.
+	 * @param mentions
+	 * 		List of the entity mentions detected in the listed articles.
 	 * @param startDate
 	 * 		Start of the time period.
 	 * @param endDate
@@ -734,7 +740,7 @@ public class Extractor
 	 * 		String expression which must be present in the article,
 	 * 		or {@code null} if there's no such constraint.
 	 */
-	private void filterArticles(List<Article> articles, List<Entities> entities, Date startDate, Date endDate, boolean strictSearch, String compulsoryExpression)
+	private void filterArticles(List<Article> articles, List<Mentions> mentions, Date startDate, Date endDate, boolean strictSearch, String compulsoryExpression)
 	{	logger.log("Starting filtering the articles");
 		logger.increaseOffset();
 		
@@ -756,7 +762,7 @@ public class Extractor
 			logger.increaseOffset();
 				int count = 0;
 				Iterator<Article> itArt = articles.iterator();
-				Iterator<Entities> itEnt = entities.iterator();
+				Iterator<Mentions> itEnt = mentions.iterator();
 				while(itArt.hasNext())
 				{	Article article = itArt.next();
 					itEnt.next();
@@ -786,22 +792,22 @@ public class Extractor
 					fr.univavignon.transpolosearch.tools.time.Date start = new fr.univavignon.transpolosearch.tools.time.Date(startDate);
 					fr.univavignon.transpolosearch.tools.time.Date end = new fr.univavignon.transpolosearch.tools.time.Date(endDate);
 					Iterator<Article> itArt = articles.iterator();
-					Iterator<Entities> itEnt = entities.iterator();
+					Iterator<Mentions> itEnt = mentions.iterator();
 					int count = 0;
 					while(itArt.hasNext())
 					{	Article article = itArt.next();
-						Entities ents = itEnt.next();
+						Mentions ments = itEnt.next();
 						logger.log("Processing article "+article.getTitle());
-						List<AbstractEntity<?>> dates = ents.getEntitiesByType(EntityType.DATE);
+						List<AbstractMention<?>> dates = ments.getMentionsByType(EntityType.DATE);
 
 						// check if the article contains a date between start and end
 						boolean remove = dates.isEmpty();
 						if(!remove)	
 						{	fr.univavignon.transpolosearch.tools.time.Date date = null;
-							Iterator<AbstractEntity<?>> it = dates.iterator();
+							Iterator<AbstractMention<?>> it = dates.iterator();
 							while(date==null && it.hasNext())
-							{	AbstractEntity<?> entity = it.next();
-								fr.univavignon.transpolosearch.tools.time.Date d = (fr.univavignon.transpolosearch.tools.time.Date) entity.getValue();
+							{	AbstractMention<?> mention = it.next();
+								fr.univavignon.transpolosearch.tools.time.Date d = (fr.univavignon.transpolosearch.tools.time.Date) mention.getValue();
 								if(d.isContained(start, end))
 									date = d;
 							}
@@ -812,7 +818,7 @@ public class Extractor
 							}
 						}
 						
-						// possibly remove the article/entities
+						// possibly remove the article/mentions
 						if(remove)
 						{	itArt.remove();
 							itEnt.remove();
@@ -833,60 +839,60 @@ public class Extractor
 	// DISPLAY	/////////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
 	/**
-	 * Displays the entities associated to each article.
+	 * Displays the entity mentions associated to each article.
 	 * 
 	 * @param articles
 	 * 		List of articles.
-	 * @param entities
-	 * 		List of associated entities.
+	 * @param mentions
+	 * 		List of associated entity mentions.
 	 */
-	private void displayRemainingEntities(List<Article> articles, List<Entities> entities)
-	{	logger.log("Displaying remaining articles and entities");
+	private void displayRemainingMentions(List<Article> articles, List<Mentions> mentions)
+	{	logger.log("Displaying remaining articles and entity mentions");
 		logger.increaseOffset();
 		
 		Iterator<Article> itArt = articles.iterator();
-		Iterator<Entities> itEnt = entities.iterator();
+		Iterator<Mentions> itEnt = mentions.iterator();
 		int count = 0;
 		while(itArt.hasNext())
 		{	Article article = itArt.next();
-			Entities ents = itEnt.next();
+			Mentions ments = itEnt.next();
 			logger.log("Article: "+article.getTitle()+" ("+count+"/"+articles.size()+")");
 			logger.increaseOffset();
 				count++;
-				List<AbstractEntity<?>> dates = ents.getEntitiesByType(EntityType.DATE);
+				List<AbstractMention<?>> dates = ments.getMentionsByType(EntityType.DATE);
 				if(!dates.isEmpty())
 				{	String first = "Dates ("+dates.size()+"):";
 					List<String> msg = new ArrayList<String>();
 					msg.add(first);
-					for(AbstractEntity<?> entity: dates)
-						msg.add(entity.toString());
+					for(AbstractMention<?> mention: dates)
+						msg.add(mention.toString());
 					logger.log(msg);
 				}
-				List<AbstractEntity<?>> locations = ents.getEntitiesByType(EntityType.LOCATION);
+				List<AbstractMention<?>> locations = ments.getMentionsByType(EntityType.LOCATION);
 				if(!locations.isEmpty())
 				{	String first = "Locations ("+locations.size()+"):";
 					List<String> msg = new ArrayList<String>();
 					msg.add(first);
-					for(AbstractEntity<?> entity: locations)
-						msg.add(entity.toString());
+					for(AbstractMention<?> mention: locations)
+						msg.add(mention.toString());
 					logger.log(msg);
 				}
-				List<AbstractEntity<?>> organizations = ents.getEntitiesByType(EntityType.ORGANIZATION);
+				List<AbstractMention<?>> organizations = ments.getMentionsByType(EntityType.ORGANIZATION);
 				if(!organizations.isEmpty())
 				{	String first = "Organizations ("+organizations.size()+"):";
 					List<String> msg = new ArrayList<String>();
 					msg.add(first);
-					for(AbstractEntity<?> entity: organizations)
-						msg.add(entity.toString());
+					for(AbstractMention<?> mention: organizations)
+						msg.add(mention.toString());
 					logger.log(msg);
 				}
-				List<AbstractEntity<?>> persons = ents.getEntitiesByType(EntityType.PERSON);
+				List<AbstractMention<?>> persons = ments.getMentionsByType(EntityType.PERSON);
 				if(!persons.isEmpty())
 				{	String first = "Persons ("+persons.size()+"):";
 					List<String> msg = new ArrayList<String>();
 					msg.add(first);
-					for(AbstractEntity<?> entity: persons)
-						msg.add(entity.toString());
+					for(AbstractMention<?> mention: persons)
+						msg.add(mention.toString());
 					logger.log(msg);
 				}
 			logger.decreaseOffset();
@@ -900,32 +906,32 @@ public class Extractor
 	// EVENTS PROCESSING	/////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
 	/**
-	 * Takes a list of articles and a list of the corresponding entities,
+	 * Takes a list of articles and a list of the corresponding entity mentions,
 	 * and identifies the events described in the articles.
 	 * 
 	 * @param articles
 	 * 		List of articles to treat.
-	 * @param entities
-	 * 		List of the associated entities.*
+	 * @param mentions
+	 * 		List of the associated entity mentions.
 	 * @param bySentence
-	 * 		Whether to retrieve events by sentence (all event-related entities
+	 * 		Whether to retrieve events by sentence (all event-related entity mentions
 	 * 		must be in the same sentence) or by article.
 	 * @return
 	 * 		The resulting list of events, for each article.
 	 */
-	private List<List<Event>> extractEvents(List<Article> articles, List<Entities> entities, boolean bySentence)
+	private List<List<Event>> extractEvents(List<Article> articles, List<Mentions> mentions, boolean bySentence)
 	{	logger.log("Extracting events");
 		logger.increaseOffset();
 		List<List<Event>> result = new ArrayList<List<Event>>();
 		
 		// processing each article
 		Iterator<Article> itArt = articles.iterator();
-		Iterator<Entities> itEnt = entities.iterator();
+		Iterator<Mentions> itMent = mentions.iterator();
 		int count = 0;
 		int eventNbr = 0;
 		while(itArt.hasNext())
 		{	Article article = itArt.next();
-			Entities ents = itEnt.next();
+			Mentions ments = itMent.next();
 			logger.log("Article: "+article.getTitle()+" ("+count+"/"+articles.size()+")");
 			logger.increaseOffset();
 				count++;
@@ -939,36 +945,36 @@ public class Extractor
 					sentencePos.add(rawText.length()); // to mark the end of the last sentence
 					int sp = -1;
 					
-					// for each sentence, we get the detected entities
+					// for each sentence, we get the detected entity mentions
 					for(int ep: sentencePos)
 					{	if(sp>=0)
-						{	List<AbstractEntity<?>> le = ents.getEntitiesIn(sp, ep);
-							List<AbstractEntity<?>> dates = Entities.filterByType(le,EntityType.DATE);
+						{	List<AbstractMention<?>> le = ments.getMentionsIn(sp, ep);
+							List<AbstractMention<?>> dates = Mentions.filterByType(le,EntityType.DATE);
 							// only go on if there is at least one date
 							if(!dates.isEmpty())
 							{	if(dates.size()>1)
 									logger.log("WARNING: there are several dates in sentence \""+rawText.substring(sp,ep)+"\"");
 								else
-								{	EntityDate ed = (EntityDate)dates.get(0);
-									List<AbstractEntity<?>> persons = Entities.filterByType(le,EntityType.PERSON);
+								{	MentionDate ed = (MentionDate)dates.get(0);
+									List<AbstractMention<?>> persons = Mentions.filterByType(le,EntityType.PERSON);
 									if(persons.isEmpty())
 										logger.log("WARNING: there is a date ("+ed.getValue()+") but no persons in sentence \""+rawText.substring(sp,ep)+"\"");
 									else
 									{	Event event = new Event(ed);
 										events.add(event);
 										eventNbr++;
-										for(AbstractEntity<?> entity: persons)
-										{	EntityPerson person = (EntityPerson)entity;
+										for(AbstractMention<?> mention: persons)
+										{	MentionPerson person = (MentionPerson)mention;
 											event.addPerson(person);
 										}
-										List<AbstractEntity<?>> organizations = Entities.filterByType(le,EntityType.ORGANIZATION);
-										for(AbstractEntity<?> entity: organizations)
-										{	EntityOrganization organization = (EntityOrganization)entity;
+										List<AbstractMention<?>> organizations = Mentions.filterByType(le,EntityType.ORGANIZATION);
+										for(AbstractMention<?> mention: organizations)
+										{	MentionOrganization organization = (EntityOrganization)mention;
 											event.addOrganization(organization);
 										}
-										List<AbstractEntity<?>> locations = Entities.filterByType(le,EntityType.LOCATION);
-										for(AbstractEntity<?> entity: locations)
-										{	EntityLocation location = (EntityLocation)entity;
+										List<AbstractMention<?>> locations = Mentions.filterByType(le,EntityType.LOCATION);
+										for(AbstractMention<?> mention: locations)
+										{	MentionLocation location = (EntityLocation)mention;
 											event.addLocation(location);
 										}
 										logger.log(Arrays.asList("Event found for sentence \""+rawText.substring(sp,ep)+"\"",event.toString()));
@@ -981,45 +987,45 @@ public class Extractor
 				}
 				
 				else // by article
-				{	List<AbstractEntity<?>> dates = ents.getEntitiesByType(EntityType.DATE);
+				{	List<AbstractMention<?>> dates = ments.getMentionsByType(EntityType.DATE);
 					// only go on if there is at least one date
 					if(!dates.isEmpty())
 					{	Event event;
 						if(dates.size()>1)
 						{	logger.log("There are several ("+dates.size()+") dates in the article >> merging them");
-							Iterator<AbstractEntity<?>> it = dates.iterator();
-							EntityDate ed = (EntityDate)it.next();
+							Iterator<AbstractMention<?>> it = dates.iterator();
+							MentionDate ed = (MentionDate)it.next();
 							event = new Event(ed);
 							while(it.hasNext())
-							{	ed = (EntityDate)it.next();
+							{	ed = (MentionDate)it.next();
 								fr.univavignon.transpolosearch.tools.time.Date d = ed.getValue(); 
 								event.mergeDate(d);
 							}
 						}
 						else
-						{	EntityDate esd = (EntityDate)dates.get(0);
+						{	MentionDate esd = (MentionDate)dates.get(0);
 							event = new Event(esd);
 						}
 						
-						List<AbstractEntity<?>> persons = ents.getEntitiesByType(EntityType.PERSON);
+						List<AbstractMention<?>> persons = ments.getMentionsByType(EntityType.PERSON);
 						if(persons.isEmpty())
 							logger.log("WARNING: there is a date ("+event.getStartDate()+") but no person in article \""+article.getTitle()+"\"");
 						else
 						{	events.add(event);
 							eventNbr++;
 							
-							for(AbstractEntity<?> entity: persons)
-							{	EntityPerson person = (EntityPerson)entity;
+							for(AbstractMention<?> mention: persons)
+							{	MentionPerson person = (MentionPerson)mention;
 								event.addPerson(person);
 							}
-							List<AbstractEntity<?>> organizations = ents.getEntitiesByType(EntityType.ORGANIZATION);
-							for(AbstractEntity<?> entity: organizations)
-							{	EntityOrganization organization = (EntityOrganization)entity;
+							List<AbstractMention<?>> organizations = ments.getMentionsByType(EntityType.ORGANIZATION);
+							for(AbstractMention<?> mention: organizations)
+							{	MentionOrganization organization = (MentionOrganization)mention;
 								event.addOrganization(organization);
 							}
-							List<AbstractEntity<?>> locations = ents.getEntitiesByType(EntityType.LOCATION);
-							for(AbstractEntity<?> entity: locations)
-							{	EntityLocation location = (EntityLocation)entity;
+							List<AbstractMention<?>> locations = ments.getMentionsByType(EntityType.LOCATION);
+							for(AbstractMention<?> mention: locations)
+							{	MentionLocation location = (MentionLocation)mention;
 								event.addLocation(location);
 							}
 							logger.log(Arrays.asList("Event found for article \""+article.getTitle()+"\"",event.toString()));
@@ -1037,19 +1043,19 @@ public class Extractor
 	}
 	
 //	/**
-//	 * Takes a list of entities and returns the list of
+//	 * Takes a list of entity mentions and returns the list of
 //	 * corresponding strings.
 //	 * 
-//	 * @param entities
-//	 * 		List of entities.
+//	 * @param mentions
+//	 * 		List of entity mentions.
 //	 * @return
 //	 * 		List of the associated strings.
 //	 */
-//	private List<String> extractEntityNames(List<AbstractEntity<?>> entities)
+//	private List<String> extractMentionNames(List<AbstractMention<?>> mentions)
 //	{	List<String> result = new ArrayList<String>();
 //		
-//		for(AbstractEntity<?> entity: entities)
-//		{	Object object = entity.getValue();
+//		for(AbstractMention<?> mention: mentions)
+//		{	Object object = mention.getStringValue();
 //			String str = object.toString();
 //			result.add(str);
 //		}
@@ -1084,7 +1090,7 @@ public class Extractor
 		List<String> urls = new ArrayList<String>(originalUrls.keySet());
 		Collections.sort(urls);
 		
-		PrintWriter pw = FileTools.openTextFileWrite(filePath);
+		PrintWriter pw = FileTools.openTextFileWrite(filePath, "UTF-8");
 		
 		// write header
 		List<String> colNames = Arrays.asList(
@@ -1212,7 +1218,7 @@ public class Extractor
 		logger.decreaseOffset();
 		SimpleDateFormat sdf = new SimpleDateFormat("dd/mm/yyyyy",Locale.FRANCE); //TODO we suppose we deal with French articles, but this should be generalized later
 		
-		PrintWriter pw = FileTools.openTextFileWrite(filePath);
+		PrintWriter pw = FileTools.openTextFileWrite(filePath, "UTF-8");
 		
 		// write header
 		List<String> colNames = Arrays.asList(
@@ -1322,8 +1328,8 @@ public class Extractor
 		all.addAll(event.getOrganizations());
 		Iterator<String> itPo = all.iterator();
 		while(itPo.hasNext())
-		{	String ent = itPo.next();
-			persOrgs = persOrgs + ent;
+		{	String ment = itPo.next();
+			persOrgs = persOrgs + ment;
 			if(itPo.hasNext())
 				persOrgs = persOrgs + ", ";
 		}
