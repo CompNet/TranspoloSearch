@@ -25,12 +25,13 @@ import java.util.TreeSet;
 
 import org.jdom2.Element;
 
-import fr.univavignon.transpolosearch.data.entity.EntityDate;
-import fr.univavignon.transpolosearch.data.entity.EntityLocation;
-import fr.univavignon.transpolosearch.data.entity.EntityOrganization;
-import fr.univavignon.transpolosearch.data.entity.EntityPerson;
+import fr.univavignon.transpolosearch.data.entity.mention.MentionDate;
+import fr.univavignon.transpolosearch.data.entity.mention.MentionLocation;
+import fr.univavignon.transpolosearch.data.entity.mention.MentionOrganization;
+import fr.univavignon.transpolosearch.data.entity.mention.MentionPerson;
 import fr.univavignon.transpolosearch.tools.string.StringTools;
 import fr.univavignon.transpolosearch.tools.time.Date;
+import fr.univavignon.transpolosearch.tools.time.Period;
 
 /**
  * An event is a group of entities:
@@ -61,25 +62,11 @@ public class Event
 	/**
 	 * Builds a new event using the specified date.
 	 * 
-	 * @param startDate
-	 * 		Starting date.
+	 * @param date
+	 * 		Date mention.
 	 */
-	public Event(EntityDate startDate)
-	{	this.startDate = startDate.getValue();
-		this.endDate = null;
-	}
-
-	/**
-	 * Builds a new event using the specified period.
-	 * 
-	 * @param startDate
-	 * 		Starting date.
-	 * @param endDate
-	 * 		Ending date.
-	 */
-	public Event(EntityDate startDate, EntityDate endDate)
-	{	this.startDate = startDate.getValue();
-		this.endDate = endDate.getValue();
+	public Event(MentionDate date)
+	{	period = date.getValue();
 	}
 	
 	/////////////////////////////////////////////////////////////////
@@ -111,137 +98,56 @@ public class Event
 	/////////////////////////////////////////////////////////////////
 	// DATES			/////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
-	/** Start date */
-	private Date startDate = null;
-	/** End date (or {@code null} if no end date) */
-	private Date endDate = null;
+	/** Period  */
+	private Period period = null;
 	
 	/**
-	 * Returns the start date of the event, or
-	 * the only date if this is a single-date event.
+	 * Returns the period of the event, or
+	 * {@code null} if it has no date yet.
 	 * 
 	 * @return
-	 * 		Start (or only) date of this event.
+	 * 		Period of this event, or {@code null} if no date.
 	 */
-	public Date getStartDate()
-	{	return startDate;
+	public Period getPeriod()
+	{	return period;
 	}
 	
 	/**
-	 * Returns the end date of the event, or
-	 * {@code null} if this is only described by
-	 * a single date.
-	 * 
-	 * @return
-	 * 		End date or {@code null} if single date event.
-	 */
-	public Date getEndDate()
-	{	return endDate;
-	}
-	
-	/**
-	 * Combines the specified date to the existing ones in
+	 * Combines the specified date to the existing period in
 	 * this event. If the date is more extreme than one of
-	 * the bounds, it becomes the new bound. Same thing if
+	 * the current bounds, it becomes the new bound. Same thing if
 	 * it is more <i>precise</i>.
 	 * 
 	 * @param date
-	 * 		The date to merge to this event current dates.
+	 * 		The date to merge to this event current period.
 	 * @return
 	 * 		{@code true} iff one of the start/end dates of
 	 * 		this event was modified during the processed.
 	 */
 	public boolean mergeDate(Date date)
-	{	boolean changedStart = false;
-		boolean changedEnd = false;
-		if(startDate==null)
-		{	startDate = date;
-			changedStart = true;
-		}
-		else
-		{	int year1 = startDate.getYear();
-			int year2 = date.getYear();
-			int month1 = startDate.getMonth();
-			int month2 = date.getMonth();
-			int day1 = startDate.getDay();
-			int day2 = date.getDay();
-			
-			// check date vs start date
-			if(year1==0)
-			{	startDate = date;
-				changedStart = true;
-			}
-			else if(year2<year1)
-			{	if(endDate==null)
-				{	endDate = startDate;
-					changedEnd = true;
-				}
-				startDate = date;
-				changedStart = true;
-			}	
-			else if(year2==year1)
-			{	if(month1==0)
-				{	startDate = date;
-					changedStart = true;
-				}
-				else if(month2<month1)
-				{	if(endDate==null)
-					{	endDate = startDate;
-						changedEnd = true;
-					}
-					startDate = date;
-					changedStart = true;
-				}
-				else if(month2==month1)
-				{	if(day1==0)
-					{	startDate = date;
-						changedStart = true;
-					}
-					else if(day2<day1)
-					{	if(endDate==null)
-						{	endDate = startDate;
-							changedEnd = true;
-						}
-						startDate = date;
-						changedStart = true;
-					}
-				}
-			}
-			
-			// check date vs end date
-			if(!changedStart && !changedEnd)
-			{	if(endDate==null)
-				{	endDate = date;
-					changedEnd = true;
-				}
-			
-				else
-				{	year1 = endDate.getYear();
-					month1 = endDate.getMonth();
-					day1 = endDate.getDay();
-					
-					if(year2>year1)
-					{	endDate = date;
-						changedEnd = true;
-					}
-					else if(year2==year1)
-					{	if(month2>month1)
-						{	endDate = date;
-							changedEnd = true;
-						}
-						else if(month2==month1)
-						{	if(day2>day1)
-							{	endDate = date;
-								changedEnd = true;
-							}
-						}
-					}
-				}
-			}
-		}
-		
-		boolean result = changedEnd || changedStart;
-		return result; 
+	{	boolean result = false;
+		if(period!=null)
+			result = period.mergeDate(date);
+		return result;
+	}
+	
+	/**
+	 * Combines the specified period to the existing period in
+	 * this event. If the some bounds of the period is more extreme 
+	 * than one of the current bounds, it replaces it. Same thing if
+	 * it is more <i>precise</i>.
+	 * 
+	 * @param period
+	 * 		The period to merge to the current one.
+	 * @return 
+	 * 		{@code true} iff one of the start/end dates of
+	 * 		this event was modified during the processed.
+	 */
+	public boolean mergePeriod(Period period)
+	{	boolean result = false;
+		if(this.period!=null)
+			result = this.period.mergePeriod(period);
+		return result;
 	}
 	
 	/////////////////////////////////////////////////////////////////
@@ -268,7 +174,7 @@ public class Event
 	 * 		The location entity whose <i>normalized</i>
 	 * 		name will be added to this event.
 	 */
-	public void addLocation(EntityLocation location)
+	public void addLocation(MentionLocation location)
 	{	String normalizedName = location.getValue();
 		if(normalizedName==null)
 			normalizedName = location.getStringValue();
@@ -282,8 +188,8 @@ public class Event
 	 * 		The location entities whose <i>normalized</i>
 	 * 		name will be added to this event.
 	 */
-	public void addLocation(List<EntityLocation> locations)
-	{	for(EntityLocation location: locations)
+	public void addLocation(List<MentionLocation> locations)
+	{	for(MentionLocation location: locations)
 			addLocation(location);
 	}
 	
@@ -311,7 +217,7 @@ public class Event
 	 * 		The organization entity whose <i>normalized</i>
 	 * 		name will be added to this event.
 	 */
-	public void addOrganization(EntityOrganization organization)
+	public void addOrganization(MentionOrganization organization)
 	{	String normalizedName = organization.getValue();
 		if(normalizedName==null)
 			normalizedName = organization.getStringValue();
@@ -325,8 +231,8 @@ public class Event
 	 * 		The location entities whose <i>normalized</i>
 	 * 		name will be added to this event.
 	 */
-	public void addOrganizations(List<EntityOrganization> organizations)
-	{	for(EntityOrganization organization: organizations)
+	public void addOrganizations(List<MentionOrganization> organizations)
+	{	for(MentionOrganization organization: organizations)
 			addOrganization(organization);
 	}
 	
@@ -354,7 +260,7 @@ public class Event
 	 * 		The person entity whose <i>normalized</i>
 	 * 		name will be added to this event.
 	 */
-	public void addPerson(EntityPerson person)
+	public void addPerson(MentionPerson person)
 	{	String normalizedName = person.getValue();
 		if(normalizedName==null)
 			normalizedName = person.getStringValue();
@@ -368,8 +274,8 @@ public class Event
 	 * 		The person entities whose <i>normalized</i>
 	 * 		name will be added to this event.
 	 */
-	public void addPerson(List<EntityPerson> persons)
-	{	for(EntityPerson person: persons)
+	public void addPerson(List<MentionPerson> persons)
+	{	for(MentionPerson person: persons)
 			addPerson(person);
 	}
 	
@@ -391,7 +297,7 @@ public class Event
 	{	boolean result;
 		
 		// check if dates are compatible
-		result = areCompatibleDates(startDate,endDate,event.startDate,event.endDate);
+		result = areCompatibleDates(period,event.period);
 
 		// check if at least one compatible location
 		if(result)
@@ -415,20 +321,15 @@ public class Event
 	 * <br/>
 	 * For now, we check if one date/period contains the other.
 	 * 
-	 * @param startDate1
-	 * 		Start date of the first event.
-	 * @param endDate1
-	 * 		End date of the first event.
-	 * @param startDate2
-	 * 		Start date of the second event.
-	 * @param endDate2
-	 * 		End date of the second event.
+	 * @param period1
+	 * 		Date of the first event.
+	 * @param period2
+	 * 		Date of the second event.
 	 * @return
 	 * 		{@code true} iff both periods/dates have similar semantical value.
 	 */
-	public boolean areCompatibleDates(Date startDate1, Date endDate1, Date startDate2, Date endDate2)
-	{	boolean result = startDate1.isCompatible(startDate2)
-			&& ((endDate1==null && endDate2==null) || endDate1.isCompatible(endDate2)); 
+	public boolean areCompatibleDates(Period period1, Period period2)
+	{	boolean result = period1.isCompatible(period2); 
 		
 		return result;
 	}
@@ -542,10 +443,10 @@ public class Event
 	public String toString()
 	{	String result = "<";
 		
-		if(endDate==null)
-			result = result + "date=" + startDate;
+		if(period==null)
+			result = result + "date=N/A";
 		else
-			result = result + " start=" + startDate + " end=" + endDate;
+			result = result + " date=" + period;
 		
 		if(!persons.isEmpty())
 			result = result + " persons=" + persons;

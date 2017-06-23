@@ -49,12 +49,6 @@ import com.gargoylesoftware.htmlunit.FailingHttpStatusCodeException;
 
 import fr.univavignon.transpolosearch.data.article.Article;
 import fr.univavignon.transpolosearch.data.article.ArticleLanguage;
-import fr.univavignon.transpolosearch.data.entity.AbstractEntity;
-import fr.univavignon.transpolosearch.data.entity.Entities;
-import fr.univavignon.transpolosearch.data.entity.EntityDate;
-import fr.univavignon.transpolosearch.data.entity.EntityLocation;
-import fr.univavignon.transpolosearch.data.entity.EntityOrganization;
-import fr.univavignon.transpolosearch.data.entity.EntityPerson;
 import fr.univavignon.transpolosearch.data.entity.EntityType;
 import fr.univavignon.transpolosearch.data.entity.mention.AbstractMention;
 import fr.univavignon.transpolosearch.data.entity.mention.MentionDate;
@@ -81,6 +75,7 @@ import fr.univavignon.transpolosearch.tools.file.FileTools;
 import fr.univavignon.transpolosearch.tools.log.HierarchicalLogger;
 import fr.univavignon.transpolosearch.tools.log.HierarchicalLoggerManager;
 import fr.univavignon.transpolosearch.tools.string.StringTools;
+import fr.univavignon.transpolosearch.tools.time.Period;
 
 /**
  * This class handles the main search, i.e. it :
@@ -969,12 +964,12 @@ public class Extractor
 										}
 										List<AbstractMention<?>> organizations = Mentions.filterByType(le,EntityType.ORGANIZATION);
 										for(AbstractMention<?> mention: organizations)
-										{	MentionOrganization organization = (EntityOrganization)mention;
+										{	MentionOrganization organization = (MentionOrganization)mention;
 											event.addOrganization(organization);
 										}
 										List<AbstractMention<?>> locations = Mentions.filterByType(le,EntityType.LOCATION);
 										for(AbstractMention<?> mention: locations)
-										{	MentionLocation location = (EntityLocation)mention;
+										{	MentionLocation location = (MentionLocation)mention;
 											event.addLocation(location);
 										}
 										logger.log(Arrays.asList("Event found for sentence \""+rawText.substring(sp,ep)+"\"",event.toString()));
@@ -998,8 +993,8 @@ public class Extractor
 							event = new Event(ed);
 							while(it.hasNext())
 							{	ed = (MentionDate)it.next();
-								fr.univavignon.transpolosearch.tools.time.Date d = ed.getValue(); 
-								event.mergeDate(d);
+								Period p = ed.getValue(); 
+								event.mergePeriod(p);
 							}
 						}
 						else
@@ -1009,7 +1004,7 @@ public class Extractor
 						
 						List<AbstractMention<?>> persons = ments.getMentionsByType(EntityType.PERSON);
 						if(persons.isEmpty())
-							logger.log("WARNING: there is a date ("+event.getStartDate()+") but no person in article \""+article.getTitle()+"\"");
+							logger.log("WARNING: there is a date ("+event.getPeriod()+") but no person in article \""+article.getTitle()+"\"");
 						else
 						{	events.add(event);
 							eventNbr++;
@@ -1302,11 +1297,8 @@ public class Extractor
 	 */
 	private String convertEvent2Csv(Event event)
 	{	// get the dates
-		fr.univavignon.transpolosearch.tools.time.Date startDate = event.getStartDate();
-		fr.univavignon.transpolosearch.tools.time.Date endDate = event.getEndDate();
-		String dateStr = startDate.toString();
-		if(endDate!=null)
-			dateStr = dateStr + "-" + endDate.toString();
+		Period period = event.getPeriod();
+		String periodStr = period.toString();
 		
 		// get the locations
 		String locations = "\"";
@@ -1335,7 +1327,7 @@ public class Extractor
 		}
 		persOrgs = persOrgs + "\"";
 		
-		String result = dateStr+",,,"+locations+","+persOrgs;
+		String result = periodStr+",,,"+locations+","+persOrgs;
 		return result;
 	}
 }
