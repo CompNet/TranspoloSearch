@@ -1,24 +1,21 @@
 package fr.univavignon.transpolosearch.processing.internal;
 
 /*
- * Nerwip - Named Entity Extraction in Wikipedia Pages
- * Copyright 2011-17 Vincent Labatut et al.
+ * TranspoloSearch
+ * Copyright 2015-17 Vincent Labatut
  * 
- * This file is part of Nerwip - Named Entity Extraction in Wikipedia Pages.
+ * This file is part of TranspoloSearch.
  * 
- * Nerwip - Named Entity Extraction in Wikipedia Pages is free software: you can 
- * redistribute it and/or modify it under the terms of the GNU General Public License 
- * as published by the Free Software Foundation, either version 2 of the License, or
- * (at your option) any later version.
+ * TranspoloSearch is free software: you can redistribute it and/or modify it under 
+ * the terms of the GNU General Public License as published by the Free Software 
+ * Foundation, either version 2 of the License, or (at your option) any later version.
  * 
- * Nerwip - Named Entity Extraction in Wikipedia Pages is distributed in the hope 
- * that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty 
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public 
- * License for more details.
+ * TranspoloSearch is distributed in the hope that it will be useful, but WITHOUT ANY 
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A 
+ * PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * 
  * You should have received a copy of the GNU General Public License
- * along with Nerwip - Named Entity Extraction in Wikipedia Pages.  
- * If not, see <http://www.gnu.org/licenses/>.
+ * along with TranspoloSearch. If not, see <http://www.gnu.org/licenses/>.
  */
 
 import java.io.File;
@@ -43,7 +40,7 @@ import fr.univavignon.transpolosearch.tools.file.FileTools;
  * The recognition process can be implemented either directly in the processor
  * class, or preferably in a delegate class. In the latter case, the delegate
  * must be based on this class, which specifically concerns internal processors,
- * i.e. those invokable internally from within Nerwip.
+ * i.e. those invokable internally from within the software.
  * 
   * @param <T>
  * 		Class of the internal representation of the mentions resulting from the detection.
@@ -92,7 +89,7 @@ public abstract class AbstractInternalDelegateRecognizer<T> extends AbstractDele
      * and returns the internal representation of
      * the detected mentions. Those must then
      * be converted to objects compatible
-     * with the rest of Nerwip.
+     * with the rest of the software.
      * 
      * @param article
      * 		Article to process.
@@ -197,7 +194,7 @@ public abstract class AbstractInternalDelegateRecognizer<T> extends AbstractDele
 	/////////////////////////////////////////////////////////////////
 	/**
 	 * Converts the specified objects, used internally by the associated
-	 * recognizer, into the mention list used internally by Nerwip.  
+	 * recognizer, into the mention list used internally by the software.  
 	 * 
 	 * @param article
 	 * 		Original article (might be usefull, in order to get the full text).
