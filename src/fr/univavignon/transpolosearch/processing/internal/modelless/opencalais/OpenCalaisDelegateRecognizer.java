@@ -32,7 +32,7 @@ import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.jdom2.Document;
 import org.jdom2.Element;
 import org.jdom2.JDOMException;
@@ -172,7 +172,7 @@ class OpenCalaisDelegateRecognizer extends AbstractModellessInternalDelegateReco
 				
 				// send to open calais
 				logger.log("Send message to OpenCalais");
-				HttpClient client = new DefaultHttpClient();
+				HttpClient client = HttpClientBuilder.create().build();
 				HttpResponse response = client.execute(method);
 				
 				// read answer

@@ -29,7 +29,7 @@ import org.apache.http.ParseException;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.util.EntityUtils;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -102,7 +102,7 @@ public class FbIdTools
 			logger.log(url);
 			
 			// get Freebase answer
-			HttpClient httpclient = new DefaultHttpClient();   
+			HttpClient httpclient = HttpClientBuilder.create().build();
 			HttpGet request = new HttpGet(url);
 			HttpResponse response = httpclient.execute(request);
 			

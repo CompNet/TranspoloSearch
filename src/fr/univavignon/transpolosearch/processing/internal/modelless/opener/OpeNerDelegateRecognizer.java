@@ -34,7 +34,7 @@ import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpPost;
-import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.message.BasicNameValuePair;
 
 import org.jdom2.Document;
@@ -381,7 +381,7 @@ class OpeNerDelegateRecognizer extends AbstractModellessInternalDelegateRecogniz
 	private String sendReceiveRequest(HttpPost method) throws ClientProtocolException, IOException, ProcessorException
 	{	// send to service
 		logger.log("Send message to service");
-		HttpClient client = new DefaultHttpClient();
+		HttpClient client = HttpClientBuilder.create().build();
 		HttpResponse response = client.execute(method);
 		int responseCode = response.getStatusLine().getStatusCode();
 		logger.log("Response Code : " + responseCode);
