@@ -61,7 +61,7 @@ public abstract class AbstractDelegateRecognizer
 	 * @param recognizer
 	 * 		Recognizer associated to this delegate.
 	 * @param trim
-	 * 		Whether or not the beginings and ends of mentions should be 
+	 * 		Whether or not the beginnings and ends of mentions should be 
 	 * 		cleaned from any non-letter/digit chars.
 	 * @param ignorePronouns
 	 * 		Whether or not pronouns should be ignored.
@@ -169,7 +169,7 @@ public abstract class AbstractDelegateRecognizer
 	private static final Map<ArticleLanguage,List<String>> PRONOUN_LISTS = new HashMap<ArticleLanguage,List<String>>();
 	
 	/**
-	 * Loads a set of language-dependant list of words.
+	 * Loads a set of language-dependent list of words.
 	 * This is only used during recognition.
 	 * 
 	 * @param prefix
@@ -407,7 +407,7 @@ public abstract class AbstractDelegateRecognizer
     protected boolean trim = false;
 
     /**
-	 * Some recognizers let punctuation/space at the begining/end of the mention. This
+	 * Some recognizers let punctuation/space at the beginning/end of the mention. This
 	 * function trims the mention to remove this noise.
 	 * <br/>
 	 * If the consecutive trimmings remove all characters from the mention, then
@@ -457,8 +457,8 @@ public abstract class AbstractDelegateRecognizer
 
 	/**
 	 * Gets a list of mentions and cleans them by
-	 * removing unappropriate characters possibly
-	 * located at the beginning-end. Unappropriate
+	 * removing inappropriate characters possibly
+	 * located at the beginning-end. Inappropriate
 	 * means here neither characters nor letters.
 	 * <br/>
 	 * This is only used during recognition.

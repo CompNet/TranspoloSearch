@@ -344,7 +344,9 @@ public class Mentions
 	 * 		Mention to add to the list.
 	 */
 	public void addMention(AbstractMention<?> mention)
-	{	mentions.add(mention);
+	{	if(mention==null)
+			throw new NullPointerException("Trying to add a null mention to this Mentions object");
+		mentions.add(mention);
 	}
 	
 	/**
@@ -365,13 +367,14 @@ public class Mentions
 	 * Adds to this object all the mentions contained in 
 	 * the specified list.
 	 * <br/>
-	 * No redundance check is performed. 
+	 * No redundance check is performed.
 	 * 
 	 * @param mentions
 	 * 		List of mentions to add to the list.
 	 */
 	public void addMentions(List<AbstractMention<?>> mentions)
-	{	this.mentions.addAll(mentions);
+	{	for(AbstractMention<?> mention: mentions)
+			addMention(mention);
 	}
 
 	/**

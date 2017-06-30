@@ -699,7 +699,7 @@ public class Extractor
 		List<Mentions> result = new ArrayList<Mentions>();
 		
 		for(Article article: articles)
-		{	logger.log("Processing article "+article.getTitle()+"("+article.getUrl()+")");
+		{	logger.log("Processing article "+article.getTitle()+" ("+article.getUrl()+")");
 			logger.increaseOffset();
 				Mentions mentions = recognizer.recognize(article);
 				result.add(mentions);
@@ -1174,7 +1174,7 @@ public class Extractor
 
 					// at least one event detected
 					else
-					{	for(int j=0;j<events.size();j++)
+					{	for(int j=0;j<eventList.size();j++)
 						{	Event event = eventList.get(j);
 							String beginning = i+","+title+","+address+",,,,"+"Yes,,,,,"; 
 							String ending = convertEvent2Csv(event);

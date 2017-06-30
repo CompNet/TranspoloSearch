@@ -448,7 +448,7 @@ public class Article
 	 * could complicate the task of the recognizers, or any subsequent 
 	 * processing.
 	 * <br/>
-	 * This method is called when reading an Article from file, and when
+	 * This method is called when reading an {@code Article} from file, and when
 	 * retrieving an article from the Web. It should not be called if
 	 * the article has already been annotated (be it manually or automatically), 
 	 * because it does <i>not</i> update the position of mentions in
@@ -459,7 +459,7 @@ public class Article
 	public void cleanContent()
 	{	// raw text	
 		rawText = StringTools.cleanText(rawText);
-				
+		
 		// linked text
 		linkedText = StringTools.cleanText(linkedText);
 		

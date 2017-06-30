@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
+import java.net.ConnectException;
 import java.net.HttpURLConnection;
 import java.net.SocketTimeoutException;
 import java.net.URL;
@@ -37,6 +38,7 @@ import java.util.zip.GZIPInputStream;
 import java.util.zip.Inflater;
 import java.util.zip.InflaterInputStream;
 
+import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLHandshakeException;
 
 import org.jsoup.HttpStatusException;
@@ -55,7 +57,6 @@ import fr.univavignon.transpolosearch.tools.file.FileTools;
 import fr.univavignon.transpolosearch.tools.html.HtmlNames;
 import fr.univavignon.transpolosearch.tools.log.HierarchicalLogger;
 import fr.univavignon.transpolosearch.tools.log.HierarchicalLoggerManager;
-import fr.univavignon.transpolosearch.tools.string.StringTools;
 
 /**
  * All classes automatically getting articles
@@ -181,103 +182,6 @@ public abstract class ArticleReader
 	// CLEANING			/////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
 	/**
-	 * Cleans the specified string, in order to remove characters
-	 * causing problems when detecting named entities.
-	 *    
-	 * @param input
-	 * 		The string to process.
-	 * @return
-	 * 		Cleaned string.
-	 */
-	protected String cleanText(String input)
-	{	String output = input.trim();
-		
-		String previous = output;
-		do
-		{	previous = output;
-		
-			// move punctuation out of hyperlinks
-			String punctuation = "[ \\n\\.,;]";
-			output = output.replaceAll("<a ([^>]*?)>("+punctuation+"*)([^<]*?)("+punctuation+"*)</a>","$2<a $1>$3</a>$4");
-			output = output.replaceAll("<a ([^>]*?)>(\\()([^<]*?)(\\))</a>","$2<a $1>$3</a>$4");
-			output = output.replaceAll("<a ([^>]*?)>(\\[)([^<]*?)(\\])</a>","$2<a $1>$3</a>$4");
-			
-			// replace multiple consecutive spaces by a single one 
-			output = output.replaceAll("( )+", " ");
-			
-			// replace multiple consecutive newlines by a single one 
-			output = output.replaceAll("(\\n)+", "\n");
-			
-			// remove spaces at the end of lines 
-			output = output.replaceAll(" \\n", "\n");
-			
-			// replace multiple space-separated punctuations by single ones 
-//			output = output.replaceAll("; ;", ";");
-//			output = output.replaceAll(", ,", ",");
-//			output = output.replaceAll(": :", ":");
-//			output = output.replaceAll("\\. \\.", "\\.");
-			
-			// replace multiple consecutive punctuation marks by a single one 
-			output = output.replaceAll("([\\.,;:] )[\\.,;:]", "$1");
-	
-			// remove spaces before dots 
-			output = output.replaceAll(" \\.", ".");
-			
-			// remove space after opening parenthesis
-			output = output.replaceAll("\\( +", "(");
-			// remove space before closing parenthesis
-			output = output.replaceAll(" +\\)", ")");
-			
-			// remove various combinations of punctuation marks
-			output = output.replaceAll("\\(;", "(");
-	
-			// remove empty square brackets and parentheses
-			output = output.replaceAll("\\[\\]", "");
-			output = output.replaceAll("\\(\\)", "");
-			
-			// adds final dot when it is missing at the end of a sentence (itself detected thanks to the new line)
-//			output = output.replaceAll("([^(\\.|\\-)])\\n", "$1.\n");
-			
-			// insert a space after coma, when missing
-//			output = output.replaceAll(",([^ _])", ", $1");
-	
-			// insert a space after semi-column, when missing
-//			output = output.replaceAll(";([^ _])", "; $1");
-			
-			// replace 2 single quotes by double quotes
-			output = output.replaceAll("''+", "\"");
-		}
-		while(!output.equals(previous));
-		
-		return output;
-	}
-	
-	/**
-	 * Cleans the specified article (both the raw and linked version)
-	 * by replacing non-breaking space by regular spaces, etc.
-	 *    
-	 * @param article
-	 * 		The article to process.
-	 */
-	protected void cleanArticle(Article article)
-	{	// raw text
-		String rawText = article.getRawText();
-		rawText = StringTools.replaceSpaces(rawText);
-		rawText = cleanText(rawText);
-		article.setRawText(rawText);
-		
-		// linked text
-		String linkedText = article.getLinkedText();
-		if(linkedText==null)
-			linkedText = rawText;
-		else
-		{	linkedText = StringTools.replaceSpaces(linkedText);
-			linkedText = cleanText(linkedText);
-		}
-		article.setLinkedText(linkedText);
-	}
-	
-	/**
 	 * Removes the signs {@code <} and {@code >}
 	 * from the specified text.
 	 * <br/>
@@ -303,7 +207,7 @@ public abstract class ArticleReader
 	/////////////////////////////////////////////////////////////////
 	/**
 	 * Processes the specified URL to get the
-	 * targetted article. Also applies a cleaning step
+	 * targeted article. Also applies a cleaning step
 	 * (removing non-breaking space, and so on.
 	 * 
 	 * @param url
@@ -319,14 +223,14 @@ public abstract class ArticleReader
 	public Article read(URL url, ArticleLanguage language) throws ReaderException
 	{	Article result = processUrl(url, language);
 		
-		cleanArticle(result);
+		result.cleanContent();
 		
 		return result;
 	}
 
 	/**
 	 * Processes the specified URL to get the
-	 * targetted article.
+	 * targeted article.
 	 * 
 	 * @param url
 	 * 		Article address.
@@ -341,7 +245,7 @@ public abstract class ArticleReader
 	public abstract Article processUrl(URL url, ArticleLanguage language) throws ReaderException;
 
 	/**
-	 * Loads the html source code from the cached file,
+	 * Loads the HTML source code from the cached file,
 	 * or fetches it from the Web server if needed.
 	 * 
 	 * @param name
@@ -392,6 +296,12 @@ public abstract class ArticleReader
 					timeOut = timeOut + 5000;
 					again = true;
 				}
+				catch(ConnectException e)
+				{	logger.log(Arrays.asList(
+						"WARNING: Could not download the page, the server seems to be offline.",
+						"Error message: "+e.getMessage()
+					));
+				}
 				catch(UnsupportedMimeTypeException e)
 				{	logger.log(Arrays.asList(
 						"WARNING: Could not download the page, the MIME format is not supported.",
@@ -411,6 +321,12 @@ public abstract class ArticleReader
 					));
 				}
 				catch(SSLHandshakeException e)
+				{	logger.log(Arrays.asList(
+						"WARNING: Security error when connecting to the URL.",
+						"Error message: "+e.getMessage()
+					));
+				}
+				catch(SSLException e)
 				{	logger.log(Arrays.asList(
 						"WARNING: Security error when connecting to the URL.",
 						"Error message: "+e.getMessage()
@@ -547,7 +463,7 @@ public abstract class ArticleReader
 	}
 
 	/**
-	 * Retrieve the text located in a offline quote (BLOCKQUOTE) HTML element.
+	 * Retrieve the text located in an offline quote (BLOCKQUOTE) HTML element.
 	 * 
 	 * @param element
 	 * 		Element to be processed.

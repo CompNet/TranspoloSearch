@@ -21,39 +21,33 @@
 	along with Nerwip - Named Entity Extraction in Wikipedia Pages.  
 	If not, see <http://www.gnu.org/licenses/>.
  -->
- 
-	<xsd:include schemaLocation="_categories.xsd"/>
-	<xsd:include schemaLocation="_languages.xsd"/>
 
-	<xsd:complexType name="tAuthors">
+	<xsd:group name="gGroup">
+		<xsd:choice>
+			<xsd:element name="text"  type="tText"/>
+			<xsd:element name="group"  type="tGroup"/>
+		</xsd:choice>
+	</xsd:group>
+
+	<xsd:complexType name="tGroup">
 		<xsd:sequence>
-			<xsd:element name="author" type="xsd:string" maxOccurs="unbounded" />
+			<xsd:group ref="gGroup"  maxOccurs="unbounded"/>
+		</xsd:sequence>
+		<xsd:attribute name="name" type="xsd:string" use="required" />
+	</xsd:complexType>
+
+	<xsd:complexType name="tText">
+		<xsd:attribute name="name" type="xsd:string" use="required" />
+		<xsd:attribute name="value" type="xsd:string" use="required" />
+		<xsd:attribute name="tooltip" type="xsd:string" use="optional" />
+	</xsd:complexType>
+
+	<xsd:complexType name="tLanguage">
+		<xsd:sequence>
+			<xsd:element name="group"  type="tGroup" maxOccurs="unbounded"/>
 		</xsd:sequence>
 	</xsd:complexType>
 
-	<xsd:complexType name="tDates">
-		<xsd:sequence>
-			<xsd:element name="retrieval" type="xsd:string" />
-			<xsd:element name="publishing" type="xsd:string"  minOccurs="0"/>
-			<xsd:element name="modification" type="xsd:string"  minOccurs="0"/>
-		</xsd:sequence>
-	</xsd:complexType>
-
-	<xsd:simpleType name="tCategoryList">
-		<xsd:list itemType="tCategory"/>
-	</xsd:simpleType>
-
-	<xsd:complexType name="tProperties">
-		<xsd:sequence>
-			<xsd:element name="title" type="xsd:string" />
-			<xsd:element name="url" type="xsd:anyURI" minOccurs="0"/>
-			<xsd:element name="language" type="tLanguage" minOccurs="0"/>
-			<xsd:element name="authors" type="tAuthors"  minOccurs="0"/>
-			<xsd:element name="dates" type="tDates" />
-			<xsd:element name="category" type="tCategoryList" minOccurs="0"/>
-		</xsd:sequence>
-	</xsd:complexType>
-
-	<xsd:element name="properties" type="tProperties" />
+	<xsd:element name="language" type="tLanguage" />
 
 </xsd:schema>

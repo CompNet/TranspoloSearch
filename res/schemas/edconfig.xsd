@@ -21,39 +21,34 @@
 	along with Nerwip - Named Entity Extraction in Wikipedia Pages.  
 	If not, see <http://www.gnu.org/licenses/>.
  -->
- 
-	<xsd:include schemaLocation="_categories.xsd"/>
-	<xsd:include schemaLocation="_languages.xsd"/>
-
-	<xsd:complexType name="tAuthors">
+ 	
+	<xsd:complexType name="tUse">
+		<xsd:attribute name="corpus" type="xsd:boolean" use="required" />
+		<xsd:attribute name="article" type="xsd:boolean" use="required" />
+	</xsd:complexType>
+	
+	<xsd:complexType name="tLast">
 		<xsd:sequence>
-			<xsd:element name="author" type="xsd:string" maxOccurs="unbounded" />
+			<xsd:element name="corpus" type="xsd:string" />
+			<xsd:element name="article" type="xsd:string" minOccurs="0" />
+		</xsd:sequence>
+	</xsd:complexType>
+	
+	<xsd:complexType name="tText">
+		<xsd:attribute name="fontSize" type="xsd:integer" use="optional" />
+		<xsd:attribute name="editable" type="xsd:boolean" use="required" />
+	</xsd:complexType>
+	
+	<xsd:complexType name="tConfiguration">
+		<xsd:sequence>
+			<xsd:element name="use" type="tUse" />
+			<xsd:element name="last" type="tLast" minOccurs="0" />
+			<xsd:element name="editor" type="xsd:string" minOccurs="0" />
+			<xsd:element name="text" type="tText" />
+			<xsd:element name="language" type="xsd:string" minOccurs="0" />
 		</xsd:sequence>
 	</xsd:complexType>
 
-	<xsd:complexType name="tDates">
-		<xsd:sequence>
-			<xsd:element name="retrieval" type="xsd:string" />
-			<xsd:element name="publishing" type="xsd:string"  minOccurs="0"/>
-			<xsd:element name="modification" type="xsd:string"  minOccurs="0"/>
-		</xsd:sequence>
-	</xsd:complexType>
-
-	<xsd:simpleType name="tCategoryList">
-		<xsd:list itemType="tCategory"/>
-	</xsd:simpleType>
-
-	<xsd:complexType name="tProperties">
-		<xsd:sequence>
-			<xsd:element name="title" type="xsd:string" />
-			<xsd:element name="url" type="xsd:anyURI" minOccurs="0"/>
-			<xsd:element name="language" type="tLanguage" minOccurs="0"/>
-			<xsd:element name="authors" type="tAuthors"  minOccurs="0"/>
-			<xsd:element name="dates" type="tDates" />
-			<xsd:element name="category" type="tCategoryList" minOccurs="0"/>
-		</xsd:sequence>
-	</xsd:complexType>
-
-	<xsd:element name="properties" type="tProperties" />
+	<xsd:element name="configuration" type="tConfiguration" />
 
 </xsd:schema>

@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema">
 
 <!-- 
 	Nerwip - Named Entity Extraction in Wikipedia Pages
@@ -10,7 +11,7 @@
 	redistribute it and/or modify it under the terms of the GNU General Public License 
 	as published by the Free Software Foundation, either version 2 of the License, or
 	(at your option) any later version.
-	 
+	
 	Nerwip - Named Entity Extraction in Wikipedia Pages is distributed in the hope 
 	that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty 
 	of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public 
@@ -21,13 +22,15 @@
 	If not, see <http://www.gnu.org/licenses/>.
  -->
  
-<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema">
-
-	<xsd:simpleType name="tLanguage">
+	<xsd:simpleType name="tEntityType">
 		<xsd:restriction base="xsd:string">
-			<xsd:enumeration value="EN" />
-			<xsd:enumeration value="FR" />
+			<xsd:enumeration value="DATE" />
+			<xsd:enumeration value="FUNCTION" />
+			<xsd:enumeration value="LOCATION" />
+			<xsd:enumeration value="MEETING" />
+			<xsd:enumeration value="ORGANIZATION" />
+			<xsd:enumeration value="PERSON" />
+			<xsd:enumeration value="PRODUCTION" />
 		</xsd:restriction>
 	</xsd:simpleType>
-
 </xsd:schema>

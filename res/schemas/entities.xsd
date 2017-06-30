@@ -2,52 +2,77 @@
 <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema">
 
 <!-- 
-	TranspoloSearch
-	Copyright 2015-17 Vincent Labatut
+	Nerwip - Named Entity Extraction in Wikipedia Pages
+	Copyright 2011-17 Vincent Labatut et al.
 	
-	This file is part of TranspoloSearch.
+	This file is part of Nerwip - Named Entity Extraction in Wikipedia Pages.
 	
-	TranspoloSearch is free software: you can redistribute it and/or modify it under 
-	the terms of the GNU General Public License as published by the Free Software 
-	Foundation, either version 2 of the License, or (at your option) any later version.
-	 
-	TranspoloSearch is distributed in the hope that it will be useful, but WITHOUT ANY 
-	WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A 
-	PARTICULAR PURPOSE. See the GNU General Public License for more details.
+	Nerwip - Named Entity Extraction in Wikipedia Pages is free software: you can 
+	redistribute it and/or modify it under the terms of the GNU General Public License 
+	as published by the Free Software Foundation, either version 2 of the License, or
+	(at your option) any later version.
+	
+	Nerwip - Named Entity Extraction in Wikipedia Pages is distributed in the hope 
+	that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty 
+	of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public 
+	License for more details.
 	
 	You should have received a copy of the GNU General Public License
-	along with TranspoloSearch. If not, see <http://www.gnu.org/licenses/>.
+	along with Nerwip - Named Entity Extraction in Wikipedia Pages.  
+	If not, see <http://www.gnu.org/licenses/>.
  -->
  
-	<xsd:simpleType name="tType">
-		<xsd:restriction base="xsd:string">
-			<xsd:enumeration value="DATE" />
-			<xsd:enumeration value="FUNCTION" />
-			<xsd:enumeration value="LOCATION" />
-			<xsd:enumeration value="ORGANIZATION" />
-			<xsd:enumeration value="PERSON" />
-			<xsd:enumeration value="PRODUCTION" />
-		</xsd:restriction>
-	</xsd:simpleType>
-
-	<xsd:complexType name="tEntity">
+	<xsd:include schemaLocation="_entitytypes.xsd"/>
+	
+	<xsd:complexType name="tSurfaceForms">
 		<xsd:sequence>
-			<xsd:element name="string" type="xsd:string" />
-			<xsd:element name="value" type="xsd:string" minOccurs="0"/>
+			<xsd:element name="surfaceForm" type="xsd:string" maxOccurs="unbounded"/>
 		</xsd:sequence>
-		<xsd:attribute name="type" type="tType" use="required" />
-		<xsd:attribute name="start" type="xsd:integer" use="required" />
-		<xsd:attribute name="end" type="xsd:integer" use="required" />
 	</xsd:complexType>
-
+	
+	<xsd:complexType name="tExternalId">
+		<xsd:simpleContent>
+			<xsd:extension base="xsd:string">
+				<xsd:attribute name="knowledgeBase" type="xsd:string" use="required" />
+			</xsd:extension>
+		</xsd:simpleContent>
+	</xsd:complexType>
+	
+	<xsd:complexType name="tExternalIds">
+		<xsd:sequence>
+			<xsd:element name="externalId" type="xsd:string" maxOccurs="unbounded"/>
+		</xsd:sequence>
+		<xsd:attribute name="knowledgeBase" type="xsd:string" use="required" />
+	</xsd:complexType>
+	
+	<xsd:group name="gNamedEntity">
+		<xsd:sequence>
+			<xsd:element name="surfaceForms" type="tSurfaceForms" />
+			<xsd:element name="externalIds" type="tExternalIds" />
+		</xsd:sequence>
+	</xsd:group>
+	
+	<xsd:complexType name="tEntity">
+		<xsd:choice>
+			<xsd:group ref="gNamedEntity"/>
+			<xsd:element name="value" type="xsd:string" />
+		</xsd:choice>
+		<xsd:attribute name="type" type="tEntityType" use="required" />
+		<xsd:attribute name="id" type="xsd:long" use="required" />
+		<xsd:attribute name="name" type="xsd:string" use="optional" />
+	</xsd:complexType>
+	
 	<xsd:complexType name="tEntities">
 		<xsd:sequence>
 			<xsd:element name="entity" type="tEntity" minOccurs="0" maxOccurs="unbounded"/>
 		</xsd:sequence>
-		<xsd:attribute name="date" type="xsd:string" use="optional" />
-		<xsd:attribute name="source" type="xsd:string" />
+		<xsd:attribute name="creation" type="xsd:dateTime" />
+		<xsd:attribute name="modification" type="xsd:dateTime" />
+		<xsd:attribute name="resolver" type="xsd:string" />
+		<xsd:attribute name="linker" type="xsd:string" use="optional" />
+		<xsd:attribute name="editor" type="xsd:string" use="optional" />
 	</xsd:complexType>
-
+	
 	<xsd:element name="entities" type="tEntities" />
-
+	
 </xsd:schema>

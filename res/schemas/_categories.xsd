@@ -23,10 +23,20 @@
  
 <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema">
 
-	<xsd:simpleType name="tLanguage">
+	<xsd:simpleType name="tCategory">
 		<xsd:restriction base="xsd:string">
-			<xsd:enumeration value="EN" />
-			<xsd:enumeration value="FR" />
+			<xsd:enumeration value="ACADEMIA" />
+			<xsd:enumeration value="ARCHITECTURE" />
+			<xsd:enumeration value="ART" />
+			<xsd:enumeration value="BUSINESS" />
+			<xsd:enumeration value="LAW" />
+			<xsd:enumeration value="MEDICINE" />
+			<xsd:enumeration value="MEDIA" />
+			<xsd:enumeration value="MILITARY" />
+			<xsd:enumeration value="POLITICS" />
+			<xsd:enumeration value="RELIGION" />
+			<xsd:enumeration value="SPORT" />
+			<xsd:enumeration value="OTHER" />
 		</xsd:restriction>
 	</xsd:simpleType>
 
