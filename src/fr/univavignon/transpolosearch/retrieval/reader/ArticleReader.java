@@ -268,7 +268,7 @@ public abstract class ArticleReader
 		File originalFile = new File(folderPath + File.separator + FileNames.FI_ORIGINAL_PAGE);
 		if(cache && originalFile.exists())
 		{	logger.log("Cache enabled and HTML already retrieved >> we use the cached file ("+originalFile.getName()+")");
-			String sourceCode = FileTools.readTextFile(originalFile,"UTF-8");
+			String sourceCode = FileTools.readTextFile(originalFile, "UTF-8");
 			result = Jsoup.parse(sourceCode);
 		}
 		
@@ -294,7 +294,7 @@ public abstract class ArticleReader
 				catch(SocketTimeoutException e)
 				{	logger.log("Could not download the page (timeout="+timeOut+" ms) >> trying again");
 					timeOut = timeOut + 5000;
-					again = true;
+					again = timeOut<1*10*1000;	//2*60*1000;
 				}
 				catch(ConnectException e)
 				{	logger.log(Arrays.asList(

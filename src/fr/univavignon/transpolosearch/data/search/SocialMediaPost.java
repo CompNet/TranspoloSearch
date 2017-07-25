@@ -1,4 +1,4 @@
-package fr.univavignon.transpolosearch.search.social;
+package fr.univavignon.transpolosearch.data.search;
 
 /*
  * TranspoloSearch

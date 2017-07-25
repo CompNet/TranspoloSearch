@@ -38,6 +38,7 @@ import facebook4j.Reading;
 import facebook4j.ResponseList;
 import facebook4j.conf.Configuration;
 import facebook4j.conf.ConfigurationBuilder;
+import fr.univavignon.transpolosearch.data.search.SocialMediaPost;
 import fr.univavignon.transpolosearch.tools.keys.KeyHandler;
 
 import java.io.IOException;
@@ -188,7 +189,7 @@ public class FacebookEngine extends AbstractSocialEngine
 	// DATA			/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
 	/** Textual name of this engine */
-	private static final String ENGINE_NAME = "Facebook Search";
+	private static final String ENGINE_NAME = "Facebook";
 
 	@Override
 	public String getName()
@@ -261,7 +262,11 @@ public class FacebookEngine extends AbstractSocialEngine
 					String id = post.getId();
 					Date date = post.getCreatedTime();
 					Category auth = post.getFrom();
-					String authName = auth.getName();
+					String authName;
+					if(auth==null)
+						authName = "N/A";
+					else
+						authName = auth.getName();
 					// create the post object
 					SocialMediaPost p = new SocialMediaPost(id, authName, date, getName(), msg);
 					p.url = post.getLink();

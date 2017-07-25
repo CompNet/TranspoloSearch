@@ -26,9 +26,12 @@ import java.util.TreeSet;
 import org.jdom2.Element;
 
 import fr.univavignon.transpolosearch.data.entity.mention.MentionDate;
+import fr.univavignon.transpolosearch.data.entity.mention.MentionFunction;
 import fr.univavignon.transpolosearch.data.entity.mention.MentionLocation;
+import fr.univavignon.transpolosearch.data.entity.mention.MentionMeeting;
 import fr.univavignon.transpolosearch.data.entity.mention.MentionOrganization;
 import fr.univavignon.transpolosearch.data.entity.mention.MentionPerson;
+import fr.univavignon.transpolosearch.data.entity.mention.MentionProduction;
 import fr.univavignon.transpolosearch.tools.string.StringTools;
 import fr.univavignon.transpolosearch.tools.time.Date;
 import fr.univavignon.transpolosearch.tools.time.Period;
@@ -188,7 +191,7 @@ public class Event
 	 * 		The location entities whose <i>normalized</i>
 	 * 		name will be added to this event.
 	 */
-	public void addLocation(List<MentionLocation> locations)
+	public void addLocations(List<MentionLocation> locations)
 	{	for(MentionLocation location: locations)
 			addLocation(location);
 	}
@@ -274,9 +277,138 @@ public class Event
 	 * 		The person entities whose <i>normalized</i>
 	 * 		name will be added to this event.
 	 */
-	public void addPerson(List<MentionPerson> persons)
+	public void addPersons(List<MentionPerson> persons)
 	{	for(MentionPerson person: persons)
 			addPerson(person);
+	}
+	
+	/////////////////////////////////////////////////////////////////
+	// FUNCTIONS		/////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////
+	/** List of strings representing the functions associated to this event */
+	private final Set<String> functions = new TreeSet<String>(StringTools.COMPARATOR);
+	
+	/**
+	 * Returns the set of functions associated
+	 * to this event.
+	 * 
+	 * @return
+	 * 		A list of function names.
+	 */
+	public Collection<String> getFunctions()
+	{	return functions;
+	}
+	
+	/**
+	 * Adds a function name to the current list.
+	 * 
+	 * @param function
+	 * 		The function entity whose <i>normalized</i>
+	 * 		name will be added to this event.
+	 */
+	public void addFunction(MentionFunction function)
+	{	String normalizedName = function.getValue();
+		if(normalizedName==null)
+			normalizedName = function.getStringValue();
+		functions.add(normalizedName);
+	}
+	
+	/**
+	 * Adds the function names to the current list.
+	 * 
+	 * @param functions
+	 * 		The function entities whose <i>normalized</i>
+	 * 		name will be added to this event.
+	 */
+	public void addFunctions(List<MentionFunction> functions)
+	{	for(MentionFunction function: functions)
+			addFunction(function);
+	}
+	
+	/////////////////////////////////////////////////////////////////
+	// PRODUCTIONS		/////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////
+	/** List of strings representing the productions associated to this event */
+	private final Set<String> productions = new TreeSet<String>(StringTools.COMPARATOR);
+	
+	/**
+	 * Returns the set of productions associated
+	 * to this event.
+	 * 
+	 * @return
+	 * 		A list of production names.
+	 */
+	public Collection<String> getProductions()
+	{	return productions;
+	}
+	
+	/**
+	 * Adds a production name to the current list.
+	 * 
+	 * @param production
+	 * 		The production entity whose <i>normalized</i>
+	 * 		name will be added to this event.
+	 */
+	public void addProduction(MentionProduction production)
+	{	String normalizedName = production.getValue();
+		if(normalizedName==null)
+			normalizedName = production.getStringValue();
+		productions.add(normalizedName);
+	}
+	
+	/**
+	 * Adds the productions names to the current list.
+	 * 
+	 * @param productions
+	 * 		The production entities whose <i>normalized</i>
+	 * 		name will be added to this event.
+	 */
+	public void addProductions(List<MentionProduction> productions)
+	{	for(MentionProduction production: productions)
+			addProduction(production);
+	}
+	
+	/////////////////////////////////////////////////////////////////
+	// MEETINGS			/////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////
+	/** List of strings representing the meetings associated to this event */
+	private final Set<String> meetings = new TreeSet<String>(StringTools.COMPARATOR);
+	
+	/**
+	 * Returns the set of meetings associated
+	 * to this event.
+	 * 
+	 * @return
+	 * 		A list of meeting names.
+	 */
+	public Collection<String> getMeetings()
+	{	return meetings;
+	}
+	
+	/**
+	 * Adds a meeting name to the current list.
+	 * 
+	 * @param meeting
+	 * 		The meeting entity whose <i>normalized</i>
+	 * 		name will be added to this event.
+	 */
+	public void addMeeting(MentionMeeting meeting)
+	{	String normalizedName = meeting.getValue();
+		if(normalizedName==null)
+			normalizedName = meeting.getStringValue();
+		meetings.add(normalizedName);
+	}
+	
+	/**
+	 * Adds the meeting names to the current list.
+	 * 
+	 * @param meetings
+	 * 		The meeting entities whose <i>normalized</i>
+	 * 		name will be added to this event.
+	 */
+	public void addMeetings(List<MentionMeeting> meetings)
+	{	for(MentionMeeting meeting: meetings)
+			addMeeting(meeting);
 	}
 	
 	/////////////////////////////////////////////////////////////////
@@ -456,6 +588,15 @@ public class Event
 		
 		if(!organizations.isEmpty())
 			result = result + " organizations=" + organizations;
+		
+		if(!productions.isEmpty())
+			result = result + " productions=" + productions;
+		
+		if(!functions.isEmpty())
+			result = result + " functions=" + functions;
+		
+		if(!meetings.isEmpty())
+			result = result + " meetings=" + meetings;
 		
 		result = result + " >";
 		return result;

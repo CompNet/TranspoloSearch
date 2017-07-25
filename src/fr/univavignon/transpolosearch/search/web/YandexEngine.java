@@ -44,7 +44,10 @@ import org.jdom2.input.SAXBuilder;
  * This class uses Yandex to search the Web.
  * It takes advantage of the undocumented API.
  * <br/>
- * URL used as resources:
+ * Dates are explicitly taken into account in the
+ * Yandex API (unlike some other search engines).
+ * <br/>
+ * <b>URL used as resources:</b>
  * https://tech.yandex.com/xml/
  * https://yandex.com/support/search/robots/search-api.html
  * https://yandex.com/support/search/how-to-search/search-operators.html

@@ -269,17 +269,30 @@ public class Test
 		
 		DateFormat df = new SimpleDateFormat("yyyyMMdd");
 		
-		String keywords = "Cécile Helle";
+//		String keywords = "Cécile Helle";
+//		String compulsoryExpression = "Helle";
+//		String keywords = "Anne Hidalgo";
+//		String compulsoryExpression = "Hidalgo";
+		String keywords = "Martine Aubry";
+		String compulsoryExpression = "Aubry";
+		
 		String website = null;
 		Date startDate = df.parse("20170306");
 		Date endDate = df.parse("20170310");
-		boolean strictSearch = true;
-		String compulsoryExpression = "Helle";
+		boolean searchDate = true;
 		boolean extendedSocialSearch = true;
 		
-		extractor.performExtraction(keywords, website, startDate, endDate, strictSearch, compulsoryExpression, extendedSocialSearch);
+		extractor.performExtraction(keywords, website, startDate, endDate, searchDate, compulsoryExpression, extendedSocialSearch);
 	}
 }
 
 // dates: 6/3 >> 10/3
 // pers: C. Helle + M. Aubry + A. Hidalgo
+
+/** TODO
+ * 1) FB for hidalgo + aubry
+ * 2) check the retrieved pages, possibly correct the software when needed
+ * 
+ * - process each engine separately, record the results in their individual folders, then only merge the results
+ * - check if articles have unique name/title (they should)
+ */

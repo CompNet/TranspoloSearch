@@ -107,6 +107,9 @@ public class LeMondeReader extends ArticleReader
 	private final static String CLASS_SIGNATURE = "bloc_signature";
 	/** Class of the article body */
 	private final static String CLASS_ARTICLE_BODY = "content-article-body";
+//	private final static String CLASS_ARTICLE_BODY = "contenu_article";
+	/** Itemprop of the article body */
+	private final static String ITEMPROP_ARTICLE_BODY = "articleBody";
 	/** Class of the article "related articles" links */
 	private final static String CLASS_RELATED_ARTICLES = "lire";
 	
@@ -187,7 +190,8 @@ public class LeMondeReader extends ArticleReader
 			// processing each element in the article body
 			Element bodyElt = articleElt.getElementById(ID_ARTICLE_BODY);
 			if(bodyElt==null)
-			{	Elements bodyElts = articleElt.getElementsByAttributeValue(HtmlNames.ATT_CLASS, CLASS_ARTICLE_BODY);
+			{	//Elements bodyElts = articleElt.getElementsByAttributeValue(HtmlNames.ATT_CLASS, CLASS_ARTICLE_BODY);
+				Elements bodyElts = articleElt.getElementsByAttributeValue(HtmlNames.ATT_ITEMPROP, ITEMPROP_ARTICLE_BODY);
 				bodyElt = bodyElts.first();
 				if(bodyElts.size()==0)
 					throw new IllegalArgumentException("No article body found in the Web page");

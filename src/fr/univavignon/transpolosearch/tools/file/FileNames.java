@@ -172,6 +172,8 @@ public class FileNames
 	
 	/** File containing cached search results */
 	public final static String FI_SEARCH_RESULTS = "search" + FileNames.EX_TEXT;
+	/** File containing overall search results */
+	public final static String FI_SEARCH_RESULTS_ALL = "search" + FileNames.EX_CSV;
 	/** Events file */
 	public final static String FI_EVENT_TABLE = "event_table" + FileNames.EX_CSV;
 	

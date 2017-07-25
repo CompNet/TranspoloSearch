@@ -43,6 +43,9 @@ import java.util.List;
  * This code is inspired by the 
  * <a href="http://weblog4j.com/2014/06/03/having-fun-with-google-custom-search-api-and-java/">weblog4j.com post</a> 
  * of Niraj Singh.
+ * <br/>
+ * Dates are explicitly taken into account in the
+ * Google API (unlike some other search engines).
  * 
  * @author Vincent Labatut
  */

@@ -43,7 +43,11 @@ import org.json.simple.parser.ParseException;
  * This class uses Qwant to search the Web.
  * It takes advantage of the undocumented API.
  * <br/>
- * URL used as resources:
+ * <b>Note:</b> There is no parameter to specify a period,
+ * so when a period is specified, we simply make a different
+ * search for each day constituting the period. 
+ * <br/>
+ * <b>URL used as resources:</b>
  * https://api.qwant.com/api/search/web?locale=fr_fr&offset=10&q=Fran%C3%A7ois%20hollande%2001%2f04%2f2016
  * https://api.qwant.com/api/search/news?locale=en_us&offset=10&q=francois%20hollande	
  * https://github.com/asciimoo/searx/blob/master/searx/engines/qwant.py

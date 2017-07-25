@@ -47,6 +47,10 @@ import org.json.simple.parser.ParseException;
 /**
  * This class uses Bing to search the Web. More
  * precisely, it uses the Bing Search API v5.
+ * <br/>
+ * <b>Note:</b> There is no parameter to specify a period,
+ * so when a period is specified, we simply make a different
+ * search for each day constituting the period. 
  * 
  * @author Vincent Labatut
  */

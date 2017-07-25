@@ -52,11 +52,17 @@ import fr.univavignon.transpolosearch.data.article.ArticleLanguage;
 import fr.univavignon.transpolosearch.data.entity.EntityType;
 import fr.univavignon.transpolosearch.data.entity.mention.AbstractMention;
 import fr.univavignon.transpolosearch.data.entity.mention.MentionDate;
+import fr.univavignon.transpolosearch.data.entity.mention.MentionFunction;
 import fr.univavignon.transpolosearch.data.entity.mention.MentionLocation;
+import fr.univavignon.transpolosearch.data.entity.mention.MentionMeeting;
 import fr.univavignon.transpolosearch.data.entity.mention.MentionOrganization;
 import fr.univavignon.transpolosearch.data.entity.mention.MentionPerson;
+import fr.univavignon.transpolosearch.data.entity.mention.MentionProduction;
 import fr.univavignon.transpolosearch.data.entity.mention.Mentions;
 import fr.univavignon.transpolosearch.data.event.Event;
+import fr.univavignon.transpolosearch.data.search.SocialMediaPost;
+import fr.univavignon.transpolosearch.data.search.WebSearchResult;
+import fr.univavignon.transpolosearch.data.search.WebSearchResults;
 import fr.univavignon.transpolosearch.processing.InterfaceRecognizer;
 import fr.univavignon.transpolosearch.processing.ProcessorException;
 import fr.univavignon.transpolosearch.processing.combiner.straightcombiner.StraightCombiner;
@@ -64,7 +70,6 @@ import fr.univavignon.transpolosearch.retrieval.ArticleRetriever;
 import fr.univavignon.transpolosearch.retrieval.reader.ReaderException;
 import fr.univavignon.transpolosearch.search.social.AbstractSocialEngine;
 import fr.univavignon.transpolosearch.search.social.FacebookEngine;
-import fr.univavignon.transpolosearch.search.social.SocialMediaPost;
 import fr.univavignon.transpolosearch.search.web.AbstractWebEngine;
 import fr.univavignon.transpolosearch.search.web.BingEngine;
 import fr.univavignon.transpolosearch.search.web.GoogleEngine;
@@ -128,7 +133,7 @@ public class Extractor
 	 * @param endDate
 	 * 		End of the period we want to consider,
 	 * 		or {@code null} for no constraint.
-	 * @param strictSearch
+	 * @param searchDate
 	 * 		If {@code true}, both dates will be used directly in the Web search.
 	 * 		Otherwise, they will be used <i>a posteri</i> to filter the detected events.
 	 * 		If one of the dates is {@code null}, this parameter has no effect.
@@ -152,13 +157,13 @@ public class Extractor
 	 * @throws ProcessorException 
 	 * 		Problem while detecting the entity mentions.
 	 */
-	public void performExtraction(String keywords, String website, Date startDate, Date endDate, boolean strictSearch, String compulsoryExpression, boolean extendedSocialSearch) throws IOException, ReaderException, ParseException, SAXException, ProcessorException
+	public void performExtraction(String keywords, String website, Date startDate, Date endDate, boolean searchDate, String compulsoryExpression, boolean extendedSocialSearch) throws IOException, ReaderException, ParseException, SAXException, ProcessorException
 	{	logger.log("Starting the information extraction");
 		logger.increaseOffset();
 		
 		// perform the Web search
-		logger.log("Performing the Web search");
-		performWebExtraction(keywords, website, startDate, endDate, strictSearch, compulsoryExpression);
+//		logger.log("Performing the Web search");
+//		performWebExtraction(keywords, website, startDate, endDate, searchDate, compulsoryExpression);
 		
 		// perform the social search
 		logger.log("Performing the social media search");
@@ -181,7 +186,7 @@ public class Extractor
 	 * @param endDate
 	 * 		End of the period we want to consider,
 	 * 		or {@code null} for no constraint.
-	 * @param strictSearch
+	 * @param searchDate
 	 * 		If {@code true}, both dates will be used directly in the Web search.
 	 * 		Otherwise, they will be used <i>a posteri</i> to filter the detected events.
 	 * 		If one of the dates is {@code null}, this parameter has no effect.
@@ -200,37 +205,34 @@ public class Extractor
 	 * @throws ProcessorException 
 	 * 		Problem while detecting the entity mentions.
 	 */
-	public void performWebExtraction(String keywords, String website, Date startDate, Date endDate, boolean strictSearch, String compulsoryExpression) throws IOException, ReaderException, ParseException, SAXException, ProcessorException
+	public void performWebExtraction(String keywords, String website, Date startDate, Date endDate, boolean searchDate, String compulsoryExpression) throws IOException, ReaderException, ParseException, SAXException, ProcessorException
 	{	logger.log("Starting the web extraction");
 		logger.increaseOffset();
 		
 		// perform the Web search
-		Map<String,List<String>> originalUrls = performWebSearch(keywords, website, startDate, endDate, strictSearch);
+		WebSearchResults results = performWebSearch(keywords, website, startDate, endDate, searchDate);
 
 		// filter Web pages (remove PDFs, and so on)
-		List<String> filteredUrls = new ArrayList<String>(originalUrls.keySet());
-		filterUrls(filteredUrls);
+		results.filterByUrl();
 		
 		// retrieve the corresponding articles
-		List<Article> originalArticles = retrieveArticles(filteredUrls);
+		results.retrieveArticles();
 		
 		// detect the entity mentions
-		List<Mentions> originalMentions = detectMentions(originalArticles);
+		results.detectMentions(recognizer);
 		
 		// possibly filter the articles depending on the dates and compulsory expression
-		List<Article> filteredArticles = new ArrayList<Article>(originalArticles);
-		List<Mentions> filteredMentions = new ArrayList<Mentions>(originalMentions);
-		filterArticles(filteredArticles,filteredMentions,startDate,endDate,strictSearch,compulsoryExpression);
+		results.filterByContent(startDate,endDate,searchDate,compulsoryExpression);
 		
 		// displays the remaining articles with their mentions	//TODO maybe get the entities instead of the mention, eventually?
-		displayRemainingMentions(filteredArticles,filteredMentions); //TODO for debug only
+		results.displayRemainingMentions(); //TODO for debug only
 		
 		// extract events from the remaining articles and mentions
 		boolean bySentence = false; //TODO for debug
-		List<List<Event>> events = extractEvents(filteredArticles,filteredMentions,bySentence);
+		results.extractEvents(bySentence);
 		
 		// export the events as a table
-		exportWebEvents(originalUrls, filteredUrls, originalArticles, filteredArticles, events);
+		results.exportEvents();
 		
 		logger.decreaseOffset();
 		logger.log("Web extraction over");
@@ -277,18 +279,18 @@ public class Extractor
 		// convert the posts to articles for later use
 		List<Article> convertedPosts = convertPosts(originalPosts);
 		
-//		// detect the entity mentions
-//		List<Mentions> postMentions = detectMentions(convertedPosts);
-//		
-//		// displays the remaining articles with their mentions
-//		displayRemainingMentions(convertedPosts,postMentions); //TODO for debug only
-//		
-//		// extract events from the remaining articles and mentions
-//		boolean bySentence = false; //TODO for debug
-//		List<List<Event>> events = extractEvents(convertedPosts, postMentions, bySentence);
-//		
-//		// export the events as a table
-//		exportSocialEvents(originalPosts, convertedPosts, events);
+		// detect the entity mentions
+		List<Mentions> postMentions = detectMentions(convertedPosts);
+		
+		// displays the remaining articles with their mentions
+		displayRemainingMentions(convertedPosts,postMentions); //TODO for debug only
+		
+		// extract events from the remaining articles and mentions
+		boolean bySentence = false; //TODO for debug
+		List<List<Event>> events = extractEvents(convertedPosts, postMentions, bySentence);
+		
+		// export the events as a table
+		exportSocialEvents(originalPosts, convertedPosts, events);
 		
 		logger.decreaseOffset();
 		logger.log("Social media extraction over");
@@ -345,18 +347,17 @@ public class Extractor
 	 * @param endDate
 	 * 		End of the period we want to consider,
 	 * 		or {@code null} for no constraint.
-	 * @param strictSearch
+	 * @param searchDate
 	 * 		If {@code true}, both dates will be used directly in the Web search.
 	 * 		Otherwise, they will be used <i>a posteriori</i> to filter the detected events.
 	 * 		If one of the dates is {@code null}, this parameter has no effect.
 	 * @return
-	 * 		List of results taking the form of a map associating URLs (as strings) with
-	 * 		search engine names.
+	 * 		List of web search results.
 	 * 
 	 * @throws IOException
 	 * 		Problem accessing the Web.
 	 */
-	private Map<String,List<String>> performWebSearch(String keywords, String website, Date startDate, Date endDate, boolean strictSearch) throws IOException
+	private WebSearchResults performWebSearch(String keywords, String website, Date startDate, Date endDate, boolean searchDate) throws IOException
 	{	boolean cachedSearch = true; //TODO for debug
 		
 		// log search parameters
@@ -365,14 +366,14 @@ public class Extractor
 			logger.log("keywords="+keywords);
 			logger.log("startDate="+startDate);
 			logger.log("endDate="+endDate);
-			String txt = "strictSearch="+strictSearch;
-			if(!strictSearch)
+			String txt = "searchDate="+searchDate;
+			if(!searchDate)
 				txt = txt + "(dates are ignored here, because the search is not strict)";
 			logger.log(txt);
 		logger.decreaseOffset();
 		
 		// nullify dates if the search is not strict
-		if(!strictSearch)
+		if(!searchDate)
 		{	startDate = null;
 			endDate = null;
 		}
@@ -380,10 +381,10 @@ public class Extractor
 		// apply each search engine
 		logger.log("Applying iteratively each search engine");
 		logger.increaseOffset();
-			Map<String,List<String>> result = new HashMap<String,List<String>>();
+			WebSearchResults result = new WebSearchResults();
 			
 			for(AbstractWebEngine engine: webEngines)
-			{	Set<URL> urls = new TreeSet<URL>(URL_COMPARATOR);
+			{	List<URL> urls = new ArrayList<URL>();
 				
 				// possibly use cached results
 				String cacheFilePath = FileNames.FO_WEB_SEARCH_RESULTS + File.separator + engine.getName();
@@ -407,8 +408,7 @@ public class Extractor
 				{	logger.log("Applying search engine "+engine.getName());
 					logger.increaseOffset();
 						// apply the engine
-						List<URL> temp = engine.search(keywords,website,startDate,endDate);
-						urls.addAll(temp);
+						urls = engine.search(keywords,website,startDate,endDate);
 						
 						// possibly record its results
 						if(cachedSearch)
@@ -422,121 +422,20 @@ public class Extractor
 				}
 				
 				// add to the overall map of URLs
+				String engineName = engine.getName();
+				int rank = 1;
 				for(URL url: urls)
 				{	String urlStr = url.toString();
-					List<String> list = result.get(urlStr);
-					if(list==null)
-					{	list = new ArrayList<String>();
-						result.put(urlStr, list);
-					}
-					list.add(engine.getName());
+					result.addResult(urlStr, engineName, rank);
+					rank++;
 				}
 			}
 		logger.decreaseOffset();
 		logger.log("Total number of pages found: "+result.size());
 		
 		// record the complete list of URLs (not for cache, just as a result)
-		File folder = new File(FileNames.FO_WEB_SEARCH_RESULTS);
-		folder.mkdirs();
-		String cacheFilePath = FileNames.FO_WEB_SEARCH_RESULTS + File.separator + FileNames.FI_SEARCH_RESULTS;
-		logger.log("Recording all URLs in CSV file \""+cacheFilePath+"\"");
-		PrintWriter pw = FileTools.openTextFileWrite(cacheFilePath,"UTF-8");
-		pw.println("URL,Engines");
-		for(Entry<String,List<String>> entry: result.entrySet())
-		{	String urlStr = entry.getKey();
-			List<String> engineList = entry.getValue();
-			String val = "\"";
-			for(String engineName: engineList)
-				val = val + engineName + ", ";
-			if(!val.isEmpty())
-				val = val.substring(0, val.length()-2);
-			val = val + "\"";
-			pw.println(urlStr+","+val);
+		result.exportAsCsv();
 		
-		}
-		pw.close();
-		
-		return result;
-	}
-	
-	/**
-	 * Removes from the specified list the URLs
-	 * which cannot be processed.
-	 * 
-	 * @param urls
-	 * 		List of Web addresses.
-	 */
-	private void filterUrls(List<String> urls)
-	{	logger.log("Filtering the retrieved URL to remove those we can't treat");
-		logger.increaseOffset();
-		
-		Iterator<String> it = urls.iterator();
-		while(it.hasNext())
-		{	String url = it.next();
-			
-			// we don't process PDF files
-			if(url.endsWith(FileNames.EX_PDF))
-			{	logger.log("The following URL points towards a PDF, we cannot currently use it: "+url);
-				it.remove();
-			}
-			
-			else
-				logger.log("We keep the URL "+url);
-		}
-		
-		Collections.sort(urls);
-		logger.decreaseOffset();
-		logger.log("Filtering complete: "+urls.size()+" pages kept");
-	}
-	
-	/////////////////////////////////////////////////////////////////
-	// RETRIEVAL	/////////////////////////////////////////////////
-	/////////////////////////////////////////////////////////////////
-	/**
-	 * Retrieve all the articles whose URLs are indicated
-	 * in the list parameter.
-	 * 
-	 * @param urls
-	 * 		List of URLs to process.
-	 * @return
-	 * 		The list of corresponding article objects.
-	 * 
-	 * @throws IOException
-	 * 		Problem while retrieving a Web page.
-	 * @throws ParseException
-	 * 		Problem while retrieving a Web page.
-	 * @throws SAXException
-	 * 		Problem while retrieving a Web page.
-	 */
-	private List<Article> retrieveArticles(List<String> urls) throws IOException, ParseException, SAXException
-	{	logger.log("Starting the article retrieval");
-		logger.increaseOffset();
-		
-		// init
-		List<Article> result = new ArrayList<Article>();
-		ArticleRetriever articleRetriever = new ArticleRetriever(true); //TODO cache disabled for debugging
-		articleRetriever.setLanguage(ArticleLanguage.FR); // TODO we know the articles will be in French (should be generalized later)
-
-		// retrieve articles
-		Iterator<String> it = urls.iterator();
-		int nbr = urls.size();
-		int i = 0;
-		while(it.hasNext())
-		{	String url = it.next();
-			i++;
-			logger.log("Retrieving article ("+i+"/"+nbr+") at URL "+url);
-			try
-			{	Article article = articleRetriever.process(url);
-				result.add(article);
-			}
-			catch (ReaderException e)
-			{	logger.log("WARNING: Could not retrieve the article at URL "+url.toString()+" >> removing it from the result list.");
-				it.remove();
-			}
-		}
-		
-		logger.decreaseOffset();
-		logger.log("Article retrieval complete");
 		return result;
 	}
 	
@@ -601,7 +500,7 @@ public class Extractor
 			{	List<SocialMediaPost> posts = new ArrayList<SocialMediaPost>();
 				
 				// possibly use cached results
-				String cacheFilePath = FileNames.FO_SOCIAL_SEARCH_RESULTS + engine.getName();
+				String cacheFilePath = FileNames.FO_SOCIAL_SEARCH_RESULTS + File.separator + engine.getName();
 				File cacheFolder = new File(cacheFilePath);
 				cacheFolder.mkdirs();
 				cacheFilePath = cacheFilePath + File.separator + FileNames.FI_SEARCH_RESULTS;
@@ -728,14 +627,14 @@ public class Extractor
 	 * 		Start of the time period.
 	 * @param endDate
 	 * 		End of the time period.
-	 * @param strictSearch
+	 * @param searchDate
 	 * 		Whether the filtering should be applied ({@code false})
 	 * 		or not ({@code true}).
 	 * @param compulsoryExpression
 	 * 		String expression which must be present in the article,
 	 * 		or {@code null} if there's no such constraint.
 	 */
-	private void filterArticles(List<Article> articles, List<Mentions> mentions, Date startDate, Date endDate, boolean strictSearch, String compulsoryExpression)
+	private void filterByContent(List<Article> articles, List<Mentions> mentions, Date startDate, Date endDate, boolean searchDate, String compulsoryExpression)
 	{	logger.log("Starting filtering the articles");
 		logger.increaseOffset();
 		
@@ -744,8 +643,8 @@ public class Extractor
 		logger.increaseOffset();
 			logger.log("startDate="+startDate);
 			logger.log("endDate="+endDate);
-			String txt = "strictSearch="+strictSearch;
-			if(strictSearch)
+			String txt = "searchDate="+searchDate;
+			if(searchDate)
 				txt = txt + "(dates are ignored here, because the search is strict)";
 			logger.log(txt);
 			logger.log("compulsoryExpression="+compulsoryExpression);
@@ -778,7 +677,7 @@ public class Extractor
 			logger.log("No compulsory expression to process");
 
 		// possibly filter the resulting texts depending on the dates they contain
-		if(!strictSearch)
+		if(!searchDate)
 		{	if(startDate==null || endDate==null)
 				logger.log("WARNING: one date is null, so both of them are ignored");
 			else
@@ -807,8 +706,8 @@ public class Extractor
 									date = d;
 							}
 							
-							if(date!=null)
-							{	logger.log("Found date "+date+" in article "+article.getTitle()+" >> removal ("+article.getUrl()+")");
+							if(date==null)
+							{	logger.log("Found no date in article "+article.getTitle()+" >> removal ("+article.getUrl()+")");
 								remove = true;
 							}
 						}
@@ -972,6 +871,21 @@ public class Extractor
 										{	MentionLocation location = (MentionLocation)mention;
 											event.addLocation(location);
 										}
+										List<AbstractMention<?>> meetings = Mentions.filterByType(le,EntityType.MEETING);
+										for(AbstractMention<?> mention: meetings)
+										{	MentionMeeting meeting = (MentionMeeting)mention;
+											event.addMeeting(meeting);
+										}
+										List<AbstractMention<?>> functions = Mentions.filterByType(le,EntityType.FUNCTION);
+										for(AbstractMention<?> mention: functions)
+										{	MentionFunction function = (MentionFunction)mention;
+											event.addFunction(function);
+										}
+										List<AbstractMention<?>> productions = Mentions.filterByType(le,EntityType.PRODUCTION);
+										for(AbstractMention<?> mention: productions)
+										{	MentionProduction production = (MentionProduction)mention;
+											event.addProduction(production);
+										}
 										logger.log(Arrays.asList("Event found for sentence \""+rawText.substring(sp,ep)+"\"",event.toString()));
 									}
 								}
@@ -1057,140 +971,6 @@ public class Extractor
 //		
 //		return result;
 //	}
-	
-	/**
-	 * Records the results of the web search as a CSV file.
-	 * 
-	 * @param originalUrls
-	 * 		List of treated URLs.
-	 * @param filteredUrls
-	 * 		List of remaining URLs after filtering.
-	 * @param originalArticles
-	 * 		List of treated articles.
-	 * @param filteredArticles
-	 * 		List of remaining articles after filtering.
-	 * @param events
-	 * 		List of detected events.
-	 * 
-	 * @throws UnsupportedEncodingException
-	 * 		Problem while accessing to the result file.
-	 * @throws FileNotFoundException
-	 * 		Problem while accessing to the result file.
-	 */
-	private void exportWebEvents(Map<String,List<String>> originalUrls, List<String> filteredUrls, List<Article> originalArticles, List<Article> filteredArticles, List<List<Event>> events) throws UnsupportedEncodingException, FileNotFoundException
-	{	String filePath = FileNames.FO_WEB_SEARCH_RESULTS + File.separator + FileNames.FI_EVENT_TABLE;
-		logger.log("Recording the events as a CVS file: "+filePath);
-		logger.decreaseOffset();
-		
-		List<String> urls = new ArrayList<String>(originalUrls.keySet());
-		Collections.sort(urls);
-		
-		PrintWriter pw = FileTools.openTextFileWrite(filePath, "UTF-8");
-		
-		// write header
-		List<String> colNames = Arrays.asList(
-			"Rank",
-			"Page title",
-			"Url",
-			"Date",
-			"Content",
-			"Active",
-			"Contains keyword",
-			"Support type",
-			"Source",
-			"Content type",
-			"Theme",
-			"Event",
-			"Date",
-			"Hour",
-			"Period relevance",
-			"Location",
-			"Persons/Organizations",
-			"Event rank"
-		);
-		Iterator<String> it = colNames.iterator();
-		while(it.hasNext())
-		{	String colName = it.next();
-			pw.print(colName);
-			if(it.hasNext())
-				pw.print(",");
-		}
-		pw.println();
-		
-		// write data
-		logger.log("Treat each article separately");
-		int i = 1;
-		for(String url: urls)
-		{	String address = "\""+url+"\"";
-			int indexUrl = filteredUrls.indexOf(url);
-			
-			// URL not processed
-			if(indexUrl==-1)
-			{	if(url.endsWith(FileNames.EX_PDF))
-					pw.print(
-						i+",,"+
-						address+",,,,,"+
-						"PDF,,,,,,,,,"+
-						"Filtered URL,"
-					);
-				else
-					pw.print(
-						i+",,"+
-						address+",,,,,,,,,,,,,,"+
-						"Filtered URL,"
-					);
-			}
-			
-			// URL processed
-			else
-			{	Article article = originalArticles.get(indexUrl);
-				String title = "\""+article.getTitle()+"\"";
-				int indexArticle = filteredArticles.indexOf(article);
-				
-				// article not processed
-				if(indexArticle==-1)
-				{	pw.print(
-						i+","+
-						title+","+
-						address+",,,,"+
-						"No,,,,,,,,,,"+
-						"Filtered article,"
-					);
-				}
-				
-				// article processed
-				else
-				{	List<Event> eventList = events.get(indexArticle);
-
-					// no event detected for this article
-					if(eventList.isEmpty())
-						pw.print(
-							i+","+
-							title+","+
-							address+",,,,"+
-							"Yes,,,,,,,,,,"+
-							"No event detected,0"
-						);
-
-					// at least one event detected
-					else
-					{	for(int j=0;j<eventList.size();j++)
-						{	Event event = eventList.get(j);
-							String beginning = i+","+title+","+address+",,,,"+"Yes,,,,,"; 
-							String ending = convertEvent2Csv(event);
-							pw.print(beginning+","+ending+","+(j+1));
-						}
-					}
-				}
-			}
-			
-			pw.println();
-			i++;
-		}
-		
-		pw.close();
-		logger.decreaseOffset();
-	}
 	
 	/**
 	 * Records the results of the social media search as a CSV file.

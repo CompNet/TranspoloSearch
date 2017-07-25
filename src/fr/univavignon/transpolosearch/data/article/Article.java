@@ -49,7 +49,7 @@ import fr.univavignon.transpolosearch.tools.xml.XmlTools;
  * 
  * @author Vincent Labatut
  */
-public class Article
+public class Article implements Comparable<Article>
 {
 	/**
 	 * Creates a new article.
@@ -906,6 +906,23 @@ public class Article
 	@Override
 	public String toString()
 	{	String result = "["+name+"] "+title;
+		return result;
+	}
+
+	@Override
+	public int compareTo(Article o) 
+	{	String title2 = o.title;
+		int result = title.compareTo(title2);
+		return result;
+	}
+	
+	@Override
+	public boolean equals(Object obj) 
+	{	boolean result = false;
+		if(obj!=null && obj instanceof Article)
+		{	Article article = (Article)obj;
+			result = this.compareTo(article)==0;
+		}
 		return result;
 	}
 }
