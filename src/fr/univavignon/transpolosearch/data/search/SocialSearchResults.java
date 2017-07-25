@@ -46,14 +46,14 @@ import fr.univavignon.transpolosearch.tools.log.HierarchicalLogger;
 import fr.univavignon.transpolosearch.tools.log.HierarchicalLoggerManager;
 
 /**
- * Collection of search results returned by a collection of Web
+ * Collection of search results returned by a collection of social
  * search engines, with additional info resulting from their
  * subsequent processing.
  * 
  * @author Vincent Labatut
  */
-public class WebSearchResults extends AbstractSearchResults<WebSearchResult>
-{	
+public class SocialSearchResults extends AbstractSearchResults<SocialSearchResult>
+{
 	/////////////////////////////////////////////////////////////////
 	// ENGINES		/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
@@ -200,7 +200,7 @@ public class WebSearchResults extends AbstractSearchResults<WebSearchResult>
 			logger.log("endDate="+endDate);
 			String txt = "searchDate="+searchDate;
 			if(searchDate)
-				txt = txt + "(dates are ignored here, because they were already used during the Web search)";
+				txt = txt + "(dates are ignored here, because they were already used during the social search)";
 			logger.log(txt);
 			logger.log("compulsoryExpression="+compulsoryExpression);
 		logger.decreaseOffset();
@@ -230,11 +230,11 @@ public class WebSearchResults extends AbstractSearchResults<WebSearchResult>
 	 * Retrieve all the articles whose URLs were not previously filtered.
 	 * 
 	 * @throws IOException
-	 * 		Problem while retrieving a Web page.
+	 * 		Problem while retrieving a resource.
 	 * @throws ParseException
-	 * 		Problem while retrieving a Web page.
+	 * 		Problem while retrieving a resource.
 	 * @throws SAXException
-	 * 		Problem while retrieving a Web page.
+	 * 		Problem while retrieving a resource.
 	 */
 	public void retrieveArticles() throws IOException, ParseException, SAXException
 	{	logger.log("Starting the article retrieval");
@@ -311,7 +311,7 @@ public class WebSearchResults extends AbstractSearchResults<WebSearchResult>
 	/////////////////////////////////////////////////////////////////
 	/**
 	 * Identifies the events described in the articles associated to
-	 * the Web search results.
+	 * the social search results.
 	 * 
 	 * @param bySentence
 	 * 		Whether to retrieve events by sentence (all event-related entity mentions
@@ -376,7 +376,7 @@ public class WebSearchResults extends AbstractSearchResults<WebSearchResult>
 	 * 		Problem while opening the CSV file.
 	 */
 	public void exportAsCsv() throws UnsupportedEncodingException, FileNotFoundException
-	{	logger.log("Recording all the Web search results in a single file");
+	{	logger.log("Recording all the social search results in a single file");
 		logger.increaseOffset();
 		
 		// create folder
@@ -411,7 +411,7 @@ public class WebSearchResults extends AbstractSearchResults<WebSearchResult>
 	}
 	
 	/**
-	 * Records the results of the web search as a CSV file.
+	 * Records the results of the social search as a CSV file.
 	 * 
 	 * @throws UnsupportedEncodingException
 	 * 		Problem while accessing to the result file.

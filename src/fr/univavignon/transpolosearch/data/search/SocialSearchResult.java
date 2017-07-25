@@ -56,20 +56,20 @@ import fr.univavignon.transpolosearch.tools.time.Period;
 import fr.univavignon.transpolosearch.tools.time.TimeFormatting;
 
 /**
- * Represents one result of a Web search engine (a URL) and some info
- * regarding how it was subsequently processed.
+ * Represents one result of a social search engine (probably a concatenation
+ * of posts) and some info regarding how it was subsequently processed.
  * 
  * @author Vincent Labatut
  */
-public class WebSearchResult extends AbstractSearchResult
+public class SocialSearchResult extends AbstractSearchResult
 {
 	/**
-	 * Initializes the Web search result.
+	 * Initializes the Social search result.
 	 * 
 	 * @param url
 	 * 		Address associated to the search result.
 	 */
-	public WebSearchResult(String url)
+	public SocialSearchResult(String url)
 	{	this.url = url;
 	}
 	
@@ -130,7 +130,7 @@ public class WebSearchResult extends AbstractSearchResult
 	/////////////////////////////////////////////////////////////////
 	// ARTICLE		/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
-	/** Article associated to this Web result */
+	/** Article associated to this social result */
 	public Article article = null;
 	
 	/**
@@ -236,7 +236,7 @@ public class WebSearchResult extends AbstractSearchResult
 	/////////////////////////////////////////////////////////////////
 	// MENTIONS		/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
-	/** Mentions detected in the article associated to this Web search result */
+	/** Mentions detected in the article associated to this social search result */
 	public Mentions mentions = null;
 	
 	/**
@@ -316,11 +316,11 @@ public class WebSearchResult extends AbstractSearchResult
 	/////////////////////////////////////////////////////////////////
 	// EVENTS		/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
-	/** Event detected for this Web search result */
+	/** Event detected for this social search result */
 	public List<Event> events = new ArrayList<Event>();
 	/**
 	 * Identifies the events described in the article associated to
-	 * this Web search result.
+	 * this social search result.
 	 * 
 	 * @param bySentence
 	 * 		Whether to retrieve events by sentence (all event-related entity mentions
@@ -450,10 +450,10 @@ public class WebSearchResult extends AbstractSearchResult
 	}
 	
 	/**
-	 * Records the results of the web search as a CSV file.
+	 * Records the results of the social search as a CSV file.
 	 * 
 	 * @return
-	 * 		Map representing the events associated to this Web
+	 * 		Map representing the events associated to this social
 	 * 		search result (can be empty). 
 	 */
 	protected List<Map<String,String>> exportEvents()

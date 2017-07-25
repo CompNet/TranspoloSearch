@@ -56,22 +56,28 @@ import fr.univavignon.transpolosearch.tools.time.Period;
 import fr.univavignon.transpolosearch.tools.time.TimeFormatting;
 
 /**
- * Represents one result of a Web search engine (a URL) and some info
+ * Represents one result of a search engine and some info 
  * regarding how it was subsequently processed.
  * 
  * @author Vincent Labatut
  */
-public class WebSearchResult extends AbstractSearchResult
+public abstract class AbstractSearchResult
 {
 	/**
-	 * Initializes the Web search result.
+	 * Initializes the search result.
 	 * 
 	 * @param url
 	 * 		Address associated to the search result.
 	 */
-	public WebSearchResult(String url)
+	public AbstractSearchResult(String url)
 	{	this.url = url;
 	}
+	
+	/////////////////////////////////////////////////////////////////
+	// LOGGER		/////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////
+	/** Common object used for logging */
+	public static HierarchicalLogger logger = HierarchicalLoggerManager.getHierarchicalLogger();
 	
 	/////////////////////////////////////////////////////////////////
 	// URL			/////////////////////////////////////////////////
@@ -130,7 +136,7 @@ public class WebSearchResult extends AbstractSearchResult
 	/////////////////////////////////////////////////////////////////
 	// ARTICLE		/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
-	/** Article associated to this Web result */
+	/** Article associated to this result */
 	public Article article = null;
 	
 	/**
@@ -236,7 +242,7 @@ public class WebSearchResult extends AbstractSearchResult
 	/////////////////////////////////////////////////////////////////
 	// MENTIONS		/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
-	/** Mentions detected in the article associated to this Web search result */
+	/** Mentions detected in the article associated to this search result */
 	public Mentions mentions = null;
 	
 	/**
@@ -316,11 +322,11 @@ public class WebSearchResult extends AbstractSearchResult
 	/////////////////////////////////////////////////////////////////
 	// EVENTS		/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
-	/** Event detected for this Web search result */
+	/** Event detected for this search result */
 	public List<Event> events = new ArrayList<Event>();
 	/**
 	 * Identifies the events described in the article associated to
-	 * this Web search result.
+	 * this search result.
 	 * 
 	 * @param bySentence
 	 * 		Whether to retrieve events by sentence (all event-related entity mentions
@@ -450,10 +456,10 @@ public class WebSearchResult extends AbstractSearchResult
 	}
 	
 	/**
-	 * Records the results of the web search as a CSV file.
+	 * Records the results of the search as a CSV file.
 	 * 
 	 * @return
-	 * 		Map representing the events associated to this Web
+	 * 		Map representing the events associated to this social
 	 * 		search result (can be empty). 
 	 */
 	protected List<Map<String,String>> exportEvents()
