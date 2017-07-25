@@ -290,8 +290,8 @@ public class Test
 // pers: C. Helle + M. Aubry + A. Hidalgo
 
 /** TODO
- * 1) FB for hidalgo + aubry
- * 2) check the retrieved pages, possibly correct the software when needed
+ * - edit the SNS search part, mutualize the new classes designed from the web search
+ * - check the retrieved pages, possibly correct the software when needed
  * 
  * - process each engine separately, record the results in their individual folders, then only merge the results
  * - check if articles have unique name/title (they should)
