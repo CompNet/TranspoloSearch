@@ -18,30 +18,16 @@ package fr.univavignon.transpolosearch.data.search;
  * along with TranspoloSearch. If not, see <http://www.gnu.org/licenses/>.
  */
 
-import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
-import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
-import org.xml.sax.SAXException;
-
-import fr.univavignon.transpolosearch.data.article.ArticleLanguage;
 import fr.univavignon.transpolosearch.processing.InterfaceRecognizer;
 import fr.univavignon.transpolosearch.processing.ProcessorException;
-import fr.univavignon.transpolosearch.retrieval.ArticleRetriever;
-import fr.univavignon.transpolosearch.tools.file.FileNames;
-import fr.univavignon.transpolosearch.tools.file.FileTools;
 import fr.univavignon.transpolosearch.tools.log.HierarchicalLogger;
 import fr.univavignon.transpolosearch.tools.log.HierarchicalLoggerManager;
 
@@ -49,6 +35,9 @@ import fr.univavignon.transpolosearch.tools.log.HierarchicalLoggerManager;
  * Collection of search results returned by a collection of
  * search engines, with additional info resulting from their
  * subsequent processing.
+ * 
+ * @param <T>
+ * 		Type of results handled by this class. 
  * 
  * @author Vincent Labatut
  */
@@ -71,38 +60,13 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 	// ENGINES		/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
 	/** List of search engines involved in the current search */
-	private Set<String> engineNames = new TreeSet<String>();
+	protected Set<String> engineNames = new TreeSet<String>();
 	
 	/////////////////////////////////////////////////////////////////
 	// RESULTS		/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
 	/** Map of results */
-	private Map<String,T> results = new HashMap<String,T>();
-	
-	/**
-	 * Adds the specified url to the list of results, as returned at the specified
-	 * rank by the specified search engine. If a similar result already exists, it
-	 * is simply completed.
-	 * 
-	 * @param url
-	 * 		Result URL.
-	 * @param engineName
-	 * 		Engine returning the URL.
-	 * @param rank
-	 * 		Rank of the URL according to the search engine.
-	 * @return
-	 * 		The created/completed search result object.
-	 */
-	public T addResult(String url, String engineName, int rank)
-	{	T result = results.get(url);
-		if(result==null)
-		{	result = new WebSearchResult(url);
-			results.put(url, result);
-		}
-		result.addEngine(engineName, rank);
-		engineNames.add(engineName);
-		return result;
-	}
+	protected Map<String,T> results = new HashMap<String,T>();
 	
 	/**
 	 * Returns the number of entries in this collection of search results.
@@ -119,24 +83,6 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 	// FILTERING	/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
 	/**
-	 * Discards the results corresponding to URLs which cannot
-	 * be processed.
-	 */
-	public void filterByUrl()
-	{	logger.log("Filtering the retrieved URL to remove those we can't treat");
-		logger.increaseOffset();
-		
-		int count = 0;
-		for(WebSearchResult result: results.values())
-		{	if(!result.filterUrl())
-				count++;
-		}
-		
-		logger.decreaseOffset();
-		logger.log("URL filtering complete: "+count+" pages kept");
-	}
-	
-	/**
 	 * Discards results describing only events not contained 
 	 * in the specified date range.
 	 *  
@@ -152,7 +98,7 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 			fr.univavignon.transpolosearch.tools.time.Date end = new fr.univavignon.transpolosearch.tools.time.Date(endDate);
 			int count = 0;
 			int total = 0;
-			for(WebSearchResult result: results.values())
+			for(T result: results.values())
 			{	if(result.status==null)
 				{	total++;
 					if(!result.filterByDate(start,end,total))
@@ -175,7 +121,7 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 		logger.increaseOffset();
 			int count = 0;
 			int total = 0;
-			for(WebSearchResult result: results.values())
+			for(T result: results.values())
 			{	if(result.status==null)
 				{	total++;
 					if(!result.filterByKeyword(compulsoryExpression,total))
@@ -235,44 +181,9 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 		logger.decreaseOffset();
 		logger.log("Article filtering complete");
 	}
-	
-	/////////////////////////////////////////////////////////////////
-	// RETRIEVAL	/////////////////////////////////////////////////
-	/////////////////////////////////////////////////////////////////
-	/**
-	 * Retrieve all the articles whose URLs were not previously filtered.
-	 * 
-	 * @throws IOException
-	 * 		Problem while retrieving a resource.
-	 * @throws ParseException
-	 * 		Problem while retrieving a resource.
-	 * @throws SAXException
-	 * 		Problem while retrieving a resource.
-	 */
-	public void retrieveArticles() throws IOException, ParseException, SAXException
-	{	logger.log("Starting the article retrieval");
-		logger.increaseOffset();
 		
-			// init
-			ArticleRetriever articleRetriever = new ArticleRetriever(true); //TODO cache disabled for debugging
-			articleRetriever.setLanguage(ArticleLanguage.FR); // TODO we know the articles will be in French (should be generalized later)
-	
-			int count = 0;
-			int total = 0;
-			for(WebSearchResult result: results.values())
-			{	if(result.status==null)
-				{	total++;
-					if(result.retrieveArticle(articleRetriever,total))
-						count++;
-				}
-			}
-		
-		logger.decreaseOffset();
-		logger.log("Article retrieval complete: "+count+"/"+total);
-	}
-	
 	/////////////////////////////////////////////////////////////////
-	// ENTITIES		/////////////////////////////////////////////////
+	// MENTIONS		/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
 	/**
 	 * Detects the entity mentions present in each specified article.
@@ -288,7 +199,7 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 		
 			int count = 0;
 			int total = 0;
-			for(WebSearchResult result: results.values())
+			for(T result: results.values())
 			{	if(result.status==null)
 				{	total++;
 					if(result.detectMentions(recognizer,total)>0)
@@ -308,7 +219,7 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 		logger.increaseOffset();
 		
 		int total = 0;
-		for(WebSearchResult result: results.values())
+		for(T result: results.values())
 		{	if(result.status==null)
 			{	total++;
 				result.displayRemainingMentions(total);
@@ -336,7 +247,7 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 		
 			int count = 0;
 			int total = 0;
-			for(WebSearchResult result: results.values())
+			for(T result: results.values())
 			{	if(result.status==null)
 				{	total++;
 					if(result.extractEvents(bySentence,total)>0)
@@ -359,6 +270,8 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 	protected static final String COL_PAGE_STATUS = "Format";
 	/** Publication date of the Web resource */
 	protected static final String COL_PUB_DATE = "Publication date";
+	/** Name of the social search engine */
+	protected static final String COL_SOCIAL_ENGINE = "Social media";
 	/** Rank according to some search engine */
 	protected static final String COL_RANK = "Rank ";
 	/** Rank of the event in the article */
@@ -381,104 +294,12 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 	protected static final String COL_COMMENTS = "Comments";
 	
 	/**
-	 * Records all result URL in a single CSV file.
-	 * 
-	 * @throws UnsupportedEncodingException
-	 * 		Problem while opening the CSV file.
-	 * @throws FileNotFoundException
-	 * 		Problem while opening the CSV file.
-	 */
-	public void exportAsCsv() throws UnsupportedEncodingException, FileNotFoundException
-	{	logger.log("Recording all the search results in a single file");
-		logger.increaseOffset();
-		
-		// create folder
-		File folder = new File(FileNames.FO_WEB_SEARCH_RESULTS);
-		folder.mkdirs();
-		String cacheFilePath = folder + File.separator + FileNames.FI_SEARCH_RESULTS_ALL;
-		logger.log("Recording in CSV file \""+cacheFilePath+"\"");
-		
-		// open file and write header
-		PrintWriter pw = FileTools.openTextFileWrite(cacheFilePath,"UTF-8");
-		{	String line = "URL";
-			for(String engineName: engineNames)
-				line = line + "," + engineName;
-			pw.println(line);
-		}
-		
-		// write data and close file
-		for(WebSearchResult result: results.values())
-		{	String line = "\""+result.url+"\"";
-			Map<String,Integer> ranks = result.ranks;
-			for(String engineName: engineNames)
-			{	line = line + ",";
-				Integer rank = ranks.get(engineName);
-				if(rank!=null)
-					line = line + rank;
-			}
-			pw.println(line);
-		}
-		pw.close();
-
-		logger.decreaseOffset();
-	}
-	
-	/**
-	 * Records the results of the search as a CSV file.
+	 * Records the results of the social search as a CSV file.
 	 * 
 	 * @throws UnsupportedEncodingException
 	 * 		Problem while accessing to the result file.
 	 * @throws FileNotFoundException
 	 * 		Problem while accessing to the result file.
 	 */
-	public void exportEvents() throws UnsupportedEncodingException, FileNotFoundException
-	{	String filePath = FileNames.FO_WEB_SEARCH_RESULTS + File.separator + FileNames.FI_EVENT_TABLE;
-		logger.log("Recording the events as a CVS file: "+filePath);
-		logger.decreaseOffset();
-			PrintWriter pw = FileTools.openTextFileWrite(filePath, "UTF-8");
-			
-			// write header
-			List<String> startCols = Arrays.asList(COL_PAGE_TITLE, COL_PAGE_URL, COL_PUB_DATE);
-			List<String> endCols = Arrays.asList(COL_PAGE_STATUS, COL_EVENT_RANK, COL_EVENT_DATES,
-					COL_EVENT_LOCATIONS, COL_EVENT_PERSONS, COL_EVENT_ORGANIZATIONS, COL_EVENT_FUNCTIONS,
-					COL_EVENT_PRODUCTIONS, COL_EVENT_MEETINGS, COL_COMMENTS
-			);
-			List<String> cols = new ArrayList<String>();
-			cols.addAll(startCols);
-			for(String engineName: engineNames)
-				cols.add(COL_RANK+engineName); 
-			cols.addAll(endCols);
-			Iterator<String> it = cols.iterator();
-			while(it.hasNext())
-			{	String col = it.next();
-				pw.print(col);
-				if(it.hasNext())
-					pw.print(",");
-			}
-			pw.println();
-			
-			// write data
-			logger.log("Treat each article separately");
-			int total = 0;
-			for(WebSearchResult result: results.values())
-			{	List<Map<String,String>> lines = result.exportEvents();
-				for(Map<String,String> line: lines)
-				{	it = cols.iterator();
-					while(it.hasNext())
-					{	String col = it.next();
-						String val = line.get(col);
-						if(val!=null)
-							pw.print(val);
-						if(it.hasNext())
-							pw.print(",");
-					}
-					pw.println();
-					total++;
-				}
-			}
-			
-			pw.close();
-		logger.decreaseOffset();
-		logger.log("Wrote "+total+" events");
-	}
+	public abstract void exportEvents() throws UnsupportedEncodingException, FileNotFoundException;
 }

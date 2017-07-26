@@ -22,7 +22,7 @@ import java.io.IOException;
 import java.util.Date;
 import java.util.List;
 
-import fr.univavignon.transpolosearch.data.search.SocialMediaPost;
+import fr.univavignon.transpolosearch.data.search.SocialSearchResult;
 import fr.univavignon.transpolosearch.tools.log.HierarchicalLogger;
 import fr.univavignon.transpolosearch.tools.log.HierarchicalLoggerManager;
 
@@ -80,5 +80,5 @@ public abstract class AbstractSocialEngine
 	 * @throws IOException
 	 * 		Problem while searching the Web.
 	 */
-	public abstract List<SocialMediaPost> search(String keywords, Date startDate, Date endDate, boolean extendedSearch)  throws IOException;
+	public abstract List<SocialSearchResult> search(String keywords, Date startDate, Date endDate, boolean extendedSearch)  throws IOException;
 }

@@ -19,54 +19,26 @@ package fr.univavignon.transpolosearch.extraction;
  */
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.io.UnsupportedEncodingException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Scanner;
-import java.util.Set;
-import java.util.TreeSet;
 
 import org.xml.sax.SAXException;
 
 import com.gargoylesoftware.htmlunit.FailingHttpStatusCodeException;
 
-import fr.univavignon.transpolosearch.data.article.Article;
-import fr.univavignon.transpolosearch.data.article.ArticleLanguage;
-import fr.univavignon.transpolosearch.data.entity.EntityType;
-import fr.univavignon.transpolosearch.data.entity.mention.AbstractMention;
-import fr.univavignon.transpolosearch.data.entity.mention.MentionDate;
-import fr.univavignon.transpolosearch.data.entity.mention.MentionFunction;
-import fr.univavignon.transpolosearch.data.entity.mention.MentionLocation;
-import fr.univavignon.transpolosearch.data.entity.mention.MentionMeeting;
-import fr.univavignon.transpolosearch.data.entity.mention.MentionOrganization;
-import fr.univavignon.transpolosearch.data.entity.mention.MentionPerson;
-import fr.univavignon.transpolosearch.data.entity.mention.MentionProduction;
-import fr.univavignon.transpolosearch.data.entity.mention.Mentions;
-import fr.univavignon.transpolosearch.data.event.Event;
-import fr.univavignon.transpolosearch.data.search.SocialMediaPost;
-import fr.univavignon.transpolosearch.data.search.WebSearchResult;
+import fr.univavignon.transpolosearch.data.search.SocialSearchResult;
+import fr.univavignon.transpolosearch.data.search.SocialSearchResults;
 import fr.univavignon.transpolosearch.data.search.WebSearchResults;
 import fr.univavignon.transpolosearch.processing.InterfaceRecognizer;
 import fr.univavignon.transpolosearch.processing.ProcessorException;
 import fr.univavignon.transpolosearch.processing.combiner.straightcombiner.StraightCombiner;
-import fr.univavignon.transpolosearch.retrieval.ArticleRetriever;
 import fr.univavignon.transpolosearch.retrieval.reader.ReaderException;
 import fr.univavignon.transpolosearch.search.social.AbstractSocialEngine;
 import fr.univavignon.transpolosearch.search.social.FacebookEngine;
@@ -79,8 +51,6 @@ import fr.univavignon.transpolosearch.tools.file.FileNames;
 import fr.univavignon.transpolosearch.tools.file.FileTools;
 import fr.univavignon.transpolosearch.tools.log.HierarchicalLogger;
 import fr.univavignon.transpolosearch.tools.log.HierarchicalLoggerManager;
-import fr.univavignon.transpolosearch.tools.string.StringTools;
-import fr.univavignon.transpolosearch.tools.time.Period;
 
 /**
  * This class handles the main search, i.e. it :
@@ -167,7 +137,7 @@ public class Extractor
 		
 		// perform the social search
 		logger.log("Performing the social media search");
-		performSocialExtraction(keywords, startDate, endDate, extendedSocialSearch);
+		performSocialExtraction(keywords, startDate, endDate, compulsoryExpression, extendedSocialSearch);
 		
 		logger.decreaseOffset();
 		logger.log("Information extraction over");
@@ -192,7 +162,7 @@ public class Extractor
 	 * 		If one of the dates is {@code null}, this parameter has no effect.
 	 * @param compulsoryExpression
 	 * 		String expression which must be present in the article,
-	 * 		or {@code null} if there's no such constraint.
+	 * 		or {@code null} if there is no such constraint.
 	 * 
 	 * @throws IOException 
 	 * 		Problem accessing the Web or a file.
@@ -257,6 +227,9 @@ public class Extractor
 	 * 		users commenting the posts of interest, for the considered period. If 
 	 * 		{@code false}, only the posts on the targeted page and their direct comments
 	 * 		are returned. 
+	 * @param compulsoryExpression
+	 * 		String expression which must be present in the groups of posts,
+	 * 		or {@code null} if there is no such constraint.
 	 * 
 	 * @throws IOException 
 	 * 		Problem accessing the Web or a file.
@@ -269,28 +242,31 @@ public class Extractor
 	 * @throws ProcessorException 
 	 * 		Problem while detecting the entity mentions.
 	 */
-	public void performSocialExtraction(String keywords, Date startDate, Date endDate, boolean extendedSocialSearch) throws IOException, ReaderException, ParseException, SAXException, ProcessorException
+	public void performSocialExtraction(String keywords, Date startDate, Date endDate, String compulsoryExpression, boolean extendedSocialSearch) throws IOException, ReaderException, ParseException, SAXException, ProcessorException
 	{	logger.log("Starting the social media extraction");
 		logger.increaseOffset();
 		
 		// perform the social search
-		List<SocialMediaPost> originalPosts = performSocialSearch(keywords, startDate, endDate, extendedSocialSearch);
-
-		// convert the posts to articles for later use
-		List<Article> convertedPosts = convertPosts(originalPosts);
+		SocialSearchResults results = performSocialSearch(keywords, startDate, endDate, extendedSocialSearch);
+		
+		// convert the posts to proper articles
+		results.buildArticles();
+		
+		// possibly filter the articles depending on the compulsory expression
+		results.filterByContent(null,null,true,compulsoryExpression);
 		
 		// detect the entity mentions
-		List<Mentions> postMentions = detectMentions(convertedPosts);
+		results.detectMentions(recognizer);
 		
-		// displays the remaining articles with their mentions
-		displayRemainingMentions(convertedPosts,postMentions); //TODO for debug only
+		// displays the remaining articles with their mentions	//TODO maybe get the entities instead of the mention, eventually?
+		results.displayRemainingMentions(); //TODO for debug only
 		
 		// extract events from the remaining articles and mentions
 		boolean bySentence = false; //TODO for debug
-		List<List<Event>> events = extractEvents(convertedPosts, postMentions, bySentence);
+		results.extractEvents(bySentence);
 		
 		// export the events as a table
-		exportSocialEvents(originalPosts, convertedPosts, events);
+		results.exportEvents();
 		
 		logger.decreaseOffset();
 		logger.log("Social media extraction over");
@@ -301,14 +277,6 @@ public class Extractor
 	/////////////////////////////////////////////////////////////////
 	/** List of engines used for the Web search */
 	private final List<AbstractWebEngine> webEngines = new ArrayList<AbstractWebEngine>();
-	/** URL comparator (apparently, the default one is not appropriate? Can't remember why I added this...) */
-	private final static Comparator<URL> URL_COMPARATOR = new Comparator<URL>()
-	{	@Override
-		public int compare(URL url1, URL url2)
-		{	int result = url1.toString().compareTo(url2.toString());
-			return result;
-		}	
-	};
 	
 	/**
 	 * Initializes the default search engines.
@@ -481,7 +449,7 @@ public class Extractor
 	 * @throws IOException
 	 * 		Problem accessing the Web.
 	 */
-	private List<SocialMediaPost> performSocialSearch(String keywords, Date startDate, Date endDate, boolean extendedSearch) throws IOException
+	private SocialSearchResults performSocialSearch(String keywords, Date startDate, Date endDate, boolean extendedSearch) throws IOException
 	{	boolean cachedSearch = true; //TODO for debug
 		// log search parameters
 		logger.log("Parameters:");
@@ -489,15 +457,16 @@ public class Extractor
 			logger.log("keywords="+keywords);
 			logger.log("startDate="+startDate);
 			logger.log("endDate="+endDate);
+			logger.log("extendedSearch="+extendedSearch);
 		logger.decreaseOffset();
 		
 		// apply each search engine
 		logger.log("Applying iteratively each social engine");
 		logger.increaseOffset();
-			List<SocialMediaPost> result = new ArrayList<SocialMediaPost>();
+			SocialSearchResults result = new SocialSearchResults();
 			
 			for(AbstractSocialEngine engine: socialEngines)
-			{	List<SocialMediaPost> posts = new ArrayList<SocialMediaPost>();
+			{	List<SocialSearchResult> posts = new ArrayList<SocialSearchResult>();
 				
 				// possibly use cached results
 				String cacheFilePath = FileNames.FO_SOCIAL_SEARCH_RESULTS + File.separator + engine.getName();
@@ -509,7 +478,7 @@ public class Extractor
 				{	logger.log("Loading the previous search results from file "+cacheFilePath);
 					Scanner sc = FileTools.openTextFileRead(cacheFile,"UTF-8");
 					while(sc.hasNextLine())
-					{	SocialMediaPost post = SocialMediaPost.readFromText(sc);
+					{	SocialSearchResult post = SocialSearchResult.readFromText(sc);
 						posts.add(post);
 					}
 					logger.log("Number of posts loaded (not counting the comments): "+posts.size());
@@ -526,39 +495,24 @@ public class Extractor
 						if(cachedSearch)
 						{	logger.log("Recording all posts in text file \""+cacheFilePath+"\"");
 							PrintWriter pw = FileTools.openTextFileWrite(cacheFile,"UTF-8");
-							for(SocialMediaPost post: posts)
+							for(SocialSearchResult post: posts)
 								post.writeAsText(pw);
 							pw.close();
 						}
 					logger.decreaseOffset();
 				}
 				
-				// add to the overall list of URL
-				result.addAll(posts);
+				// add to the overall result object
+				int rank = 1;
+				for(SocialSearchResult post: posts)
+				{	post.rank = rank;
+					post.buildArticle();
+					result.addResult(post);
+					rank++;
+				}
 			}
 		logger.decreaseOffset();
 		logger.log("Total number of posts found: "+result.size());
-		
-		return result;
-	}
-	
-	/**
-	 * Convert each social media post from the specified list to
-	 * a proper article. The comments are simply concatenated as new
-	 * paragraphs, at the end of the post.
-	 * 
-	 * @param posts
-	 * 		List of post to convert.
-	 * @return
-	 * 		Resulting list of articles.
-	 */
-	private List<Article> convertPosts(List<SocialMediaPost> posts)
-	{	List<Article> result = new ArrayList<Article>();
-		
-		for(SocialMediaPost post: posts)
-		{	Article article = post.convert();
-			result.add(article);
-		}
 		
 		return result;
 	}
@@ -580,534 +534,5 @@ public class Extractor
 	private void initDefaultRecognizer() throws ProcessorException
 	{	recognizer = new StraightCombiner();
 		recognizer.setCacheEnabled(true);//TODO false for debugging
-	}
-	
-	/**
-	 * Detects the entity mentions present in each specified article.
-	 * 
-	 * @param articles
-	 * 		The list of articles to process.
-	 * @return
-	 * 		A list of entity mentions for each article.
-	 * @throws ProcessorException
-	 * 		Problem while applying the NER tool.
-	 */
-	private List<Mentions> detectMentions(List<Article> articles) throws ProcessorException
-	{	logger.log("Detecting entities in all "+articles.size()+" articles");
-		logger.increaseOffset();
-		List<Mentions> result = new ArrayList<Mentions>();
-		
-		for(Article article: articles)
-		{	logger.log("Processing article "+article.getTitle()+" ("+article.getUrl()+")");
-			logger.increaseOffset();
-				Mentions mentions = recognizer.recognize(article);
-				result.add(mentions);
-				
-				logger.log("Found "+mentions.getMentions().size()+" entities");
-			logger.decreaseOffset();
-		}
-		
-		logger.decreaseOffset();
-		return result;
-	}
-	
-	/////////////////////////////////////////////////////////////////
-	// FILTERING	/////////////////////////////////////////////////
-	/////////////////////////////////////////////////////////////////
-	/**
-	 * Removes from the list the articles concerning events
-	 * not contained in the specified date range. Also removes
-	 * the articles not containing the compulsory expression.
-	 *  
-	 * @param articles
-	 * 		List of articles to process.
-	 * @param mentions
-	 * 		List of the entity mentions detected in the listed articles.
-	 * @param startDate
-	 * 		Start of the time period.
-	 * @param endDate
-	 * 		End of the time period.
-	 * @param searchDate
-	 * 		Whether the filtering should be applied ({@code false})
-	 * 		or not ({@code true}).
-	 * @param compulsoryExpression
-	 * 		String expression which must be present in the article,
-	 * 		or {@code null} if there's no such constraint.
-	 */
-	private void filterByContent(List<Article> articles, List<Mentions> mentions, Date startDate, Date endDate, boolean searchDate, String compulsoryExpression)
-	{	logger.log("Starting filtering the articles");
-		logger.increaseOffset();
-		
-		// log stuff
-		logger.log("Parameters:");
-		logger.increaseOffset();
-			logger.log("startDate="+startDate);
-			logger.log("endDate="+endDate);
-			String txt = "searchDate="+searchDate;
-			if(searchDate)
-				txt = txt + "(dates are ignored here, because the search is strict)";
-			logger.log(txt);
-			logger.log("compulsoryExpression="+compulsoryExpression);
-		logger.decreaseOffset();
-		
-		// possibly filter the resulting texts depending on the compulsory expression
-		if(compulsoryExpression!=null)
-		{	logger.log("Removing articles not containing the compulsory expression \""+compulsoryExpression+"\"");
-			logger.increaseOffset();
-				int count = 0;
-				Iterator<Article> itArt = articles.iterator();
-				Iterator<Mentions> itEnt = mentions.iterator();
-				while(itArt.hasNext())
-				{	Article article = itArt.next();
-					itEnt.next();
-					logger.log("Processing article "+article.getTitle());
-					String rawText = article.getRawText();
-					if(!rawText.contains(compulsoryExpression))
-					{	logger.log("Removing article "+article.getTitle()+" ("+article.getUrl()+")");
-						itArt.remove();
-						itEnt.remove();
-						count++;
-					}
-				}
-				logger.log(">Number of articles removed: "+count);
-				logger.log(">Number of articles remaining: "+articles.size());
-			logger.decreaseOffset();
-		}
-		else
-			logger.log("No compulsory expression to process");
-
-		// possibly filter the resulting texts depending on the dates they contain
-		if(!searchDate)
-		{	if(startDate==null || endDate==null)
-				logger.log("WARNING: one date is null, so both of them are ignored");
-			else
-			{	logger.log("Removing articles not fitting the date constraints: "+startDate+"->"+endDate);
-				logger.increaseOffset();
-					fr.univavignon.transpolosearch.tools.time.Date start = new fr.univavignon.transpolosearch.tools.time.Date(startDate);
-					fr.univavignon.transpolosearch.tools.time.Date end = new fr.univavignon.transpolosearch.tools.time.Date(endDate);
-					Iterator<Article> itArt = articles.iterator();
-					Iterator<Mentions> itEnt = mentions.iterator();
-					int count = 0;
-					while(itArt.hasNext())
-					{	Article article = itArt.next();
-						Mentions ments = itEnt.next();
-						logger.log("Processing article "+article.getTitle());
-						List<AbstractMention<?>> dates = ments.getMentionsByType(EntityType.DATE);
-
-						// check if the article contains a date between start and end
-						boolean remove = dates.isEmpty();
-						if(!remove)	
-						{	fr.univavignon.transpolosearch.tools.time.Date date = null;
-							Iterator<AbstractMention<?>> it = dates.iterator();
-							while(date==null && it.hasNext())
-							{	AbstractMention<?> mention = it.next();
-								fr.univavignon.transpolosearch.tools.time.Date d = (fr.univavignon.transpolosearch.tools.time.Date) mention.getValue();
-								if(d.isContained(start, end))
-									date = d;
-							}
-							
-							if(date==null)
-							{	logger.log("Found no date in article "+article.getTitle()+" >> removal ("+article.getUrl()+")");
-								remove = true;
-							}
-						}
-						
-						// possibly remove the article/mentions
-						if(remove)
-						{	itArt.remove();
-							itEnt.remove();
-							count++;
-						}
-					}
-					logger.log(">Number of articles removed: "+count);
-					logger.log(">Number of articles remaining: "+articles.size());
-				logger.decreaseOffset();
-			}
-		}
-		
-		logger.decreaseOffset();
-		logger.log("Article filtering complete");
-	}
-
-	/////////////////////////////////////////////////////////////////
-	// DISPLAY	/////////////////////////////////////////////////////
-	/////////////////////////////////////////////////////////////////
-	/**
-	 * Displays the entity mentions associated to each article.
-	 * 
-	 * @param articles
-	 * 		List of articles.
-	 * @param mentions
-	 * 		List of associated entity mentions.
-	 */
-	private void displayRemainingMentions(List<Article> articles, List<Mentions> mentions)
-	{	logger.log("Displaying remaining articles and entity mentions");
-		logger.increaseOffset();
-		
-		Iterator<Article> itArt = articles.iterator();
-		Iterator<Mentions> itEnt = mentions.iterator();
-		int count = 0;
-		while(itArt.hasNext())
-		{	Article article = itArt.next();
-			Mentions ments = itEnt.next();
-			logger.log("Article: "+article.getTitle()+" ("+count+"/"+articles.size()+")");
-			logger.increaseOffset();
-				count++;
-				List<AbstractMention<?>> dates = ments.getMentionsByType(EntityType.DATE);
-				if(!dates.isEmpty())
-				{	String first = "Dates ("+dates.size()+"):";
-					List<String> msg = new ArrayList<String>();
-					msg.add(first);
-					for(AbstractMention<?> mention: dates)
-						msg.add(mention.toString());
-					logger.log(msg);
-				}
-				List<AbstractMention<?>> locations = ments.getMentionsByType(EntityType.LOCATION);
-				if(!locations.isEmpty())
-				{	String first = "Locations ("+locations.size()+"):";
-					List<String> msg = new ArrayList<String>();
-					msg.add(first);
-					for(AbstractMention<?> mention: locations)
-						msg.add(mention.toString());
-					logger.log(msg);
-				}
-				List<AbstractMention<?>> organizations = ments.getMentionsByType(EntityType.ORGANIZATION);
-				if(!organizations.isEmpty())
-				{	String first = "Organizations ("+organizations.size()+"):";
-					List<String> msg = new ArrayList<String>();
-					msg.add(first);
-					for(AbstractMention<?> mention: organizations)
-						msg.add(mention.toString());
-					logger.log(msg);
-				}
-				List<AbstractMention<?>> persons = ments.getMentionsByType(EntityType.PERSON);
-				if(!persons.isEmpty())
-				{	String first = "Persons ("+persons.size()+"):";
-					List<String> msg = new ArrayList<String>();
-					msg.add(first);
-					for(AbstractMention<?> mention: persons)
-						msg.add(mention.toString());
-					logger.log(msg);
-				}
-			logger.decreaseOffset();
-		}
-		
-		logger.decreaseOffset();
-		logger.log("Display complete");
-	}
-	
-	/////////////////////////////////////////////////////////////////
-	// EVENTS PROCESSING	/////////////////////////////////////////
-	/////////////////////////////////////////////////////////////////
-	/**
-	 * Takes a list of articles and a list of the corresponding entity mentions,
-	 * and identifies the events described in the articles.
-	 * 
-	 * @param articles
-	 * 		List of articles to treat.
-	 * @param mentions
-	 * 		List of the associated entity mentions.
-	 * @param bySentence
-	 * 		Whether to retrieve events by sentence (all event-related entity mentions
-	 * 		must be in the same sentence) or by article.
-	 * @return
-	 * 		The resulting list of events, for each article.
-	 */
-	private List<List<Event>> extractEvents(List<Article> articles, List<Mentions> mentions, boolean bySentence)
-	{	logger.log("Extracting events");
-		logger.increaseOffset();
-		List<List<Event>> result = new ArrayList<List<Event>>();
-		
-		// processing each article
-		Iterator<Article> itArt = articles.iterator();
-		Iterator<Mentions> itMent = mentions.iterator();
-		int count = 0;
-		int eventNbr = 0;
-		while(itArt.hasNext())
-		{	Article article = itArt.next();
-			Mentions ments = itMent.next();
-			logger.log("Article: "+article.getTitle()+" ("+count+"/"+articles.size()+")");
-			logger.increaseOffset();
-				count++;
-				String rawText = article.getRawText();
-				List<Event> events = new ArrayList<Event>();
-				result.add(events);
-				
-				if(bySentence)
-				{	// retrieving the sentence positions
-					List<Integer> sentencePos = StringTools.getSentencePositions(rawText);
-					sentencePos.add(rawText.length()); // to mark the end of the last sentence
-					int sp = -1;
-					
-					// for each sentence, we get the detected entity mentions
-					for(int ep: sentencePos)
-					{	if(sp>=0)
-						{	List<AbstractMention<?>> le = ments.getMentionsIn(sp, ep);
-							List<AbstractMention<?>> dates = Mentions.filterByType(le,EntityType.DATE);
-							// only go on if there is at least one date
-							if(!dates.isEmpty())
-							{	if(dates.size()>1)
-									logger.log("WARNING: there are several dates in sentence \""+rawText.substring(sp,ep)+"\"");
-								else
-								{	MentionDate ed = (MentionDate)dates.get(0);
-									List<AbstractMention<?>> persons = Mentions.filterByType(le,EntityType.PERSON);
-									if(persons.isEmpty())
-										logger.log("WARNING: there is a date ("+ed.getValue()+") but no persons in sentence \""+rawText.substring(sp,ep)+"\"");
-									else
-									{	Event event = new Event(ed);
-										events.add(event);
-										eventNbr++;
-										for(AbstractMention<?> mention: persons)
-										{	MentionPerson person = (MentionPerson)mention;
-											event.addPerson(person);
-										}
-										List<AbstractMention<?>> organizations = Mentions.filterByType(le,EntityType.ORGANIZATION);
-										for(AbstractMention<?> mention: organizations)
-										{	MentionOrganization organization = (MentionOrganization)mention;
-											event.addOrganization(organization);
-										}
-										List<AbstractMention<?>> locations = Mentions.filterByType(le,EntityType.LOCATION);
-										for(AbstractMention<?> mention: locations)
-										{	MentionLocation location = (MentionLocation)mention;
-											event.addLocation(location);
-										}
-										List<AbstractMention<?>> meetings = Mentions.filterByType(le,EntityType.MEETING);
-										for(AbstractMention<?> mention: meetings)
-										{	MentionMeeting meeting = (MentionMeeting)mention;
-											event.addMeeting(meeting);
-										}
-										List<AbstractMention<?>> functions = Mentions.filterByType(le,EntityType.FUNCTION);
-										for(AbstractMention<?> mention: functions)
-										{	MentionFunction function = (MentionFunction)mention;
-											event.addFunction(function);
-										}
-										List<AbstractMention<?>> productions = Mentions.filterByType(le,EntityType.PRODUCTION);
-										for(AbstractMention<?> mention: productions)
-										{	MentionProduction production = (MentionProduction)mention;
-											event.addProduction(production);
-										}
-										logger.log(Arrays.asList("Event found for sentence \""+rawText.substring(sp,ep)+"\"",event.toString()));
-									}
-								}
-							}
-						}
-						sp = ep;
-					}
-				}
-				
-				else // by article
-				{	List<AbstractMention<?>> dates = ments.getMentionsByType(EntityType.DATE);
-					// only go on if there is at least one date
-					if(!dates.isEmpty())
-					{	Event event;
-						if(dates.size()>1)
-						{	logger.log("There are several ("+dates.size()+") dates in the article >> merging them");
-							Iterator<AbstractMention<?>> it = dates.iterator();
-							MentionDate ed = (MentionDate)it.next();
-							event = new Event(ed);
-							while(it.hasNext())
-							{	ed = (MentionDate)it.next();
-								Period p = ed.getValue(); 
-								event.mergePeriod(p);
-							}
-						}
-						else
-						{	MentionDate esd = (MentionDate)dates.get(0);
-							event = new Event(esd);
-						}
-						
-						List<AbstractMention<?>> persons = ments.getMentionsByType(EntityType.PERSON);
-						if(persons.isEmpty())
-							logger.log("WARNING: there is a date ("+event.getPeriod()+") but no person in article \""+article.getTitle()+"\"");
-						else
-						{	events.add(event);
-							eventNbr++;
-							
-							for(AbstractMention<?> mention: persons)
-							{	MentionPerson person = (MentionPerson)mention;
-								event.addPerson(person);
-							}
-							List<AbstractMention<?>> organizations = ments.getMentionsByType(EntityType.ORGANIZATION);
-							for(AbstractMention<?> mention: organizations)
-							{	MentionOrganization organization = (MentionOrganization)mention;
-								event.addOrganization(organization);
-							}
-							List<AbstractMention<?>> locations = ments.getMentionsByType(EntityType.LOCATION);
-							for(AbstractMention<?> mention: locations)
-							{	MentionLocation location = (MentionLocation)mention;
-								event.addLocation(location);
-							}
-							logger.log(Arrays.asList("Event found for article \""+article.getTitle()+"\"",event.toString()));
-						}
-					}
-				}
-				
-			logger.log("Total number of events for this article: "+events.size());
-			logger.decreaseOffset();
-		}
-		
-		logger.decreaseOffset();
-		logger.log("Event extraction complete: "+eventNbr+" events detected in "+articles.size()+" articles");
-		return result;
-	}
-	
-//	/**
-//	 * Takes a list of entity mentions and returns the list of
-//	 * corresponding strings.
-//	 * 
-//	 * @param mentions
-//	 * 		List of entity mentions.
-//	 * @return
-//	 * 		List of the associated strings.
-//	 */
-//	private List<String> extractMentionNames(List<AbstractMention<?>> mentions)
-//	{	List<String> result = new ArrayList<String>();
-//		
-//		for(AbstractMention<?> mention: mentions)
-//		{	Object object = mention.getStringValue();
-//			String str = object.toString();
-//			result.add(str);
-//		}
-//		
-//		return result;
-//	}
-	
-	/**
-	 * Records the results of the social media search as a CSV file.
-	 * 
-	 * @param originalPosts
-	 * 		Posts originally retrieved.
-	 * @param convertedPosts
-	 * 		List of articles representing the above posts.
-	 * @param events
-	 * 		List of detected events.
-	 * 
-	 * @throws UnsupportedEncodingException
-	 * 		Problem while accessing to the result file.
-	 * @throws FileNotFoundException
-	 * 		Problem while accessing to the result file.
-	 */
-	private void exportSocialEvents(List<SocialMediaPost> originalPosts, List<Article> convertedPosts, List<List<Event>> events) throws UnsupportedEncodingException, FileNotFoundException
-	{	String filePath = FileNames.FO_SOCIAL_SEARCH_RESULTS + File.separator + FileNames.FI_EVENT_TABLE;
-		logger.log("Recording the events as a CVS file: "+filePath);
-		logger.decreaseOffset();
-		SimpleDateFormat sdf = new SimpleDateFormat("dd/mm/yyyyy",Locale.FRANCE); //TODO we suppose we deal with French articles, but this should be generalized later
-		
-		PrintWriter pw = FileTools.openTextFileWrite(filePath, "UTF-8");
-		
-		// write header
-		List<String> colNames = Arrays.asList(
-			"Title",
-			"ID",
-			"Url",
-			"Date",
-			"Content",
-			"Source",
-			"Event",
-			"Date",
-			"Hour",
-			"Location",
-			"Persons/Organizations",
-			"Event rank"
-		);
-		Iterator<String> it = colNames.iterator();
-		while(it.hasNext())
-		{	String colName = it.next();
-			pw.print(colName);
-			if(it.hasNext())
-				pw.print(",");
-		}
-		pw.println();
-		
-		// write data
-		logger.log("Treat each post separately");
-		for(int i=0;i<originalPosts.size();i++)
-		{	// get the data
-			SocialMediaPost post = originalPosts.get(i);
-			Article article = convertedPosts.get(i);
-			List<Event> eventList = events.get(i);
-			
-			// title and id
-			String beginningStr = "\""+article.getTitle()+"\"";
-			beginningStr = beginningStr + ","+post.id;
-			
-			// url
-			String url = article.getUrl().toString();
-			if(url==null)
-				beginningStr = beginningStr + ",";
-			else
-				beginningStr = beginningStr + ",\""+url+"\"";
-			
-			// date
-			Date date = article.getPublishingDate();
-			String dateStr = sdf.format(date);
-			beginningStr = beginningStr + ","+dateStr;
-			
-			// content
-			beginningStr = beginningStr + ",\""+article.getRawText()+"\"";
-			
-			// source
-			beginningStr = beginningStr + ","+post.source;
-
-			// events
-			if(eventList.isEmpty())
-				pw.print(beginningStr+",No event detected,,,,,");
-			else
-			{	for(int j=0;j<events.size();j++)
-				{	Event event = eventList.get(j);
-					String ending = convertEvent2Csv(event);
-					pw.print(beginningStr+","+ending+","+(j+1));
-				}
-			}
-			
-			pw.println();
-		}
-		
-		pw.close();
-		logger.decreaseOffset();
-	}
-	
-	/**
-	 * Converts an event to a CSV-compatible representation.
-	 * 
-	 * @param event
-	 * 		Event of interest.
-	 * @return
-	 * 		String representing the event in a CSV file.
-	 */
-	private String convertEvent2Csv(Event event)
-	{	// get the dates
-		Period period = event.getPeriod();
-		String periodStr = period.toString();
-		
-		// get the locations
-		String locations = "\"";
-		{	Collection<String> locs = event.getLocations();
-			Iterator<String> itLoc = locs.iterator();
-			while(itLoc.hasNext())
-			{	String loc = itLoc.next();
-				locations = locations + loc;
-				if(itLoc.hasNext())
-					locations = locations + ", ";
-			}
-			locations = locations + "\"";
-		}
-		
-		// get the persons/organizations
-		String persOrgs = "\"";
-		Collection<String> all = new ArrayList<String>();
-		all.addAll(event.getPersons());
-		all.addAll(event.getOrganizations());
-		Iterator<String> itPo = all.iterator();
-		while(itPo.hasNext())
-		{	String ment = itPo.next();
-			persOrgs = persOrgs + ment;
-			if(itPo.hasNext())
-				persOrgs = persOrgs + ", ";
-		}
-		persOrgs = persOrgs + "\"";
-		
-		String result = periodStr+",,,"+locations+","+persOrgs;
-		return result;
 	}
 }

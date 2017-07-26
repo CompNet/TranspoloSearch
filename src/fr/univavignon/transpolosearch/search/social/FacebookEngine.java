@@ -38,7 +38,7 @@ import facebook4j.Reading;
 import facebook4j.ResponseList;
 import facebook4j.conf.Configuration;
 import facebook4j.conf.ConfigurationBuilder;
-import fr.univavignon.transpolosearch.data.search.SocialMediaPost;
+import fr.univavignon.transpolosearch.data.search.SocialSearchResult;
 import fr.univavignon.transpolosearch.tools.keys.KeyHandler;
 
 import java.io.IOException;
@@ -220,10 +220,10 @@ public class FacebookEngine extends AbstractSocialEngine
 	// SEARCH		/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
 	@Override
-	public List<SocialMediaPost> search(String keywords, Date startDate, Date endDate, boolean extendedSearch)  throws IOException
+	public List<SocialSearchResult> search(String keywords, Date startDate, Date endDate, boolean extendedSearch)  throws IOException
 	{	logger.log("Searching Facebook");
 		logger.increaseOffset();
-		List<SocialMediaPost> result = new ArrayList<SocialMediaPost>();
+		List<SocialSearchResult> result = new ArrayList<SocialSearchResult>();
 		
 		String query = keywords;
 		Reading reading = null;
@@ -268,7 +268,7 @@ public class FacebookEngine extends AbstractSocialEngine
 					else
 						authName = auth.getName();
 					// create the post object
-					SocialMediaPost p = new SocialMediaPost(id, authName, date, getName(), msg);
+					SocialSearchResult p = new SocialSearchResult(id, authName, date, getName(), msg);
 					p.url = post.getLink();
 					result.add(p);
 					
@@ -285,7 +285,7 @@ public class FacebookEngine extends AbstractSocialEngine
 						auth = comment.getFrom();
 						authName = auth.getName();
 						// create the post object
-						SocialMediaPost com = new SocialMediaPost(id, authName, date, getName(), msg);
+						SocialSearchResult com = new SocialSearchResult(id, authName, date, getName(), msg);
 						p.comments.add(com);
 						// add to the comment author to the list
 						String authId = auth.getId();
@@ -312,7 +312,7 @@ public class FacebookEngine extends AbstractSocialEngine
 						Category auth = post.getFrom();
 						String authName = auth.getName();
 						// create the post object
-						SocialMediaPost p = new SocialMediaPost(id, authName, date, getName(), msg);
+						SocialSearchResult p = new SocialSearchResult(id, authName, date, getName(), msg);
 						p.url = post.getLink();
 						result.add(p);
 						

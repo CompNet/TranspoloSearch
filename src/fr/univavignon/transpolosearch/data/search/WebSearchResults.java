@@ -26,24 +26,16 @@ import java.io.UnsupportedEncodingException;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Date;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
 
 import org.xml.sax.SAXException;
 
 import fr.univavignon.transpolosearch.data.article.ArticleLanguage;
-import fr.univavignon.transpolosearch.processing.InterfaceRecognizer;
-import fr.univavignon.transpolosearch.processing.ProcessorException;
 import fr.univavignon.transpolosearch.retrieval.ArticleRetriever;
 import fr.univavignon.transpolosearch.tools.file.FileNames;
 import fr.univavignon.transpolosearch.tools.file.FileTools;
-import fr.univavignon.transpolosearch.tools.log.HierarchicalLogger;
-import fr.univavignon.transpolosearch.tools.log.HierarchicalLoggerManager;
 
 /**
  * Collection of search results returned by a collection of Web
@@ -55,17 +47,8 @@ import fr.univavignon.transpolosearch.tools.log.HierarchicalLoggerManager;
 public class WebSearchResults extends AbstractSearchResults<WebSearchResult>
 {	
 	/////////////////////////////////////////////////////////////////
-	// ENGINES		/////////////////////////////////////////////////
-	/////////////////////////////////////////////////////////////////
-	/** List of search engines involved in the current search */
-	private Set<String> engineNames = new TreeSet<String>();
-	
-	/////////////////////////////////////////////////////////////////
 	// RESULTS		/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
-	/** Map of results */
-	private Map<String,WebSearchResult> results = new HashMap<String,WebSearchResult>();
-	
 	/**
 	 * Adds the specified url to the list of results, as returned at the specified
 	 * rank by the specified search engine. If a similar result already exists, it
@@ -91,17 +74,6 @@ public class WebSearchResults extends AbstractSearchResults<WebSearchResult>
 		return result;
 	}
 	
-	/**
-	 * Returns the number of entries in this collection of search results.
-	 * 
-	 * @return
-	 * 		Number of entries in this map.
-	 */
-	public int size()
-	{	int result = results.size();
-		return result;
-	}
-	
 	/////////////////////////////////////////////////////////////////
 	// FILTERING	/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
@@ -123,106 +95,6 @@ public class WebSearchResults extends AbstractSearchResults<WebSearchResult>
 		logger.log("URL filtering complete: "+count+" pages kept");
 	}
 	
-	/**
-	 * Discards results describing only events not contained 
-	 * in the specified date range.
-	 *  
-	 * @param startDate
-	 * 		Start of the time period.
-	 * @param endDate
-	 * 		End of the time period.
-	 */
-	private void filterByDate(Date startDate, Date endDate)
-	{	logger.log("Removing articles not fitting the date constraints: "+startDate+"->"+endDate);
-		logger.increaseOffset();
-			fr.univavignon.transpolosearch.tools.time.Date start = new fr.univavignon.transpolosearch.tools.time.Date(startDate);
-			fr.univavignon.transpolosearch.tools.time.Date end = new fr.univavignon.transpolosearch.tools.time.Date(endDate);
-			int count = 0;
-			int total = 0;
-			for(WebSearchResult result: results.values())
-			{	if(result.status==null)
-				{	total++;
-					if(!result.filterByDate(start,end,total))
-						count++;
-				}
-			}
-		logger.decreaseOffset();
-		logger.log("Date-based filtering complete: "+count+"/"+total);
-	}
-
-	/**
-	 * Discards results corresponding only to articles not containing 
-	 * the compulsory expression.
-	 *  
-	 * @param compulsoryExpression
-	 * 		String expression which must be present in the article.
-	 */
-	private void filterByKeyword(String compulsoryExpression)
-	{	logger.log("Discarding articles not containing the compulsory expression \""+compulsoryExpression+"\"");
-		logger.increaseOffset();
-			int count = 0;
-			int total = 0;
-			for(WebSearchResult result: results.values())
-			{	if(result.status==null)
-				{	total++;
-					if(!result.filterByKeyword(compulsoryExpression,total))
-						count++;
-				}
-			}
-		logger.decreaseOffset();
-		logger.log("Keyword-based filtering complete: "+count+"/"+total);
-	}
-
-	/**
-	 * Discards results describing only events not contained 
-	 * in the specified date range, or not containing the 
-	 * compulsory expression.
-	 *  
-	 * @param startDate
-	 * 		Start of the time period.
-	 * @param endDate
-	 * 		End of the time period.
-	 * @param searchDate
-	 * 		Whether the date constraint was applied before ({@code true}) at search time,
-	 * 		or should be applied <i>a posteriori</i> here ({@code false}).
-	 * @param compulsoryExpression
-	 * 		String expression which must be present in the article,
-	 * 		or {@code null} if there is no such constraint.
-	 */
-	public void filterByContent(Date startDate, Date endDate, boolean searchDate, String compulsoryExpression)
-	{	logger.log("Starting filtering the articles");
-		logger.increaseOffset();
-		
-		// log stuff
-		logger.log("Parameters:");
-		logger.increaseOffset();
-			logger.log("startDate="+startDate);
-			logger.log("endDate="+endDate);
-			String txt = "searchDate="+searchDate;
-			if(searchDate)
-				txt = txt + "(dates are ignored here, because they were already used during the Web search)";
-			logger.log(txt);
-			logger.log("compulsoryExpression="+compulsoryExpression);
-		logger.decreaseOffset();
-		
-		// possibly filter the resulting texts depending on the compulsory expression
-		if(compulsoryExpression!=null)
-			filterByKeyword(compulsoryExpression);
-		else
-			logger.log("No compulsory expression to process");
-
-		// possibly filter the resulting texts depending on the dates they contain
-		if(!searchDate)
-		{	if(startDate==null || endDate==null)
-				logger.log("WARNING: one date is null, so both of them are ignored");
-			else
-				filterByDate(startDate, endDate);
-		}
-		
-		logger.decreaseOffset();
-		logger.log("Article filtering complete");
-	}
-	
 	/////////////////////////////////////////////////////////////////
 	// RETRIEVAL	/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
@@ -239,11 +111,11 @@ public class WebSearchResults extends AbstractSearchResults<WebSearchResult>
 	public void retrieveArticles() throws IOException, ParseException, SAXException
 	{	logger.log("Starting the article retrieval");
 		logger.increaseOffset();
-		
+			
 			// init
 			ArticleRetriever articleRetriever = new ArticleRetriever(true); //TODO cache disabled for debugging
 			articleRetriever.setLanguage(ArticleLanguage.FR); // TODO we know the articles will be in French (should be generalized later)
-	
+			
 			int count = 0;
 			int total = 0;
 			for(WebSearchResult result: results.values())
@@ -259,114 +131,8 @@ public class WebSearchResults extends AbstractSearchResults<WebSearchResult>
 	}
 	
 	/////////////////////////////////////////////////////////////////
-	// ENTITIES		/////////////////////////////////////////////////
-	/////////////////////////////////////////////////////////////////
-	/**
-	 * Detects the entity mentions present in each specified article.
-	 * 
-	 * @param recognizer
-	 * 		The recognizer used to detect the mentions.
-	 * @throws ProcessorException
-	 * 		Problem while applying the NER tool.
-	 */
-	public void detectMentions(InterfaceRecognizer recognizer) throws ProcessorException
-	{	logger.log("Detecting entity mentions in all the articles");
-		logger.increaseOffset();
-		
-			int count = 0;
-			int total = 0;
-			for(WebSearchResult result: results.values())
-			{	if(result.status==null)
-				{	total++;
-					if(result.detectMentions(recognizer,total)>0)
-						count++;
-				}
-			}
-		
-		logger.decreaseOffset();
-		logger.log("Mention detection complete: ("+count+"/"+total+")");
-	}
-
-	/**
-	 * Displays the entity mentions associated to each remaining article.
-	 */
-	public void displayRemainingMentions()
-	{	logger.log("Displaying remaining articles and entity mentions");
-		logger.increaseOffset();
-		
-		int total = 0;
-		for(WebSearchResult result: results.values())
-		{	if(result.status==null)
-			{	total++;
-				result.displayRemainingMentions(total);
-			}
-		}
-		
-		logger.decreaseOffset();
-		logger.log("Display complete");
-	}
-	
-	/////////////////////////////////////////////////////////////////
-	// EVENTS		/////////////////////////////////////////////////
-	/////////////////////////////////////////////////////////////////
-	/**
-	 * Identifies the events described in the articles associated to
-	 * the Web search results.
-	 * 
-	 * @param bySentence
-	 * 		Whether to retrieve events by sentence (all event-related entity mentions
-	 * 		must be in the same sentence) or by article.
-	 */
-	public void extractEvents(boolean bySentence)
-	{	logger.log("Extracting events from all the articles");
-		logger.increaseOffset();
-		
-			int count = 0;
-			int total = 0;
-			for(WebSearchResult result: results.values())
-			{	if(result.status==null)
-				{	total++;
-					if(result.extractEvents(bySentence,total)>0)
-						count++;
-				}
-			}
-		
-		logger.decreaseOffset();
-		logger.log("Event extraction complete: ("+count+"/"+total+")");
-	}
-	
-	/////////////////////////////////////////////////////////////////
 	// EXPORT		/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
-	/** Title of the Web resource */
-	protected static final String COL_PAGE_TITLE = "Page title";
-	/** URL of the Web resource */
-	protected static final String COL_PAGE_URL = "URL";
-	/** File format of the Web resource (HTML, PDF, etc.) */
-	protected static final String COL_PAGE_STATUS = "Format";
-	/** Publication date of the Web resource */
-	protected static final String COL_PUB_DATE = "Publication date";
-	/** Rank according to some search engine */
-	protected static final String COL_RANK = "Rank ";
-	/** Rank of the event in the article */
-	protected static final String COL_EVENT_RANK = "Event rank";
-	/** Dates associated to the event */
-	protected static final String COL_EVENT_DATES = "Dates";
-	/** Locations associated to the event */
-	protected static final String COL_EVENT_LOCATIONS = "Locations";
-	/** Persons associated to the event */
-	protected static final String COL_EVENT_PERSONS = "Persons";
-	/** Organizations associated to the event */
-	protected static final String COL_EVENT_ORGANIZATIONS = "Organizations";
-	/** Personal roles associated to the event */
-	protected static final String COL_EVENT_FUNCTIONS = "Functions";
-	/** Intellectual productions associated to the event */
-	protected static final String COL_EVENT_PRODUCTIONS = "Production";
-	/** Meetings associated to the event */
-	protected static final String COL_EVENT_MEETINGS = "Meetings";
-	/** Misc comments */
-	protected static final String COL_COMMENTS = "Comments";
-	
 	/**
 	 * Records all result URL in a single CSV file.
 	 * 
@@ -409,15 +175,16 @@ public class WebSearchResults extends AbstractSearchResults<WebSearchResult>
 
 		logger.decreaseOffset();
 	}
-	
+
 	/**
-	 * Records the results of the web search as a CSV file.
+	 * Records the results of the social search as a CSV file.
 	 * 
 	 * @throws UnsupportedEncodingException
 	 * 		Problem while accessing to the result file.
 	 * @throws FileNotFoundException
 	 * 		Problem while accessing to the result file.
 	 */
+	@Override
 	public void exportEvents() throws UnsupportedEncodingException, FileNotFoundException
 	{	String filePath = FileNames.FO_WEB_SEARCH_RESULTS + File.separator + FileNames.FI_EVENT_TABLE;
 		logger.log("Recording the events as a CVS file: "+filePath);
