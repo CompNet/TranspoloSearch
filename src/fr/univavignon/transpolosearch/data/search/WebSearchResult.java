@@ -143,6 +143,12 @@ public class WebSearchResult extends AbstractSearchResult
 	/////////////////////////////////////////////////////////////////
 	// EVENTS		/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
+	@Override
+	protected int extractEvents(boolean bySentence, int nbr)
+	{	int result = extractEvents(bySentence,nbr,true);
+		return result;
+	}
+	
 	/**
 	 * Records the results of the web search as a CSV file.
 	 * 

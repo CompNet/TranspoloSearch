@@ -38,6 +38,7 @@ import fr.univavignon.transpolosearch.data.entity.mention.Mentions;
 import fr.univavignon.transpolosearch.data.event.Event;
 import fr.univavignon.transpolosearch.processing.InterfaceRecognizer;
 import fr.univavignon.transpolosearch.processing.ProcessorException;
+import fr.univavignon.transpolosearch.processing.ProcessorName;
 import fr.univavignon.transpolosearch.tools.log.HierarchicalLogger;
 import fr.univavignon.transpolosearch.tools.log.HierarchicalLoggerManager;
 import fr.univavignon.transpolosearch.tools.string.StringTools;
@@ -164,7 +165,7 @@ public abstract class AbstractSearchResult
 	 * 		Problem while detecting the mentions.
 	 */
 	protected int detectMentions(InterfaceRecognizer recognizer, int nbr) throws ProcessorException
-	{	logger.log("Retrieving article #"+nbr+" ("+article.getTitle()+")");
+	{	logger.log("Detecting mentions in article #"+nbr+" ("+article.getTitle()+")");
 		logger.increaseOffset();
 			mentions = recognizer.recognize(article);
 			int result = mentions.getMentions().size();
@@ -174,8 +175,7 @@ public abstract class AbstractSearchResult
 		logger.decreaseOffset();
 		return result;
 	}
-
-
+	
 	/**
 	 * Displays the entity mentions associated to each remaining article.
 	 * 
@@ -183,7 +183,7 @@ public abstract class AbstractSearchResult
 	 * 		Number of this result in the collection.
 	 */
 	protected void displayRemainingMentions(int nbr)
-	{	logger.log("Mentions for article #"+nbr+" ("+article.getTitle()+")");
+	{	logger.log("Mentions detected in article #"+nbr+" ("+article.getTitle()+")");
 		logger.increaseOffset();
 			List<AbstractMention<?>> dates = mentions.getMentionsByType(EntityType.DATE);
 			if(!dates.isEmpty())
@@ -242,7 +242,24 @@ public abstract class AbstractSearchResult
 	 * @return 
 	 * 		Number of extracted events.
 	 */
-	protected int extractEvents(boolean bySentence, int nbr)
+	protected abstract int extractEvents(boolean bySentence, int nbr);
+	
+	/**
+	 * Identifies the events described in the article associated to
+	 * this search result.
+	 * 
+	 * @param bySentence
+	 * 		Whether to retrieve events by sentence (all event-related entity mentions
+	 * 		must be in the same sentence) or by article.
+	 * @param nbr
+	 * 		Number of this result in the collection.
+	 * @param usePubDate
+	 * 		Whether or not to use the article publication date if no other date is
+	 * 		explicitly present in the content.
+	 * @return 
+	 * 		Number of extracted events.
+	 */
+	protected int extractEvents(boolean bySentence, int nbr, boolean usePubDate)
 	{	logger.log("Retrieving article #"+nbr+" ("+article.getTitle()+")");
 		logger.increaseOffset();
 			String rawText = article.getRawText();
@@ -257,51 +274,59 @@ public abstract class AbstractSearchResult
 				{	if(sp>=0)
 					{	List<AbstractMention<?>> le = mentions.getMentionsIn(sp, ep);
 						List<AbstractMention<?>> dates = Mentions.filterByType(le,EntityType.DATE);
+						Date pubDate = new Date(article.getPublishingDate());
 						// only go on if there is at least one date
-						if(!dates.isEmpty())
-						{	if(dates.size()>1)
-								logger.log("WARNING: there are several dates in sentence \""+rawText.substring(sp,ep)+"\"");
+						if(!dates.isEmpty() || (usePubDate && pubDate!=null))
+						{	MentionDate ed;
+							if(dates.isEmpty())
+							{	ed = new MentionDate(-1, -1, ProcessorName.REFERENCE, pubDate.toString(), pubDate);
+								logger.log("WARNING: no explicit date in the post, using the publication date instead (\""+rawText.substring(sp,ep)+"\")");
+							}
 							else
-							{	MentionDate ed = (MentionDate)dates.get(0);
-								List<AbstractMention<?>> persons = Mentions.filterByType(le,EntityType.PERSON);
-								if(persons.isEmpty())
-									logger.log("WARNING: there is a date ("+ed.getValue()+") but no persons in sentence \""+rawText.substring(sp,ep)+"\"");
-								else
-								{	Event event = new Event(ed);
-									events.add(event);
-									for(AbstractMention<?> mention: persons)
-									{	MentionPerson person = (MentionPerson)mention;
-										event.addPerson(person);
-									}
-									List<AbstractMention<?>> organizations = Mentions.filterByType(le,EntityType.ORGANIZATION);
-									for(AbstractMention<?> mention: organizations)
-									{	MentionOrganization organization = (MentionOrganization)mention;
-										event.addOrganization(organization);
-									}
-									List<AbstractMention<?>> locations = Mentions.filterByType(le,EntityType.LOCATION);
-									for(AbstractMention<?> mention: locations)
-									{	MentionLocation location = (MentionLocation)mention;
-										event.addLocation(location);
-									}
-									List<AbstractMention<?>> meetings = Mentions.filterByType(le,EntityType.MEETING);
-									for(AbstractMention<?> mention: meetings)
-									{	MentionMeeting meeting = (MentionMeeting)mention;
-										event.addMeeting(meeting);
-									}
-									List<AbstractMention<?>> functions = Mentions.filterByType(le,EntityType.FUNCTION);
-									for(AbstractMention<?> mention: functions)
-									{	MentionFunction function = (MentionFunction)mention;
-										event.addFunction(function);
-									}
-									List<AbstractMention<?>> productions = Mentions.filterByType(le,EntityType.PRODUCTION);
-									for(AbstractMention<?> mention: productions)
-									{	MentionProduction production = (MentionProduction)mention;
-										event.addProduction(production);
-									}
-									logger.log(Arrays.asList("Event found for sentence \""+rawText.substring(sp,ep)+"\"",event.toString()));
+							{	ed = (MentionDate)dates.get(0);
+								if(dates.size()>1)
+									logger.log("WARNING: there are several dates in the sentence >> using the first one (\""+rawText.substring(sp,ep)+"\")");
+							} 
+							List<AbstractMention<?>> persons = Mentions.filterByType(le,EntityType.PERSON);
+							if(persons.isEmpty())
+								logger.log("WARNING: there is no person in sentence \""+rawText.substring(sp,ep)+"\"");
+							else
+							{	Event event = new Event(ed);
+								events.add(event);
+								for(AbstractMention<?> mention: persons)
+								{	MentionPerson person = (MentionPerson)mention;
+									event.addPerson(person);
 								}
+								List<AbstractMention<?>> organizations = Mentions.filterByType(le,EntityType.ORGANIZATION);
+								for(AbstractMention<?> mention: organizations)
+								{	MentionOrganization organization = (MentionOrganization)mention;
+									event.addOrganization(organization);
+								}
+								List<AbstractMention<?>> locations = Mentions.filterByType(le,EntityType.LOCATION);
+								for(AbstractMention<?> mention: locations)
+								{	MentionLocation location = (MentionLocation)mention;
+									event.addLocation(location);
+								}
+								List<AbstractMention<?>> meetings = Mentions.filterByType(le,EntityType.MEETING);
+								for(AbstractMention<?> mention: meetings)
+								{	MentionMeeting meeting = (MentionMeeting)mention;
+									event.addMeeting(meeting);
+								}
+								List<AbstractMention<?>> functions = Mentions.filterByType(le,EntityType.FUNCTION);
+								for(AbstractMention<?> mention: functions)
+								{	MentionFunction function = (MentionFunction)mention;
+									event.addFunction(function);
+								}
+								List<AbstractMention<?>> productions = Mentions.filterByType(le,EntityType.PRODUCTION);
+								for(AbstractMention<?> mention: productions)
+								{	MentionProduction production = (MentionProduction)mention;
+									event.addProduction(production);
+								}
+								logger.log(Arrays.asList("Event found for sentence \""+rawText.substring(sp,ep)+"\"",event.toString()));
 							}
 						}
+						else
+							logger.log("No usable date, so no event in this article.");
 					}
 					sp = ep;
 				}
@@ -310,7 +335,7 @@ public abstract class AbstractSearchResult
 			else // by article
 			{	List<AbstractMention<?>> dates = mentions.getMentionsByType(EntityType.DATE);
 				// only go on if there is at least one date
-				if(!dates.isEmpty())//TODO if empty, put the publication date (at retrieval?)
+				if(!dates.isEmpty())
 				{	Event event;
 					if(dates.size()>1)
 					{	logger.log("There are several ("+dates.size()+") dates in the article >> merging them");

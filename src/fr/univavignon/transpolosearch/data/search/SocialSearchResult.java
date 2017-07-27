@@ -227,10 +227,16 @@ public class SocialSearchResult extends AbstractSearchResult
 		
 		return result;
 	}
-
+	
 	/////////////////////////////////////////////////////////////////
 	// EVENTS		/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
+	@Override
+	protected int extractEvents(boolean bySentence, int nbr)
+	{	int result = extractEvents(bySentence,nbr,true);
+		return result;
+	}
+	
 	/**
 	 * Records the results of the social search as a CSV file.
 	 * 
