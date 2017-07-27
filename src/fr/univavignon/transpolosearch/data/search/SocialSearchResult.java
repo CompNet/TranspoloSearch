@@ -139,8 +139,11 @@ public class SocialSearchResult extends AbstractSearchResult
 		for(SocialSearchResult com: comments)
 			text = text + "\n\n" + com.content;
 		article.setRawText(text);
+		article.setLinkedText(text);
+		article.cleanContent();
 		
 		// metadata
+		article.setTitle(id);
 		article.setLanguage(ArticleLanguage.FR);	// TODO we suppose the language is French, to be generalized later
 		article.setPublishingDate(date);
 		Calendar cal = Calendar.getInstance();
@@ -247,7 +250,8 @@ public class SocialSearchResult extends AbstractSearchResult
 
 			// general stuff
 			map.put(WebSearchResults.COL_PAGE_TITLE,"\""+article.getTitle()+"\"");
-			map.put(WebSearchResults.COL_PAGE_URL,"\""+article.getUrl().toString()+"\"");
+			if(article.getUrl()!=null)
+				map.put(WebSearchResults.COL_PAGE_URL,"\""+article.getUrl().toString()+"\"");
 			map.put(WebSearchResults.COL_PAGE_STATUS,status);
 			map.put(WebSearchResults.COL_COMMENTS,"");
 			

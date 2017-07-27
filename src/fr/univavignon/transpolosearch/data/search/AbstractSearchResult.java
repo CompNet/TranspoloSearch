@@ -310,7 +310,7 @@ public abstract class AbstractSearchResult
 			else // by article
 			{	List<AbstractMention<?>> dates = mentions.getMentionsByType(EntityType.DATE);
 				// only go on if there is at least one date
-				if(!dates.isEmpty())
+				if(!dates.isEmpty())//TODO if empty, put the publication date (at retrieval?)
 				{	Event event;
 					if(dates.size()>1)
 					{	logger.log("There are several ("+dates.size()+") dates in the article >> merging them");
