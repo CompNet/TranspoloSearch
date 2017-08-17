@@ -69,7 +69,7 @@ import fr.univavignon.transpolosearch.tools.html.HtmlTools;
 
 /**
  * From a specified URL, this class retrieves a page
- * from the french newspaper LeMonde (as of 04/05/2015),
+ * from the french newspaper LeMonde (as of 17/08/2017),
  * and gives access to the raw and linked texts, as well
  * as other metadata (authors, publishing date, etc.).
  * 
@@ -81,7 +81,7 @@ public class LeMondeReader extends ArticleReader
 	/////////////////////////////////////////////////////////////////
 	// DOMAIN			/////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
-	/** Text allowing to detect wikipedia URL */
+	/** Text allowing to detect the domain */
 	public static final String DOMAIN = "www.lemonde.fr";
 	
 	@Override

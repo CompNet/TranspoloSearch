@@ -69,20 +69,40 @@ import fr.univavignon.transpolosearch.tools.html.HtmlTools;
 
 /**
  * From a specified URL, this class retrieves a page
- * from the french newspaper Libération (as of 05/05/2015),
+ * from the french newspaper Le Figaro (as of 17/08/2017),
  * and gives access to the raw and linked texts, as well
  * as other metadata (authors, publishing date, etc.).
  * 
  * @author Vincent Labatut
  */
 @SuppressWarnings("unused")
-public class LiberationReader extends ArticleReader
-{
+public class LeFigaroReader extends ArticleReader
+{	
+	/**
+	 * Method defined only for a quick test.
+	 * 
+	 * @param args
+	 * 		Not used.
+	 * 
+	 * @throws Exception
+	 * 		Whatever exception. 
+	 */
+	public static void main(String[] args) throws Exception
+	{	
+		URL url = new URL("http://www.lefigaro.fr/international/2017/08/16/01003-20170816ARTFIG00075-violences-a-charlottesville-la-polemique-racontee-en-quatre-episodes.php");
+//		URL url = new URL("http://www.lefigaro.fr/sciences/2017/08/17/01008-20170817ARTFIG00132-daniel-zagury-l-homme-qui-se-vaccina-contre-le-sida.php");
+		
+		ArticleReader reader = new LeFigaroReader();
+		Article article = reader.processUrl(url, ArticleLanguage.FR);
+		System.out.println(article);
+		article.write();
+	}
+	
 	/////////////////////////////////////////////////////////////////
 	// DOMAIN			/////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
 	/** Text allowing to detect the domain */
-	public static final String DOMAIN = "www.liberation.fr";
+	public static final String DOMAIN = "www.lefigaro.fr";
 
 	@Override
 	public String getDomain()
@@ -95,22 +115,26 @@ public class LiberationReader extends ArticleReader
 	/** Format used to parse the dates */
 	private static final DateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
 	
-	/** Text displayed for limited access content */
-	private final static String CONTENT_LIMITED_ACCESS = "Article réservé aux abonnés";
-	/** Text displayed for "related articles" links */
-	private final static String CONTENT_RELATED_ARTICLES = "Lire aussi";
-	
-	/** Id of the element containing the article content in the Wikipedia page */
-	private final static String ID_ARTICLE_BODY = "article-body";
+	/** Item prop of the main article */
+	private final static String CONTENT_MAIN = "mainContentOfPage";
+	/** Item prop of the author name */
+	private final static String AUTHOR_NAME = "name";
 
 	/** Class of the author names */
-	private final static String CLASS_AUTHOR = "author";
+	private final static String CLASS_AUTHOR = "fig-auteur";
 	/** Class of the article description panel */
-	private final static String CLASS_DESCRIPTION = "description";
-	/** Class of the article information panel */
-	private final static String CLASS_INFO = "info";
-	/** Class of footnotes */
-	private final static String CLASS_FOOTNOTE = "note";
+	private final static String CLASS_DESCRIPTION = "fig-chapo";
+	/** Class of the article body */
+	private final static String CLASS_ARTICLE_BODY = "fig-article-body";
+	/** Class of the publication date */
+	private final static String CLASS_DATE_PUB = "fig-date-pub";
+	/** Class of the modification date */
+	private final static String CLASS_DATE_UPDT = "fig-date-maj";
+	/** Class of the restricted access */
+	private final static String CLASS_PROMO = "fig-article-promo";
+	
+	/** ID of the restricted access */
+	private final static String ID_KLOCKED = "kLocked";
 	
 	@Override
 	public Article processUrl(URL url, ArticleLanguage language) throws ReaderException
@@ -118,7 +142,15 @@ public class LiberationReader extends ArticleReader
 		String name = getName(url);
 		
 		try
-		{	// get the page
+		{	// init variables
+			String title = "";
+			StringBuilder rawStr = new StringBuilder();
+			StringBuilder linkedStr = new StringBuilder();
+			Date publishingDate = null;
+			Date modificationDate = null;
+			List<String> authors = null;
+			
+			// get the page
 			String address = url.toString();
 			logger.log("Retrieving page "+address);
 			long startTime = System.currentTimeMillis();
@@ -127,84 +159,82 @@ public class LiberationReader extends ArticleReader
 			{	logger.log("ERROR: Could not retrieve the document at URL "+url);
 				throw new ReaderException("Could not retrieve the document at URL "+url);
 			}
-					
-			// get its title
-			Element titleElt = document.getElementsByTag(HtmlNames.ELT_TITLE).first();
-			String title = titleElt.text();
-			title = removeGtst(title);
-			logger.log("Get title: "+title);
-			
-			// check if the access is restricted
-			Elements limitedElts = document.getElementsContainingText(CONTENT_LIMITED_ACCESS);
-			if(!limitedElts.isEmpty())
-				logger.log("WARNING: The access to this article is limited, only the beginning is available.");
-			
+	
 			// get the article element
 			logger.log("Get the main element of the document");
 			Elements articleElts = document.getElementsByTag(HtmlNames.ELT_ARTICLE);
 			Element articleElt = articleElts.first();
 			if(articleElts.size()==0)
 				throw new IllegalArgumentException("No <article> element found in the Web page");
-			else if(articleElts.size()>1)
-				logger.log("WARNING: There are more than 1 <article> elements, which is unusual. Let's focus on the first.");
-			Element headerElt = articleElt.getElementsByTag(HtmlNames.ELT_HEADER).first();
-			Element infoElt = headerElt.getElementsByAttributeValue(HtmlNames.ATT_CLASS, CLASS_INFO).first();
+			else 
+			{	String itemPropVal = articleElt.attr(HtmlNames.ATT_ITEMPROP);
+				if(!itemPropVal.equals(CONTENT_MAIN))
+					logger.log("WARNING: The first article is not the main content of the page, which is not normal.");
+			}
+			
+			// check if the access is restricted
+			Elements promoElts = articleElt.getElementsByAttributeValue(HtmlNames.ATT_CLASS, CLASS_PROMO);
+			if(!promoElts.isEmpty())
+				logger.log("WARNING: The access to this article is limited, only the beginning is available.");
+			
+			// get the title
+			Element titleElt = articleElt.getElementsByTag(HtmlNames.ELT_H1).first();
+			List<TextNode> textNodes = titleElt.textNodes();	// we need to ignore "avant-première" and other similar indications
+			for(TextNode textNode: textNodes)
+				title = title + " " + textNode.text();
+			title = removeGtst(title).trim();
+			logger.log("Get title: \""+title+"\"");
 			
 			// retrieve the dates
-			Elements timeElts = infoElt.getElementsByTag(HtmlNames.ELT_TIME);
-			Element publishingElt = timeElts.first();
-			Date publishingDate = HtmlTools.getDateFromTimeElt(publishingElt,DATE_FORMAT);
-			logger.log("Found the publishing date: "+publishingDate);
-			Date modificationDate = null;
-			if(timeElts.size()>1)
-			{	Element modificationElt = timeElts.last();
-				modificationDate = HtmlTools.getDateFromTimeElt(modificationElt,DATE_FORMAT);
-				logger.log("Found a last modification date: "+modificationDate);
+			Elements pubDateElts = articleElt.getElementsByAttributeValueContaining(HtmlNames.ATT_CLASS, CLASS_DATE_PUB);
+			if(!pubDateElts.isEmpty())
+			{	Element pubDateElt = pubDateElts.first();
+				Element time = pubDateElt.getElementsByTag(HtmlNames.ELT_TIME).first();
+				publishingDate = HtmlTools.getDateFromTimeElt(time,DATE_FORMAT);
+				logger.log("Found the publishing date: "+publishingDate);
+			}
+			else
+				logger.log("Did not find any publication date");
+			Elements updtDateElts = articleElt.getElementsByAttributeValueContaining(HtmlNames.ATT_CLASS, CLASS_DATE_UPDT);
+			if(!updtDateElts.isEmpty())
+			{	Element updtDateElt = updtDateElts.first();
+				Element time = updtDateElt.getElementsByTag(HtmlNames.ELT_TIME).first();
+				modificationDate = HtmlTools.getDateFromTimeElt(time,DATE_FORMAT);
+				logger.log("Found the last modification date: "+modificationDate);
 			}
 			else
 				logger.log("Did not find any last modification date");
-			
+	
 			// retrieve the authors
-			List<String> authors = null;
-			Elements authorElts = infoElt.getElementsByAttributeValue(HtmlNames.ATT_CLASS, CLASS_AUTHOR);
-			if(authorElts.isEmpty())
-				logger.log("WARNING: could not find any author, which is unusual");
-			else
-			{	logger.log("List of the authors found for this article:");
-				logger.increaseOffset();
-				authors = new ArrayList<String>();
-				for(Element authorElt: authorElts)
-				{	String authorName = authorElt.text();
-					authorName = removeGtst(authorName);
-					logger.log(authorName);
-					authors.add(authorName);
-				}
+			Elements authorElts = articleElt.getElementsByAttributeValue(HtmlNames.ATT_CLASS, CLASS_AUTHOR);
+			if(!authorElts.isEmpty())
+			{	Element authorElt = authorElts.first();
+				Elements nameElts = authorElt.getElementsByAttributeValue(HtmlNames.ATT_ITEMPROP, AUTHOR_NAME);
+				logger.log("List of the authors found for this article:");
+					logger.increaseOffset();
+					authors = new ArrayList<String>();
+					for(Element nameElt: nameElts)
+					{	String authorName = nameElt.text();
+						authorName = removeGtst(authorName);
+						logger.log(authorName);
+						authors.add(authorName);
+					}
 				logger.decreaseOffset();
 			}
+			else
+				logger.log("WARNING: could not find any author, which is unusual");
 			
-			// get raw and linked texts
-			logger.log("Get raw and linked texts");
-			StringBuilder rawStr = new StringBuilder();
-			StringBuilder linkedStr = new StringBuilder();
-
 			// get the description
-			Element descriptionElt = headerElt.getElementsByAttributeValue(HtmlNames.ATT_CLASS, CLASS_DESCRIPTION).first();
-			Element h2Elt = descriptionElt.getElementsByTag(HtmlNames.ELT_H2).first();
-			String text = h2Elt.text() + "\n";
+			Element descriptionElt = articleElt.getElementsByAttributeValue(HtmlNames.ATT_CLASS, CLASS_DESCRIPTION).first();
+			String text = descriptionElt.text() + "\n";
 			text = removeGtst(text);
 			rawStr.append(text);
 			linkedStr.append(text);
-
-			// processing each element in the body
-			Element bodyElt = articleElt.getElementById(ID_ARTICLE_BODY);
-			Elements contentElts = bodyElt.children();
-			Iterator<Element> it = contentElts.iterator();
-			Element contentElt;
-			do
-				contentElt = it.next();
-			while(!contentElt.tagName().equalsIgnoreCase(HtmlNames.ELT_DIV));
+		
+			// processing the article main content
+			Element contentElt = articleElt.getElementsByAttributeValue(HtmlNames.ATT_CLASS, CLASS_ARTICLE_BODY).first();
 			processAnyElement(contentElt, rawStr, linkedStr);
-				
+			
 			// create and init article object
 			result = new Article(name);
 			result.setTitle(title);
@@ -219,13 +249,9 @@ public class LiberationReader extends ArticleReader
 			
 			// clean text
 			String rawText = rawStr.toString();
-//			rawText = cleanText(rawText);
-//			rawText = ArticleCleaning.replaceChars(rawText);
 			result.setRawText(rawText);
 			logger.log("Length of the raw text: "+rawText.length()+" chars.");
 			String linkedText = linkedStr.toString();
-//			linkedText = cleanText(linkedText);
-//			linkedText = ArticleCleaning.replaceChars(linkedText);
 			result.setLinkedText(linkedText);
 			logger.log("Length of the linked text: "+linkedText.length()+" chars.");
 			
@@ -249,31 +275,5 @@ public class LiberationReader extends ArticleReader
 		}
 		
 		return result;
-	}
-
-	/////////////////////////////////////////////////////////////////
-	// ELEMENTS			/////////////////////////////////////////////
-	/////////////////////////////////////////////////////////////////
-	@Override
-	protected void processParagraphElement(Element element, StringBuilder rawStr, StringBuilder linkedStr)
-	{	// we ignore the "related article" links
-		String str = element.text();
-		String eltClass = element.attr(HtmlNames.ATT_CLASS);
-		if(!str.startsWith(CONTENT_RELATED_ARTICLES) && !eltClass.equalsIgnoreCase(CLASS_FOOTNOTE))
-		{	// possibly add a new line character first (if the last one is not already a newline)
-			if(rawStr.length()>0 && rawStr.charAt(rawStr.length()-1)!='\n')
-			{	rawStr.append("\n");
-				linkedStr.append("\n");
-			}
-			
-			// recursive processing
-			processAnyElement(element,rawStr,linkedStr);
-			
-			// possibly add a new line character (if the last one is not already a newline)
-			if(rawStr.length()>0 && rawStr.charAt(rawStr.length()-1)!='\n')
-			{	rawStr.append("\n");
-				linkedStr.append("\n");
-			}
-		}
 	}
 }

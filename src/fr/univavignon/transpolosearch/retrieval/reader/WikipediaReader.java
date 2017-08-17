@@ -70,7 +70,7 @@ public class WikipediaReader extends ArticleReader
 	/////////////////////////////////////////////////////////////////
 	// DOMAIN			/////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
-	/** Text allowing to detect wikipedia URL */
+	/** Text allowing to detect the wikipedia domain */
 	public static final String DOMAIN = "wikipedia.org";
 	
 	@Override

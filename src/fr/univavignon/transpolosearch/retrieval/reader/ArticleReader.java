@@ -98,6 +98,8 @@ public abstract class ArticleReader
 		
 		if(url.contains(WikipediaReader.DOMAIN))
 			result = new WikipediaReader();
+		else if(url.contains(LeFigaroReader.DOMAIN))
+			result = new LeFigaroReader();
 		else if(url.contains(LeMondeReader.DOMAIN))
 			result = new LeMondeReader();
 		else if(url.contains(LiberationReader.DOMAIN))
