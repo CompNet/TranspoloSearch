@@ -89,8 +89,8 @@ public class LiberationReader extends ArticleReader
 	 */
 	public static void main(String[] args) throws Exception
 	{	
-		URL url = new URL("http://www.liberation.fr/sports/2017/08/17/psg-pourquoi-le-depart-de-matuidi-marque-la-fin-d-une-ere_1590282");
-//		URL url = new URL("http://www.lefigaro.fr/sciences/2017/08/17/01008-20170817ARTFIG00132-daniel-zagury-l-homme-qui-se-vaccina-contre-le-sida.php");
+//		URL url = new URL("http://www.liberation.fr/sports/2017/08/17/psg-pourquoi-le-depart-de-matuidi-marque-la-fin-d-une-ere_1590282");
+		URL url = new URL("http://www.liberation.fr/planete/2017/08/09/coree-du-nord-il-est-devenu-tres-difficile-de-negocier-avec-kim-jong-un_1589153");
 		
 		ArticleReader reader = new LiberationReader();
 		Article article = reader.processUrl(url, ArticleLanguage.FR);
@@ -120,17 +120,16 @@ public class LiberationReader extends ArticleReader
 	/** Text displayed for "related articles" links */
 	private final static String CONTENT_RELATED_ARTICLES = "Lire aussi";
 	
-	/** Id of the element containing the article content in the Wikipedia page */
-	private final static String ID_ARTICLE_BODY = "article-body";
-
 	/** Class of the author names */
 	private final static String CLASS_AUTHOR = "author";
 	/** Class of the article description panel */
-	private final static String CLASS_DESCRIPTION = "description";
+	private final static String CLASS_DESCRIPTION = "article-standfirst";
 	/** Class of the article information panel */
 	private final static String CLASS_INFO = "info";
 	/** Class of footnotes */
 	private final static String CLASS_FOOTNOTE = "note";
+	/** Class of the element containing the article content */
+	private final static String CLASS_ARTICLE_BODY = "article-body";
 	
 	@Override
 	public Article processUrl(URL url, ArticleLanguage language) throws ReaderException
@@ -168,10 +167,9 @@ public class LiberationReader extends ArticleReader
 			else if(articleElts.size()>1)
 				logger.log("WARNING: There are more than 1 <article> elements, which is unusual. Let's focus on the first.");
 			Element headerElt = articleElt.getElementsByTag(HtmlNames.ELT_HEADER).first();
-			Element infoElt = headerElt.getElementsByAttributeValue(HtmlNames.ATT_CLASS, CLASS_INFO).first();
 			
 			// retrieve the dates
-			Elements timeElts = infoElt.getElementsByTag(HtmlNames.ELT_TIME);
+			Elements timeElts = headerElt.getElementsByTag(HtmlNames.ELT_TIME);
 			Element publishingElt = timeElts.first();
 			Date publishingDate = HtmlTools.getDateFromTimeElt(publishingElt,DATE_FORMAT);
 			logger.log("Found the publishing date: "+publishingDate);
@@ -186,7 +184,7 @@ public class LiberationReader extends ArticleReader
 			
 			// retrieve the authors
 			List<String> authors = null;
-			Elements authorElts = infoElt.getElementsByAttributeValue(HtmlNames.ATT_CLASS, CLASS_AUTHOR);
+			Elements authorElts = headerElt.getElementsByAttributeValue(HtmlNames.ATT_CLASS, CLASS_AUTHOR);
 			if(authorElts.isEmpty())
 				logger.log("WARNING: could not find any author, which is unusual");
 			else
@@ -208,7 +206,7 @@ public class LiberationReader extends ArticleReader
 			StringBuilder linkedStr = new StringBuilder();
 
 			// get the description
-			Element descriptionElt = headerElt.getElementsByAttributeValue(HtmlNames.ATT_CLASS, CLASS_DESCRIPTION).first();
+			Element descriptionElt = articleElt.getElementsByAttributeValueContaining(HtmlNames.ATT_CLASS, CLASS_DESCRIPTION).first();
 			Element h2Elt = descriptionElt.getElementsByTag(HtmlNames.ELT_H2).first();
 			String text = h2Elt.text() + "\n";
 			text = removeGtst(text);
@@ -216,14 +214,8 @@ public class LiberationReader extends ArticleReader
 			linkedStr.append(text);
 
 			// processing each element in the body
-			Element bodyElt = articleElt.getElementById(ID_ARTICLE_BODY);
-			Elements contentElts = bodyElt.children();
-			Iterator<Element> it = contentElts.iterator();
-			Element contentElt;
-			do
-				contentElt = it.next();
-			while(!contentElt.tagName().equalsIgnoreCase(HtmlNames.ELT_DIV));
-			processAnyElement(contentElt, rawStr, linkedStr);
+			Element bodyElt = articleElt.getElementsByAttributeValueContaining(HtmlNames.ATT_CLASS, CLASS_ARTICLE_BODY).first();
+			processAnyElement(bodyElt, rawStr, linkedStr);
 				
 			// create and init article object
 			result = new Article(name);
