@@ -78,6 +78,26 @@ import fr.univavignon.transpolosearch.tools.html.HtmlTools;
 @SuppressWarnings("unused")
 public class LeMondeReader extends ArticleReader
 {
+	/**
+	 * Method defined only for a quick test.
+	 * 
+	 * @param args
+	 * 		Not used.
+	 * 
+	 * @throws Exception
+	 * 		Whatever exception. 
+	 */
+	public static void main(String[] args) throws Exception
+	{	
+//		URL url = new URL("http://www.lemonde.fr/les-decodeurs/article/2017/08/09/navire-antimigrants-c-star-une-mission-inutile-voire-illegale_5170650_4355770.html");
+		URL url = new URL("http://www.lemonde.fr/sport/article/2017/08/12/sur-les-traces-des-jeux-olympiques-de-1900-et-1924_5171678_3242.html");
+		
+		ArticleReader reader = new LeMondeReader();
+		Article article = reader.processUrl(url, ArticleLanguage.FR);
+		System.out.println(article);
+		article.write();
+	}
+	
 	/////////////////////////////////////////////////////////////////
 	// DOMAIN			/////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////

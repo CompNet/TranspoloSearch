@@ -89,8 +89,8 @@ public class LeFigaroReader extends ArticleReader
 	 */
 	public static void main(String[] args) throws Exception
 	{	
-		URL url = new URL("http://www.lefigaro.fr/international/2017/08/16/01003-20170816ARTFIG00075-violences-a-charlottesville-la-polemique-racontee-en-quatre-episodes.php");
-//		URL url = new URL("http://www.lefigaro.fr/sciences/2017/08/17/01008-20170817ARTFIG00132-daniel-zagury-l-homme-qui-se-vaccina-contre-le-sida.php");
+//		URL url = new URL("http://www.lefigaro.fr/international/2017/08/16/01003-20170816ARTFIG00075-violences-a-charlottesville-la-polemique-racontee-en-quatre-episodes.php");
+		URL url = new URL("http://www.lefigaro.fr/sciences/2017/08/17/01008-20170817ARTFIG00132-daniel-zagury-l-homme-qui-se-vaccina-contre-le-sida.php");
 		
 		ArticleReader reader = new LeFigaroReader();
 		Article article = reader.processUrl(url, ArticleLanguage.FR);
@@ -163,11 +163,12 @@ public class LeFigaroReader extends ArticleReader
 			// get the article element
 			logger.log("Get the main element of the document");
 			Elements articleElts = document.getElementsByTag(HtmlNames.ELT_ARTICLE);
-			Element articleElt = articleElts.first();
+			Element articleElt = null;
 			if(articleElts.size()==0)
 				throw new IllegalArgumentException("No <article> element found in the Web page");
 			else 
-			{	String itemPropVal = articleElt.attr(HtmlNames.ATT_ITEMPROP);
+			{	articleElt = articleElts.first();
+				String itemPropVal = articleElt.attr(HtmlNames.ATT_ITEMPROP);
 				if(!itemPropVal.equals(CONTENT_MAIN))
 					logger.log("WARNING: The first article is not the main content of the page, which is not normal.");
 			}
