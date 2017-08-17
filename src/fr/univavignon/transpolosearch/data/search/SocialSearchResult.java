@@ -255,30 +255,30 @@ public class SocialSearchResult extends AbstractSearchResult
 			rank++;
 
 			// general stuff
-			map.put(WebSearchResults.COL_PAGE_TITLE,"\""+article.getTitle()+"\"");
+			map.put(AbstractSearchResults.COL_PAGE_TITLE,"\""+article.getTitle()+"\"");
 			if(article.getUrl()!=null)
-				map.put(WebSearchResults.COL_PAGE_URL,"\""+article.getUrl().toString()+"\"");
-			map.put(WebSearchResults.COL_PAGE_STATUS,status);
-			map.put(WebSearchResults.COL_COMMENTS,"");
+				map.put(AbstractSearchResults.COL_PAGE_URL,"\""+article.getUrl().toString()+"\"");
+			map.put(AbstractSearchResults.COL_PAGE_STATUS,status);
+			map.put(AbstractSearchResults.COL_COMMENTS,"");
 			
 			// publication date
 			java.util.Date pubDate = article.getPublishingDate();
 			if(pubDate!=null)
 			{	String pubDateStr = TimeFormatting.formatDate(pubDate);
-				map.put(WebSearchResults.COL_PUB_DATE,pubDateStr);
+				map.put(AbstractSearchResults.COL_PUB_DATE,pubDateStr);
 			}
 			
 			// search engine
 			if(source!=null)
-				map.put(WebSearchResults.COL_SOCIAL_ENGINE,source);
+				map.put(AbstractSearchResults.COL_SOCIAL_ENGINE,source);
 			
 			if(event!=null)
-			{	map.put(WebSearchResults.COL_EVENT_RANK,Integer.toString(rank));
+			{	map.put(AbstractSearchResults.COL_EVENT_RANK,Integer.toString(rank));
 				
 				// dates
 				Period period = event.getPeriod();
 				String periodStr = period.toString();
-				map.put(WebSearchResults.COL_EVENT_DATES,periodStr);
+				map.put(AbstractSearchResults.COL_EVENT_DATES,periodStr);
 				
 				// locations
 				{	String locations = "\"";
@@ -291,7 +291,7 @@ public class SocialSearchResult extends AbstractSearchResult
 							locations = locations + ", ";
 					}
 					locations = locations + "\"";
-					map.put(WebSearchResults.COL_EVENT_LOCATIONS,locations);
+					map.put(AbstractSearchResults.COL_EVENT_LOCATIONS,locations);
 				}
 				
 				// persons
@@ -305,7 +305,7 @@ public class SocialSearchResult extends AbstractSearchResult
 							persons = persons + ", ";
 					}
 					persons = persons + "\"";
-					map.put(WebSearchResults.COL_EVENT_PERSONS,persons);
+					map.put(AbstractSearchResults.COL_EVENT_PERSONS,persons);
 				}
 				
 				// organizations
@@ -319,7 +319,7 @@ public class SocialSearchResult extends AbstractSearchResult
 							organizations = organizations + ", ";
 					}
 					organizations = organizations + "\"";
-					map.put(WebSearchResults.COL_EVENT_ORGANIZATIONS,organizations);
+					map.put(AbstractSearchResults.COL_EVENT_ORGANIZATIONS,organizations);
 				}
 				
 				// functions
@@ -333,7 +333,7 @@ public class SocialSearchResult extends AbstractSearchResult
 							functions = functions + ", ";
 					}
 					functions = functions + "\"";
-					map.put(WebSearchResults.COL_EVENT_FUNCTIONS,functions);
+					map.put(AbstractSearchResults.COL_EVENT_FUNCTIONS,functions);
 				}
 				
 				// productions
@@ -347,7 +347,7 @@ public class SocialSearchResult extends AbstractSearchResult
 							productions = productions + ", ";
 					}
 					productions = productions + "\"";
-					map.put(WebSearchResults.COL_EVENT_PRODUCTIONS,productions);
+					map.put(AbstractSearchResults.COL_EVENT_PRODUCTIONS,productions);
 				}
 				
 				// meetings
@@ -361,7 +361,7 @@ public class SocialSearchResult extends AbstractSearchResult
 							meetings = meetings + ", ";
 					}
 					meetings = meetings + "\"";
-					map.put(WebSearchResults.COL_EVENT_MEETINGS,meetings);
+					map.put(AbstractSearchResults.COL_EVENT_MEETINGS,meetings);
 				}
 			}
 		}

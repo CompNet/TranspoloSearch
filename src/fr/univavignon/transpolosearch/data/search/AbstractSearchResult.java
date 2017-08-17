@@ -263,6 +263,9 @@ public abstract class AbstractSearchResult
 	{	logger.log("Retrieving article #"+nbr+" ("+article.getTitle()+")");
 		logger.increaseOffset();
 			String rawText = article.getRawText();
+			Date pubDate = null;
+			if(article.getPublishingDate()!=null)
+					pubDate = new Date(article.getPublishingDate());
 			if(bySentence)
 			{	// retrieving the sentence positions
 				List<Integer> sentencePos = StringTools.getSentencePositions(rawText);
@@ -274,7 +277,6 @@ public abstract class AbstractSearchResult
 				{	if(sp>=0)
 					{	List<AbstractMention<?>> le = mentions.getMentionsIn(sp, ep);
 						List<AbstractMention<?>> dates = Mentions.filterByType(le,EntityType.DATE);
-						Date pubDate = new Date(article.getPublishingDate());
 						// only go on if there is at least one date
 						if(!dates.isEmpty() || (usePubDate && pubDate!=null))
 						{	MentionDate ed;
@@ -335,7 +337,7 @@ public abstract class AbstractSearchResult
 			else // by article
 			{	List<AbstractMention<?>> dates = mentions.getMentionsByType(EntityType.DATE);
 				// only go on if there is at least one date
-				if(!dates.isEmpty())
+				if(!dates.isEmpty() || (usePubDate && pubDate!=null))
 				{	Event event;
 					if(dates.size()>1)
 					{	logger.log("There are several ("+dates.size()+") dates in the article >> merging them");
@@ -348,9 +350,14 @@ public abstract class AbstractSearchResult
 							event.mergePeriod(p);
 						}
 					}
-					else
+					else if(dates.size()==1)
 					{	MentionDate esd = (MentionDate)dates.get(0);
 						event = new Event(esd);
+					}
+					else
+					{	MentionDate ed = new MentionDate(-1, -1, ProcessorName.REFERENCE, pubDate.toString(), pubDate);
+						event = new Event(ed);
+						logger.log("WARNING: no explicit date in the post, using the publication date instead ("+pubDate+")");
 					}
 					
 					List<AbstractMention<?>> persons = mentions.getMentionsByType(EntityType.PERSON);

@@ -271,10 +271,10 @@ public class Test
 		
 //		String keywords = "Cécile Helle";
 //		String compulsoryExpression = "Helle";
-//		String keywords = "Martine Aubry";
-//		String compulsoryExpression = "Aubry";
-		String keywords = "Anne Hidalgo";
-		String compulsoryExpression = "Hidalgo";
+		String keywords = "Martine Aubry";
+		String compulsoryExpression = "Aubry";
+//		String keywords = "Anne Hidalgo";
+//		String compulsoryExpression = "Hidalgo";
 		
 		String website = null;
 		Date startDate = df.parse("20170306");
