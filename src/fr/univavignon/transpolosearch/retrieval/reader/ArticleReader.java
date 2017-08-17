@@ -104,6 +104,8 @@ public abstract class ArticleReader
 			result = new LeMondeReader();
 		else if(url.contains(LeParisienReader.DOMAIN))
 			result = new LeParisienReader();
+		else if(url.contains(LePointReader.DOMAIN))
+			result = new LePointReader();
 		else if(url.contains(LiberationReader.DOMAIN))
 			result = new LiberationReader();
 		else
