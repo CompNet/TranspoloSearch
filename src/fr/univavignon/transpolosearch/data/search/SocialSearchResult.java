@@ -278,6 +278,8 @@ public class SocialSearchResult extends AbstractSearchResult
 				// dates
 				Period period = event.getPeriod();
 				String periodStr = period.toString();
+if(periodStr.contains("\n") || periodStr.contains("\r"))
+	System.out.print("");
 				map.put(AbstractSearchResults.COL_EVENT_DATES,periodStr);
 				
 				// locations
@@ -286,6 +288,8 @@ public class SocialSearchResult extends AbstractSearchResult
 					Iterator<String> itLoc = locs.iterator();
 					while(itLoc.hasNext())
 					{	String loc = itLoc.next();
+if(loc.contains("\n") || loc.contains("\r"))
+	System.out.print("");
 						locations = locations + loc;
 						if(itLoc.hasNext())
 							locations = locations + ", ";
@@ -300,6 +304,8 @@ public class SocialSearchResult extends AbstractSearchResult
 					Iterator<String> itPers = perss.iterator();
 					while(itPers.hasNext())
 					{	String pers = itPers.next();
+if(pers.contains("\n") || pers.contains("\r"))
+	System.out.print("");
 						persons = persons + pers;
 						if(itPers.hasNext())
 							persons = persons + ", ";
@@ -314,6 +320,8 @@ public class SocialSearchResult extends AbstractSearchResult
 					Iterator<String> itOrg = orgs.iterator();
 					while(itOrg.hasNext())
 					{	String org = itOrg.next();
+if(org.contains("\n") || org.contains("\r"))
+	System.out.print("");
 						organizations = organizations + org;
 						if(itOrg.hasNext())
 							organizations = organizations + ", ";
@@ -329,6 +337,8 @@ public class SocialSearchResult extends AbstractSearchResult
 					while(itFun.hasNext())
 					{	String fun = itFun.next();
 						functions = functions + fun;
+if(fun.contains("\n") || fun.contains("\r"))
+	System.out.print("");
 						if(itFun.hasNext())
 							functions = functions + ", ";
 					}
@@ -342,6 +352,8 @@ public class SocialSearchResult extends AbstractSearchResult
 					Iterator<String> itProd = prods.iterator();
 					while(itProd.hasNext())
 					{	String prod = itProd.next();
+if(prod.contains("\n") || prod.contains("\r"))
+	System.out.print("");
 						productions = productions + prod;
 						if(itProd.hasNext())
 							productions = productions + ", ";
@@ -356,6 +368,8 @@ public class SocialSearchResult extends AbstractSearchResult
 					Iterator<String> itMeet = meets.iterator();
 					while(itMeet.hasNext())
 					{	String meet = itMeet.next();
+if(meet.contains("\n") || meet.contains("\r"))
+	System.out.print("");
 						meetings = meetings + meet;
 						if(itMeet.hasNext())
 							meetings = meetings + ", ";
