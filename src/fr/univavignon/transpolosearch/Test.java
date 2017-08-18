@@ -269,10 +269,10 @@ public class Test
 		
 		DateFormat df = new SimpleDateFormat("yyyyMMdd");
 		
-//		String keywords = "Cécile Helle";
-//		String compulsoryExpression = "Helle";
-		String keywords = "Martine Aubry";
-		String compulsoryExpression = "Aubry";
+		String keywords = "Cécile Helle";
+		String compulsoryExpression = "Helle";
+//		String keywords = "Martine Aubry";
+//		String compulsoryExpression = "Aubry";
 //		String keywords = "Anne Hidalgo";
 //		String compulsoryExpression = "Hidalgo";
 		

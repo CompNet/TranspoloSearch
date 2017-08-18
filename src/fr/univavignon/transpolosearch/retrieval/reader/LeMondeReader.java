@@ -113,7 +113,7 @@ public class LeMondeReader extends ArticleReader
 	// RETRIEVE			/////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////	
 	/** Format used to parse the dates */
-	private static final DateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX");
+	private static final DateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX",Locale.FRENCH);
 	
 	/** Text displayed for limited access content */
 	private final static String CONTENT_LIMITED_ACCESS = "L’accès à la totalité de l’article est protégé";
@@ -170,7 +170,7 @@ public class LeMondeReader extends ArticleReader
 				logger.log("WARNING: There are more than 1 <article> elements, which is unusual. Let's focus on the first.");
 			
 			// retrieve the dates
-//			Element signatureElt = articleElt.getElementsByAttributeValue(HtmlNames.ATT_CLASS, CLASS_SIGNATURE).first();
+//			Element signatureElt = articleElt.getElementsByAttributeValueContaining(HtmlNames.ATT_CLASS, CLASS_SIGNATURE).first();
 			Elements timeElts = articleElt.getElementsByTag(HtmlNames.ELT_TIME);
 			Element publishingElt = timeElts.first();
 			Date publishingDate = HtmlTools.getDateFromTimeElt(publishingElt,DATE_FORMAT);
@@ -186,7 +186,7 @@ public class LeMondeReader extends ArticleReader
 			
 			// retrieve the authors
 			List<String> authors = null;
-			Elements authorElts = articleElt.getElementsByAttributeValue(HtmlNames.ATT_CLASS, CLASS_AUTHOR);
+			Elements authorElts = articleElt.getElementsByAttributeValueContaining(HtmlNames.ATT_CLASS, CLASS_AUTHOR);
 			if(authorElts.isEmpty())
 				logger.log("WARNING: could not find any author, which is unusual");
 			else
@@ -210,8 +210,8 @@ public class LeMondeReader extends ArticleReader
 			// processing each element in the article body
 			Element bodyElt = articleElt.getElementById(ID_ARTICLE_BODY);
 			if(bodyElt==null)
-			{	//Elements bodyElts = articleElt.getElementsByAttributeValue(HtmlNames.ATT_CLASS, CLASS_ARTICLE_BODY);
-				Elements bodyElts = articleElt.getElementsByAttributeValue(HtmlNames.ATT_ITEMPROP, ITEMPROP_ARTICLE_BODY);
+			{	//Elements bodyElts = articleElt.getElementsByAttributeValueContaining(HtmlNames.ATT_CLASS, CLASS_ARTICLE_BODY);
+				Elements bodyElts = articleElt.getElementsByAttributeValueContaining(HtmlNames.ATT_ITEMPROP, ITEMPROP_ARTICLE_BODY);
 				bodyElt = bodyElts.first();
 				if(bodyElts.size()==0)
 					throw new IllegalArgumentException("No article body found in the Web page");

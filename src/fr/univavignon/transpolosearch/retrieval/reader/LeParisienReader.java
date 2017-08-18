@@ -115,7 +115,7 @@ public class LeParisienReader extends ArticleReader
 	// RETRIEVE			/////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////	
 	/** Format used to parse the dates */
-	private static final DateFormat DATE_FORMAT = new SimpleDateFormat("dd MMMM yyyy, HH'h'mm");
+	private static final DateFormat DATE_FORMAT = new SimpleDateFormat("dd MMMM yyyy, HH'h'mm",Locale.FRENCH);
 	/** String prefix used to specify the modification date in the Web page */
 	private static final String UPDT_PREFIX = "MAJ : ";
 	
@@ -123,6 +123,8 @@ public class LeParisienReader extends ArticleReader
 	private final static String CLASS_AUTHORS = "article-full__infos-author";
 	/** Class of the article description */
 	private final static String CLASS_DESCRIPTION = "article-full__header";
+	/** Class of the article body */
+	private final static String CLASS_ARTICLE_BODY = "article-full__body";
 	/** Class of the article body */
 	private final static String CLASS_ARTICLE_MAIN = "article-full";
 	/** Class of the article title */
@@ -132,11 +134,8 @@ public class LeParisienReader extends ArticleReader
 	/** Class of the dates */
 	private final static String CLASS_DATES = "article-full__infos-date";
 	/** Class of the restricted access */
-	private final static String CLASS_RESTRICTED = "elided";
+	private final static String MSG_RESTRICTED = "Répondez à une question rapide avant de pouvoir accéder à cet article";
 
-/** ID of the restricted access */
-private final static String ID_KLOCKED = "kLocked";
-	
 	@Override
 	public Article processUrl(URL url, ArticleLanguage language) throws ReaderException
 	{	Article result = null;
@@ -167,16 +166,16 @@ private final static String ID_KLOCKED = "kLocked";
 			if(articleElts.size()==0)
 				throw new IllegalArgumentException("No <article> element found in the Web page");
 			Element articleElt = articleElts.first();
-			Element fullElt = articleElt.getElementsByAttributeValue(HtmlNames.ATT_CLASS, CLASS_ARTICLE_MAIN).first();
-			Element infoElt = fullElt.getElementsByAttributeValue(HtmlNames.ATT_CLASS, CLASS_INFO).first();
+			Element fullElt = articleElt.getElementsByAttributeValueContaining(HtmlNames.ATT_CLASS, CLASS_ARTICLE_MAIN).first();
+			Element infoElt = fullElt.getElementsByAttributeValueContaining(HtmlNames.ATT_CLASS, CLASS_INFO).first();
 
-//			// check if the access is restricted
-//			Elements promoElts = articleElt.getElementsByAttributeValue(HtmlNames.ATT_CLASS, CLASS_PROMO);
-//			if(!promoElts.isEmpty())
-//				logger.log("WARNING: The access to this article is limited, only the beginning is available.");
+			// check if the access is restricted
+			String text = articleElt.text();
+			if(text.contains(MSG_RESTRICTED))
+				logger.log("WARNING: The access to this article is limited, only the beginning is available.");
 	
 			// get the title
-			Element titleElt = fullElt.getElementsByAttributeValue(HtmlNames.ATT_CLASS, CLASS_TITLE).first();
+			Element titleElt = fullElt.getElementsByAttributeValueContaining(HtmlNames.ATT_CLASS, CLASS_TITLE).first();
 			title = titleElt.text(); 
 			title = removeGtst(title).trim();
 			logger.log("Get title: \""+title+"\"");
@@ -204,27 +203,36 @@ private final static String ID_KLOCKED = "kLocked";
 			}
 			
 			// retrieve the authors
-			Element authorElt = infoElt.getElementsByAttributeValue(HtmlNames.ATT_CLASS, CLASS_AUTHORS).first();
-			String authorName = authorElt.text();
-			authorName = removeGtst(authorName);
-			authors.add(authorName);
+			Element authorElt = infoElt.getElementsByAttributeValueContaining(HtmlNames.ATT_CLASS, CLASS_AUTHORS).first();
+			if(authorElt!=null)
+			{	String authorName = authorElt.text();
+				authorName = removeGtst(authorName);
+				authors.add(authorName);
+				logger.log("Authors: ");
+				logger.log(authors);
+			}
+			else
+				logger.log("Could not find any author for this article");
 	
 			// get the description
-			Element descriptionElt = fullElt.getElementsByAttributeValue(HtmlNames.ATT_CLASS, CLASS_DESCRIPTION).first();
-			Element contentElt = descriptionElt.nextElementSibling();
-			// check if the access is restricted
-			String classStr = contentElt.attr(HtmlNames.ATT_CLASS);
-			if(!classStr.contains(CLASS_RESTRICTED))
-			{	// add the description
+			Elements descriptionElts = fullElt.getElementsByAttributeValueContaining(HtmlNames.ATT_CLASS, CLASS_DESCRIPTION);
+			Element descriptionElt = null;
+			if(!descriptionElts.isEmpty())
+			{	descriptionElt = descriptionElts.first();
 				processAnyElement(descriptionElt, rawStr, linkedStr);
-	
-				// processing the article main content
-				while(contentElt!=null)
-				{	Attributes attr = contentElt.attributes();
-					if(attr.size()==0)
-						processAnyElement(contentElt, rawStr, linkedStr);
-					contentElt = contentElt.nextElementSibling();
-				}
+			}
+			
+			// processing the article main content
+			if(descriptionElt==null)
+			{	Element bodyElt = fullElt.getElementsByAttributeValueContaining(HtmlNames.ATT_CLASS, CLASS_ARTICLE_BODY).first();
+				descriptionElt = bodyElt.child(0);
+			}
+			Element contentElt = descriptionElt.nextElementSibling();
+			while(contentElt!=null)
+			{	Attributes attr = contentElt.attributes();
+				if(attr.size()==0)
+					processAnyElement(contentElt, rawStr, linkedStr);
+				contentElt = contentElt.nextElementSibling();
 			}
 			
 			// create and init article object

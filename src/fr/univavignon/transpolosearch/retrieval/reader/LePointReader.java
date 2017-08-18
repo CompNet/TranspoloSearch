@@ -115,7 +115,7 @@ public class LePointReader extends ArticleReader
 	// RETRIEVE			/////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////	
 	/** Format used to parse the dates */
-	private static final DateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm");
+	private static final DateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm",Locale.FRENCH);
 	/** String prefix used to specify the modification date in the Web page */
 	private static final String UPDT_PREFIX = "MAJ : ";
 	
@@ -200,11 +200,14 @@ public class LePointReader extends ArticleReader
 			authors.add(authorName);
 	
 			// get the description
-			Element descriptionElt = headerElt.getElementsByAttributeValue(HtmlNames.ATT_CLASS, CLASS_DESCRIPTION).first();
+			Element descriptionElt = headerElt.getElementsByAttributeValueContaining(HtmlNames.ATT_CLASS, CLASS_DESCRIPTION).first();
+			if(descriptionElt==null)
+				logger.log("Could not find any article presenstation");
+			else
 				processAnyElement(descriptionElt, rawStr, linkedStr);
 	
 			// processing the article main content
-			Element contentElt = articleElt.getElementsByAttributeValue(HtmlNames.ATT_CLASS, CLASS_ARTICLE_BODY).first();
+			Element contentElt = articleElt.getElementsByAttributeValueContaining(HtmlNames.ATT_CLASS, CLASS_ARTICLE_BODY).first();
 			processAnyElement(contentElt, rawStr, linkedStr);
 			
 			// create and init article object

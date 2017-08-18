@@ -113,7 +113,7 @@ public class LiberationReader extends ArticleReader
 	// RETRIEVE			/////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////	
 	/** Format used to parse the dates */
-	private static final DateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+	private static final DateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss",Locale.FRENCH);
 	
 	/** Text displayed for limited access content */
 	private final static String CONTENT_LIMITED_ACCESS = "Article réservé aux abonnés";
@@ -184,7 +184,7 @@ public class LiberationReader extends ArticleReader
 			
 			// retrieve the authors
 			List<String> authors = null;
-			Elements authorElts = headerElt.getElementsByAttributeValue(HtmlNames.ATT_CLASS, CLASS_AUTHOR);
+			Elements authorElts = headerElt.getElementsByAttributeValueContaining(HtmlNames.ATT_CLASS, CLASS_AUTHOR);
 			if(authorElts.isEmpty())
 				logger.log("WARNING: could not find any author, which is unusual");
 			else

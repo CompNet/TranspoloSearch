@@ -113,7 +113,7 @@ public class LeFigaroReader extends ArticleReader
 	// RETRIEVE			/////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////	
 	/** Format used to parse the dates */
-	private static final DateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+	private static final DateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss",Locale.FRENCH);
 	
 	/** Item prop of the main article */
 	private final static String CONTENT_MAIN = "mainContentOfPage";
@@ -174,7 +174,7 @@ public class LeFigaroReader extends ArticleReader
 			}
 			
 			// check if the access is restricted
-			Elements promoElts = articleElt.getElementsByAttributeValue(HtmlNames.ATT_CLASS, CLASS_PROMO);
+			Elements promoElts = articleElt.getElementsByAttributeValueContaining(HtmlNames.ATT_CLASS, CLASS_PROMO);
 			if(!promoElts.isEmpty())
 				logger.log("WARNING: The access to this article is limited, only the beginning is available.");
 			
@@ -207,10 +207,10 @@ public class LeFigaroReader extends ArticleReader
 				logger.log("Did not find any last modification date");
 	
 			// retrieve the authors
-			Elements authorElts = articleElt.getElementsByAttributeValue(HtmlNames.ATT_CLASS, CLASS_AUTHOR);
+			Elements authorElts = articleElt.getElementsByAttributeValueContaining(HtmlNames.ATT_CLASS, CLASS_AUTHOR);
 			if(!authorElts.isEmpty())
 			{	Element authorElt = authorElts.first();
-				Elements nameElts = authorElt.getElementsByAttributeValue(HtmlNames.ATT_ITEMPROP, AUTHOR_NAME);
+				Elements nameElts = authorElt.getElementsByAttributeValueContaining(HtmlNames.ATT_ITEMPROP, AUTHOR_NAME);
 				logger.log("List of the authors found for this article:");
 					logger.increaseOffset();
 					authors = new ArrayList<String>();
@@ -226,14 +226,14 @@ public class LeFigaroReader extends ArticleReader
 				logger.log("WARNING: could not find any author, which is unusual");
 			
 			// get the description
-			Element descriptionElt = articleElt.getElementsByAttributeValue(HtmlNames.ATT_CLASS, CLASS_DESCRIPTION).first();
+			Element descriptionElt = articleElt.getElementsByAttributeValueContaining(HtmlNames.ATT_CLASS, CLASS_DESCRIPTION).first();
 			String text = descriptionElt.text() + "\n";
 			text = removeGtst(text);
 			rawStr.append(text);
 			linkedStr.append(text);
 		
 			// processing the article main content
-			Element contentElt = articleElt.getElementsByAttributeValue(HtmlNames.ATT_CLASS, CLASS_ARTICLE_BODY).first();
+			Element contentElt = articleElt.getElementsByAttributeValueContaining(HtmlNames.ATT_CLASS, CLASS_ARTICLE_BODY).first();
 			processAnyElement(contentElt, rawStr, linkedStr);
 			
 			// create and init article object
