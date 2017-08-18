@@ -32,6 +32,7 @@ Here are the dependencies for TranspoloSearch:
 * Certain classes (mainly those related to Named Entity Recognition) were taken from our own tool [Nerwip](https://github.com/CompNet/Nerwip) (and sometimes modified)
 
 ## Todo
+* Define a black list corresponding to satirical journals (Gorafi, Infos du monde, Nordpresse, Sud ou Est, etc.)
 * Article retrieval:
   * Maybe use the Boilerpipe API instead of our custom tool? (see https://code.google.com/archive/p/boilerpipe and https://github.com/kohlschutter/boilerpipe)
   * Add the specific classes for the following sites:

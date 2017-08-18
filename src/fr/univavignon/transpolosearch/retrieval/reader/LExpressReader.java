@@ -71,14 +71,14 @@ import fr.univavignon.transpolosearch.tools.html.HtmlTools;
 
 /**
  * From a specified URL, this class retrieves a page
- * from the french newspaper Le Point (as of 17/08/2017),
+ * from the french newspaper L'Express (as of 18/08/2017),
  * and gives access to the raw and linked texts, as well
  * as other metadata (authors, publishing date, etc.).
  * 
  * @author Vincent Labatut
  */
 @SuppressWarnings("unused")
-public class LePointReader extends ArticleReader
+public class LExpressReader extends ArticleReader
 {	
 	/**
 	 * Method defined only for a quick test.
@@ -91,10 +91,10 @@ public class LePointReader extends ArticleReader
 	 */
 	public static void main(String[] args) throws Exception
 	{	
-//		URL url = new URL("http://www.lepoint.fr/monde/attentat-de-barcelone-les-vehicules-lances-sur-la-foule-un-phenomene-devenu-habituel-en-europe-17-08-2017-2150646_24.php");
-		URL url = new URL("http://www.lepoint.fr/invites-du-point/laetitia-strauch-bonart/strauch-bonart-cet-etrange-m-corbyn-17-08-2017-2150595_3096.php");
+//		URL url = new URL("http://www.lexpress.fr/styles/vip/angelina-jolie-et-brad-pitt-condamnes-a-verser-500-000-euros-a-une-artiste_1936140.html");
+		URL url = new URL("http://www.lexpress.fr/actualite/politique/lfi/les-insoumis-ayant-chante-tout-l-ete_1935643.html");
 		
-		ArticleReader reader = new LePointReader();
+		ArticleReader reader = new LExpressReader();
 		Article article = reader.processUrl(url, ArticleLanguage.FR);
 		System.out.println(article);
 		article.write();
@@ -104,7 +104,7 @@ public class LePointReader extends ArticleReader
 	// DOMAIN			/////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
 	/** Text allowing to detect the domain */
-	public static final String DOMAIN = "www.lepoint.fr";
+	public static final String DOMAIN = "www.lexpress.fr";
 
 	@Override
 	public String getDomain()
@@ -115,20 +115,23 @@ public class LePointReader extends ArticleReader
 	// RETRIEVE			/////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////	
 	/** Format used to parse the dates */
-	private static final DateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm",Locale.FRENCH);
-	
-	/** Class of the author names */
-	private final static String CLASS_AUTHORS = "art-source";
+	private static final DateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssX",Locale.FRENCH);
+	/** String prefix used to specify the modification date in the Web page */
+	private static final String PREFIX_AUTHOR = "Par ";
+
+
+	/** Class of the inter-titles */
+	private final static String CLASS_INTERTITLE = "intertitre";
 	/** Class of the article description panel */
-	private final static String CLASS_DESCRIPTION = "art-chapeau";
+	private final static String CLASS_DESCRIPTION = "chapo title_gamma";
 	/** Class of the article body */
-	private final static String CLASS_ARTICLE_BODY = "art-text";
+	private final static String CLASS_CONTENT = "article_content";
 	/** Class of the article title */
-	private final static String CLASS_TITLE = "art-titre";
-	/** Class of the dates */
-	private final static String CLASS_DATES = "art-date-infos";
+	private final static String CLASS_TITLE = "title_alpha";
 	/** Class of the restricted access */
-	private final static String CLASS_RESTRICTED = "freemium-tronque";
+	private final static String CLASS_RESTRICTED = "premium_content";
+	/** Class of the restricted access */
+	private final static String CLASS_SIGNATURE = "signature";
 	
 	@Override
 	public Article processUrl(URL url, ArticleLanguage language) throws ReaderException
@@ -161,21 +164,17 @@ public class LePointReader extends ArticleReader
 				throw new IllegalArgumentException("No <article> element found in the Web page");
 			Element articleElt = articleElts.first();
 			Element headerElt = articleElt.getElementsByTag(HtmlNames.ELT_HEADER).first();
+			Element bodyElt = articleElt.getElementsByAttributeValueContaining(HtmlNames.ATT_CLASS, CLASS_CONTENT).first();
 			
-			// check if the access is restricted
-			String classStr = articleElt.attr(HtmlNames.ATT_CLASS);
-			if(classStr!=null && classStr.equalsIgnoreCase(CLASS_RESTRICTED))
-				logger.log("WARNING: The access to this article is limited, only the beginning is available.");
-	
 			// get the title
 			Element titleElt = headerElt.getElementsByAttributeValueContaining(HtmlNames.ATT_CLASS, CLASS_TITLE).first();
 			title = titleElt.text(); 
 			title = removeGtst(title).trim();
 			logger.log("Get title: \""+title+"\"");
-	
+
 			// retrieve the dates
-			Element datesElt = headerElt.getElementsByAttributeValueContaining(HtmlNames.ATT_CLASS, CLASS_DATES).first();
-			Elements timeElts = datesElt.getElementsByTag(HtmlNames.ELT_TIME);
+			Element signatureElt = headerElt.getElementsByAttributeValueContaining(HtmlNames.ATT_CLASS, CLASS_SIGNATURE).first();
+			Elements timeElts = signatureElt.getElementsByTag(HtmlNames.ELT_TIME);
 			if(!timeElts.isEmpty())
 			{	Element timeElt = timeElts.get(0);
 				publishingDate = HtmlTools.getDateFromTimeElt(timeElt,DATE_FORMAT);
@@ -190,23 +189,45 @@ public class LePointReader extends ArticleReader
 			}
 			else
 				logger.log("Did not find any publication date");
-			
-			// retrieve the authors
-			Element authorElt = headerElt.getElementsByAttributeValueContaining(HtmlNames.ATT_CLASS, CLASS_AUTHORS).first();
-			String authorName = authorElt.text();
+	
+			// retrieve the author
+			List<TextNode> textNodes = headerElt.textNodes();
+			TextNode authorNode = textNodes.get(0);
+			String authorName = authorNode.text().trim();
+			// remove "Par "
+			if(authorName.startsWith(PREFIX_AUTHOR))
+				authorName = authorName.substring(PREFIX_AUTHOR.length());
+			// remove ", publié le..."
+			int pos = authorName.indexOf(',');
+			if(pos!=-1)
+				authorName = authorName.substring(0,pos);
 			authorName = removeGtst(authorName);
 			authors.add(authorName);
-	
+
 			// get the description
-			Element descriptionElt = headerElt.getElementsByAttributeValueContaining(HtmlNames.ATT_CLASS, CLASS_DESCRIPTION).first();
+			Element descriptionElt = bodyElt.getElementsByAttributeValueContaining(HtmlNames.ATT_CLASS, CLASS_DESCRIPTION).first();
 			if(descriptionElt==null)
 				logger.log("Could not find any article presenstation");
 			else
-				processAnyElement(descriptionElt, rawStr, linkedStr);
-	
+			{	processAnyElement(descriptionElt, rawStr, linkedStr);
+				rawStr.append("\n");
+				linkedStr.append("\n");
+			}
+
 			// processing the article main content
-			Element contentElt = articleElt.getElementsByAttributeValueContaining(HtmlNames.ATT_CLASS, CLASS_ARTICLE_BODY).first();
-			processAnyElement(contentElt, rawStr, linkedStr);
+			Element contentElt = descriptionElt.nextElementSibling();
+			while(contentElt!=null)
+			{	String classStr = contentElt.attr(HtmlNames.ATT_CLASS);
+				if(contentElt.tagName().equalsIgnoreCase(HtmlNames.ELT_P)
+					|| classStr!=null && classStr.contains(CLASS_INTERTITLE))
+				{	processAnyElement(contentElt, rawStr, linkedStr);
+					rawStr.append("\n");
+					linkedStr.append("\n");
+				}
+				if(classStr!=null && classStr.equalsIgnoreCase(CLASS_RESTRICTED))
+					logger.log("WARNING: The access to this article is limited, only the beginning is available.");
+				contentElt = contentElt.nextElementSibling();
+			}
 			
 			// create and init article object
 			result = new Article(name);
