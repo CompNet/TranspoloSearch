@@ -91,8 +91,8 @@ public class LExpressReader extends ArticleReader
 	 */
 	public static void main(String[] args) throws Exception
 	{	
-//		URL url = new URL("http://www.lexpress.fr/styles/vip/angelina-jolie-et-brad-pitt-condamnes-a-verser-500-000-euros-a-une-artiste_1936140.html");
-		URL url = new URL("http://www.lexpress.fr/actualite/politique/lfi/les-insoumis-ayant-chante-tout-l-ete_1935643.html");
+		URL url = new URL("http://www.lexpress.fr/styles/vip/angelina-jolie-et-brad-pitt-condamnes-a-verser-500-000-euros-a-une-artiste_1936140.html");
+//		URL url = new URL("http://www.lexpress.fr/actualite/politique/lfi/les-insoumis-ayant-chante-tout-l-ete_1935643.html");
 		
 		ArticleReader reader = new LExpressReader();
 		Article article = reader.processUrl(url, ArticleLanguage.FR);
@@ -191,8 +191,8 @@ public class LExpressReader extends ArticleReader
 				logger.log("Did not find any publication date");
 	
 			// retrieve the author
-			List<TextNode> textNodes = headerElt.textNodes();
-			TextNode authorNode = textNodes.get(0);
+			List<TextNode> textNodes = signatureElt.textNodes();
+			TextNode authorNode = textNodes.get(1);
 			String authorName = authorNode.text().trim();
 			// remove "Par "
 			if(authorName.startsWith(PREFIX_AUTHOR))
