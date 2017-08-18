@@ -192,6 +192,7 @@ public class WebSearchResult extends AbstractSearchResult
 				// dates
 				Period period = event.getPeriod();
 				String periodStr = period.toString();
+				periodStr = periodStr.replaceAll("[\\n\\r]", " ");
 				map.put(WebSearchResults.COL_EVENT_DATES,periodStr);
 				
 				// locations
@@ -200,6 +201,7 @@ public class WebSearchResult extends AbstractSearchResult
 					Iterator<String> itLoc = locs.iterator();
 					while(itLoc.hasNext())
 					{	String loc = itLoc.next();
+						loc = loc.replaceAll("[\\n\\r]", " ");
 						locations = locations + loc;
 						if(itLoc.hasNext())
 							locations = locations + ", ";
@@ -214,6 +216,7 @@ public class WebSearchResult extends AbstractSearchResult
 					Iterator<String> itPers = perss.iterator();
 					while(itPers.hasNext())
 					{	String pers = itPers.next();
+						pers = pers.replaceAll("[\\n\\r]", " ");
 						persons = persons + pers;
 						if(itPers.hasNext())
 							persons = persons + ", ";
@@ -228,6 +231,7 @@ public class WebSearchResult extends AbstractSearchResult
 					Iterator<String> itOrg = orgs.iterator();
 					while(itOrg.hasNext())
 					{	String org = itOrg.next();
+						org = org.replaceAll("[\\n\\r]", " ");
 						organizations = organizations + org;
 						if(itOrg.hasNext())
 							organizations = organizations + ", ";
@@ -242,6 +246,7 @@ public class WebSearchResult extends AbstractSearchResult
 					Iterator<String> itFun = funs.iterator();
 					while(itFun.hasNext())
 					{	String fun = itFun.next();
+						fun = fun.replaceAll("[\\n\\r]", " ");
 						functions = functions + fun;
 						if(itFun.hasNext())
 							functions = functions + ", ";
@@ -256,6 +261,7 @@ public class WebSearchResult extends AbstractSearchResult
 					Iterator<String> itProd = prods.iterator();
 					while(itProd.hasNext())
 					{	String prod = itProd.next();
+						prod = prod.replaceAll("[\\n\\r]", " ");
 						productions = productions + prod;
 						if(itProd.hasNext())
 							productions = productions + ", ";
@@ -270,6 +276,7 @@ public class WebSearchResult extends AbstractSearchResult
 					Iterator<String> itMeet = meets.iterator();
 					while(itMeet.hasNext())
 					{	String meet = itMeet.next();
+						meet = meet.replaceAll("[\\n\\r]", " ");
 						meetings = meetings + meet;
 						if(itMeet.hasNext())
 							meetings = meetings + ", ";

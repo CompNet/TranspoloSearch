@@ -52,6 +52,7 @@ import java.util.zip.InflaterInputStream;
 import org.apache.http.ParseException;
 import org.apache.http.client.ClientProtocolException;
 import org.jsoup.Jsoup;
+import org.jsoup.nodes.Attributes;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.nodes.Node;
@@ -124,6 +125,8 @@ public class LaProvenceReader extends ArticleReader
 	private final static String CLASS_AUTHOR = "signature";
 	/** Class of the article text */
 	private final static String CLASS_TEXT = "p402_premium";
+	/** Class of the article live event */
+	private final static String CLASS_LIVE = "live_container";
 	
 	/** Id of the article information */
 	private final static String ID_INFO = "article-infos";
@@ -208,8 +211,29 @@ public class LaProvenceReader extends ArticleReader
 			}
 			else
 			{	// processing the article main content
-				Element contentElt = bodyElt.getElementsByAttributeValueContaining(HtmlNames.ATT_CLASS, CLASS_TEXT).first();
-				processAnyElement(contentElt, rawStr, linkedStr);
+				Elements contentElts = bodyElt.getElementsByAttributeValueContaining(HtmlNames.ATT_CLASS, CLASS_TEXT);
+				Elements liveElts = bodyElt.getElementsByAttributeValueContaining(HtmlNames.ATT_CLASS, CLASS_LIVE);
+				if(!contentElts.isEmpty())
+				{	Element contentElt = contentElts.first();
+					processAnyElement(contentElt, rawStr, linkedStr);
+				}
+				// can alternatively be a live stream
+				else if(!liveElts.isEmpty())
+				{	for(Element liveElt: liveElts)
+					{	processAnyElement(liveElt, rawStr, linkedStr);
+						rawStr.append("\n");
+						linkedStr.append("\n");
+					}
+				}
+				// otherwise just use the attribute-less paragraphs
+				else
+				{	Elements parElts = bodyElt.getElementsByTag(HtmlNames.ELT_P);
+					for(Element parElt: parElts)
+					{	Attributes attributes = parElt.attributes();
+						if(attributes==null || attributes.size()==0)
+							processAnyElement(parElt, rawStr, linkedStr);
+					}
+				}
 			}
 			
 			// create and init article object

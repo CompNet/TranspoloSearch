@@ -278,8 +278,7 @@ public class SocialSearchResult extends AbstractSearchResult
 				// dates
 				Period period = event.getPeriod();
 				String periodStr = period.toString();
-if(periodStr.contains("\n") || periodStr.contains("\r"))
-	System.out.print("");
+				periodStr = periodStr.replaceAll("[\\n\\r]", " ");
 				map.put(AbstractSearchResults.COL_EVENT_DATES,periodStr);
 				
 				// locations
@@ -288,8 +287,7 @@ if(periodStr.contains("\n") || periodStr.contains("\r"))
 					Iterator<String> itLoc = locs.iterator();
 					while(itLoc.hasNext())
 					{	String loc = itLoc.next();
-if(loc.contains("\n") || loc.contains("\r"))
-	System.out.print("");
+						loc = loc.replaceAll("[\\n\\r]", " ");
 						locations = locations + loc;
 						if(itLoc.hasNext())
 							locations = locations + ", ";
@@ -304,8 +302,7 @@ if(loc.contains("\n") || loc.contains("\r"))
 					Iterator<String> itPers = perss.iterator();
 					while(itPers.hasNext())
 					{	String pers = itPers.next();
-if(pers.contains("\n") || pers.contains("\r"))
-	System.out.print("");
+						pers = pers.replaceAll("[\\n\\r]", " ");
 						persons = persons + pers;
 						if(itPers.hasNext())
 							persons = persons + ", ";
@@ -320,8 +317,7 @@ if(pers.contains("\n") || pers.contains("\r"))
 					Iterator<String> itOrg = orgs.iterator();
 					while(itOrg.hasNext())
 					{	String org = itOrg.next();
-if(org.contains("\n") || org.contains("\r"))
-	System.out.print("");
+						org = org.replaceAll("[\\n\\r]", " ");
 						organizations = organizations + org;
 						if(itOrg.hasNext())
 							organizations = organizations + ", ";
@@ -336,9 +332,8 @@ if(org.contains("\n") || org.contains("\r"))
 					Iterator<String> itFun = funs.iterator();
 					while(itFun.hasNext())
 					{	String fun = itFun.next();
+						fun = fun.replaceAll("[\\n\\r]", " ");
 						functions = functions + fun;
-if(fun.contains("\n") || fun.contains("\r"))
-	System.out.print("");
 						if(itFun.hasNext())
 							functions = functions + ", ";
 					}
@@ -352,8 +347,7 @@ if(fun.contains("\n") || fun.contains("\r"))
 					Iterator<String> itProd = prods.iterator();
 					while(itProd.hasNext())
 					{	String prod = itProd.next();
-if(prod.contains("\n") || prod.contains("\r"))
-	System.out.print("");
+						prod = prod.replaceAll("[\\n\\r]", " ");
 						productions = productions + prod;
 						if(itProd.hasNext())
 							productions = productions + ", ";
@@ -368,8 +362,7 @@ if(prod.contains("\n") || prod.contains("\r"))
 					Iterator<String> itMeet = meets.iterator();
 					while(itMeet.hasNext())
 					{	String meet = itMeet.next();
-if(meet.contains("\n") || meet.contains("\r"))
-	System.out.print("");
+						meet = meet.replaceAll("[\\n\\r]", " ");
 						meetings = meetings + meet;
 						if(itMeet.hasNext())
 							meetings = meetings + ", ";
