@@ -136,136 +136,149 @@ public class LExpressReader extends ArticleReader
 	@Override
 	public Article processUrl(URL url, ArticleLanguage language) throws ReaderException
 	{	Article result = null;
-		String name = getName(url);
 		
-		try
-		{	// init variables
-			String title = "";
-			StringBuilder rawStr = new StringBuilder();
-			StringBuilder linkedStr = new StringBuilder();
-			Date publishingDate = null;
-			Date modificationDate = null;
-			List<String> authors = new ArrayList<String>();
-			
-			// get the page
-			String address = url.toString();
-			logger.log("Retrieving page "+address);
-			long startTime = System.currentTimeMillis();
-			Document document  = retrieveSourceCode(name,url);
-			if(document==null)
-			{	logger.log("ERROR: Could not retrieve the document at URL "+url);
-				throw new ReaderException("Could not retrieve the document at URL "+url);
-			}
-			
-			// get the article element
-			logger.log("Get the main element of the document");
-			Elements articleElts = document.getElementsByTag(HtmlNames.ELT_ARTICLE);
-			if(articleElts.size()==0)
-				throw new IllegalArgumentException("No <article> element found in the Web page");
-			Element articleElt = articleElts.first();
-			Element headerElt = articleElt.getElementsByTag(HtmlNames.ELT_HEADER).first();
-			Element bodyElt = articleElt.getElementsByAttributeValueContaining(HtmlNames.ATT_CLASS, CLASS_CONTENT).first();
-			
-			// get the title
-			Element titleElt = headerElt.getElementsByAttributeValueContaining(HtmlNames.ATT_CLASS, CLASS_TITLE).first();
-			title = titleElt.text(); 
-			title = removeGtst(title).trim();
-			logger.log("Get title: \""+title+"\"");
-
-			// retrieve the dates
-			Element signatureElt = headerElt.getElementsByAttributeValueContaining(HtmlNames.ATT_CLASS, CLASS_SIGNATURE).first();
-			Elements timeElts = signatureElt.getElementsByTag(HtmlNames.ELT_TIME);
-			if(!timeElts.isEmpty())
-			{	Element timeElt = timeElts.get(0);
-				publishingDate = HtmlTools.getDateFromTimeElt(timeElt,DATE_FORMAT);
-				logger.log("Found the publishing date: "+publishingDate);
-				if(timeElts.size()>1)
-				{	timeElt = timeElts.get(1);
-					modificationDate = HtmlTools.getDateFromTimeElt(timeElt,DATE_FORMAT);
-					logger.log("Found the last modification date: "+modificationDate);
+		// just a list of articles: nothing to get from that
+		if(url.toString().contains("/archives/"))
+		{	ArticleReader reader = new GenericReader();
+			result = reader.processUrl(url, language);
+		}
+		
+		// an actual article, processed appropriately
+		else
+		{	String name = getName(url);
+			try
+			{	// init variables
+				String title = "";
+				StringBuilder rawStr = new StringBuilder();
+				StringBuilder linkedStr = new StringBuilder();
+				Date publishingDate = null;
+				Date modificationDate = null;
+				List<String> authors = new ArrayList<String>();
+				
+				// get the page
+				String address = url.toString();
+				logger.log("Retrieving page "+address);
+				long startTime = System.currentTimeMillis();
+				Document document  = retrieveSourceCode(name,url);
+				if(document==null)
+				{	logger.log("ERROR: Could not retrieve the document at URL "+url);
+					throw new ReaderException("Could not retrieve the document at URL "+url);
+				}
+				
+				// get the article element
+				logger.log("Get the main element of the document");
+				Elements articleElts = document.getElementsByTag(HtmlNames.ELT_ARTICLE);
+				if(articleElts.size()==0)
+					throw new IllegalArgumentException("No <article> element found in the Web page");
+				Element articleElt = articleElts.first();
+				Element headerElt = articleElt.getElementsByTag(HtmlNames.ELT_HEADER).first();
+				Element bodyElt = articleElt.getElementsByAttributeValueContaining(HtmlNames.ATT_CLASS, CLASS_CONTENT).first();
+				
+				// get the title
+				Element titleElt = headerElt.getElementsByAttributeValueContaining(HtmlNames.ATT_CLASS, CLASS_TITLE).first();
+				title = titleElt.text(); 
+				title = removeGtst(title).trim();
+				logger.log("Get title: \""+title+"\"");
+	
+				// retrieve the dates
+				Element signatureElt = headerElt.getElementsByAttributeValueContaining(HtmlNames.ATT_CLASS, CLASS_SIGNATURE).first();
+				Elements timeElts = signatureElt.getElementsByTag(HtmlNames.ELT_TIME);
+				if(!timeElts.isEmpty())
+				{	Element timeElt = timeElts.get(0);
+					publishingDate = HtmlTools.getDateFromTimeElt(timeElt,DATE_FORMAT);
+					logger.log("Found the publishing date: "+publishingDate);
+					if(timeElts.size()>1)
+					{	timeElt = timeElts.get(1);
+						modificationDate = HtmlTools.getDateFromTimeElt(timeElt,DATE_FORMAT);
+						logger.log("Found the last modification date: "+modificationDate);
+					}
+					else
+						logger.log("Did not find any last modification date");
 				}
 				else
-					logger.log("Did not find any last modification date");
-			}
-			else
-				logger.log("Did not find any publication date");
+					logger.log("Did not find any publication date");
+		
+				// retrieve the author
+				List<TextNode> textNodes = signatureElt.textNodes();
+				if(textNodes.size()<2)
+					logger.log("WARNING: Could not find the author, which is unusual");
+				else
+				{	TextNode authorNode = textNodes.get(1);
+					String authorName = authorNode.text().trim();
+					// remove "Par "
+					if(authorName.startsWith(PREFIX_AUTHOR))
+						authorName = authorName.substring(PREFIX_AUTHOR.length());
+					// remove ", publié le..."
+					int pos = authorName.indexOf(',');
+					if(pos!=-1)
+						authorName = authorName.substring(0,pos);
+					authorName = removeGtst(authorName);
+					authors.add(authorName);
+				}
 	
-			// retrieve the author
-			List<TextNode> textNodes = signatureElt.textNodes();
-			TextNode authorNode = textNodes.get(1);
-			String authorName = authorNode.text().trim();
-			// remove "Par "
-			if(authorName.startsWith(PREFIX_AUTHOR))
-				authorName = authorName.substring(PREFIX_AUTHOR.length());
-			// remove ", publié le..."
-			int pos = authorName.indexOf(',');
-			if(pos!=-1)
-				authorName = authorName.substring(0,pos);
-			authorName = removeGtst(authorName);
-			authors.add(authorName);
-
-			// get the description
-			Element descriptionElt = bodyElt.getElementsByAttributeValueContaining(HtmlNames.ATT_CLASS, CLASS_DESCRIPTION).first();
-			if(descriptionElt==null)
-				logger.log("Could not find any article presenstation");
-			else
-			{	processAnyElement(descriptionElt, rawStr, linkedStr);
-				rawStr.append("\n");
-				linkedStr.append("\n");
-			}
-
-			// processing the article main content
-			Element contentElt = descriptionElt.nextElementSibling();
-			while(contentElt!=null)
-			{	String classStr = contentElt.attr(HtmlNames.ATT_CLASS);
-				if(contentElt.tagName().equalsIgnoreCase(HtmlNames.ELT_P)
-					|| classStr!=null && classStr.contains(CLASS_INTERTITLE))
-				{	processAnyElement(contentElt, rawStr, linkedStr);
+				// get the description
+				Element descriptionElt = bodyElt.getElementsByAttributeValueContaining(HtmlNames.ATT_CLASS, CLASS_DESCRIPTION).first();
+				if(descriptionElt==null)
+					logger.log("Could not find any article presenstation");
+				else
+				{	processAnyElement(descriptionElt, rawStr, linkedStr);
 					rawStr.append("\n");
 					linkedStr.append("\n");
 				}
-				if(classStr!=null && classStr.equalsIgnoreCase(CLASS_RESTRICTED))
-					logger.log("WARNING: The access to this article is limited, only the beginning is available.");
-				contentElt = contentElt.nextElementSibling();
+	
+				// processing the article main content
+				Element contentElt = descriptionElt.nextElementSibling();
+				while(contentElt!=null)
+				{	String classStr = contentElt.attr(HtmlNames.ATT_CLASS);
+					if(contentElt.tagName().equalsIgnoreCase(HtmlNames.ELT_P)
+						|| classStr!=null && classStr.contains(CLASS_INTERTITLE))
+					{	processAnyElement(contentElt, rawStr, linkedStr);
+						rawStr.append("\n");
+						linkedStr.append("\n");
+					}
+					if(classStr!=null && classStr.equalsIgnoreCase(CLASS_RESTRICTED))
+						logger.log("WARNING: The access to this article is limited, only the beginning is available.");
+					contentElt = contentElt.nextElementSibling();
+				}
+				
+				// create and init article object
+				result = new Article(name);
+				result.setTitle(title);
+				result.setUrl(url);
+				result.initRetrievalDate();
+				result.setLanguage(language);
+				result.setPublishingDate(publishingDate);
+				if(modificationDate!=null)
+					result.setModificationDate(modificationDate);
+				if(authors!=null)
+					result.addAuthors(authors);
+				
+				// clean text
+				String rawText = rawStr.toString();
+				result.setRawText(rawText);
+				logger.log("Length of the raw text: "+rawText.length()+" chars.");
+				String linkedText = linkedStr.toString();
+				result.setLinkedText(linkedText);
+				logger.log("Length of the linked text: "+linkedText.length()+" chars.");
+				
+				// get original html source code
+				logger.log("Get original HTML source code.");
+				String originalPage = document.toString();
+				result.setOriginalPage(originalPage);
+				logger.log("Length of the original page: "+originalPage.length()+" chars.");
+	
+				long endTime = System.currentTimeMillis();
+				logger.log("Total duration: "+(endTime-startTime)+" ms.");
 			}
-			
-			// create and init article object
-			result = new Article(name);
-			result.setTitle(title);
-			result.setUrl(url);
-			result.initRetrievalDate();
-			result.setLanguage(language);
-			result.setPublishingDate(publishingDate);
-			if(modificationDate!=null)
-				result.setModificationDate(modificationDate);
-			if(authors!=null)
-				result.addAuthors(authors);
-			
-			// clean text
-			String rawText = rawStr.toString();
-			result.setRawText(rawText);
-			logger.log("Length of the raw text: "+rawText.length()+" chars.");
-			String linkedText = linkedStr.toString();
-			result.setLinkedText(linkedText);
-			logger.log("Length of the linked text: "+linkedText.length()+" chars.");
-			
-			// get original html source code
-			logger.log("Get original HTML source code.");
-			String originalPage = document.toString();
-			result.setOriginalPage(originalPage);
-			logger.log("Length of the original page: "+originalPage.length()+" chars.");
-
-			long endTime = System.currentTimeMillis();
-			logger.log("Total duration: "+(endTime-startTime)+" ms.");
-		}
-		catch (ClientProtocolException e)
-		{	e.printStackTrace();
-		} 
-		catch (ParseException e)
-		{	e.printStackTrace();
-		}
-		catch (IOException e)
-		{	e.printStackTrace();
+			catch (ClientProtocolException e)
+			{	e.printStackTrace();
+			} 
+			catch (ParseException e)
+			{	e.printStackTrace();
+			}
+			catch (IOException e)
+			{	e.printStackTrace();
+			}
 		}
 		
 		return result;
