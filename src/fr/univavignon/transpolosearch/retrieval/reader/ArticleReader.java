@@ -96,8 +96,13 @@ public abstract class ArticleReader
 	public static ArticleReader buildReader(String url)
 	{	ArticleReader result;
 		
+		// wikipedia article
 		if(url.contains(WikipediaReader.DOMAIN))
 			result = new WikipediaReader();
+		
+		// handled french journal
+		else if(url.contains(LaProvenceReader.DOMAIN))
+			result = new LaProvenceReader();
 		else if(url.contains(LeFigaroReader.DOMAIN))
 			result = new LeFigaroReader();
 		else if(url.contains(LeMondeReader.DOMAIN))
@@ -110,6 +115,8 @@ public abstract class ArticleReader
 			result = new LExpressReader();
 		else if(url.contains(LiberationReader.DOMAIN))
 			result = new LiberationReader();
+		
+		// generic reader for the other cases
 		else
 			result = new GenericReader();
 		
