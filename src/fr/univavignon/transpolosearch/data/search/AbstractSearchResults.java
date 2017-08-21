@@ -122,7 +122,11 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 			int count = 0;
 			int total = 0;
 			for(T result: results.values())
-			{	if(result.status==null)
+			{	
+if(result instanceof WebSearchResult && ((WebSearchResult)result).url.equalsIgnoreCase
+		("http://www.lamarseillaise.fr/vaucluse/developpement-durable/58144-avignon-ca-bouge-autour-du-technopole-de-l-agroparc"))				
+	System.out.print("");
+				if(result.status==null)
 				{	total++;
 					if(!result.filterByKeyword(compulsoryExpression,total))
 						count++;
@@ -200,7 +204,11 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 			int count = 0;
 			int total = 0;
 			for(T result: results.values())
-			{	if(result.status==null)
+			{	
+if(result instanceof WebSearchResult && ((WebSearchResult)result).url.equalsIgnoreCase
+		("http://www.lamarseillaise.fr/vaucluse/developpement-durable/58144-avignon-ca-bouge-autour-du-technopole-de-l-agroparc"))				
+	System.out.print("");
+				if(result.status==null)
 				{	total++;
 					if(result.detectMentions(recognizer,total)>0)
 						count++;
@@ -248,7 +256,12 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 			int count = 0;
 			int total = 0;
 			for(T result: results.values())
-			{	if(result.status==null)
+			{	
+if(result instanceof WebSearchResult && ((WebSearchResult)result).url.equalsIgnoreCase
+		("http://www.lamarseillaise.fr/vaucluse/developpement-durable/58144-avignon-ca-bouge-autour-du-technopole-de-l-agroparc"))				
+	System.out.print("");
+				
+				if(result.status==null)
 				{	total++;
 					if(result.extractEvents(bySentence,total)>0)
 						count++;

@@ -260,7 +260,7 @@ public abstract class AbstractSearchResult
 	 * 		Number of extracted events.
 	 */
 	protected int extractEvents(boolean bySentence, int nbr, boolean usePubDate)
-	{	logger.log("Retrieving article #"+nbr+" ("+article.getTitle()+")");
+	{	logger.log("Processing article #"+nbr+" ("+article.getTitle()+")");
 		logger.increaseOffset();
 			String rawText = article.getRawText();
 			Date pubDate = null;
