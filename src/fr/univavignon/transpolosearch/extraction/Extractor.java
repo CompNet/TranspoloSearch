@@ -131,6 +131,9 @@ public class Extractor
 	{	logger.log("Starting the information extraction");
 		logger.increaseOffset();
 		
+		// setup the output folder
+		FileNames.setOutputFolder(keywords);
+		
 		// perform the Web search
 		logger.log("Performing the Web search");
 		performWebExtraction(keywords, website, startDate, endDate, searchDate, compulsoryExpression);
@@ -186,15 +189,15 @@ public class Extractor
 		results.filterByUrl();
 		
 		// retrieve the corresponding articles
-		results.retrieveArticles(keywords);
-		results.exportAsCsv(FileNames.FI_SEARCH_RESULTS_URL, keywords);
+		results.retrieveArticles();
+		results.exportAsCsv(FileNames.FI_SEARCH_RESULTS_URL);
 		
 		// detect the entity mentions
 		results.detectMentions(recognizer);
 		
 		// possibly filter the articles depending on the dates and compulsory expression
 		results.filterByContent(startDate,endDate,searchDate,compulsoryExpression);
-		results.exportAsCsv(FileNames.FI_SEARCH_RESULTS_CONTENT, keywords);
+		results.exportAsCsv(FileNames.FI_SEARCH_RESULTS_CONTENT);
 
 		// displays the remaining articles with their mentions	//TODO maybe get the entities instead of the mention, eventually?
 		results.displayRemainingMentions(); //TODO for debug only
@@ -204,7 +207,7 @@ public class Extractor
 		results.extractEvents(bySentence);
 		
 		// export the events as a table
-		results.exportEvents(keywords);
+		results.exportEvents();
 		
 		logger.decreaseOffset();
 		logger.log("Web extraction over");
@@ -252,7 +255,7 @@ public class Extractor
 		SocialSearchResults results = performSocialSearch(keywords, startDate, endDate, extendedSocialSearch);
 		
 		// convert the posts to proper articles
-		results.buildArticles(keywords);
+		results.buildArticles();
 		
 		// possibly filter the articles depending on the compulsory expression
 		results.filterByContent(null,null,true,compulsoryExpression);
@@ -268,7 +271,7 @@ public class Extractor
 		results.extractEvents(bySentence);
 		
 		// export the events as a table
-		results.exportEvents(keywords);
+		results.exportEvents();
 		
 		logger.decreaseOffset();
 		logger.log("Social media extraction over");
@@ -357,7 +360,7 @@ public class Extractor
 			{	List<URL> urls = new ArrayList<URL>();
 				
 				// possibly use cached results
-				String cacheFilePath = FileNames.getWebSearchFolder(keywords) + File.separator + engine.getName();
+				String cacheFilePath = FileNames.FO_WEB_SEARCH_RESULTS + File.separator + engine.getName();
 				File cacheFolder = new File(cacheFilePath);
 				cacheFolder.mkdirs();
 				cacheFilePath = cacheFilePath + File.separator + FileNames.FI_SEARCH_RESULTS;
@@ -404,7 +407,7 @@ public class Extractor
 		logger.log("Total number of pages found: "+result.size());
 		
 		// record the complete list of URLs (not for cache, just as a result)
-		result.exportAsCsv(FileNames.FI_SEARCH_RESULTS_ALL, keywords);
+		result.exportAsCsv(FileNames.FI_SEARCH_RESULTS_ALL);
 		
 		return result;
 	}
@@ -471,7 +474,7 @@ public class Extractor
 			{	List<SocialSearchResult> posts = new ArrayList<SocialSearchResult>();
 				
 				// possibly use cached results
-				String cacheFilePath = FileNames.getSocialSearchFolder(keywords) + File.separator + engine.getName();
+				String cacheFilePath = FileNames.FO_SOCIAL_SEARCH_RESULTS + File.separator + engine.getName();
 				File cacheFolder = new File(cacheFilePath);
 				cacheFolder.mkdirs();
 				cacheFilePath = cacheFilePath + File.separator + FileNames.FI_SEARCH_RESULTS;
@@ -508,7 +511,7 @@ public class Extractor
 				int rank = 1;
 				for(SocialSearchResult post: posts)
 				{	post.rank = rank;
-					post.buildArticle(keywords);
+					post.buildArticle();
 					result.addResult(post);
 					rank++;
 				}

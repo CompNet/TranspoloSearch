@@ -124,8 +124,6 @@ public abstract class ArticleReader
 	/////////////////////////////////////////////////////////////////
 	/** Whether or not original source code should be cached localy */
 	protected boolean cache = true;
-	/** Keywords of the current search (used for caching) */
-	public static String keywords = null;
 	
 	/**
 	 * Switches the cache flag.
@@ -272,7 +270,7 @@ public abstract class ArticleReader
 		logger.log("Retrieve HTML source code");
 		
 		// check if the cache can/must be used
-		String folderPath = FileNames.getWebCacheFolder(keywords) + File.separator + name;
+		String folderPath = FileNames.FO_WEB_PAGES + File.separator + name;
 		File originalFile = new File(folderPath + File.separator + FileNames.FI_ORIGINAL_PAGE);
 		if(cache && originalFile.exists())
 		{	logger.log("Cache enabled and HTML already retrieved >> we use the cached file ("+originalFile.getName()+")");

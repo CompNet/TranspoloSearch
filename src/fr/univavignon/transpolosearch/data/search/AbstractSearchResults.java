@@ -296,13 +296,10 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 	/**
 	 * Records the results of the search as a CSV file.
 	 * 
-	 * @param keywords
-	 * 		Keywords of the current search.
-	 * 
 	 * @throws UnsupportedEncodingException
 	 * 		Problem while accessing to the result file.
 	 * @throws FileNotFoundException
 	 * 		Problem while accessing to the result file.
 	 */
-	public abstract void exportEvents(String keywords) throws UnsupportedEncodingException, FileNotFoundException;
+	public abstract void exportEvents() throws UnsupportedEncodingException, FileNotFoundException;
 }

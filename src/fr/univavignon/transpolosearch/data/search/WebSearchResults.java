@@ -101,9 +101,6 @@ public class WebSearchResults extends AbstractSearchResults<WebSearchResult>
 	/**
 	 * Retrieve all the articles whose URLs were not previously filtered.
 	 * 
-	 * @param keywords 
-	 * 		Keywords of the current search (used for caching).
-	 * 
 	 * @throws IOException
 	 * 		Problem while retrieving a Web page.
 	 * @throws ParseException
@@ -111,12 +108,12 @@ public class WebSearchResults extends AbstractSearchResults<WebSearchResult>
 	 * @throws SAXException
 	 * 		Problem while retrieving a Web page.
 	 */
-	public void retrieveArticles(String keywords) throws IOException, ParseException, SAXException
+	public void retrieveArticles() throws IOException, ParseException, SAXException
 	{	logger.log("Starting the article retrieval");
 		logger.increaseOffset();
 			
 			// init
-			ArticleRetriever articleRetriever = new ArticleRetriever(true, keywords); // TODO cache disabled when debugging
+			ArticleRetriever articleRetriever = new ArticleRetriever(true); //TODO cache disabled for debugging
 			articleRetriever.setLanguage(ArticleLanguage.FR); // TODO we know the articles will be in French (should be generalized later)
 			
 			int count = 0;
@@ -141,20 +138,18 @@ public class WebSearchResults extends AbstractSearchResults<WebSearchResult>
 	 * 
 	 * @param fileName
 	 * 		Name of the created file.  
-	 * @param keywords
-	 * 		Keywords of the current search.
 	 * 
 	 * @throws UnsupportedEncodingException
 	 * 		Problem while opening the CSV file.
 	 * @throws FileNotFoundException
 	 * 		Problem while opening the CSV file.
 	 */
-	public void exportAsCsv(String fileName, String keywords) throws UnsupportedEncodingException, FileNotFoundException
+	public void exportAsCsv(String fileName) throws UnsupportedEncodingException, FileNotFoundException
 	{	logger.log("Recording all the Web search results in a single file");
 		logger.increaseOffset();
 		
 		// create folder
-		File folder = new File(FileNames.getWebSearchFolder(keywords));
+		File folder = new File(FileNames.FO_WEB_SEARCH_RESULTS);
 		folder.mkdirs();
 		String cacheFilePath = folder + File.separator + fileName;
 		logger.log("Recording in CSV file \""+cacheFilePath+"\"");
@@ -191,8 +186,8 @@ public class WebSearchResults extends AbstractSearchResults<WebSearchResult>
 	}
 
 	@Override
-	public void exportEvents(String keywords) throws UnsupportedEncodingException, FileNotFoundException
-	{	String filePath = FileNames.getWebSearchFolder(keywords) + File.separator + FileNames.FI_EVENT_TABLE;
+	public void exportEvents() throws UnsupportedEncodingException, FileNotFoundException
+	{	String filePath = FileNames.FO_WEB_SEARCH_RESULTS + File.separator + FileNames.FI_EVENT_TABLE;
 		logger.log("Recording the events as a CVS file: "+filePath);
 		logger.decreaseOffset();
 			PrintWriter pw = FileTools.openTextFileWrite(filePath, "UTF-8");

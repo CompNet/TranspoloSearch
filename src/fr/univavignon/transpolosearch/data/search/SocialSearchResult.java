@@ -127,14 +127,11 @@ public class SocialSearchResult extends AbstractSearchResult
 	 * Convert this post under the form of a proper {@code Article}. 
 	 * The comments are added as paragraphs after the actual post content.
 	 * 
-	 * @param keywords
-	 * 		Keywords of the current search.
-	 * 
 	 * @throws IOException 
 	 * 		Problem while recording the article.
 	 */
-	public void buildArticle(String keywords) throws IOException
-	{	String corpusFolder = FileNames.getSocialSearchFolder(keywords) + File.separator + source;
+	public void buildArticle() throws IOException
+	{	String corpusFolder = FileNames.FO_SOCIAL_SEARCH_RESULTS + File.separator + source;
 		article = new Article(id, corpusFolder);
 
 		// content

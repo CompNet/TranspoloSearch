@@ -61,20 +61,17 @@ public class SocialSearchResults extends AbstractSearchResults<SocialSearchResul
 	/**
 	 * Records all the articles corresponding to the retrieved posts.
 	 * 
-	 * @param keywords
-	 * 		Keywords of the current search.
-	 * 
 	 * @throws IOException
 	 * 		Problem while recording the articles. 
 	 */
-	public void buildArticles(String keywords) throws IOException
+	public void buildArticles() throws IOException
 	{	logger.log("Recording the post as articles");
 		logger.increaseOffset();
 			int total = 0;
 			for(SocialSearchResult result: results.values())
 			{	if(result.status==null)
 				{	total++;
-					result.buildArticle(keywords);
+					result.buildArticle();
 				}
 			}
 		
@@ -86,8 +83,8 @@ public class SocialSearchResults extends AbstractSearchResults<SocialSearchResul
 	// EXPORT		/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
 	@Override
-	public void exportEvents(String keywords) throws UnsupportedEncodingException, FileNotFoundException
-	{	String filePath = FileNames.getSocialSearchFolder(keywords) + File.separator + FileNames.FI_EVENT_TABLE;
+	public void exportEvents() throws UnsupportedEncodingException, FileNotFoundException
+	{	String filePath = FileNames.FO_SOCIAL_SEARCH_RESULTS + File.separator + FileNames.FI_EVENT_TABLE;
 		logger.log("Recording the events as a CVS file: "+filePath);
 		logger.decreaseOffset();
 			PrintWriter pw = FileTools.openTextFileWrite(filePath, "UTF-8");
