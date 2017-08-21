@@ -64,13 +64,37 @@ public class WebSearchResults extends AbstractSearchResults<WebSearchResult>
 	 * 		The created/completed search result object.
 	 */
 	public WebSearchResult addResult(String url, String engineName, int rank)
-	{	WebSearchResult result = results.get(url);
+	{	String cleanUrl = cleanUrl(url);
+		
+		WebSearchResult result = results.get(cleanUrl);
 		if(result==null)
-		{	result = new WebSearchResult(url);
-			results.put(url, result);
+		{	result = new WebSearchResult(cleanUrl);
+			results.put(cleanUrl, result);
 		}
 		result.addEngine(engineName, rank);
 		engineNames.add(engineName);
+		return result;
+	}
+	
+	/**
+	 * Certain URL returned by certain search engines cannot be processed directly,
+	 * but must be corrected first. This methods performs this transformation when
+	 * required, and returns the fixed URL.
+	 * 
+	 * @param url
+	 * 		Original URL.
+	 * @return
+	 * 		Corrected URL.
+	 */
+	private String cleanUrl(String url)
+	{	String result = url;
+		
+		String sep = "check_cookies?url=%2F";
+		int idx = result.indexOf(sep);
+		if(idx!=-1)
+		{	result = result.substring(0,idx) + result.substring(idx+sep.length());
+			result = result.replace("%2F", "/");
+		}
 		return result;
 	}
 	
