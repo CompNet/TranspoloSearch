@@ -269,20 +269,27 @@ public class Test
 		
 		DateFormat df = new SimpleDateFormat("yyyyMMdd");
 		
-		String keywords = "Anne Hidalgo";
-		String compulsoryExpression = "Hidalgo";
-//		String keywords = "Cécile Helle";
-//		String compulsoryExpression = "Helle";
-//		String keywords = "Martine Aubry";
-//		String compulsoryExpression = "Aubry";
+		String params[][] = {
+			{"Anne Hidalgo", "Hidalgo"},	
+			{"Cécile Helle", "Helle"},
+			{"Martine Aubry", "Aubry"}
+		};
 		
-		String website = null;
-		Date startDate = df.parse("20170306");
-		Date endDate = df.parse("20170310");
-		boolean searchDate = true;
-		boolean extendedSocialSearch = true;
+		for(String[] param: params)
+		{	String keywords = param[0];
+			String compulsoryExpression = param[1];
 		
-		extractor.performExtraction(keywords, website, startDate, endDate, searchDate, compulsoryExpression, extendedSocialSearch);
+			String website = null;
+			Date startDate = df.parse("20170306");
+			Date endDate = df.parse("20170310");
+			boolean searchDate = true;
+			boolean extendedSocialSearch = true;
+			
+			logger.log("Processing "+keywords);
+			logger.increaseOffset();
+				extractor.performExtraction(keywords, website, startDate, endDate, searchDate, compulsoryExpression, extendedSocialSearch);
+			logger.decreaseOffset();
+		}
 	}
 }
 
