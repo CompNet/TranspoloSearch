@@ -266,6 +266,8 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 	protected static final String COL_PAGE_TITLE = "Page title";
 	/** URL of the Web resource */
 	protected static final String COL_PAGE_URL = "URL";
+	/** Length of the article, in chararcters */
+	protected static final String COL_LENGTH = "Text length";
 	/** File format of the Web resource (HTML, PDF, etc.) */
 	protected static final String COL_PAGE_STATUS = "Format";
 	/** Publication date of the Web resource */
