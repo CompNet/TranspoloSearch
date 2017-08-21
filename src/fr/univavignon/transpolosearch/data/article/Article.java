@@ -60,7 +60,7 @@ public class Article implements Comparable<Article>
 	public Article(String name)
 	{	this.name = name;
 		
-		initFiles(FileNames.FO_WEB_PAGES);
+		initFiles(FileNames.getWebCacheFolder(null));
 	}
 	
 	/**
@@ -519,15 +519,17 @@ public class Article implements Comparable<Article>
 	 * 
 	 * @param name
 	 * 		Name/title of the article of interest.
+	 * @param keywords
+	 * 		Keywords of the current search (used for caching).
 	 * @return
 	 * 		{@code true} iff the specified article was recorded.
 	 */
-	public static boolean isCached(String name)
+	public static boolean isCached(String name, String keywords)
 	{	
 //		for(int i=0;i<name.length();i++)
 //			System.out.println(i+": '"+name.charAt(i)+"'=='"+"Ahmet_Davutoglu".charAt(i)+"' >> "+(name.charAt(i)=="Ahmet_Davutoglu".charAt(i)));
 		
-		String folderPath = FileNames.FO_WEB_PAGES + File.separator + name;
+		String folderPath = FileNames.getWebCacheFolder(keywords) + File.separator + name;
 //		File originalFile = new File(folderPath + File.separator + FileNames.FI_ORIGINAL_PAGE);
 		File rawFile = new File(folderPath + File.separator + FileNames.FI_RAW_TEXT);
 		File linkedFile = new File(folderPath + File.separator + FileNames.FI_LINKED_TEXT);
