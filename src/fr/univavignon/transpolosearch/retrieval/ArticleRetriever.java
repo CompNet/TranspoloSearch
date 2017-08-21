@@ -51,16 +51,19 @@ public class ArticleRetriever
 	public ArticleRetriever()
 	{	//
 	}
-
+	
 	/**
 	 * Creates a new retriever with 
 	 * the specified caching behavior.
 	 * 
 	 * @param cache
 	 * 		{@code true} to enable caching.
+	 * @param keywords
+	 * 		Keywords of the current search (used for caching).
 	 */
-	public ArticleRetriever(boolean cache)
+	public ArticleRetriever(boolean cache, String keywords)
 	{	this.cache = cache;
+		ArticleReader.keywords = keywords;
 	}
 
 	/////////////////////////////////////////////////////////////////
@@ -162,7 +165,7 @@ public class ArticleRetriever
 		logger.decreaseOffset();
 		
 		// determine if the page should be accessed
-		if(!cache || !Article.isCached(name))
+		if(!cache || !Article.isCached(name,ArticleReader.keywords))
 		{	logger.log("Article not cached, need to process the original web page ("+address+")");
 			logger.increaseOffset();
 			

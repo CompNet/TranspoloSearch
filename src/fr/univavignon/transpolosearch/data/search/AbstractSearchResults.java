@@ -294,12 +294,15 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 	protected static final String COL_COMMENTS = "Comments";
 	
 	/**
-	 * Records the results of the social search as a CSV file.
+	 * Records the results of the search as a CSV file.
+	 * 
+	 * @param keywords
+	 * 		Keywords of the current search.
 	 * 
 	 * @throws UnsupportedEncodingException
 	 * 		Problem while accessing to the result file.
 	 * @throws FileNotFoundException
 	 * 		Problem while accessing to the result file.
 	 */
-	public abstract void exportEvents() throws UnsupportedEncodingException, FileNotFoundException;
+	public abstract void exportEvents(String keywords) throws UnsupportedEncodingException, FileNotFoundException;
 }

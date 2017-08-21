@@ -202,7 +202,7 @@ public class Test
 //		URL url = new URL("http://www.ideozmag.fr/je-suis-charlie-charlisme-est-un-humanisme-union-nationale/");
 //		URL url = new URL("http://www.musicme.com/Vybz-Kartel/");
 		
-		ArticleRetriever retriever = new ArticleRetriever(false);
+		ArticleRetriever retriever = new ArticleRetriever(false,null);
 		retriever.process(url);
 		
 		logger.decreaseOffset();

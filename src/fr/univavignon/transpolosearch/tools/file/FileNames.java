@@ -42,13 +42,13 @@ public class FileNames
 	/** Log folder */
 	public final static String FO_LOG = "log";
 	/** Output folder */
-	public final static String FO_OUTPUT = "out";	//actual folder
+	public final static String FO_OUTPUT = "out";
 		/** Folder containing web search results */
-		public final static String FO_WEB_SEARCH_RESULTS = FO_OUTPUT + File.separator + "web_search";
+		private final static String FO_WEB_SEARCH_RESULTS = "web_search";
 			/** Folder containing cached web pages */
-			public final static String FO_WEB_PAGES = FO_WEB_SEARCH_RESULTS + File.separator + "_pages";
+			private final static String FO_WEB_PAGES = "_pages";
 		/** Folder containing social media search results */
-		public final static String FO_SOCIAL_SEARCH_RESULTS = FO_OUTPUT + File.separator + "social_search";
+		private final static String FO_SOCIAL_SEARCH_RESULTS = "social_search";
 	/** Resources folder */
 	public final static String FO_RESOURCES = "res";
 		/** Folder used to store certain cached files */
@@ -104,6 +104,48 @@ public class FileNames
 		/** Folder containing the XML schemas */
 		public final static String FO_SCHEMA = FO_RESOURCES + File.separator + "schemas";
 	
+		/**
+		 * Returns the web search output folder for the specified keywords.
+		 * 
+		 * @param keywords
+		 * 		Key words of the current search.
+		 * @return
+		 * 		The path of the appropriate output folder. 
+		 */
+		public static String getWebSearchFolder(String keywords)
+		{	String result = FO_OUTPUT + File.separator;
+			if(keywords!=null)
+				result = result + keywords + File.separator;
+			result = result + FO_WEB_SEARCH_RESULTS;
+			return result;
+		}
+		
+		/**
+		 * Returns the web page cache for the specified keywords.
+		 * 
+		 * @param keywords
+		 * 		Key words of the current search.
+		 * @return
+		 * 		The path of the appropriate output folder. 
+		 */
+		public static String getWebCacheFolder(String keywords)
+		{	String result = getWebSearchFolder(keywords) + File.separator + FO_WEB_PAGES;
+			return result;
+		}
+		
+		/**
+		 * Returns the social search output folder for the specified keywords.
+		 * 
+		 * @param keywords
+		 * 		Key words of the current search.
+		 * @return
+		 * 		The path of the appropriate output folder. 
+		 */
+		public static String getSocialSearchFolder(String keywords)
+		{	String result = FO_OUTPUT + File.separator + keywords + File.separator + FO_SOCIAL_SEARCH_RESULTS;
+			return result;
+		}
+		
 	/////////////////////////////////////////////////////////////////
 	// FILES		/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
@@ -180,6 +222,8 @@ public class FileNames
 	public final static String FI_SEARCH_RESULTS_CONTENT = "search_3_content_filtered" + FileNames.EX_CSV;
 	/** Events file */
 	public final static String FI_EVENT_TABLE = "event_table" + FileNames.EX_CSV;
+	
+	
 	
 	
 	
