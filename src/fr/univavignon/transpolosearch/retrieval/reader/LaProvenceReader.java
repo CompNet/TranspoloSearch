@@ -176,6 +176,7 @@ public class LaProvenceReader extends ArticleReader
 			Element titleElt = infoElt.getElementById(ID_TITLE);
 			title = titleElt.text();
 			title = removeGtst(title).trim();
+			title = title.replace("\"","'");
 			logger.log("Get title: \""+title+"\"");
 	
 			// retrieve the dates

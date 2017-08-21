@@ -176,6 +176,7 @@ public class LaVoixDuNordReader extends ArticleReader
 			Element titleElt = headerElt.getElementsByTag(HtmlNames.ELT_H1).first();
 			title = titleElt.text(); 
 			title = removeGtst(title).trim();
+			title = title.replace("\"","'");
 			logger.log("Get title: \""+title+"\"");
 
 			// retrieve the dates

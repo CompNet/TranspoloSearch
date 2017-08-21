@@ -87,14 +87,21 @@ public class WebSearchResults extends AbstractSearchResults<WebSearchResult>
 	 * 		Corrected URL.
 	 */
 	private String cleanUrl(String url)
-	{	String result = url;
+	{	logger.increaseOffset();
+		String result = url;
+		
+if(url.contains("cookies"))
+	System.out.print("");
 		
 		String sep = "check_cookies?url=%2F";
 		int idx = result.indexOf(sep);
 		if(idx!=-1)
 		{	result = result.substring(0,idx) + result.substring(idx+sep.length());
 			result = result.replace("%2F", "/");
+			logger.log("Corrected URL: "+result);
 		}
+		
+		logger.decreaseOffset();
 		return result;
 	}
 	
@@ -180,7 +187,7 @@ public class WebSearchResults extends AbstractSearchResults<WebSearchResult>
 		
 		// open file and write header
 		PrintWriter pw = FileTools.openTextFileWrite(cacheFilePath,"UTF-8");
-		{	String line = "Title,URL";
+		{	String line = "Title,URL,Status,Length";
 			for(String engineName: engineNames)
 				line = line + "," + engineName;
 			pw.println(line);
@@ -188,13 +195,26 @@ public class WebSearchResults extends AbstractSearchResults<WebSearchResult>
 		
 		// write data and close file
 		for(WebSearchResult result: results.values())
-		{	String line = "\"";
+		{	// title
+			String line = "\"";
 			String title = null;
 			if(result.article!=null)
 				title = result.article.getTitle();
 			if(title!=null)
 				line = line + title;
-			line = line + "\",\"" + result.url + "\"";
+			// url
+			line = line + "\",\"" + result.url + "\",";
+			// status
+			if(result.status!=null)
+				line = line + result.status;
+			line = line + ",";
+			// length
+			Integer length = null;
+			if(result.article!=null)
+				length = result.article.getRawText().length();
+			if(length!=null)
+				line = line + length;
+			// ranks
 			Map<String,Integer> ranks = result.ranks;
 			for(String engineName: engineNames)
 			{	line = line + ",";

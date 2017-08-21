@@ -178,6 +178,7 @@ public class LExpressReader extends ArticleReader
 				Element titleElt = headerElt.getElementsByAttributeValueContaining(HtmlNames.ATT_CLASS, CLASS_TITLE).first();
 				title = titleElt.text(); 
 				title = removeGtst(title).trim();
+				title = title.replace("\"","'");
 				logger.log("Get title: \""+title+"\"");
 	
 				// retrieve the dates

@@ -184,6 +184,7 @@ public class LeFigaroReader extends ArticleReader
 			for(TextNode textNode: textNodes)
 				title = title + " " + textNode.text();
 			title = removeGtst(title).trim();
+			title = title.replace("\"","'");
 			logger.log("Get title: \""+title+"\"");
 			
 			// retrieve the dates

@@ -258,6 +258,7 @@ public class SocialSearchResult extends AbstractSearchResult
 			map.put(AbstractSearchResults.COL_PAGE_TITLE,"\""+article.getTitle()+"\"");
 			if(article.getUrl()!=null)
 				map.put(AbstractSearchResults.COL_PAGE_URL,"\""+article.getUrl().toString()+"\"");
+			map.put(AbstractSearchResults.COL_LENGTH,"\""+article.getRawText().length()+"\"");
 			map.put(AbstractSearchResults.COL_PAGE_STATUS,status);
 			map.put(AbstractSearchResults.COL_COMMENTS,"");
 			

@@ -302,7 +302,7 @@ public abstract class ArticleReader
 				catch(SocketTimeoutException e)
 				{	logger.log("Could not download the page (timeout="+timeOut+" ms) >> trying again");
 					timeOut = timeOut + 5000;
-					again = timeOut<1*10*1000;	//2*60*1000;
+					again = timeOut<1*10*1000;	//TODO 2*60*1000;
 				}
 				catch(NoRouteToHostException e)
 				{	logger.log(Arrays.asList(
