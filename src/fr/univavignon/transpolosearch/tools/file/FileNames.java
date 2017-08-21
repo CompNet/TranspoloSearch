@@ -173,7 +173,11 @@ public class FileNames
 	/** File containing cached search results */
 	public final static String FI_SEARCH_RESULTS = "search" + FileNames.EX_TEXT;
 	/** File containing overall search results */
-	public final static String FI_SEARCH_RESULTS_ALL = "search" + FileNames.EX_CSV;
+	public final static String FI_SEARCH_RESULTS_ALL = "search_1_all" + FileNames.EX_CSV;
+	/** File containing the search results after URL filtering */
+	public final static String FI_SEARCH_RESULTS_URL = "search_2_url_filtered" + FileNames.EX_CSV;
+	/** File containing the search results after content filtering */
+	public final static String FI_SEARCH_RESULTS_CONTENT = "search_3_content_filtered" + FileNames.EX_CSV;
 	/** Events file */
 	public final static String FI_EVENT_TABLE = "event_table" + FileNames.EX_CSV;
 	

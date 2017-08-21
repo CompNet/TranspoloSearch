@@ -136,24 +136,27 @@ public class WebSearchResults extends AbstractSearchResults<WebSearchResult>
 	/**
 	 * Records all result URL in a single CSV file.
 	 * 
+	 * @param fileName
+	 * 		Name of the created file.  
+	 * 
 	 * @throws UnsupportedEncodingException
 	 * 		Problem while opening the CSV file.
 	 * @throws FileNotFoundException
 	 * 		Problem while opening the CSV file.
 	 */
-	public void exportAsCsv() throws UnsupportedEncodingException, FileNotFoundException
+	public void exportAsCsv(String fileName) throws UnsupportedEncodingException, FileNotFoundException
 	{	logger.log("Recording all the Web search results in a single file");
 		logger.increaseOffset();
 		
 		// create folder
 		File folder = new File(FileNames.FO_WEB_SEARCH_RESULTS);
 		folder.mkdirs();
-		String cacheFilePath = folder + File.separator + FileNames.FI_SEARCH_RESULTS_ALL;
+		String cacheFilePath = folder + File.separator + fileName;
 		logger.log("Recording in CSV file \""+cacheFilePath+"\"");
 		
 		// open file and write header
 		PrintWriter pw = FileTools.openTextFileWrite(cacheFilePath,"UTF-8");
-		{	String line = "URL";
+		{	String line = "Title,URL";
 			for(String engineName: engineNames)
 				line = line + "," + engineName;
 			pw.println(line);
@@ -161,7 +164,13 @@ public class WebSearchResults extends AbstractSearchResults<WebSearchResult>
 		
 		// write data and close file
 		for(WebSearchResult result: results.values())
-		{	String line = "\""+result.url+"\"";
+		{	String line = "\"";
+			String title = null;
+			if(result.article!=null)
+				title = result.article.getTitle();
+			if(title!=null)
+				line = line + title;
+			line = line + "\",\"" + result.url + "\"";
 			Map<String,Integer> ranks = result.ranks;
 			for(String engineName: engineNames)
 			{	line = line + ",";

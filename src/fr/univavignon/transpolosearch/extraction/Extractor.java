@@ -187,13 +187,15 @@ public class Extractor
 		
 		// retrieve the corresponding articles
 		results.retrieveArticles();
+		results.exportAsCsv(FileNames.FI_SEARCH_RESULTS_URL);
 		
 		// detect the entity mentions
 		results.detectMentions(recognizer);
 		
 		// possibly filter the articles depending on the dates and compulsory expression
 		results.filterByContent(startDate,endDate,searchDate,compulsoryExpression);
-		
+		results.exportAsCsv(FileNames.FI_SEARCH_RESULTS_CONTENT);
+
 		// displays the remaining articles with their mentions	//TODO maybe get the entities instead of the mention, eventually?
 		results.displayRemainingMentions(); //TODO for debug only
 		
@@ -402,7 +404,7 @@ public class Extractor
 		logger.log("Total number of pages found: "+result.size());
 		
 		// record the complete list of URLs (not for cache, just as a result)
-		result.exportAsCsv();
+		result.exportAsCsv(FileNames.FI_SEARCH_RESULTS_ALL);
 		
 		return result;
 	}
