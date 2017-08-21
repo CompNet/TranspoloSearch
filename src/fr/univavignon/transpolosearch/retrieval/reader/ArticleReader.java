@@ -93,6 +93,8 @@ public abstract class ArticleReader
 		// handled french journal
 		else if(url.contains(LaProvenceReader.DOMAIN))
 			result = new LaProvenceReader();
+		else if(url.contains(LaVoixDuNordReader.DOMAIN))
+			result = new LaVoixDuNordReader();
 		else if(url.contains(LeFigaroReader.DOMAIN))
 			result = new LeFigaroReader();
 		else if(url.contains(LeMondeReader.DOMAIN))

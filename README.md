@@ -55,7 +55,6 @@ Here are the dependencies for TranspoloSearch:
     * La Croix du Nord (www.croixdunord)
     * La Dépêche du Midi (www.ladepeche.fr)
     * La Tribune (www.latribune.fr)
-    * La Voix du Nord (www.lavoixdunord.fr)
     * LCP (www.lcp.fr)
     * Le Dauphiné Libéré (www.ledauphine.com)
     * Le Petit Journal (www.lepetitjournal.com)

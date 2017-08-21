@@ -64,13 +64,37 @@ public class WebSearchResults extends AbstractSearchResults<WebSearchResult>
 	 * 		The created/completed search result object.
 	 */
 	public WebSearchResult addResult(String url, String engineName, int rank)
-	{	WebSearchResult result = results.get(url);
+	{	String cleanUrl = cleanUrl(url);
+		
+		WebSearchResult result = results.get(cleanUrl);
 		if(result==null)
-		{	result = new WebSearchResult(url);
-			results.put(url, result);
+		{	result = new WebSearchResult(cleanUrl);
+			results.put(cleanUrl, result);
 		}
 		result.addEngine(engineName, rank);
 		engineNames.add(engineName);
+		return result;
+	}
+	
+	/**
+	 * Certain URL returned by certain search engines cannot be processed directly,
+	 * but must be corrected first. This methods performs this transformation when
+	 * required, and returns the fixed URL.
+	 * 
+	 * @param url
+	 * 		Original URL.
+	 * @return
+	 * 		Corrected URL.
+	 */
+	private String cleanUrl(String url)
+	{	String result = url;
+		
+		String sep = "check_cookies?url=%2F";
+		int idx = result.indexOf(sep);
+		if(idx!=-1)
+		{	result = result.substring(0,idx) + result.substring(idx+sep.length());
+			result = result.replace("%2F", "/");
+		}
 		return result;
 	}
 	
@@ -193,7 +217,7 @@ public class WebSearchResults extends AbstractSearchResults<WebSearchResult>
 			PrintWriter pw = FileTools.openTextFileWrite(filePath, "UTF-8");
 			
 			// write header
-			List<String> startCols = Arrays.asList(COL_PAGE_TITLE, COL_PAGE_URL, COL_PUB_DATE);
+			List<String> startCols = Arrays.asList(COL_PAGE_TITLE, COL_PAGE_URL, COL_LENGTH, COL_PUB_DATE);
 			List<String> endCols = Arrays.asList(COL_PAGE_STATUS, COL_EVENT_RANK, COL_EVENT_DATES,
 					COL_EVENT_LOCATIONS, COL_EVENT_PERSONS, COL_EVENT_ORGANIZATIONS, COL_EVENT_FUNCTIONS,
 					COL_EVENT_PRODUCTIONS, COL_EVENT_MEETINGS, COL_COMMENTS
