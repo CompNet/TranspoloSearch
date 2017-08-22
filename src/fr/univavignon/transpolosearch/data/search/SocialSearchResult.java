@@ -280,6 +280,7 @@ public class SocialSearchResult extends AbstractSearchResult
 				Period period = event.getPeriod();
 				String periodStr = period.toString();
 				periodStr = periodStr.replaceAll("[\\n\\r]", " ");
+				periodStr = periodStr.replaceAll("\"", "'");
 				map.put(AbstractSearchResults.COL_EVENT_DATES,periodStr);
 				
 				// locations
@@ -289,6 +290,7 @@ public class SocialSearchResult extends AbstractSearchResult
 					while(itLoc.hasNext())
 					{	String loc = itLoc.next();
 						loc = loc.replaceAll("[\\n\\r]", " ");
+						loc = loc.replaceAll("\"", "'");
 						locations = locations + loc;
 						if(itLoc.hasNext())
 							locations = locations + ", ";
@@ -304,6 +306,7 @@ public class SocialSearchResult extends AbstractSearchResult
 					while(itPers.hasNext())
 					{	String pers = itPers.next();
 						pers = pers.replaceAll("[\\n\\r]", " ");
+						pers = pers.replaceAll("\"", "'");
 						persons = persons + pers;
 						if(itPers.hasNext())
 							persons = persons + ", ";
@@ -319,6 +322,7 @@ public class SocialSearchResult extends AbstractSearchResult
 					while(itOrg.hasNext())
 					{	String org = itOrg.next();
 						org = org.replaceAll("[\\n\\r]", " ");
+						org = org.replaceAll("\"", "'");
 						organizations = organizations + org;
 						if(itOrg.hasNext())
 							organizations = organizations + ", ";
@@ -334,6 +338,7 @@ public class SocialSearchResult extends AbstractSearchResult
 					while(itFun.hasNext())
 					{	String fun = itFun.next();
 						fun = fun.replaceAll("[\\n\\r]", " ");
+						fun = fun.replaceAll("\"", "'");
 						functions = functions + fun;
 						if(itFun.hasNext())
 							functions = functions + ", ";
@@ -349,6 +354,7 @@ public class SocialSearchResult extends AbstractSearchResult
 					while(itProd.hasNext())
 					{	String prod = itProd.next();
 						prod = prod.replaceAll("[\\n\\r]", " ");
+						prod = prod.replaceAll("\"", "'");
 						productions = productions + prod;
 						if(itProd.hasNext())
 							productions = productions + ", ";
@@ -364,6 +370,7 @@ public class SocialSearchResult extends AbstractSearchResult
 					while(itMeet.hasNext())
 					{	String meet = itMeet.next();
 						meet = meet.replaceAll("[\\n\\r]", " ");
+						meet = meet.replaceAll("\"", "'");
 						meetings = meetings + meet;
 						if(itMeet.hasNext())
 							meetings = meetings + ", ";

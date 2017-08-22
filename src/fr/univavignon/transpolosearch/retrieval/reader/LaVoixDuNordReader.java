@@ -92,7 +92,8 @@ public class LaVoixDuNordReader extends ArticleReader
 	public static void main(String[] args) throws Exception
 	{	
 //		URL url = new URL("http://www.lavoixdunord.fr/207069/article/2017-08-21/un-mineur-accuse-d-apologie-du-terrorisme-apres-les-attentats-espagnols");
-		URL url = new URL("http://www.lavoixdunord.fr/206352/article/2017-08-19/l-eglise-notre-dame-point-de-depart-de-la-francigena-en-france");
+//		URL url = new URL("http://www.lavoixdunord.fr/206352/article/2017-08-19/l-eglise-notre-dame-point-de-depart-de-la-francigena-en-france");
+		URL url = new URL("http://www.lavoixdunord.fr/128575/article/2017-03-07/le-vieux-lille-peur-de-perdre-une-centaine-d-emplois-tous-secteurs-confondus");
 		
 		ArticleReader reader = new LaVoixDuNordReader();
 		Article article = reader.processUrl(url, ArticleLanguage.FR);
