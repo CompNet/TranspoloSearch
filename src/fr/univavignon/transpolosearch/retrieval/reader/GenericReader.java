@@ -27,11 +27,14 @@ import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.text.DateFormat;
 import java.text.Normalizer;
+import java.text.SimpleDateFormat;
 import java.text.Normalizer.Form;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -79,6 +82,26 @@ import fr.univavignon.transpolosearch.tools.html.HtmlTools;
 @SuppressWarnings("unused")
 public class GenericReader extends ArticleReader
 {	
+	/**
+	 * Method defined only for a quick test.
+	 * 
+	 * @param args
+	 * 		Not used.
+	 * 
+	 * @throws Exception
+	 * 		Whatever exception. 
+	 */
+	public static void main(String[] args) throws Exception
+	{	
+//		URL url = new URL("http://www.laprovence.com/article/faits-divers-justice/4581041/il-y-a-140-ans-hysterie-collective-pour-la-guillotine-publique-a-marseille.html");
+		URL url = new URL("http://www.lemonde.fr/politique/article/2017/08/22/code-du-travail-la-reforme-entre-dans-sa-phase-finale_5175000_823448.html");
+		
+		ArticleReader reader = new GenericReader();
+		Article article = reader.processUrl(url, ArticleLanguage.FR);
+		System.out.println(article);
+		article.write();
+	}
+	
 	/////////////////////////////////////////////////////////////////
 	// DOMAIN			/////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
@@ -90,13 +113,29 @@ public class GenericReader extends ArticleReader
 	/////////////////////////////////////////////////////////////////
 	// RETRIEVE			/////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////	
+	/** Formats be used to parse the dates */
+	private static final DateFormat DATE_FORMATS[] = 
+		{	new SimpleDateFormat("dd MMMM yyyy, HH'h'mm",Locale.FRENCH),
+			new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX",Locale.FRENCH),
+			new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssX",Locale.FRENCH),
+			new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss",Locale.FRENCH),
+			new SimpleDateFormat("yyyy-MM-dd'T'HH:mm",Locale.FRENCH)
+		};
+	
 	@Override
 	public Article processUrl(URL url, ArticleLanguage language) throws ReaderException
 	{	Article result = null;
 		String name = getName(url);
 		
 		try
-		{	// get the page
+		{	// init variables
+			String title = null;
+			StringBuilder rawStr = new StringBuilder();
+			StringBuilder linkedStr = new StringBuilder();
+			Date publishingDate = null;
+			Date modificationDate = null;
+			
+			// get the page
 			String address = url.toString();
 			logger.log("Retrieving page "+address);
 			long startTime = System.currentTimeMillis();
@@ -105,9 +144,8 @@ public class GenericReader extends ArticleReader
 			{	logger.log("ERROR: Could not retrieve the document at URL "+url);
 				throw new ReaderException("Could not retrieve the document at URL "+url);
 			}
-					
+			
 			// get its title
-			String title = null;
 			Elements titleElts = document.getElementsByTag(HtmlNames.ELT_TITLE);
 			if(titleElts.isEmpty())
 				logger.log("The page has no title");
@@ -118,6 +156,38 @@ public class GenericReader extends ArticleReader
 				title = title.replace("\"","'");
 				logger.log("Get title: "+title);
 			}
+			
+			// try to get some dates
+			Elements timeElts = document.getElementsByTag(HtmlNames.ELT_TIME);
+			if(!timeElts.isEmpty())
+			{	Element timeElt = timeElts.get(0);
+				int i = 0;
+				while(publishingDate==null && i<DATE_FORMATS.length)
+				{	publishingDate = HtmlTools.getDateFromTimeElt(timeElt,DATE_FORMATS[i]);
+					i++;
+				}
+				if(publishingDate==null)
+					logger.log("Did not find any publishing date");
+				else
+					logger.log("Found the publishing date: "+publishingDate);
+				if(timeElts.size()>1)
+				{	timeElt = timeElts.get(1);
+					i = 0;
+					while(modificationDate==null && i<DATE_FORMATS.length)
+					{	modificationDate = HtmlTools.getDateFromTimeElt(timeElt,DATE_FORMATS[i]);
+						i++;
+					}
+					if(modificationDate==null)
+						logger.log("Could not find the last modification date");
+					else
+						logger.log("Found the last modification date: "+modificationDate);
+				}
+				else
+					logger.log("Did not find any last modification date");
+			}
+			else
+				logger.log("Did not find any publication date");
+				
 			
 			// identify the content element
 //if(url.toString().equalsIgnoreCase("http://www.lamarseillaise.fr/vaucluse/developpement-durable/58144-avignon-ca-bouge-autour-du-technopole-de-l-agroparc"))
@@ -135,12 +205,8 @@ public class GenericReader extends ArticleReader
 				throw new ReaderException("Could not identify the main element for URL "+url);
 			}
 
-			// get raw and linked texts
-			logger.log("Get raw and linked texts");
-			StringBuilder rawStr = new StringBuilder();
-			StringBuilder linkedStr = new StringBuilder();
-			
 			// processing each element in the content part
+			logger.log("Get raw and linked texts");
 			processAnyElement(contentElt, rawStr, linkedStr);
 			if(title==null)
 			{	title = rawStr.substring(0, Math.min(20,rawStr.length()));
@@ -158,6 +224,10 @@ public class GenericReader extends ArticleReader
 			result.setUrl(url);
 			result.initRetrievalDate();
 			result.setLanguage(language);
+			if(publishingDate!=null)
+				result.setPublishingDate(publishingDate);
+			if(modificationDate!=null)
+				result.setModificationDate(modificationDate);
 			
 			// clean text
 			String rawText = rawStr.toString();

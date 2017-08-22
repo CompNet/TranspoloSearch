@@ -78,7 +78,7 @@ public class HtmlTools
 	// TIME				/////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
 	/**
-	 * Extract a date from the specified TIME html element.
+	 * Extract a date from the specified {@code TIME} HTML element.
 	 *  
 	 * @param timeElt
 	 * 		HTML element.
