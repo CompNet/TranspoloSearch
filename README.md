@@ -34,8 +34,10 @@ Here are the dependencies for TranspoloSearch:
 ## Todo
 * Define a black list corresponding to satirical journals (Gorafi, Infos du monde, Nordpresse, Sud ou Est, etc.)
 * Article retrieval:
+  * Fine-tune the generic reader by considering all the articles in a given corpus which are too short (less than 1000 characters) or too long (more than 3000 characters?). One identified problem is the case of pages containig not one article, but rather a list of articles (sometimes with the first paragraph of each article).
   * Maybe use the Boilerpipe API instead of our custom tool? (see https://code.google.com/archive/p/boilerpipe and https://github.com/kohlschutter/boilerpipe)
-  * Add the specific classes for the following sites:
+  * For some sources, only a part of certain articles is available (restricted access, requiring some sort of registration). We could set up a reader-specific option, in order to allow to either: 1) give up the retrieval in this case (interesting if the restriction is only temporary, eg. you can access the article next month); or 2) get what we can, i.e. generally the first paragraphs (this is the current behavior, which is appropriate if the rest of the article will never be available). 
+  * Add the specifically defined readers for the following information sites:
     * 20 Minutes (www.20minutes.fr)
     * Arrêt sur Images (www.arretsurimages.net)
     * Atlantico (www.atlantico.fr)
