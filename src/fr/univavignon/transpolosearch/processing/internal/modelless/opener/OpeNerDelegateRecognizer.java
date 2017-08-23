@@ -153,9 +153,9 @@ class OpeNerDelegateRecognizer extends AbstractModellessInternalDelegateRecogniz
 	private static final String PARSER_URL = SERVICE_URL + "/constituent-parser";
 	/** Mention recognizer URL */
 	private static final String RECOGNIZER_URL = SERVICE_URL + "/ner";
-	/** Maximal request size for OpenNer (the doc recomands 1000) */
-	private static final int MAX_SIZE = 600;
-	/** Sleep periods (in ms) */ // this is actually not needed
+	/** Maximal request size for OpeNer (the doc recommends 1000) */
+	private static final int MAX_SIZE = 500;
+	/** Sleep periods (in ms) */ // this is actually not needed anymore
 	private static final long SLEEP_PERIOD = 100;
 	
 	@Override
@@ -533,46 +533,51 @@ class OpeNerDelegateRecognizer extends AbstractModellessInternalDelegateRecogniz
 				SAXBuilder sb = new SAXBuilder();
 				Document doc = sb.build(new StringReader(openerAnswer));
 				Element root = doc.getRootElement();
+//System.out.println((new XMLOutputter()).outputString(doc));
 				
 				// index all the detected words
 				logger.log("Index all detected words");
 				Map<String,Element> wordMap = new HashMap<String,Element>();
 				Element textElt = root.getChild(ELT_TEXT);
-				List<Element> wordElts = textElt.getChildren(ELT_WF);
-				for(Element wordElt: wordElts)
-				{	String wid = wordElt.getAttributeValue(ATT_WID); 
-					wordMap.put(wid,wordElt);
-				}
-				
-				// index all the detected terms
-				logger.log("Index all detected terms");
-				Map<String,Element> termMap = new HashMap<String,Element>();
-				Element termsElt = root.getChild(ELT_TERMS);
-				List<Element> termElts = termsElt.getChildren(ELT_TERM);
-				for(Element termElt: termElts)
-				{	String tid = termElt.getAttributeValue(ATT_TID); 
-					termMap.put(tid,termElt);
-				}
-				
-				// process all mention elements
-				logger.log("Create mention objects");
-				Element entitiesElt = root.getChild(ELT_ENTITIES);
-				if(entitiesElt!=null)
-				{	List<Element> entityElts = entitiesElt.getChildren(ELT_ENTITY);
-					for(Element entityElt: entityElts)
-					{	AbstractMention<?> mention = convertElement(entityElt, wordMap, termMap, prevSize, originalText, language);
-						if(mention!=null)
-						{	// possibly split in two distinct, smaller mentions when containing parentheses
-							AbstractMention<?>[] temp = processParentheses(mention,language);
-							if(temp==null)
-								result.addMention(mention);
-							else
-							{	for(AbstractMention<?> t: temp)
-									result.addMention(t);
+				if(textElt!=null)
+				{	List<Element> wordElts = textElt.getChildren(ELT_WF);
+					for(Element wordElt: wordElts)
+					{	String wid = wordElt.getAttributeValue(ATT_WID); 
+						wordMap.put(wid,wordElt);
+					}
+					
+					// index all the detected terms
+					logger.log("Index all detected terms");
+					Map<String,Element> termMap = new HashMap<String,Element>();
+					Element termsElt = root.getChild(ELT_TERMS);
+					List<Element> termElts = termsElt.getChildren(ELT_TERM);
+					for(Element termElt: termElts)
+					{	String tid = termElt.getAttributeValue(ATT_TID); 
+						termMap.put(tid,termElt);
+					}
+					
+					// process all mention elements
+					logger.log("Create mention objects");
+					Element entitiesElt = root.getChild(ELT_ENTITIES);
+					if(entitiesElt!=null)
+					{	List<Element> entityElts = entitiesElt.getChildren(ELT_ENTITY);
+						for(Element entityElt: entityElts)
+						{	AbstractMention<?> mention = convertElement(entityElt, wordMap, termMap, prevSize, originalText, language);
+							if(mention!=null)
+							{	// possibly split in two distinct, smaller mentions when containing parentheses
+								AbstractMention<?>[] temp = processParentheses(mention,language);
+								if(temp==null)
+									result.addMention(mention);
+								else
+								{	for(AbstractMention<?> t: temp)
+										result.addMention(t);
+								}
 							}
 						}
 					}
 				}
+				else
+					logger.log("Could not find any result (probably empty string");
 				
 				// update size
 				prevSize = prevSize + originalText.length();

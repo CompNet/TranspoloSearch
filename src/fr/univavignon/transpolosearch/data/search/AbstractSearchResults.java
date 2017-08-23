@@ -313,10 +313,14 @@ if(result instanceof WebSearchResult && ((WebSearchResult)result).url.equalsIgno
 	/**
 	 * Records the results of the search as a CSV file.
 	 * 
+	 * @param bySentence 
+	 * 		Whether the events are searched in the whole article or in
+	 * 		individual sentences.
+	 * 
 	 * @throws UnsupportedEncodingException
 	 * 		Problem while accessing to the result file.
 	 * @throws FileNotFoundException
 	 * 		Problem while accessing to the result file.
 	 */
-	public abstract void exportEvents() throws UnsupportedEncodingException, FileNotFoundException;
+	public abstract void exportEvents(boolean bySentence) throws UnsupportedEncodingException, FileNotFoundException;
 }

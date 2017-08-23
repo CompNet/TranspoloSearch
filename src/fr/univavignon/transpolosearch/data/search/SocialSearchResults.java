@@ -83,8 +83,13 @@ public class SocialSearchResults extends AbstractSearchResults<SocialSearchResul
 	// EXPORT		/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
 	@Override
-	public void exportEvents() throws UnsupportedEncodingException, FileNotFoundException
-	{	String filePath = FileNames.FO_SOCIAL_SEARCH_RESULTS + File.separator + FileNames.FI_EVENT_TABLE;
+	public void exportEvents(boolean bySentence) throws UnsupportedEncodingException, FileNotFoundException
+	{	String fileName;
+		if(bySentence)
+			fileName = FileNames.FI_EVENT_TABLE_SENTENCE;
+		else
+			fileName = FileNames.FI_EVENT_TABLE_ARTICLE;
+		String filePath = FileNames.FO_SOCIAL_SEARCH_RESULTS + File.separator + fileName;
 		logger.log("Recording the events as a CVS file: "+filePath);
 		logger.decreaseOffset();
 			PrintWriter pw = FileTools.openTextFileWrite(filePath, "UTF-8");

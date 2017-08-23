@@ -155,6 +155,7 @@ class StraightCombinerDelegateRecognizer extends AbstractCombinerDelegateRecogni
 			boolean loadModelOnDemand = true;
 			boolean doIntervalTagging = false;
 			HeidelTime heidelTime = new HeidelTime(modelName, loadModelOnDemand, doIntervalTagging);
+//			heidelTime.setCacheEnabled(false);
 			recognizers.add(heidelTime);
 		}
 		
@@ -175,6 +176,7 @@ class StraightCombinerDelegateRecognizer extends AbstractCombinerDelegateRecogni
 			boolean ignorePronouns = false;
 			boolean exclusionOn = false;
 			OpenCalais openCalais = new OpenCalais(lang, ignorePronouns, exclusionOn);
+//			openCalais.setCacheEnabled(false);
 			recognizers.add(openCalais);
 		}
 		
@@ -194,6 +196,7 @@ class StraightCombinerDelegateRecognizer extends AbstractCombinerDelegateRecogni
 			boolean ignorePronouns = false;
 			boolean exclusionOn = false;
 			TagEn tagEn = new TagEn(model, ignorePronouns, exclusionOn);
+//			tagEn.setCacheEnabled(false);
 			recognizers.add(tagEn);
 		}
 		

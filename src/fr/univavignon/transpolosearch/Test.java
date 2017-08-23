@@ -295,8 +295,3 @@ public class Test
 
 // dates: 6/3 >> 10/3
 // pers: C. Helle + M. Aubry + A. Hidalgo
-
-/** TODO
- * - process each engine separately, record the results in their individual folders, then only merge the results
- * - check if articles have unique name/title (they should)
- */

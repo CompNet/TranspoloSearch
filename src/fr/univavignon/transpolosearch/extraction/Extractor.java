@@ -132,7 +132,8 @@ public class Extractor
 		logger.increaseOffset();
 		
 		// setup the output folder
-		FileNames.setOutputFolder(keywords);
+		String outFolder = keywords.replace(' ','_');
+		FileNames.setOutputFolder(outFolder);
 		
 		// perform the Web search
 		logger.log("Performing the Web search");
@@ -203,11 +204,12 @@ public class Extractor
 		results.displayRemainingMentions(); //TODO for debug only
 		
 		// extract events from the remaining articles and mentions
-		boolean bySentence = false; //TODO for debug
-		results.extractEvents(bySentence);
-		
-		// export the events as a table
-		results.exportEvents();
+		boolean bySentence[] = {false,true};
+		for(boolean bs: bySentence)
+		{	results.extractEvents(bs);
+			// export the events as a table
+			results.exportEvents(bs);
+		}
 		
 		logger.decreaseOffset();
 		logger.log("Web extraction over");
@@ -267,11 +269,12 @@ public class Extractor
 		results.displayRemainingMentions(); //TODO for debug only
 		
 		// extract events from the remaining articles and mentions
-		boolean bySentence = false; //TODO for debug
-		results.extractEvents(bySentence);
-		
-		// export the events as a table
-		results.exportEvents();
+		boolean bySentence[] = {false,true};
+		for(boolean bs: bySentence)
+		{	results.extractEvents(bs);
+			// export the events as a table
+			results.exportEvents(bs);
+		}
 		
 		logger.decreaseOffset();
 		logger.log("Social media extraction over");
