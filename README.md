@@ -33,6 +33,7 @@ Here are the dependencies for TranspoloSearch:
 
 ## Todo
 * Define a black list corresponding to satirical journals (Gorafi, Infos du monde, Nordpresse, Sud ou Est, etc.)
+* Article filtering: once the content has been retrieved, filter articles not published during the targeted period (they could describe events taking place during this period though, so maybe only article published before the period?)
 * Article retrieval:
   * Fine-tune the generic reader by considering all the articles in a given corpus which are too short (less than 1000 characters) or too long (more than 3000 characters?). One identified problem is the case of pages containig not one article, but rather a list of articles (sometimes with the first paragraph of each article).
   * Maybe use the Boilerpipe API instead of our custom tool? (see https://code.google.com/archive/p/boilerpipe and https://github.com/kohlschutter/boilerpipe)
