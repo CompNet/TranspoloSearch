@@ -76,7 +76,7 @@ public class WebTools
 		while((line = bufferedReader.readLine())!=null)
 		{	stringBuffer.append(line+"\n");
 			nbr++;
-			logger.log("Line:" +line);
+//			logger.log("Line:" +line);
 		}
 		logger.log("Lines read: "+nbr);
 		

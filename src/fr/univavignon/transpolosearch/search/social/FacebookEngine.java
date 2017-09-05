@@ -49,7 +49,9 @@ import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.GregorianCalendar;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -251,6 +253,7 @@ public class FacebookEngine extends AbstractSocialEngine
 				
 		        // get the comments associated to all the targeted posts
 				Set<String> authorIds = new TreeSet<String>();
+				Map<String,String> authorNames = new HashMap<String,String>();
 				logger.log("Retrieving the comments for each post (for the specified period, if any)");
 				logger.increaseOffset();
 				for(Post post: pagePosts)
@@ -264,7 +267,7 @@ public class FacebookEngine extends AbstractSocialEngine
 					Category auth = post.getFrom();
 					String authName;
 					if(auth==null)
-						authName = "N/A";
+						authName = keywords;
 					else
 						authName = auth.getName();
 					// create the post object
@@ -290,6 +293,7 @@ public class FacebookEngine extends AbstractSocialEngine
 						// add to the comment author to the list
 						String authId = auth.getId();
 						authorIds.add(authId);
+						authorNames.put(authId, authName);
 					}
 				}
 				logger.decreaseOffset();
@@ -310,7 +314,13 @@ public class FacebookEngine extends AbstractSocialEngine
 						String id = post.getId();
 						Date date = post.getCreatedTime();
 						Category auth = post.getFrom();
-						String authName = auth.getName();
+						String authName;
+						if(auth==null)
+							authName = authorNames.get(authId);
+						if(auth==null)
+							authName = "N/A";
+						else
+							authName = auth.getName();
 						// create the post object
 						SocialSearchResult p = new SocialSearchResult(id, authName, date, getName(), msg, false);
 						p.url = post.getLink();

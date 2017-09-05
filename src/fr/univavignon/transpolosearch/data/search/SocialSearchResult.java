@@ -160,6 +160,8 @@ public class SocialSearchResult extends AbstractSearchResult
 		
 		// metadata
 		article.setTitle(id);
+		if(author!=null)
+			article.addAuthor(author);
 		article.setLanguage(ArticleLanguage.FR);	// TODO we suppose the language is French, to be generalized later
 		article.setPublishingDate(date);
 		Calendar cal = Calendar.getInstance();
