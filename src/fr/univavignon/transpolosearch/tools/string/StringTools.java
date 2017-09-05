@@ -409,7 +409,9 @@ public class StringTools
 	/////////////////////////////////////////////////////////////////
 	/**
 	 * Process the specified string in order to remove
-	 * space character-related problems.
+	 * space character-related problems. All whitespaces are
+	 * replaced by standard spaces, excepted '\n'. All 
+	 * consecutive redundant whitespaces are removed.
 	 *  
 	 * @param string
 	 * 		The original string (not modified).
@@ -420,9 +422,13 @@ public class StringTools
 	{	String result = string;
 		
 		if(result!=null)
-		{	// replace all white spaces by regular spaces
-			result = result.replaceAll("\\s", " ");
+		{	// replace all carriage return chars by newline ones
+			result = result.replace('\r', '\n');
+			// replace all consecutive new line chars by a single one
+			result = result.replaceAll("\\n+", "\\n");
 			
+			// replace all white spaces (except newline chars) by regular spaces
+			result = result.replaceAll("[\\s^\\n]", " ");
 			// replace all consecutive spaces by a single one
 			result = result.replaceAll(" +", " ");
 			

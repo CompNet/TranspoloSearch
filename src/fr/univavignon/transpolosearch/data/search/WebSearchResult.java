@@ -180,6 +180,20 @@ public class WebSearchResult extends AbstractSearchResult
 				map.put(WebSearchResults.COL_PUB_DATE,pubDateStr);
 			}
 			
+			// author(s)
+			List<String> authors = article.getAuthors();
+			if(!authors.isEmpty())
+			{	Iterator<String> it = authors.iterator();
+				String authorStr = it.next();
+				String authorsStr = "\"" + authorStr;
+				while(it.hasNext())
+				{	authorStr = it.next();
+					authorsStr = authorsStr + ", " + authorStr;
+				}
+				authorsStr = authorsStr + "\"";
+				map.put(WebSearchResults.COL_AUTHORS,authorsStr);
+			}
+			
 			// search engine ranks
 			for(Entry<String,String> entry: ranks.entrySet())
 			{	String engineName = entry.getKey();

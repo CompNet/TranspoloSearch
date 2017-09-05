@@ -257,10 +257,11 @@ public class Extractor
 		logger.increaseOffset();
 		
 		// perform the social search
-		SocialSearchResults results = performSocialSearch(keywords, startDate, endDate, extendedSocialSearch);
+		boolean includeComments = false;
+		SocialSearchResults results = performSocialSearch(keywords, startDate, endDate, extendedSocialSearch, includeComments);
 		
 		// convert the posts to proper articles
-		results.buildArticles();
+		results.buildArticles(includeComments);
 		
 		// possibly filter the articles depending on the compulsory expression
 //		results.filterByContent(null,null,true,compulsoryExpression);
@@ -509,13 +510,16 @@ public class Extractor
 	 * 		or {@code null} for no constraint.
 	 * @param extendedSearch
 	 * 		Whether or not to look for the posts of the commenting users. 
+	 * @param includeComments 
+	 * 		Whether ({@code true}) or not ({@code false}) to include comments 
+	 * 		in the proper article (or just the main post).
 	 * @return
 	 * 		List of results taking the form of URLs.
 	 * 
 	 * @throws IOException
 	 * 		Problem accessing the Web.
 	 */
-	private SocialSearchResults performSocialSearch(String keywords, Date startDate, Date endDate, boolean extendedSearch) throws IOException
+	private SocialSearchResults performSocialSearch(String keywords, Date startDate, Date endDate, boolean extendedSearch, boolean includeComments) throws IOException
 	{	boolean cachedSearch = true; //TODO for debug
 		// log search parameters
 		logger.log("Parameters:");
@@ -572,7 +576,7 @@ public class Extractor
 				int rank = 1;
 				for(SocialSearchResult post: posts)
 				{	post.rank = rank;
-					post.buildArticle();
+					post.buildArticle(includeComments);
 					result.addResult(post);
 					rank++;
 				}

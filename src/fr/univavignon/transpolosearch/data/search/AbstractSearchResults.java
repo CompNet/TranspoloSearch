@@ -281,8 +281,10 @@ if(result instanceof WebSearchResult && ((WebSearchResult)result).url.equalsIgno
 	protected static final String COL_PAGE_TITLE = "Page title";
 	/** URL of the Web resource */
 	protected static final String COL_PAGE_URL = "URL";
-	/** Length of the article, in chararcters */
+	/** Length of the article, in characters */
 	protected static final String COL_LENGTH = "Text length";
+	/** Author of the article */
+	protected static final String COL_AUTHORS = "Author(s)";
 	/** File format of the Web resource (HTML, PDF, etc.) */
 	protected static final String COL_PAGE_STATUS = "Format";
 	/** Publication date of the Web resource */
@@ -309,6 +311,8 @@ if(result instanceof WebSearchResult && ((WebSearchResult)result).url.equalsIgno
 	protected static final String COL_EVENT_MEETINGS = "Meetings";
 	/** Misc comments */
 	protected static final String COL_COMMENTS = "Comments";
+	/** Whether a social post was written by the targeted person, or not */
+	protected static final String COL_ORIGINAL = "Original post";
 	
 	/**
 	 * Records the results of the search as a CSV file.

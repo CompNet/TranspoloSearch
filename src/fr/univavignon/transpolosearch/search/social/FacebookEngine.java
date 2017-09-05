@@ -268,7 +268,7 @@ public class FacebookEngine extends AbstractSocialEngine
 					else
 						authName = auth.getName();
 					// create the post object
-					SocialSearchResult p = new SocialSearchResult(id, authName, date, getName(), msg);
+					SocialSearchResult p = new SocialSearchResult(id, authName, date, getName(), msg, true);
 					p.url = post.getLink();
 					result.add(p);
 					
@@ -285,7 +285,7 @@ public class FacebookEngine extends AbstractSocialEngine
 						auth = comment.getFrom();
 						authName = auth.getName();
 						// create the post object
-						SocialSearchResult com = new SocialSearchResult(id, authName, date, getName(), msg);
+						SocialSearchResult com = new SocialSearchResult(id, authName, date, getName(), msg, false);
 						p.comments.add(com);
 						// add to the comment author to the list
 						String authId = auth.getId();
@@ -312,7 +312,7 @@ public class FacebookEngine extends AbstractSocialEngine
 						Category auth = post.getFrom();
 						String authName = auth.getName();
 						// create the post object
-						SocialSearchResult p = new SocialSearchResult(id, authName, date, getName(), msg);
+						SocialSearchResult p = new SocialSearchResult(id, authName, date, getName(), msg, false);
 						p.url = post.getLink();
 						result.add(p);
 						
