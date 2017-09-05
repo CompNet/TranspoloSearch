@@ -34,6 +34,9 @@ import java.util.regex.Pattern;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Combinations;
 
+import fr.univavignon.transpolosearch.tools.log.HierarchicalLogger;
+import fr.univavignon.transpolosearch.tools.log.HierarchicalLoggerManager;
+
 /**
  * This class contains various methods
  * used when processing strings.
@@ -92,7 +95,13 @@ public class StringTools
 		String str = removeNonLatinChars("sdsfsd fتثتqsdsq");
 		System.out.println(str);
 	}
-
+	
+	/////////////////////////////////////////////////////////////////
+	// LOGGER		/////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////
+	/** Common object used for logging */
+	public static HierarchicalLogger logger = HierarchicalLoggerManager.getHierarchicalLogger();
+	
 	/////////////////////////////////////////////////////////////////
 	// COMPARISON		/////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
@@ -817,7 +826,9 @@ public class StringTools
 	 * 		Same string, without the RTL characters.
 	 */
 	public static String removeNonLatinChars(String input)
-	{	String result = input;
+	{	logger.increaseOffset();
+		boolean disp = input.length()>100000;
+		String result = input;
 		
 		if (input!=null)
 		{	// first version, regex-based: problems when dealing with bidirectional texts (eg english + arabic)
@@ -835,14 +846,19 @@ public class StringTools
 //			result = tmp;
 			
 			// second version: brutal, but seems more robust
-			result = "";
+			StringBuffer tmp = new StringBuffer();
 			for(int i=0;i<input.length();i++) 
-			{	char c = input.charAt(i);
+			{	if(disp && (i+1)%50000==0)
+					logger.log("Processing char "+(i+1)+"/"+input.length());
+				
+				char c = input.charAt(i);
 				if(LATIN_CHARS.contains(c))
-					result = result + c;
+					tmp.append(c);
 	        }
+			result = tmp.toString();
 	    }
 		
-	    return result;
+		logger.decreaseOffset();
+		 return result;
 	}
 }
