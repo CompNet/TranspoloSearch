@@ -629,7 +629,7 @@ public class Article implements Comparable<Article>
 		result.setLinkedText(linkedText);
 		
 		// clean the texts
-		result.cleanContent();
+//		result.cleanContent();
 		// possibly re-record the article if its content was changed due to cleaning
 		boolean changed = !rawText.equals(result.getRawText()) || !linkedText.equals(result.getLinkedText());
 		if(changed)

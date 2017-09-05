@@ -66,7 +66,28 @@ public class OpeNer extends AbstractProcessor implements InterfaceRecognizer
 	public OpeNer(boolean parenSplit, boolean ignorePronouns, boolean exclusionOn)
 	{	delegateRecognizer = new OpeNerDelegateRecognizer(this, parenSplit, ignorePronouns, exclusionOn);
 	}
-
+	
+	/**
+	 * Methods used to perform various tests.
+	 * 
+	 * @param args
+	 * 		Not used.
+	 * 
+	 * @throws Exception
+	 * 		Can throw whatever exception. 
+	 */
+	public static void main(String[] args) throws Exception
+	{	String txt = "Je vous invite à partager cette vidéo en masse Pour ajouter ce mec son liens est http:-www.facebook.com-monsieurterenzio Elle est belle votre liberté d'expression Le respect c'est quelque choses de personnel et d'intimes. Il suffit pas de mettre   je suis charlie  pour être respecteux. on dirais que pour vous il suf. youtube.com Fais gaffe tu vas rire . 1 2014.";
+		Article article = new Article("test");
+		article.setRawText(txt);
+		
+		boolean parenSplit = true;
+		boolean ignorePronouns = true;
+		boolean exclusionOn = true;
+		OpeNer recognizer = new OpeNer(parenSplit, ignorePronouns, exclusionOn);
+		recognizer.delegateRecognizer.detectMentions(article);
+	}
+	
 	/////////////////////////////////////////////////////////////////
 	// NAME				/////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////

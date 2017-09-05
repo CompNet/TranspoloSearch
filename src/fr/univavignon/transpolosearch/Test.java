@@ -270,9 +270,10 @@ public class Test
 		DateFormat df = new SimpleDateFormat("yyyyMMdd");
 		
 		String params[][] = {
-			{"Anne Hidalgo", "Hidalgo"},
-			{"Cécile Helle", "Helle"},
-			{"Martine Aubry", "Aubry"}
+//			{"Anne Hidalgo", "Hidalgo"},
+//			{"Cécile Helle", "Helle"},
+//			{"Martine Aubry", "Aubry"},
+			{"Roland Ries", "Ries"}
 		};
 		
 		for(String[] param: params)

@@ -139,7 +139,7 @@ public abstract class AbstractInternalDelegateResolver<T> extends AbstractDelega
 				prepareResolver();
 				T intRes = resolveCoreferences(article, mentions);
 				
-				// possibly record results as they are outputted (useful for debug)
+				// possibly record results as they are output (useful for debug)
 				if(resolver.doesOutputRawResults())
 				{	logger.log("Record raw "+resolverName+" results");
 					writeRawResults(article, intRes);

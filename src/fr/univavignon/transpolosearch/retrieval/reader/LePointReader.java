@@ -142,7 +142,7 @@ public class LePointReader extends ArticleReader
 			StringBuilder linkedStr = new StringBuilder();
 			Date publishingDate = null;
 			Date modificationDate = null;
-			List<String> authors = new ArrayList<String>();
+			List<String> authors = null;
 			
 			// get the page
 			String address = url.toString();
@@ -175,7 +175,7 @@ public class LePointReader extends ArticleReader
 			logger.log("Get title: \""+title+"\"");
 	
 			// retrieve the dates
-			Element datesElt = headerElt.getElementsByAttributeValueContaining(HtmlNames.ATT_CLASS, CLASS_DATES).first();
+			Element datesElt = articleElt.getElementsByAttributeValueContaining(HtmlNames.ATT_CLASS, CLASS_DATES).first();
 			Elements timeElts = datesElt.getElementsByTag(HtmlNames.ELT_TIME);
 			if(!timeElts.isEmpty())
 			{	Element timeElt = timeElts.get(0);
@@ -194,9 +194,15 @@ public class LePointReader extends ArticleReader
 			
 			// retrieve the authors
 			Element authorElt = headerElt.getElementsByAttributeValueContaining(HtmlNames.ATT_CLASS, CLASS_AUTHORS).first();
-			String authorName = authorElt.text();
-			authorName = removeGtst(authorName);
-			authors.add(authorName);
+			if(authorElt!=null)
+			{	String authorName = authorElt.text();
+				authorName = removeGtst(authorName);
+				authors = new ArrayList<String>();
+				authors.add(authorName);
+				logger.log("Author: "+authorName);
+			}
+			else
+				logger.log("Could not find any author name");
 	
 			// get the description
 			Element descriptionElt = headerElt.getElementsByAttributeValueContaining(HtmlNames.ATT_CLASS, CLASS_DESCRIPTION).first();

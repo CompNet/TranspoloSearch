@@ -63,7 +63,7 @@ public class WebSearchResults extends AbstractSearchResults<WebSearchResult>
 	 * @return
 	 * 		The created/completed search result object.
 	 */
-	public WebSearchResult addResult(String url, String engineName, int rank)
+	public WebSearchResult addResult(String url, String engineName, String rank)
 	{	String cleanUrl = cleanUrl(url);
 		
 		WebSearchResult result = results.get(cleanUrl);
@@ -215,12 +215,12 @@ if(url.contains("cookies"))
 			if(length!=null)
 				line = line + length;
 			// ranks
-			Map<String,Integer> ranks = result.ranks;
+			Map<String,String> ranks = result.ranks;
 			for(String engineName: engineNames)
 			{	line = line + ",";
-				Integer rank = ranks.get(engineName);
+				String rank = ranks.get(engineName);
 				if(rank!=null)
-					line = line + rank;
+					line = line + "\"" + rank + "\"";
 			}
 			pw.println(line);
 		}

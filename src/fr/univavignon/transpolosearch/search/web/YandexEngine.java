@@ -25,10 +25,11 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.net.URL;
 import java.net.URLEncoder;
-import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.client.ClientProtocolException;
@@ -115,10 +116,10 @@ public class YandexEngine extends AbstractWebEngine
 	// SEARCH		/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
 	@Override
-	public List<URL> search(String keywords, String website, Date startDate, Date endDate)  throws IOException
+	public Map<String,URL> search(String keywords, String website, Date startDate, Date endDate)  throws IOException
 	{	logger.log("Applying Yandex Search");
 		logger.increaseOffset();
-		List<URL> result = new ArrayList<URL>();
+		Map<String,URL> result = new HashMap<String,URL>();
 		
 		// init search parameters
 		logger.log("Keywords: "+keywords);
@@ -183,8 +184,10 @@ public class YandexEngine extends AbstractWebEngine
 	 * @throws JDOMException
 	 * 		Problem while parsing Yandex JSON results.
 	 */
-	private void searchYandex(String baseUrl, String query, List<URL> result) throws ClientProtocolException, IOException, JDOMException
-	{	// repeat because of the pagination system
+	private void searchYandex(String baseUrl, String query, Map<String,URL> result) throws ClientProtocolException, IOException, JDOMException
+	{	int resIdx = 1;
+		
+		// repeat because of the pagination system
 		int page = 0;
 		boolean goOn = true;
 		do
@@ -221,7 +224,8 @@ public class YandexEngine extends AbstractWebEngine
 						String urlStr = urlElt.getTextTrim();
 						logger.log("Adding URL: "+urlStr);
 						URL val = new URL(urlStr);
-						result.add(val);
+						result.put(Integer.toString(resIdx),val);
+						resIdx++;
 					}
 				}
 				
@@ -259,7 +263,7 @@ public class YandexEngine extends AbstractWebEngine
 		Date startDate = null;//new GregorianCalendar(2016,3,1).getTime();
 		Date endDate = null;//new GregorianCalendar(2016,3,2).getTime();
 		
-		List<URL> result = engine.search(keywords, website, startDate, endDate);
+		Map<String,URL> result = engine.search(keywords, website, startDate, endDate);
 		
 		System.out.println(result);
 	}

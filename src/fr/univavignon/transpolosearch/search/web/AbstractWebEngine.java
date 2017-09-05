@@ -21,7 +21,7 @@ package fr.univavignon.transpolosearch.search.web;
 import java.io.IOException;
 import java.net.URL;
 import java.util.Date;
-import java.util.List;
+import java.util.Map;
 
 import fr.univavignon.transpolosearch.tools.log.HierarchicalLogger;
 import fr.univavignon.transpolosearch.tools.log.HierarchicalLoggerManager;
@@ -74,7 +74,7 @@ public abstract class AbstractWebEngine
 	 * @throws IOException
 	 * 		Problem while searching the Web.
 	 */
-	public abstract List<URL> search(String keywords, String website, Date startDate, Date endDate)  throws IOException;
+	public abstract Map<String,URL> search(String keywords, String website, Date startDate, Date endDate)  throws IOException;
 
 	/////////////////////////////////////////////////////////////////
 	// STRING		/////////////////////////////////////////////////

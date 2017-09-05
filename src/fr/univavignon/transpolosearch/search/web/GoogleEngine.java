@@ -34,7 +34,9 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * This class uses Google to search the Web. More
@@ -120,7 +122,7 @@ public class GoogleEngine extends AbstractWebEngine
 	// SEARCH		/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
 	@Override
-	public List<URL> search(String keywords, String website, Date startDate, Date endDate)  throws IOException
+	public Map<String,URL> search(String keywords, String website, Date startDate, Date endDate)  throws IOException
 	{	logger.log("Applying Google Custom Search");
 		logger.increaseOffset();
 		
@@ -156,13 +158,15 @@ public class GoogleEngine extends AbstractWebEngine
 		// convert result list
 		logger.log("Results obtained:");
 		logger.increaseOffset();
-		List<URL> result = new ArrayList<URL>();
+		Map<String,URL> result = new HashMap<String,URL>();
+		int resIdx = 1;
 		for(Result res: resList)
 		{	String title = res.getHtmlTitle();
 			String urlStr = res.getLink();
 			logger.log(title+" - "+urlStr);
 			URL url = new URL(urlStr);
-			result.add(url);
+			result.put(Integer.toString(resIdx),url);
+			resIdx++;
 		}
 		logger.decreaseOffset();
 		

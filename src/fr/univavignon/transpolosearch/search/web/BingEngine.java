@@ -29,10 +29,10 @@ import java.net.URLConnection;
 import java.net.URLEncoder;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.client.ClientProtocolException;
@@ -119,10 +119,10 @@ public class BingEngine extends AbstractWebEngine
 	// SEARCH		/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
 	@Override
-	public List<URL> search(String keywords, String website, Date startDate, Date endDate)  throws IOException
+	public Map<String,URL> search(String keywords, String website, Date startDate, Date endDate)  throws IOException
 	{	logger.log("Applying Bing Search");
 		logger.increaseOffset();
-		List<URL> result = new ArrayList<URL>();
+		Map<String,URL> result = new HashMap<String,URL>();
 		
 		// init search parameters
 		logger.log("Keywords: "+keywords);
@@ -157,10 +157,11 @@ public class BingEngine extends AbstractWebEngine
 	    	LocalDate endLocalDate = LocalDate.of(year, month, day);
 	    	
 	    	// process separately each day of the considered time period
+	    	int dayIdx = 1;
 	    	while(currentLocalDate.isBefore(endLocalDate) || currentLocalDate.isEqual(endLocalDate))
 	    	{	logger.log("Processing date "+currentLocalDate);
 				try
-	    		{	searchBing(baseUrl, baseQuery, currentLocalDate, result);
+	    		{	searchBing(baseUrl, baseQuery, currentLocalDate, dayIdx, result);
 	    		}
 	    		catch(ParseException e)
 		    	{	e.printStackTrace();
@@ -169,6 +170,7 @@ public class BingEngine extends AbstractWebEngine
 	    		
 	    		// deal with the next day
 	    		currentLocalDate = currentLocalDate.plusDays(1);
+	    		dayIdx++;
 	    	}
 			logger.decreaseOffset();
 		}
@@ -178,7 +180,7 @@ public class BingEngine extends AbstractWebEngine
 		{	logger.log("No date detected");
 			
 			try
-			{	searchBing(baseUrl, baseQuery, null, result);
+			{	searchBing(baseUrl, baseQuery, null, 0, result);
 			}
 			catch(ParseException e)
 	    	{	e.printStackTrace();
@@ -201,6 +203,8 @@ public class BingEngine extends AbstractWebEngine
 	 * 		Base query (to be completed, too).
 	 * @param targetedDate
 	 * 		Date of the searched articles (can be {@code null}, if none).
+	 * @param dayIdx 
+	 * 		Number of the date in the targeted period.
 	 * @param result
 	 * 		Current list of URL.
 	 * 
@@ -211,8 +215,10 @@ public class BingEngine extends AbstractWebEngine
 	 * @throws ParseException
 	 * 		Problem while parsing Bing JSON results.
 	 */
-	private void searchBing(String baseUrl, String baseQuery, LocalDate targetedDate, List<URL> result) throws ClientProtocolException, IOException, ParseException
-	{	// repeat because of the pagination system
+	private void searchBing(String baseUrl, String baseQuery, LocalDate targetedDate, int dayIdx, Map<String,URL> result) throws ClientProtocolException, IOException, ParseException
+	{	int resIdx = 1;
+		
+		// repeat because of the pagination system
 		int lastRes = 0;
 		do
 		{	logger.log("Getting results "+lastRes+"-"+(lastRes+PAGE_SIZE-1));
@@ -258,7 +264,13 @@ public class BingEngine extends AbstractWebEngine
 						logger.log("url: "+urlStr);
 						URL resUrl = convertUrl(urlStr);
 						logger.log("converted to: "+resUrl);
-						result.add(resUrl);
+						String key;
+						if(dayIdx==0)
+							key = Integer.toString(resIdx);
+						else
+							key = dayIdx+"-"+resIdx;
+						result.put(key,resUrl);
+						resIdx++;
 						logger.decreaseOffset();
 						i++;
 					}
@@ -291,7 +303,13 @@ public class BingEngine extends AbstractWebEngine
 						}
 						if(keepArticle)
 						{	URL resUrl = convertUrl(urlStr);
-							result.add(resUrl);
+							String key;
+							if(dayIdx==0)
+								key = Integer.toString(resIdx);
+							else
+								key = dayIdx+"-"+resIdx;
+							result.put(key,resUrl);
+							resIdx++;
 							logger.log("No publication date, or equal to the targeted date >> keeping the article");
 						}
 						else

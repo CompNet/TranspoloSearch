@@ -174,6 +174,8 @@ class OpeNerDelegateRecognizer extends AbstractModellessInternalDelegateRecogniz
 			String part = parts.get(i);
 			part = cleanText(part);
 //System.out.println(part);
+if(part.startsWith(("si tu aimes la vidéo")))
+		System.out.print("");
 			
 			try
 			{	// tokenize the text
@@ -245,14 +247,15 @@ class OpeNerDelegateRecognizer extends AbstractModellessInternalDelegateRecogniz
 		do
 		{	result = prev;
 			
-			prev = prev.replaceAll("\"", " ");
-			prev = prev.replaceAll("@", " ");
-			prev = prev.replaceAll("(["+punctuation+"])\\1+", "$1");
+			prev = prev.replaceAll("\"", " ");								// remove double quotes
+			prev = prev.replaceAll("@", " ");								// remove arobases
+			prev = prev.replaceAll("(["+punctuation+"])\\1+", "$1");		// 
 //			prev = prev.replaceAll("[\n\r](["+punctuation+"])", " $1");
-			prev = prev.replaceAll("^["+punctuation+"]", " ");
+			prev = prev.replaceAll("^["+punctuation+"]", " ");				// remove punctuation at the beginning of a line
 //			prev = prev.replaceAll("[\n\r] ", "  ");
-			prev = prev.replaceAll("[\n\r]", " ");
-			prev = prev.replaceAll("- -", " - ");
+			prev = prev.replaceAll("[\n\r]", " ");							// remove new lines
+			prev = prev.replaceAll("- -", " - ");							// clean multuple hyphens
+			prev = prev.replaceAll(":([)(])"," $1");						// OpeNer doesn't like ":(", for some reason... 
 		}
 		while(!result.equals(prev));
 		
