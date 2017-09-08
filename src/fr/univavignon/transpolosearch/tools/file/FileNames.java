@@ -199,6 +199,8 @@ public class FileNames
 	public final static String FI_EVENT_TABLE_ARTICLE = "event_table_byarticle" + FileNames.EX_CSV;
 	/** Events file, by sentence */
 	public final static String FI_EVENT_TABLE_SENTENCE = "event_table_bysentence" + FileNames.EX_CSV;
+	/** List of Facebook ids */
+	public final static String FI_FACEBOOK_IDS = "fb_ids" + FileNames.EX_TEXT;
 	
 	
 	

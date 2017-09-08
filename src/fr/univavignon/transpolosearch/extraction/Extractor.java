@@ -139,8 +139,8 @@ public class Extractor
 		FileNames.setOutputFolder(outFolder);
 		
 		// perform the Web search
-		logger.log("Performing the Web search");
-		performWebExtraction(keywords, website, startDate, endDate, searchDate, compulsoryExpression);
+//		logger.log("Performing the Web search");
+//		performWebExtraction(keywords, website, startDate, endDate, searchDate, compulsoryExpression);
 		
 		// perform the social search
 		logger.log("Performing the social media search");

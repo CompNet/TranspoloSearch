@@ -272,8 +272,8 @@ public class Test
 		String params[][] = {
 			{"Anne Hidalgo", "Hidalgo"},
 			{"Cécile Helle", "Helle"},
-			{"Martine Aubry", "Aubry"}
-//			{"Roland Ries", "Ries"}
+			{"Martine Aubry", "Aubry"},
+			{"Roland Ries", "Ries"}
 		};
 		
 		for(String[] param: params)
@@ -293,6 +293,8 @@ public class Test
 		}
 	}
 }
+
+// TODO médias sociaus: rajouter dans le csv le nombre de commentaires associés à chaque post
 
 // dates: 6/3 >> 10/3
 // pers: C. Helle + M. Aubry + A. Hidalgo
