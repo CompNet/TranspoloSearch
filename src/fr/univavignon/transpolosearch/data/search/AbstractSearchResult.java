@@ -89,19 +89,7 @@ public abstract class AbstractSearchResult
 	 * @return
 	 * 		{@code true} iff the result was discarded.
 	 */
-	protected boolean filterByKeyword(String compulsoryExpression, int nbr)
-	{	boolean result = true;
-		
-		logger.log("Processing article "+article.getTitle()+" ("+nbr+")");
-		String rawText = article.getRawText();
-		if(!rawText.contains(compulsoryExpression))
-		{	logger.log("Discarding article "+article.getTitle()+" ("+article.getUrl()+")");
-			status = "Missing keyword";
-			result = false;
-		}
-			
-		return result;
-	}
+	protected abstract boolean filterByKeyword(String compulsoryExpression, int nbr);
 	
 	/**
 	 * Discards results describing only events not contained 

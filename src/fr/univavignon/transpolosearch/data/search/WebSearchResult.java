@@ -140,6 +140,24 @@ public class WebSearchResult extends AbstractSearchResult
 		return result;
 	}
 	
+	@Override
+	protected boolean filterByKeyword(String compulsoryExpression, int nbr)
+	{	boolean result = true;
+		
+		logger.log("Processing article "+article.getTitle()+" ("+nbr+")");
+		logger.increaseOffset();
+		{	String rawText = article.getRawText();
+			if(!rawText.contains(compulsoryExpression))
+			{	logger.log("Discarding article "+article.getTitle()+" ("+article.getUrl()+")");
+				status = "Missing keyword";
+				result = false;
+			}
+		}
+		logger.decreaseOffset();
+			
+		return result;
+	}
+	
 	/////////////////////////////////////////////////////////////////
 	// EVENTS		/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////

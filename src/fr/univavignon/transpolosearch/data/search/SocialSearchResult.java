@@ -173,6 +173,29 @@ public class SocialSearchResult extends AbstractSearchResult
 		article.write();
 	}
 	
+	@Override
+	protected boolean filterByKeyword(String compulsoryExpression, int nbr)
+	{	boolean result = true;
+		
+		logger.log("Processing article "+article.getTitle()+" ("+nbr+")");
+		logger.increaseOffset();
+		{	// filter only if the article was not authored by the target
+			if(!original)
+			{	String rawText = article.getRawText();
+				if(!rawText.contains(compulsoryExpression))
+				{	logger.log("Discarding article "+article.getTitle()+" ("+article.getUrl()+")");
+					status = "Missing keyword";
+					result = false;
+				}
+			}
+			else
+				logger.log("This article was written by the targetted person, and we therefore keep it");
+		}
+		logger.decreaseOffset();
+			
+		return result;
+	}
+	
 	/////////////////////////////////////////////////////////////////
 	// FILE			/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////

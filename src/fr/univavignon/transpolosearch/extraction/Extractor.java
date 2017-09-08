@@ -139,8 +139,8 @@ public class Extractor
 		FileNames.setOutputFolder(outFolder);
 		
 		// perform the Web search
-//		logger.log("Performing the Web search");
-//		performWebExtraction(keywords, website, startDate, endDate, searchDate, compulsoryExpression);
+		logger.log("Performing the Web search");
+		performWebExtraction(keywords, website, startDate, endDate, searchDate, compulsoryExpression);
 		
 		// perform the social search
 		logger.log("Performing the social media search");
@@ -264,7 +264,7 @@ public class Extractor
 		results.buildArticles(includeComments);
 		
 		// possibly filter the articles depending on the compulsory expression
-//		results.filterByContent(null,null,true,compulsoryExpression);
+		results.filterByContent(null,null,true,compulsoryExpression);
 		
 		// detect the entity mentions
 		results.detectMentions(recognizer);
