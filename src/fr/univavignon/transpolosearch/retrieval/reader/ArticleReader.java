@@ -27,6 +27,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.ConnectException;
 import java.net.HttpURLConnection;
 import java.net.NoRouteToHostException;
+import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.net.URLEncoder;
@@ -313,6 +314,12 @@ public abstract class ArticleReader
 				catch(ConnectException e)
 				{	logger.log(Arrays.asList(
 						"WARNING: Could not download the page, the server seems to be offline.",
+						"Error message: "+e.getMessage()
+					));
+				}
+				catch(SocketException e)
+				{	logger.log(Arrays.asList(
+						"WARNING: Could not download the page, the server ended the file transmission.",
 						"Error message: "+e.getMessage()
 					));
 				}

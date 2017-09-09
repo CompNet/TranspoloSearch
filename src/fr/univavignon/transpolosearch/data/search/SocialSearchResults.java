@@ -99,8 +99,8 @@ public class SocialSearchResults extends AbstractSearchResults<SocialSearchResul
 			PrintWriter pw = FileTools.openTextFileWrite(filePath, "UTF-8");
 			
 			// write header
-			List<String> cols = Arrays.asList(COL_COMMENTS, COL_PAGE_TITLE, COL_PAGE_URL, COL_LENGTH, COL_PUB_DATE, 
-					COL_AUTHORS, COL_SOCIAL_ENGINE, COL_PAGE_STATUS, COL_EVENT_RANK, COL_EVENT_DATES,
+			List<String> cols = Arrays.asList(COL_COMMENTS, COL_TITLE, COL_URL, COL_LENGTH, COL_PUB_DATE, 
+					COL_AUTHORS, COL_SOCIAL_ENGINE, COL_STATUS, COL_EVENT_RANK, COL_EVENT_DATES,
 					COL_EVENT_LOCATIONS, COL_EVENT_PERSONS, COL_EVENT_ORGANIZATIONS, COL_EVENT_FUNCTIONS,
 					COL_EVENT_PRODUCTIONS, COL_EVENT_MEETINGS
 			);

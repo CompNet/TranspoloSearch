@@ -20,16 +20,23 @@ package fr.univavignon.transpolosearch;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.io.StringReader;
+import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Scanner;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
@@ -45,10 +52,14 @@ import org.jdom2.input.SAXBuilder;
 
 import com.google.api.services.customsearch.model.Result;
 
+import fr.univavignon.transpolosearch.data.search.AbstractSearchResults;
 import fr.univavignon.transpolosearch.extraction.Extractor;
 import fr.univavignon.transpolosearch.retrieval.ArticleRetriever;
 import fr.univavignon.transpolosearch.retrieval.reader.ArticleReader;
+import fr.univavignon.transpolosearch.search.web.AbstractWebEngine;
 import fr.univavignon.transpolosearch.search.web.GoogleEngine;
+import fr.univavignon.transpolosearch.tools.file.FileNames;
+import fr.univavignon.transpolosearch.tools.file.FileTools;
 import fr.univavignon.transpolosearch.tools.log.HierarchicalLogger;
 import fr.univavignon.transpolosearch.tools.log.HierarchicalLoggerManager;
 import fr.univavignon.transpolosearch.tools.string.StringTools;
@@ -83,6 +94,9 @@ public class Test
 		
 		// whole process
 		testExtractor();
+		
+		// compare searches
+//		compareSearches("Anne_Hidalgo_1", "Anne_Hidalgo_2");
 		
 		logger.close();
 	}
@@ -212,22 +226,162 @@ public class Test
 	/////////////////////////////////////////////////////////////////
 	// COMPARISON		/////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
+	/** Title of the result of the comparison in the CSV file */
+	private static final String COL_COMPARISON = "Comparison result";
+	
+	/**
+	 * Loads a CSV file representing a collection of URLs, and
+	 * put them (and their metadata) in a map for later use.
+	 * 
+	 * @param folder
+	 * 		Folder corresponding to the search (keywors, possibly website).
+	 * @return
+	 * 		A map representing the collection of URLs.
+	 * 
+	 * @throws FileNotFoundException
+	 * 		Problem while reading the CSV file.
+	 * @throws UnsupportedEncodingException
+	 * 		Problem while reading the CSV file.
+	 */
+	private static Map<String,Map<String,String>> loadSearchCSV(String folder) throws FileNotFoundException, UnsupportedEncodingException
+	{	// open file
+		FileNames.setOutputFolder(folder);
+		String filePath = FileNames.FO_WEB_SEARCH_RESULTS + File.separator + FileNames.FI_SEARCH_RESULTS_CONTENT;
+		Scanner scanner = FileTools.openTextFileRead(filePath,"UTF-8");
+		
+		// get header
+		String header = scanner.nextLine();
+		String colNames[] = header.split(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)", -1);	//this is taken from https://stackoverflow.com/questions/1757065/java-splitting-a-comma-separated-string-but-ignoring-commas-in-quotes
+		for(int i=0;i<colNames.length;i++)
+			colNames[i] = colNames[i].replace('"',' ').trim();
+		
+		
+		// get content
+		Map<String,Map<String,String>> result = new HashMap<String,Map<String,String>>();
+		while(scanner.hasNextLine())
+		{	String line = scanner.nextLine();
+			String tmp[] = line.split(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)", -1);
+			Map<String,String> map = new HashMap<String,String>();
+			for(int i=0;i<tmp.length;i++)
+			{	String key = colNames[i];
+				String value = tmp[i].replace('"',' ').trim();
+				map.put(key,value);
+			}
+			String url = map.get(AbstractSearchResults.COL_URL);
+			result.put(url,map);
+		}
+		
+		FileNames.setOutputFolder(null);
+		return result;
+	}
+	
 	/**
 	 * Compares the list of URLs resulting from two searches.
 	 * 
-	 * @throws Exception
-	 * 		Something went wrong during the search. 
+	 * @param folder1
+	 * 		Folder of the first search. 
+	 * @param folder2 
+	 * 		Folder of the second search.
+	 * 
+	 * @throws UnsupportedEncodingException 
+	 * 		Something went wrong during the comparison.
+	 * @throws FileNotFoundException 
+	 * 		Something went wrong during the comparison.
 	 */
-	private static void compareSearches(String folder1, String folder2) throws Exception
+	private static void compareSearches(String folder1, String folder2) throws FileNotFoundException, UnsupportedEncodingException
 	{	logger.setName("Compare-Searches");
 		logger.log("Compare "+folder1+" vs. "+folder2);
 		logger.increaseOffset();
 		
-		// open first file
+		// set up column names for the output file
+		List<String> colNames = new ArrayList<String>(Arrays.asList(
+			AbstractSearchResults.COL_TITLE,
+			AbstractSearchResults.COL_URL,
+			COL_COMPARISON,
+			AbstractSearchResults.COL_STATUS,
+			AbstractSearchResults.COL_LENGTH
+		));
+		for(String engineName: AbstractWebEngine.ENGINE_NAMES)
+			colNames.add(engineName);
 		
-		// open second file
-		// compare results
+		// get both files
+		logger.log("Load the files");
+		Map<String,Map<String,String>> map1 = loadSearchCSV(folder1);
+		Map<String,Map<String,String>> map2 = loadSearchCSV(folder2);
+
+		// compare them
+		logger.log("Compare them");
+		List<Map<String,String>> only1 = new ArrayList<Map<String,String>>();
+		List<Map<String,String>> only2 = new ArrayList<Map<String,String>>();
+		List<Map<String,String>> both = new ArrayList<Map<String,String>>();
+		for(Entry<String,Map<String,String>> entry: map1.entrySet())
+		{	String key = entry.getKey();
+			Map<String,String> vals1 = entry.getValue();
+			Map<String,String> vals2 = map2.get(key);
+			if(vals2==null)
+				only1.add(vals1);
+			else
+			{	Map<String,String> vals = new HashMap<String,String>();
+				for(String colName: colNames)
+				{	String val1 = vals1.get(colName);
+					String val2 = vals2.get(colName);
+					String val;
+					if(val1==null || val1.isEmpty())
+					{	if(val2==null || val2.isEmpty())
+							val = "";
+						else
+							val = "<Empty>\n" + val2;
+					}
+					else
+					{	if(val2==null || vals2.isEmpty())
+							val = val1 + "\n<Empty>";
+						else
+							val = val1 + "\n" + val2;
+					}
+					vals.put(colName, val);
+				}
+				both.add(vals);
+			}
+		}
+		for(Entry<String,Map<String,String>> entry: map2.entrySet())
+		{	String key = entry.getKey();
+			Map<String,String> vals1 = map1.get(key);
+			if(vals1==null)
+			{	Map<String,String> vals2 = entry.getValue();
+				only2.add(vals2);
+			}
+		}
+		
 		// record comparison outcome
+		String filePath = FileNames.FO_OUTPUT + File.separator + "comparison_"+folder1+"_vs_"+folder2+".csv";
+		logger.log("Record the comparison results in file "+filePath);
+		PrintWriter pw = FileTools.openTextFileWrite(filePath, "UTF-8");
+		// write header
+		{	String header = "";
+			for(String colName: colNames)
+			{	if(!header.isEmpty())
+					header = header + ",";
+				header = header + "\"" + colName + "\"";
+			}
+			pw.print(header);
+		}
+		// write content
+		List<List<Map<String,String>>> data = Arrays.asList(only1, only2, both);
+		for(List<Map<String,String>> list: data)
+		{	for(Map<String,String> vals: list)
+			{	String line = "";
+				for(String colName: colNames)
+				{	if(!line.isEmpty())
+						line = line + ",";
+					String val = vals.get(colName);
+					if(val==null)
+						val = "";
+					line = line + "\"" + val + "\"";
+				}
+				pw.print(line);
+			}
+		}
+		pw.close();
 		
 		logger.decreaseOffset();
 	}
@@ -288,14 +442,15 @@ public class Test
 	 * 		Something went wrong during the search. 
 	 */
 	private static void testExtractor() throws Exception
-	{	Extractor extractor = new Extractor();
+	{	logger.setName("Extraction");
+		Extractor extractor = new Extractor();
 		
 		DateFormat df = new SimpleDateFormat("yyyyMMdd");
 		
 		String params[][] = {
-			{"Anne Hidalgo", "Hidalgo"}
-//			{"Cécile Helle", "Helle"},
-//			{"Martine Aubry", "Aubry"},
+//			{"Anne Hidalgo", "Hidalgo"}
+			{"Cécile Helle", "Helle"}
+//			{"Martine Aubry", "Aubry"}
 //			{"Roland Ries", "Ries"}
 		};
 		

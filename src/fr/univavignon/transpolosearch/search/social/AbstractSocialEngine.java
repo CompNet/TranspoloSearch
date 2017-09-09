@@ -23,6 +23,10 @@ import java.util.Date;
 import java.util.List;
 
 import fr.univavignon.transpolosearch.data.search.SocialSearchResult;
+import fr.univavignon.transpolosearch.search.web.BingEngine;
+import fr.univavignon.transpolosearch.search.web.GoogleEngine;
+import fr.univavignon.transpolosearch.search.web.QwantEngine;
+import fr.univavignon.transpolosearch.search.web.YandexEngine;
 import fr.univavignon.transpolosearch.tools.log.HierarchicalLogger;
 import fr.univavignon.transpolosearch.tools.log.HierarchicalLoggerManager;
 
@@ -43,6 +47,11 @@ public abstract class AbstractSocialEngine
 	/////////////////////////////////////////////////////////////////
 	// NAME			/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
+	/** List of search engine names */
+	public final static String[] ENGINE_NAMES = 
+	{	FacebookEngine.ENGINE_NAME
+	};
+	
 	/**
 	 * Returns a String representing the name
 	 * of this search engine.

@@ -164,9 +164,6 @@ if(url.contains("cookies"))
 	/////////////////////////////////////////////////////////////////
 	// CSV			/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
-	/** Used to init the header of the CSV file */
-	private final static String HEADER_P1 = "Title,URL,Status,Length";
-	
 	/**
 	 * Records all result URLs in a single CSV file.
 	 * 
@@ -190,7 +187,7 @@ if(url.contains("cookies"))
 		
 		// open file and write header
 		PrintWriter pw = FileTools.openTextFileWrite(cacheFilePath,"UTF-8");
-		{	String line = HEADER_P1;
+		{	String line = "\""+COL_TITLE+"\",\""+COL_URL+"\",\""+COL_STATUS+"\",\""+COL_LENGTH+"\"";
 			for(String engineName: engineNames)
 				line = line + "," + engineName;
 			pw.println(line);
@@ -248,9 +245,9 @@ if(url.contains("cookies"))
 			PrintWriter pw = FileTools.openTextFileWrite(filePath, "UTF-8");
 			
 			// write header
-			List<String> startCols = Arrays.asList(COL_COMMENTS, COL_PAGE_TITLE, COL_PAGE_URL, COL_LENGTH, 
+			List<String> startCols = Arrays.asList(COL_COMMENTS, COL_TITLE, COL_URL, COL_LENGTH, 
 					COL_PUB_DATE, COL_AUTHORS);
-			List<String> endCols = Arrays.asList(COL_PAGE_STATUS, COL_EVENT_RANK, COL_EVENT_DATES,
+			List<String> endCols = Arrays.asList(COL_STATUS, COL_EVENT_RANK, COL_EVENT_DATES,
 					COL_EVENT_LOCATIONS, COL_EVENT_PERSONS, COL_EVENT_ORGANIZATIONS, COL_EVENT_FUNCTIONS,
 					COL_EVENT_PRODUCTIONS, COL_EVENT_MEETINGS
 			);

@@ -43,6 +43,14 @@ public abstract class AbstractWebEngine
 	/////////////////////////////////////////////////////////////////
 	// NAME			/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
+	/** List of search engine names */
+	public final static String[] ENGINE_NAMES = 
+	{	BingEngine.ENGINE_NAME,
+		GoogleEngine.ENGINE_NAME,
+		QwantEngine.ENGINE_NAME,
+		YandexEngine.ENGINE_NAME
+	};
+	
 	/**
 	 * Returns a String representing the name
 	 * of this search engine.

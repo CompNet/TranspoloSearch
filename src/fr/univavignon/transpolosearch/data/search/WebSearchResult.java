@@ -185,10 +185,10 @@ public class WebSearchResult extends AbstractSearchResult
 			rank++;
 
 			// general stuff
-			map.put(WebSearchResults.COL_PAGE_TITLE,"\""+article.getTitle()+"\"");
-			map.put(WebSearchResults.COL_PAGE_URL,"\""+article.getUrl().toString()+"\"");
+			map.put(WebSearchResults.COL_TITLE,"\""+article.getTitle()+"\"");
+			map.put(WebSearchResults.COL_URL,"\""+article.getUrl().toString()+"\"");
 			map.put(WebSearchResults.COL_LENGTH,"\""+article.getRawText().length()+"\"");
-			map.put(WebSearchResults.COL_PAGE_STATUS,status);
+			map.put(WebSearchResults.COL_STATUS,status);
 			map.put(WebSearchResults.COL_COMMENTS,"");
 			
 			// publication date

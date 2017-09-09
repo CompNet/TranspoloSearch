@@ -91,7 +91,7 @@ public class GoogleEngine extends AbstractWebEngine
 	// DATA			/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
 	/** Textual name of this engine */
-	private static final String ENGINE_NAME = "Google";
+	public static final String ENGINE_NAME = "Google";
 
 	@Override
 	public String getName()

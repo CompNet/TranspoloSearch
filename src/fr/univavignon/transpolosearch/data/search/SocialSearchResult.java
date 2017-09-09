@@ -299,13 +299,13 @@ public class SocialSearchResult extends AbstractSearchResult
 			rank++;
 
 			// general stuff
-			map.put(AbstractSearchResults.COL_PAGE_TITLE,"\""+article.getTitle()+"\"");
+			map.put(AbstractSearchResults.COL_TITLE,"\""+article.getTitle()+"\"");
 			if(article.getUrl()!=null)
-				map.put(AbstractSearchResults.COL_PAGE_URL,"\""+article.getUrl().toString()+"\"");
+				map.put(AbstractSearchResults.COL_URL,"\""+article.getUrl().toString()+"\"");
 			map.put(AbstractSearchResults.COL_LENGTH,"\""+article.getRawText().length()+"\"");
 			map.put(AbstractSearchResults.COL_AUTHORS,"\""+article.getAuthors().get(0)+"\"");
 			map.put(AbstractSearchResults.COL_ORIGINAL,"\""+original+"\"");
-			map.put(AbstractSearchResults.COL_PAGE_STATUS,"\""+status+"\"");
+			map.put(AbstractSearchResults.COL_STATUS,"\""+status+"\"");
 			map.put(AbstractSearchResults.COL_COMMENTS,"");
 			
 			// publication date

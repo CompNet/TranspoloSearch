@@ -245,7 +245,7 @@ public class FacebookEngine extends AbstractSocialEngine
 	// DATA			/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
 	/** Textual name of this engine */
-	private static final String ENGINE_NAME = "Facebook";
+	public static final String ENGINE_NAME = "Facebook";
 
 	@Override
 	public String getName()

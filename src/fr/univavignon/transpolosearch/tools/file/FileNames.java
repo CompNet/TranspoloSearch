@@ -113,7 +113,9 @@ public class FileNames
 	 */
 	public static void setOutputFolder(String keywords)
 	{	// add the keywords after the default output folder 
-		FO_OUTPUT = "out" + File.separator + keywords;
+		FO_OUTPUT = "out";
+		if(keywords!=null)
+			FO_OUTPUT = FO_OUTPUT + File.separator + keywords;
 
 		// update the related subfolders
 		FO_WEB_SEARCH_RESULTS = FO_OUTPUT + File.separator + "web_search";

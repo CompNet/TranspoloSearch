@@ -833,7 +833,7 @@ public class StringTools
 	 */
 	public static String removeNonLatinChars(String input)
 	{	logger.increaseOffset();
-		boolean disp = input.length()>100000;
+//		boolean disp = input.length()>100000;
 		String result = input;
 		
 		if (input!=null)
@@ -854,8 +854,9 @@ public class StringTools
 			// second version: brutal, but seems more robust
 			StringBuffer tmp = new StringBuffer();
 			for(int i=0;i<input.length();i++) 
-			{	if(disp && (i+1)%50000==0)
-					logger.log("Processing char "+(i+1)+"/"+input.length());
+			{	
+//				if(disp && (i+1)%50000==0)
+//					logger.log("Processing char "+(i+1)+"/"+input.length());
 				
 				char c = input.charAt(i);
 				if(LATIN_CHARS.contains(c))

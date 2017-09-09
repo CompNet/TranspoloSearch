@@ -275,41 +275,41 @@ if(result instanceof WebSearchResult && ((WebSearchResult)result).url.equalsIgno
 	}
 	
 	/** Title of the Web resource */
-	protected static final String COL_PAGE_TITLE = "Page title";
+	public static final String COL_TITLE = "Page title";
 	/** URL of the Web resource */
-	protected static final String COL_PAGE_URL = "URL";
+	public static final String COL_URL = "URL";
 	/** Length of the article, in characters */
-	protected static final String COL_LENGTH = "Text length";
+	public static final String COL_LENGTH = "Text length";
 	/** Author of the article */
-	protected static final String COL_AUTHORS = "Author(s)";
-	/** File format of the Web resource (HTML, PDF, etc.) */
-	protected static final String COL_PAGE_STATUS = "Format";
+	public static final String COL_AUTHORS = "Author(s)";
+	/** Status of the page (if none, it means it is still handled) */
+	public static final String COL_STATUS = "Status";
 	/** Publication date of the Web resource */
-	protected static final String COL_PUB_DATE = "Publication date";
+	public static final String COL_PUB_DATE = "Publication date";
 	/** Name of the social search engine */
-	protected static final String COL_SOCIAL_ENGINE = "Social media";
+	public static final String COL_SOCIAL_ENGINE = "Social media";
 	/** Rank according to some search engine */
-	protected static final String COL_RANK = "Rank ";
+	public static final String COL_RANK = "Rank ";
 	/** Rank of the event in the article */
-	protected static final String COL_EVENT_RANK = "Event rank";
+	public static final String COL_EVENT_RANK = "Event rank";
 	/** Dates associated to the event */
-	protected static final String COL_EVENT_DATES = "Dates";
+	public static final String COL_EVENT_DATES = "Dates";
 	/** Locations associated to the event */
-	protected static final String COL_EVENT_LOCATIONS = "Locations";
+	public static final String COL_EVENT_LOCATIONS = "Locations";
 	/** Persons associated to the event */
-	protected static final String COL_EVENT_PERSONS = "Persons";
+	public static final String COL_EVENT_PERSONS = "Persons";
 	/** Organizations associated to the event */
-	protected static final String COL_EVENT_ORGANIZATIONS = "Organizations";
+	public static final String COL_EVENT_ORGANIZATIONS = "Organizations";
 	/** Personal roles associated to the event */
-	protected static final String COL_EVENT_FUNCTIONS = "Functions";
+	public static final String COL_EVENT_FUNCTIONS = "Functions";
 	/** Intellectual productions associated to the event */
-	protected static final String COL_EVENT_PRODUCTIONS = "Production";
+	public static final String COL_EVENT_PRODUCTIONS = "Production";
 	/** Meetings associated to the event */
-	protected static final String COL_EVENT_MEETINGS = "Meetings";
+	public static final String COL_EVENT_MEETINGS = "Meetings";
 	/** Misc comments */
-	protected static final String COL_COMMENTS = "Comments";
+	public static final String COL_COMMENTS = "Comments";
 	/** Whether a social post was written by the targeted person, or not */
-	protected static final String COL_ORIGINAL = "Original post";
+	public static final String COL_ORIGINAL = "Original post";
 	
 	/**
 	 * Records the results of the search as a CSV file.

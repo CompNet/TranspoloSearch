@@ -98,7 +98,7 @@ public class BingEngine extends AbstractWebEngine
 	// DATA			/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
 	/** Textual name of this engine */
-	private static final String ENGINE_NAME = "Bing";
+	public static final String ENGINE_NAME = "Bing";
 
 	@Override
 	public String getName()
