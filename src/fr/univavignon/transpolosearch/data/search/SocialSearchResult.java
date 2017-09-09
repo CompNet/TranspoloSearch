@@ -155,7 +155,6 @@ public class SocialSearchResult extends AbstractSearchResult
 				text = text + "\n\n" + com.content;
 		}
 		article.setRawText(text);
-		length = text.length();
 		article.setLinkedText(text);
 		article.cleanContent();
 		
@@ -303,7 +302,7 @@ public class SocialSearchResult extends AbstractSearchResult
 			map.put(AbstractSearchResults.COL_PAGE_TITLE,"\""+article.getTitle()+"\"");
 			if(article.getUrl()!=null)
 				map.put(AbstractSearchResults.COL_PAGE_URL,"\""+article.getUrl().toString()+"\"");
-			map.put(AbstractSearchResults.COL_LENGTH,"\""+length+"\"");
+			map.put(AbstractSearchResults.COL_LENGTH,"\""+article.getRawText().length()+"\"");
 			map.put(AbstractSearchResults.COL_AUTHORS,"\""+article.getAuthors().get(0)+"\"");
 			map.put(AbstractSearchResults.COL_ORIGINAL,"\""+original+"\"");
 			map.put(AbstractSearchResults.COL_PAGE_STATUS,"\""+status+"\"");
