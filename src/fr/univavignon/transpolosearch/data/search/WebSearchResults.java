@@ -29,6 +29,7 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Scanner;
 
 import org.xml.sax.SAXException;
 
@@ -162,10 +163,13 @@ if(url.contains("cookies"))
 	}
 	
 	/////////////////////////////////////////////////////////////////
-	// EXPORT		/////////////////////////////////////////////////
+	// CSV			/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
+	/** Used to init the header of the CSV file */
+	private final static String HEADER_P1 = "Title,URL,Status,Length";
+	
 	/**
-	 * Records all result URL in a single CSV file.
+	 * Records all result URLs in a single CSV file.
 	 * 
 	 * @param fileName
 	 * 		Name of the created file.  
@@ -176,7 +180,7 @@ if(url.contains("cookies"))
 	 * 		Problem while opening the CSV file.
 	 */
 	public void exportAsCsv(String fileName) throws UnsupportedEncodingException, FileNotFoundException
-	{	logger.log("Recording all the Web search results in a single file");
+	{	logger.log("Recording all the Web search results in a file"+fileName);
 		logger.increaseOffset();
 		
 		// create folder
@@ -187,7 +191,7 @@ if(url.contains("cookies"))
 		
 		// open file and write header
 		PrintWriter pw = FileTools.openTextFileWrite(cacheFilePath,"UTF-8");
-		{	String line = "Title,URL,Status,Length";
+		{	String line = HEADER_P1;
 			for(String engineName: engineNames)
 				line = line + "," + engineName;
 			pw.println(line);
@@ -209,11 +213,8 @@ if(url.contains("cookies"))
 				line = line + result.status;
 			line = line + ",";
 			// length
-			Integer length = null;
-			if(result.article!=null)
-				length = result.article.getRawText().length();
-			if(length!=null)
-				line = line + length;
+			if(result.length!=null)
+				line = line + result.length;
 			// ranks
 			Map<String,String> ranks = result.ranks;
 			for(String engineName: engineNames)
@@ -228,7 +229,89 @@ if(url.contains("cookies"))
 
 		logger.decreaseOffset();
 	}
+	
+	/**
+	 * Reads all result URLs from a single CSV file.
+	 * 
+	 * @param fileName
+	 * 		Name of the existing file.
+	 * 
+	 * @throws UnsupportedEncodingException
+	 * 		Problem while opening the CSV file.
+	 * @throws FileNotFoundException
+	 * 		Problem while opening the CSV file.
+	 */
+	public static WebSearchResults importFromCsv(String fileName) throws UnsupportedEncodingException, FileNotFoundException
+	{	logger.log("Reading all the Web search results from file "+fileName);
+		logger.increaseOffset();
+		WebSearchResults result = new WebSearchResults();
+		
+		// create folder
+		String cacheFilePath = FileNames.FO_WEB_SEARCH_RESULTS + File.separator + fileName;
+		logger.log("Loading from CSV file \""+cacheFilePath+"\"");
+		
+		// open file and pass header
+		Scanner scanner = FileTools.openTextFileRead(cacheFilePath,"UTF-8");
+		String header = scanner.nextLine();
+		header = header.substring(HEADER_P1.length()+1);
+		String hdTmp[] = header.split(",");
+		for(String engineName: hdTmp)
+		{	engineName = engineName.trim();
+			result.engineNames.add(engineName);
+		}
+		
+		// read data and close file
+		logger.log("processing each entry of the table");
+		logger.increaseOffset();
+		int c = 1;
+		while(scanner.hasNextLine())
+		{	logger.log("Processing entry #"+c);
+			logger.increaseOffset();
+			c++;
+			String line = "\"";
+			String tmp[] = line.split("\n");
+			int idx = 0;
+			
+			// title
+			String title = tmp[idx++].trim();
+			logger.log("Title: "+title);
+			// url
+			String url = tmp[idx++].trim();
+			logger.log("URL: "+url);
+			WebSearchResult res = new WebSearchResult(url);
+			// status
+			String status = tmp[idx++].trim();
+			logger.log("Status: "+status);
+			res.status = status;
+			// length
+			String lengthStr = tmp[idx++].trim();
+			logger.log("Length: "+lengthStr);
+			Integer length = null;
+			if(!lengthStr.isEmpty())
+				length = Integer.parseInt(lengthStr);
+			res.length = length;
+			// ranks
+			String ranksStr = tmp[idx++].trim();
+			ranksStr = ranksStr.substring(1,ranksStr.length()-1);
+			String tkTmp[] = ranksStr.split("\",\"");
+			int i = 0;
+			for(String engineName: result.engineNames)
+			{	String rank = tkTmp[i].trim();
+				res.addEngine(engineName, rank);
+				i++;
+			}
+			logger.decreaseOffset();
+		}
+		scanner.close();
+		logger.decreaseOffset();
 
+		logger.decreaseOffset();
+		return result;
+	}
+	
+	/////////////////////////////////////////////////////////////////
+	// EVENTS		/////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////
 	@Override
 	public void exportEvents(boolean bySentence) throws UnsupportedEncodingException, FileNotFoundException
 	{	String fileName;

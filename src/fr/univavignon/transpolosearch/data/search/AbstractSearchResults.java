@@ -274,9 +274,6 @@ if(result instanceof WebSearchResult && ((WebSearchResult)result).url.equalsIgno
 		logger.log("Event extraction complete: ("+count+"/"+total+")");
 	}
 	
-	/////////////////////////////////////////////////////////////////
-	// EXPORT		/////////////////////////////////////////////////
-	/////////////////////////////////////////////////////////////////
 	/** Title of the Web resource */
 	protected static final String COL_PAGE_TITLE = "Page title";
 	/** URL of the Web resource */
