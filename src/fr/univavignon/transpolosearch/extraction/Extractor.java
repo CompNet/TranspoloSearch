@@ -136,6 +136,11 @@ public class Extractor
 		
 		// setup the output folder
 		String outFolder = keywords.replace(' ','_');
+		if(website!=null)
+		{	URL url = new URL(website);
+			String host = url.getHost();
+			outFolder = outFolder + "_" + host;
+		}
 		FileNames.setOutputFolder(outFolder);
 		
 		// perform the Web search
@@ -436,7 +441,6 @@ public class Extractor
 					logger.increaseOffset();
 						// apply the engine
 						urls = engine.search(keywords,website,startDate,endDate);
-						//TODO comment faire pour numéroter chaque sous-recherche indép ? >> faut renvoyer une map au lieu d'une liste
 						
 						// possibly record its results
 						if(cachedSearch)

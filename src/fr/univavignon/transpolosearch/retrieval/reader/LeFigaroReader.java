@@ -69,7 +69,7 @@ import fr.univavignon.transpolosearch.tools.html.HtmlTools;
 
 /**
  * From a specified URL, this class retrieves a page
- * from the french newspaper Le Figaro (as of 17/08/2017),
+ * from the french newspaper Le Figaro (as of 09/09/2017),
  * and gives access to the raw and linked texts, as well
  * as other metadata (authors, publishing date, etc.).
  * 
@@ -89,8 +89,9 @@ public class LeFigaroReader extends ArticleReader
 	 */
 	public static void main(String[] args) throws Exception
 	{	
-//		URL url = new URL("http://www.lefigaro.fr/international/2017/08/16/01003-20170816ARTFIG00075-violences-a-charlottesville-la-polemique-racontee-en-quatre-episodes.php");
-		URL url = new URL("http://www.lefigaro.fr/sciences/2017/08/17/01008-20170817ARTFIG00132-daniel-zagury-l-homme-qui-se-vaccina-contre-le-sida.php");
+		URL url = new URL("http://www.lefigaro.fr/international/2017/08/16/01003-20170816ARTFIG00075-violences-a-charlottesville-la-polemique-racontee-en-quatre-episodes.php");
+//		URL url = new URL("http://www.lefigaro.fr/sciences/2017/08/17/01008-20170817ARTFIG00132-daniel-zagury-l-homme-qui-se-vaccina-contre-le-sida.php");
+//		URL url = new URL("http://www.lefigaro.fr/elections/presidentielles/2017/03/02/35003-20170302ARTFIG00373-fillon-les-elus-on-fera-sans-eux-les-electeurs-de-droite-ils-tiennent.php");
 		
 		ArticleReader reader = new LeFigaroReader();
 		Article article = reader.processUrl(url, ArticleLanguage.FR);
@@ -115,26 +116,16 @@ public class LeFigaroReader extends ArticleReader
 	/** Format used to parse the dates */
 	private static final DateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss",Locale.FRENCH);
 	
-	/** Item prop of the main article */
-	private final static String CONTENT_MAIN = "mainContentOfPage";
-	/** Item prop of the author name */
-	private final static String AUTHOR_NAME = "name";
-
-	/** Class of the author names */
-	private final static String CLASS_AUTHOR = "fig-auteur";
+	/** Class of the list of author names */
+	private final static String CLASS_AUTHORS = "fig-content-metas__authors";
+	/** Class of one author's name */
+	private final static String CLASS_AUTHOR = "fig-content-metas__author";
 	/** Class of the article description panel */
-	private final static String CLASS_DESCRIPTION = "fig-chapo";
+	private final static String CLASS_DESCRIPTION = "fig-content__chapo";
 	/** Class of the article body */
-	private final static String CLASS_ARTICLE_BODY = "fig-article-body";
-	/** Class of the publication date */
-	private final static String CLASS_DATE_PUB = "fig-date-pub";
-	/** Class of the modification date */
-	private final static String CLASS_DATE_UPDT = "fig-date-maj";
+	private final static String CLASS_ARTICLE_BODY = "fig-content__body";
 	/** Class of the restricted access */
-	private final static String CLASS_PROMO = "fig-article-promo";
-	
-	/** ID of the restricted access */
-	private final static String ID_KLOCKED = "kLocked";
+	private final static String CLASS_PAYWALL = "fig-premium-paywall";
 	
 	@Override
 	public Article processUrl(URL url, ArticleLanguage language) throws ReaderException
@@ -167,17 +158,16 @@ public class LeFigaroReader extends ArticleReader
 			if(articleElts.size()==0)
 				throw new IllegalArgumentException("No <article> element found in the Web page");
 			else 
-			{	articleElt = articleElts.first();
-				String itemPropVal = articleElt.attr(HtmlNames.ATT_ITEMPROP);
-				if(!itemPropVal.equals(CONTENT_MAIN))
-					logger.log("WARNING: The first article is not the main content of the page, which is not normal.");
+			{	if(articleElts.size()>1)
+					logger.log("WARNING: several articles present in this page, we take the first one.");
+				articleElt = articleElts.first();
 			}
-			
+					
 			// check if the access is restricted
-			Elements promoElts = articleElt.getElementsByAttributeValueContaining(HtmlNames.ATT_CLASS, CLASS_PROMO);
+			Elements promoElts = articleElt.getElementsByAttributeValueContaining(HtmlNames.ATT_CLASS, CLASS_PAYWALL);
 			if(!promoElts.isEmpty())
 				logger.log("WARNING: The access to this article is limited, only the beginning is available.");
-			
+	
 			// get the title
 			Element titleElt = articleElt.getElementsByTag(HtmlNames.ELT_H1).first();
 			List<TextNode> textNodes = titleElt.textNodes();	// we need to ignore "avant-première" and other similar indications
@@ -188,34 +178,37 @@ public class LeFigaroReader extends ArticleReader
 			logger.log("Get title: \""+title+"\"");
 			
 			// retrieve the dates
-			Elements pubDateElts = articleElt.getElementsByAttributeValueContaining(HtmlNames.ATT_CLASS, CLASS_DATE_PUB);
-			if(!pubDateElts.isEmpty())
-			{	Element pubDateElt = pubDateElts.first();
-				Element time = pubDateElt.getElementsByTag(HtmlNames.ELT_TIME).first();
-				publishingDate = HtmlTools.getDateFromTimeElt(time,DATE_FORMAT);
+			Elements dateElts = articleElt.getElementsByTag(HtmlNames.ELT_TIME);
+			Iterator<Element> it = dateElts.iterator();
+			if(it.hasNext())
+			{	Element pubDateElt = it.next();
+				publishingDate = HtmlTools.getDateFromTimeElt(pubDateElt,DATE_FORMAT);
 				logger.log("Found the publishing date: "+publishingDate);
+				if(it.hasNext())
+				{	Element updtDateElt = it.next();
+					modificationDate = HtmlTools.getDateFromTimeElt(updtDateElt,DATE_FORMAT);
+					logger.log("Found the last modification date: "+modificationDate);
+				}
+				else
+					logger.log("Did not find any last modification date");
 			}
 			else
 				logger.log("Did not find any publication date");
-			Elements updtDateElts = articleElt.getElementsByAttributeValueContaining(HtmlNames.ATT_CLASS, CLASS_DATE_UPDT);
-			if(!updtDateElts.isEmpty())
-			{	Element updtDateElt = updtDateElts.first();
-				Element time = updtDateElt.getElementsByTag(HtmlNames.ELT_TIME).first();
-				modificationDate = HtmlTools.getDateFromTimeElt(time,DATE_FORMAT);
-				logger.log("Found the last modification date: "+modificationDate);
-			}
-			else
-				logger.log("Did not find any last modification date");
-	
+			
 			// retrieve the authors
 			Elements authorElts = articleElt.getElementsByAttributeValueContaining(HtmlNames.ATT_CLASS, CLASS_AUTHOR);
+			it = authorElts.iterator();
+			while(it.hasNext())
+			{	Element elt = it.next();
+				String classStr = elt.attr(HtmlNames.ATT_CLASS);
+				if(classStr.contains(CLASS_AUTHORS))
+					it.remove();
+			}
 			if(!authorElts.isEmpty())
-			{	Element authorElt = authorElts.first();
-				Elements nameElts = authorElt.getElementsByAttributeValueContaining(HtmlNames.ATT_ITEMPROP, AUTHOR_NAME);
-				logger.log("List of the authors found for this article:");
-					logger.increaseOffset();
+			{	logger.log("List of the authors found for this article:");
+				logger.increaseOffset();
 					authors = new ArrayList<String>();
-					for(Element nameElt: nameElts)
+					for(Element nameElt: authorElts)
 					{	String authorName = nameElt.text();
 						authorName = removeGtst(authorName);
 						logger.log(authorName);
@@ -225,14 +218,14 @@ public class LeFigaroReader extends ArticleReader
 			}
 			else
 				logger.log("WARNING: could not find any author, which is unusual");
-			
+					
 			// get the description
 			Element descriptionElt = articleElt.getElementsByAttributeValueContaining(HtmlNames.ATT_CLASS, CLASS_DESCRIPTION).first();
 			String text = descriptionElt.text() + "\n";
 			text = removeGtst(text);
 			rawStr.append(text);
 			linkedStr.append(text);
-		
+			
 			// processing the article main content
 			Element contentElt = articleElt.getElementsByAttributeValueContaining(HtmlNames.ATT_CLASS, CLASS_ARTICLE_BODY).first();
 			processAnyElement(contentElt, rawStr, linkedStr);

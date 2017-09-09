@@ -295,6 +295,7 @@ public class Test
 }
 
 // TODO médias sociaus: rajouter dans le csv le nombre de commentaires associés à chaque post
+// TODO rajouter séparateur avant/après patronyme
 
 // dates: 6/3 >> 10/3
 // pers: C. Helle + M. Aubry + A. Hidalgo
