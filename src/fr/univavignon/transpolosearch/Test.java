@@ -62,6 +62,7 @@ import com.optimaize.langdetect.text.CommonTextObjectFactories;
 import com.optimaize.langdetect.text.TextObject;
 import com.optimaize.langdetect.text.TextObjectFactory;
 
+import fr.univavignon.transpolosearch.data.article.ArticleLanguage;
 import fr.univavignon.transpolosearch.data.search.AbstractSearchResults;
 import fr.univavignon.transpolosearch.extraction.Extractor;
 import fr.univavignon.transpolosearch.retrieval.ArticleRetriever;
@@ -117,6 +118,14 @@ public class Test
 	/////////////////////////////////////////////////////////////////
 	/** Common object used for logging */
 	private static HierarchicalLogger logger = HierarchicalLoggerManager.getHierarchicalLogger();
+	
+	/////////////////////////////////////////////////////////////////
+	// MISC			/////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////
+	private void updateArticleLanguage(String folder)
+	{	
+		
+	}
 	
 	/////////////////////////////////////////////////////////////////
 	// RETRIEVAL	/////////////////////////////////////////////////
@@ -478,16 +487,17 @@ if(line.contains("marseillan"))
 		for(String[] param: params)
 		{	String keywords = param[0];
 			String compulsoryExpression = param[1];
-		
+			
 			String website = null;
 			Date startDate = df.parse("20170306");
 			Date endDate = df.parse("20170310");
 			boolean searchDate = true;
 			boolean extendedSocialSearch = true;
+			ArticleLanguage language = ArticleLanguage.FR;
 			
 			logger.log("Processing "+keywords);
 			logger.increaseOffset();
-				extractor.performExtraction(keywords, website, startDate, endDate, searchDate, compulsoryExpression, extendedSocialSearch);
+				extractor.performExtraction(keywords, website, startDate, endDate, searchDate, compulsoryExpression, extendedSocialSearch, language);
 			logger.decreaseOffset();
 		}
 	}

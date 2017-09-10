@@ -68,6 +68,7 @@ import fr.univavignon.transpolosearch.tools.file.FileNames;
 import fr.univavignon.transpolosearch.tools.file.FileTools;
 import fr.univavignon.transpolosearch.tools.html.HtmlNames;
 import fr.univavignon.transpolosearch.tools.html.HtmlTools;
+import fr.univavignon.transpolosearch.tools.string.StringTools;
 
 /**
  * From a specified URL, this class retrieves a page
@@ -248,7 +249,6 @@ public class LExpressReader extends ArticleReader
 				result.setTitle(title);
 				result.setUrl(url);
 				result.initRetrievalDate();
-				result.setLanguage(language);
 				result.setPublishingDate(publishingDate);
 				if(modificationDate!=null)
 					result.setModificationDate(modificationDate);
@@ -262,6 +262,13 @@ public class LExpressReader extends ArticleReader
 				String linkedText = linkedStr.toString();
 				result.setLinkedText(linkedText);
 				logger.log("Length of the linked text: "+linkedText.length()+" chars.");
+
+				// language
+				if(language==null)
+				{	language = StringTools.detectLanguage(rawText,false);
+					logger.log("Detected language: "+language);
+				}
+				result.setLanguage(language);
 				
 				// get original html source code
 				logger.log("Get original HTML source code.");

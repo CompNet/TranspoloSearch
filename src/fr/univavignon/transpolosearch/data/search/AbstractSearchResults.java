@@ -26,6 +26,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
+import fr.univavignon.transpolosearch.data.article.ArticleLanguage;
 import fr.univavignon.transpolosearch.processing.InterfaceRecognizer;
 import fr.univavignon.transpolosearch.processing.ProcessorException;
 import fr.univavignon.transpolosearch.tools.log.HierarchicalLogger;
@@ -82,6 +83,28 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 	/////////////////////////////////////////////////////////////////
 	// FILTERING	/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
+	/**
+	 * Discards results whose language does not matche the targetted one.
+	 *
+	 * @param language
+	 * 		Targetted language of the articles.
+	 */
+	private void filterByLanguage(ArticleLanguage language)
+	{	logger.log("Removing articles not matching the language constraint: "+language);
+		logger.increaseOffset();
+			int count = 0;
+			int total = 0;
+			for(T result: results.values())
+			{	if(result.status==null)
+				{	total++;
+					if(!result.filterByLanguage(language,total))
+						count++;
+				}
+			}
+		logger.decreaseOffset();
+		logger.log("Language-based filtering complete: "+count+"/"+total);
+	}
+	
 	/**
 	 * Discards results describing only events not contained 
 	 * in the specified date range.
@@ -152,8 +175,10 @@ if(result instanceof WebSearchResult && ((WebSearchResult)result).url.equalsIgno
 	 * @param compulsoryExpression
 	 * 		String expression which must be present in the article,
 	 * 		or {@code null} if there is no such constraint.
+	 * @param language
+	 * 		Targetted language of the articles.
 	 */
-	public void filterByContent(Date startDate, Date endDate, boolean searchDate, String compulsoryExpression)
+	public void filterByContent(Date startDate, Date endDate, boolean searchDate, String compulsoryExpression, ArticleLanguage language)
 	{	logger.log("Starting filtering the articles");
 		logger.increaseOffset();
 		
@@ -167,7 +192,14 @@ if(result instanceof WebSearchResult && ((WebSearchResult)result).url.equalsIgno
 				txt = txt + "(dates are ignored here, because they were already used during the search)";
 			logger.log(txt);
 			logger.log("compulsoryExpression="+compulsoryExpression);
+			logger.log("language="+language);
 		logger.decreaseOffset();
+		
+		// filter depending on the language
+		if(language!=null)
+			filterByLanguage(language);
+		else
+			logger.log("No targetted language to process");
 		
 		// possibly filter the resulting texts depending on the compulsory expression
 		if(compulsoryExpression!=null)

@@ -36,6 +36,7 @@ import org.xml.sax.SAXException;
 
 import com.gargoylesoftware.htmlunit.FailingHttpStatusCodeException;
 
+import fr.univavignon.transpolosearch.data.article.ArticleLanguage;
 import fr.univavignon.transpolosearch.data.search.SocialSearchResult;
 import fr.univavignon.transpolosearch.data.search.SocialSearchResults;
 import fr.univavignon.transpolosearch.data.search.WebSearchResults;
@@ -118,6 +119,8 @@ public class Extractor
 	 * 		users commenting the posts of interest, for the considered period. If 
 	 * 		{@code false}, only the posts on the targeted page and their direct comments
 	 * 		are returned. 
+	 * @param language
+	 * 		Language targetted during the search.
 	 * 
 	 * @throws IOException 
 	 * 		Problem accessing the Web or a file.
@@ -130,7 +133,7 @@ public class Extractor
 	 * @throws ProcessorException 
 	 * 		Problem while detecting the entity mentions.
 	 */
-	public void performExtraction(String keywords, String website, Date startDate, Date endDate, boolean searchDate, String compulsoryExpression, boolean extendedSocialSearch) throws IOException, ReaderException, ParseException, SAXException, ProcessorException
+	public void performExtraction(String keywords, String website, Date startDate, Date endDate, boolean searchDate, String compulsoryExpression, boolean extendedSocialSearch, ArticleLanguage language) throws IOException, ReaderException, ParseException, SAXException, ProcessorException
 	{	logger.log("Starting the information extraction");
 		logger.increaseOffset();
 		
@@ -145,11 +148,11 @@ public class Extractor
 		
 		// perform the Web search
 		logger.log("Performing the Web search");
-		performWebExtraction(keywords, website, startDate, endDate, searchDate, compulsoryExpression);
+		performWebExtraction(keywords, website, startDate, endDate, searchDate, compulsoryExpression, language);
 		
 		// perform the social search
 		logger.log("Performing the social media search");
-		performSocialExtraction(keywords, startDate, endDate, compulsoryExpression, extendedSocialSearch);
+		performSocialExtraction(keywords, startDate, endDate, compulsoryExpression, extendedSocialSearch, language);
 		
 		logger.decreaseOffset();
 		logger.log("Information extraction over");
@@ -175,6 +178,8 @@ public class Extractor
 	 * @param compulsoryExpression
 	 * 		String expression which must be present in the article,
 	 * 		or {@code null} if there is no such constraint.
+	 * @param language
+	 * 		Language targetted during the search.
 	 * 
 	 * @throws IOException 
 	 * 		Problem accessing the Web or a file.
@@ -187,7 +192,7 @@ public class Extractor
 	 * @throws ProcessorException 
 	 * 		Problem while detecting the entity mentions.
 	 */
-	private void performWebExtraction(String keywords, String website, Date startDate, Date endDate, boolean searchDate, String compulsoryExpression) throws IOException, ReaderException, ParseException, SAXException, ProcessorException
+	private void performWebExtraction(String keywords, String website, Date startDate, Date endDate, boolean searchDate, String compulsoryExpression, ArticleLanguage language) throws IOException, ReaderException, ParseException, SAXException, ProcessorException
 	{	logger.log("Starting the web extraction");
 		logger.increaseOffset();
 		
@@ -205,7 +210,7 @@ public class Extractor
 		results.detectMentions(recognizer);
 		
 		// possibly filter the articles depending on the dates and compulsory expression
-		results.filterByContent(startDate,endDate,searchDate,compulsoryExpression);
+		results.filterByContent(startDate,endDate,searchDate,compulsoryExpression,language);
 		results.exportAsCsv(FileNames.FI_SEARCH_RESULTS_CONTENT);
 
 		// displays the remaining articles with their mentions	//TODO maybe get the entities instead of the mention, eventually?
@@ -245,6 +250,8 @@ public class Extractor
 	 * @param compulsoryExpression
 	 * 		String expression which must be present in the groups of posts,
 	 * 		or {@code null} if there is no such constraint.
+	 * @param language
+	 * 		Language targetted during the search.
 	 * 
 	 * @throws IOException 
 	 * 		Problem accessing the Web or a file.
@@ -257,7 +264,7 @@ public class Extractor
 	 * @throws ProcessorException 
 	 * 		Problem while detecting the entity mentions.
 	 */
-	private void performSocialExtraction(String keywords, Date startDate, Date endDate, String compulsoryExpression, boolean extendedSocialSearch) throws IOException, ReaderException, ParseException, SAXException, ProcessorException
+	private void performSocialExtraction(String keywords, Date startDate, Date endDate, String compulsoryExpression, boolean extendedSocialSearch, ArticleLanguage language) throws IOException, ReaderException, ParseException, SAXException, ProcessorException
 	{	logger.log("Starting the social media extraction");
 		logger.increaseOffset();
 		
@@ -269,7 +276,7 @@ public class Extractor
 		results.buildArticles(includeComments);
 		
 		// possibly filter the articles depending on the compulsory expression
-		results.filterByContent(null,null,true,compulsoryExpression);
+		results.filterByContent(null,null,true,compulsoryExpression,language);
 		
 		// detect the entity mentions
 		results.detectMentions(recognizer);

@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 
 import fr.univavignon.transpolosearch.data.article.Article;
+import fr.univavignon.transpolosearch.data.article.ArticleLanguage;
 import fr.univavignon.transpolosearch.data.entity.EntityType;
 import fr.univavignon.transpolosearch.data.entity.mention.AbstractMention;
 import fr.univavignon.transpolosearch.data.entity.mention.MentionDate;
@@ -79,17 +80,33 @@ public abstract class AbstractSearchResult
 	public Article article = null;
 	
 	/**
-	 * Discards the result if its article does not contain 
-	 * the specified compulsory expression.
+	 * Discards results not matching the targetted language.
 	 *  
-	 * @param compulsoryExpression
-	 * 		String expression which must be present in the article.
+	 * @param language
+	 * 		The targetted language.
 	 * @param nbr
 	 * 		Number of this result in the collection.
 	 * @return
 	 * 		{@code true} iff the result was discarded.
 	 */
-	protected abstract boolean filterByKeyword(String compulsoryExpression, int nbr);
+	protected boolean filterByLanguage(ArticleLanguage language, int nbr)
+	{	logger.log("Processing article "+article.getTitle()+" ("+nbr+")");
+		logger.increaseOffset();
+			ArticleLanguage lang = article.getLanguage();
+			logger.log("Article language: "+lang+" (vs. "+language+")");
+			boolean result = language==lang;
+			if(result)
+				logger.log("The article language matches the targetted one >> we keep it");
+			else
+				logger.log("The article language does not match the targetted one >> we discard it");
+			
+			// possibly remove the article
+			if(result)
+				status = "Incorrect language";
+
+		logger.decreaseOffset();
+		return result;
+	}
 	
 	/**
 	 * Discards results describing only events not contained 
@@ -106,32 +123,48 @@ public abstract class AbstractSearchResult
 	 */
 	protected boolean filterByDate(Date startDate, Date endDate, int nbr)
 	{	logger.log("Processing article "+article.getTitle()+" ("+nbr+")");
-		List<AbstractMention<?>> dateMentions = mentions.getMentionsByType(EntityType.DATE);
-		boolean result = dateMentions.isEmpty();
-		if(!result)	
-		{	Period period = null;
-			Iterator<AbstractMention<?>> it = dateMentions.iterator();
-			while(period==null && it.hasNext())
-			{	AbstractMention<?> mention = it.next();
-				Period p = (Period) mention.getValue();
-				if(p.contains(startDate) ||  p.contains(endDate))
-					period = p;
+		logger.increaseOffset();
+			List<AbstractMention<?>> dateMentions = mentions.getMentionsByType(EntityType.DATE);
+			boolean result = dateMentions.isEmpty();
+			if(!result)	
+			{	Period period = null;
+				Iterator<AbstractMention<?>> it = dateMentions.iterator();
+				while(period==null && it.hasNext())
+				{	AbstractMention<?> mention = it.next();
+					Period p = (Period) mention.getValue();
+					if(p.contains(startDate) ||  p.contains(endDate))
+						period = p;
+				}
+				
+				if(period==null)
+				{	logger.log("Did not find any appropriate date in article "+article.getTitle()+" >> removal ("+article.getUrl()+")");
+					result = true;
+				}
+				else
+					logger.log("Found date "+period+" in article "+article.getTitle()+" >> keep ("+article.getUrl()+")");
+				
 			}
 			
-			if(period==null)
-			{	logger.log("Did not find any appropriate date in article "+article.getTitle()+" >> removal ("+article.getUrl()+")");
-				result = true;
-			}
-			else
-				logger.log("Found date "+period+" in article "+article.getTitle()+" >> keep ("+article.getUrl()+")");
-			
-		}
+			// possibly remove the article/mentions
+			if(result)
+				status = "Missing targetted date";
 		
-		// possibly remove the article/mentions
-		if(result)
-			status = "Missing date";
+		logger.decreaseOffset();
 		return result;
 	}
+	
+	/**
+	 * Discards the result if its article does not contain 
+	 * the specified compulsory expression.
+	 *  
+	 * @param compulsoryExpression
+	 * 		String expression which must be present in the article.
+	 * @param nbr
+	 * 		Number of this result in the collection.
+	 * @return
+	 * 		{@code true} iff the result was discarded.
+	 */
+	protected abstract boolean filterByKeyword(String compulsoryExpression, int nbr);
 	
 	/////////////////////////////////////////////////////////////////
 	// MENTIONS		/////////////////////////////////////////////////

@@ -39,6 +39,7 @@ import fr.univavignon.transpolosearch.data.article.Article;
 import fr.univavignon.transpolosearch.data.article.ArticleLanguage;
 import fr.univavignon.transpolosearch.data.event.Event;
 import fr.univavignon.transpolosearch.tools.file.FileNames;
+import fr.univavignon.transpolosearch.tools.string.StringTools;
 import fr.univavignon.transpolosearch.tools.time.Period;
 import fr.univavignon.transpolosearch.tools.time.TimeFormatting;
 
@@ -162,7 +163,9 @@ public class SocialSearchResult extends AbstractSearchResult
 		article.setTitle(id);
 		if(author!=null)
 			article.addAuthor(author);
-		article.setLanguage(ArticleLanguage.FR);	// TODO we suppose the language is French, to be generalized later
+		ArticleLanguage lang = StringTools.detectLanguage(text,true);
+		if(lang!=null)
+			article.setLanguage(ArticleLanguage.FR);
 		article.setPublishingDate(date);
 		Calendar cal = Calendar.getInstance();
 		Date currentDate = cal.getTime();

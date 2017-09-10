@@ -32,7 +32,6 @@ import java.util.Map;
 
 import org.xml.sax.SAXException;
 
-import fr.univavignon.transpolosearch.data.article.ArticleLanguage;
 import fr.univavignon.transpolosearch.retrieval.ArticleRetriever;
 import fr.univavignon.transpolosearch.tools.file.FileNames;
 import fr.univavignon.transpolosearch.tools.file.FileTools;
@@ -145,7 +144,7 @@ if(url.contains("cookies"))
 			
 			// init
 			ArticleRetriever articleRetriever = new ArticleRetriever(true); //TODO cache disabled for debugging
-			articleRetriever.setLanguage(ArticleLanguage.FR); // TODO we know the articles will be in French (should be generalized later)
+//			articleRetriever.setLanguage(ArticleLanguage.FR);
 			
 			int count = 0;
 			int total = 0;

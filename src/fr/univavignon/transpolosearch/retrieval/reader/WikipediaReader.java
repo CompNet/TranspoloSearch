@@ -57,6 +57,7 @@ import fr.univavignon.transpolosearch.retrieval.reader.ReaderException;
 import fr.univavignon.transpolosearch.tools.file.FileNames;
 import fr.univavignon.transpolosearch.tools.file.FileTools;
 import fr.univavignon.transpolosearch.tools.html.HtmlNames;
+import fr.univavignon.transpolosearch.tools.string.StringTools;
 
 /**
  * From a specified URL, this class retrieves a Wikipedia page,
@@ -883,7 +884,6 @@ public class WikipediaReader extends ArticleReader
 			result.setTitle(title);
 			result.setUrl(url);
 			result.initRetrievalDate();
-			result.setLanguage(language);
 			
 			// clean text
 			String rawText = rawStr.toString();
@@ -896,6 +896,13 @@ public class WikipediaReader extends ArticleReader
 //			linkedText = ArticleCleaning.replaceChars(linkedText);
 			result.setLinkedText(linkedText);
 			logger.log("Length of the linked text: "+linkedText.length()+" chars.");
+
+			// language
+			if(language==null)
+			{	language = StringTools.detectLanguage(rawText,false);
+				logger.log("Detected language: "+language);
+			}
+			result.setLanguage(language);
 			
 			// get original html source code
 			logger.log("Get original HTML source code.");
