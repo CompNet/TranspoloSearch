@@ -305,48 +305,59 @@ class OpenCalaisDelegateRecognizer extends AbstractModellessInternalDelegateReco
 			String originalText = it.next();
 			String ocAnswer = it.next();
 			
-			try
-			{	// build DOM
-				logger.log("Build DOM");
-				SAXBuilder sb = new SAXBuilder();
-				Document doc = sb.build(new StringReader(ocAnswer));
-				Element root = doc.getRootElement();
-				nsRdf = root.getNamespace(NS_RDF);
-				nsC = root.getNamespace(NS_C);
-				
-				// separate data from metadata
-				logger.log("Separate data from meta-data");
-				List<Element> elements = root.getChildren(ELT_DESCRIPTION,nsRdf);
-				Map<String,Element> metaData = new HashMap<String,Element>();
-				List<Element> data = new ArrayList<Element>();
-				for(Element element: elements)
-				{	if(element.getChild(ELT_DETECTION,nsC)==null)
-					{	String about = element.getAttributeValue(ATT_ABOUT,nsRdf); 
-						metaData.put(about,element);
+			// if the answer is actually an error message
+			if(ocAnswer.startsWith("{") && ocAnswer.contains("Unsupported-Language"))
+			{	logger.log("OpenCalais detected (possibly incorrectly) a language it does not support and returned an error code");
+				logger.log(ocAnswer);
+			}
+			
+			// otherwise, if we can process the answer
+			else
+			{	try
+				{	// build DOM
+					logger.log("Build DOM");
+					SAXBuilder sb = new SAXBuilder();
+					Document doc = sb.build(new StringReader(ocAnswer));
+					Element root = doc.getRootElement();
+					nsRdf = root.getNamespace(NS_RDF);
+					nsC = root.getNamespace(NS_C);
+					
+					// separate data from metadata
+					logger.log("Separate data from meta-data");
+					List<Element> elements = root.getChildren(ELT_DESCRIPTION,nsRdf);
+					Map<String,Element> metaData = new HashMap<String,Element>();
+					List<Element> data = new ArrayList<Element>();
+					for(Element element: elements)
+					{	if(element.getChild(ELT_DETECTION,nsC)==null)
+						{	String about = element.getAttributeValue(ATT_ABOUT,nsRdf); 
+							metaData.put(about,element);
+						}
+						else
+							data.add(element);
 					}
-					else
-						data.add(element);
+					
+					// create mentions
+					logger.log("Create mention objects");
+					for(Element element: data)
+					{	AbstractMention<?> mention = convertElement(element, metaData, prevSize, language);
+						if(mention!=null)
+							result.addMention(mention);
+					}
+					
+					// update size
+					prevSize = prevSize + originalText.length();
+					
+					// fix mention positions
+//					fixRelativePositions(root, result);
 				}
-				
-				// create mentions
-				logger.log("Create mention objects");
-				for(Element element: data)
-				{	AbstractMention<?> mention = convertElement(element, metaData, prevSize, language);
-					if(mention!=null)
-						result.addMention(mention);
+				catch (JDOMException e)
+				{	e.printStackTrace();
+					throw new ProcessorException(e.getMessage());
 				}
-				
-				// update size
-				prevSize = prevSize + originalText.length();
-				
-				// fix mention positions
-	//			fixRelativePositions(root, result);
-			}
-			catch (JDOMException e)
-			{	e.printStackTrace();
-			}
-			catch (IOException e)
-			{	e.printStackTrace();
+				catch (IOException e)
+				{	e.printStackTrace();
+					throw new ProcessorException(e.getMessage());
+				}
 			}
 		}
 		logger.decreaseOffset();

@@ -152,6 +152,7 @@ public class LiberationReader extends ArticleReader
 			String title = titleElt.text();
 			title = removeGtst(title);
 			title = title.replace("\"","'");
+			title = title.replaceAll("[\\s]+"," ");
 			logger.log("Get title: "+title);
 			
 			// check if the access is restricted

@@ -185,6 +185,7 @@ public class LeParisienReader extends ArticleReader
 				title = titleElt.text(); 
 				title = removeGtst(title).trim();
 				title = title.replace("\"","'");
+				title = title.replaceAll("[\\s]+"," ");
 				logger.log("Get title: \""+title+"\"");
 		
 				// retrieve the dates

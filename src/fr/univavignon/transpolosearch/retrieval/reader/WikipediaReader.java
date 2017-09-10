@@ -781,6 +781,7 @@ public class WikipediaReader extends ArticleReader
 			String title = firstHeadingElt.text();
 			title = removeGtst(title);
 			title = title.replace("\"","'");
+			title = title.replaceAll("[\\s]+"," ");
 			logger.log("Get title: "+title);
 			
 			// get raw and linked texts

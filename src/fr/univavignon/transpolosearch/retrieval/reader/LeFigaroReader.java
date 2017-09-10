@@ -156,7 +156,10 @@ public class LeFigaroReader extends ArticleReader
 			Elements articleElts = document.getElementsByTag(HtmlNames.ELT_ARTICLE);
 			Element articleElt = null;
 			if(articleElts.size()==0)
-				throw new IllegalArgumentException("No <article> element found in the Web page");
+			{	//throw new IllegalArgumentException("No <article> element found in the Web page");
+				logger.log("WARNING: no <article> element found in this Web page: this generally means it is a list of articles, so we ignore it.");
+				throw new ReaderException("No <article> element in Web page "+url);
+			}
 			else 
 			{	if(articleElts.size()>1)
 					logger.log("WARNING: several articles present in this page, we take the first one.");
@@ -175,6 +178,7 @@ public class LeFigaroReader extends ArticleReader
 				title = title + " " + textNode.text();
 			title = removeGtst(title).trim();
 			title = title.replace("\"","'");
+			title = title.replaceAll("[\\s]+"," ");
 			logger.log("Get title: \""+title+"\"");
 			
 			// retrieve the dates

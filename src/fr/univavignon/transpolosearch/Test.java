@@ -93,10 +93,11 @@ public class Test
 //		testGoogleSearch();
 		
 		// whole process
-		testExtractor();
+//		testExtractor();
 		
 		// compare searches
 //		compareSearches("Anne_Hidalgo_1", "Anne_Hidalgo_2");
+		compareSearches("Anne_Hidalgo_2", "Anne_Hidalgo_2ext");
 		
 		logger.close();
 	}
@@ -260,6 +261,8 @@ public class Test
 		Map<String,Map<String,String>> result = new HashMap<String,Map<String,String>>();
 		while(scanner.hasNextLine())
 		{	String line = scanner.nextLine();
+if(line.contains("marseillan"))
+	System.out.print("");
 			String tmp[] = line.split(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)", -1);
 			Map<String,String> map = new HashMap<String,String>();
 			for(int i=0;i<tmp.length;i++)
@@ -319,7 +322,9 @@ public class Test
 			Map<String,String> vals1 = entry.getValue();
 			Map<String,String> vals2 = map2.get(key);
 			if(vals2==null)
+			{	vals1.put(COL_COMPARISON, "Only #1");
 				only1.add(vals1);
+			}
 			else
 			{	Map<String,String> vals = new HashMap<String,String>();
 				for(String colName: colNames)
@@ -336,10 +341,15 @@ public class Test
 					{	if(val2==null || vals2.isEmpty())
 							val = val1 + "\n<Empty>";
 						else
-							val = val1 + "\n" + val2;
+						{	if(val1.equalsIgnoreCase(val2))
+								val = val1;
+							else
+								val = val1 + "\n" + val2;
+						}
 					}
 					vals.put(colName, val);
 				}
+				vals.put(COL_COMPARISON, "Both");
 				both.add(vals);
 			}
 		}
@@ -348,6 +358,7 @@ public class Test
 			Map<String,String> vals1 = map1.get(key);
 			if(vals1==null)
 			{	Map<String,String> vals2 = entry.getValue();
+				vals2.put(COL_COMPARISON, "Only #2");
 				only2.add(vals2);
 			}
 		}
@@ -363,7 +374,7 @@ public class Test
 					header = header + ",";
 				header = header + "\"" + colName + "\"";
 			}
-			pw.print(header);
+			pw.println(header);
 		}
 		// write content
 		List<List<Map<String,String>>> data = Arrays.asList(only1, only2, both);
@@ -378,7 +389,7 @@ public class Test
 						val = "";
 					line = line + "\"" + val + "\"";
 				}
-				pw.print(line);
+				pw.println(line);
 			}
 		}
 		pw.close();
@@ -449,8 +460,8 @@ public class Test
 		
 		String params[][] = {
 //			{"Anne Hidalgo", "Hidalgo"}
-			{"Cécile Helle", "Helle"}
-//			{"Martine Aubry", "Aubry"}
+			{"Cécile Helle", "Helle"},
+			{"Martine Aubry", "Aubry"}
 //			{"Roland Ries", "Ries"}
 		};
 		
@@ -475,6 +486,7 @@ public class Test
 // TODO médias sociaux: rajouter dans le csv le nombre de commentaires associés à chaque post
 //		en fait : rajouter le CSV pr médias sociaux (indép. d'évts)
 // TODO rajouter séparateur avant/après patronyme
+// TODO utiliser OpenCalais pour détecter la langue (et filtrer) ?
 
 // dates: 6/3 >> 10/3
 // pers: C. Helle + M. Aubry + A. Hidalgo
