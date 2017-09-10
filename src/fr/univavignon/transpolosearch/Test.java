@@ -104,11 +104,11 @@ public class Test
 //		testGoogleSearch();
 		
 		// whole process
-//		testExtractor();
+		testExtractor();
 		
 		// compare searches
 //		compareSearches("Anne_Hidalgo_1", "Anne_Hidalgo_2");
-		compareSearches("Anne_Hidalgo_2", "Anne_Hidalgo_2ext");
+//		compareSearches("Anne_Hidalgo_2", "Anne_Hidalgo_2ext");
 		
 		logger.close();
 	}
@@ -497,7 +497,3 @@ if(line.contains("marseillan"))
 
 // TODO médias sociaux: rajouter dans le csv le nombre de commentaires associés à chaque post
 //		en fait : rajouter le CSV pr médias sociaux (indép. d'évts)
-// TODO rajouter séparateur avant/après patronyme
-
-// dates: 6/3 >> 10/3
-// pers: C. Helle + M. Aubry + A. Hidalgo

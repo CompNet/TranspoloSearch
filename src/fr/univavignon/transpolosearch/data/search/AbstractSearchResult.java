@@ -94,7 +94,7 @@ public abstract class AbstractSearchResult
 		logger.increaseOffset();
 			ArticleLanguage lang = article.getLanguage();
 			logger.log("Article language: "+lang+" (vs. "+language+")");
-			boolean result = language==lang;
+			boolean result = language!=lang;
 			if(result)
 				logger.log("The article language matches the targetted one >> we keep it");
 			else

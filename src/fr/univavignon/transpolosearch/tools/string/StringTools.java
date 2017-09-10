@@ -37,6 +37,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Combinations;
 
 import com.google.common.base.Optional;
+import com.optimaize.langdetect.DetectedLanguage;
 import com.optimaize.langdetect.LanguageDetector;
 import com.optimaize.langdetect.LanguageDetectorBuilder;
 import com.optimaize.langdetect.i18n.LdLocale;
@@ -856,9 +857,22 @@ public class StringTools
 			// process the text
 			TextObject textObject = textObjectFactory.forText(text);
 			Optional<LdLocale> lang = LANGUAGE_DETECTOR.detect(textObject);
+			LdLocale loc = null;
 			if(lang.isPresent())
-			{	LdLocale loc = lang.get();
-				String iso = loc.getLanguage();
+				loc = lang.get();
+			else
+			{	List<DetectedLanguage> dls = LANGUAGE_DETECTOR.getProbabilities(textObject);
+				double maxProba = 0;
+				for(DetectedLanguage dl: dls)
+				{	double proba = dl.getProbability();
+					if(proba>maxProba)
+					{	loc = dl.getLocale();
+						maxProba = proba;
+					}
+				}
+			}
+			if(loc!=null)
+			{	String iso = loc.getLanguage();
 				switch(iso)
 				{	case "fr": 
 						result = ArticleLanguage.FR;

@@ -135,9 +135,11 @@ public class WebSearchResult extends AbstractSearchResult
 		logger.log("Retrieving article #"+nbr+" at URL "+url);
 		try
 		{	article = articleRetriever.process(url);
-String text = article.getRawText();
+String text = article.getRawText();//TODO remove all this once the articles have been updated
 ArticleLanguage language = StringTools.detectLanguage(text, false);
 article.setLanguage(language);
+if(url.equals("https://www.marianne.net/politique/le-ralliement-de-delanoe-macron-c-est-la-vieille-garde-du-ps-qui-traine-des-pieds"))
+	System.out.print("");
 article.write();
 		}
 		catch (ReaderException e)
