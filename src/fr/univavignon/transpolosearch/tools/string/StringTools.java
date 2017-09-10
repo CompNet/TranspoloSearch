@@ -21,6 +21,7 @@ package fr.univavignon.transpolosearch.tools.string;
 import java.text.Normalizer;
 import java.text.Normalizer.Form;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
@@ -33,6 +34,9 @@ import java.util.regex.Pattern;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Combinations;
 
+import fr.univavignon.transpolosearch.tools.log.HierarchicalLogger;
+import fr.univavignon.transpolosearch.tools.log.HierarchicalLoggerManager;
+
 /**
  * This class contains various methods
  * used when processing strings.
@@ -42,7 +46,7 @@ import org.apache.commons.math3.util.Combinations;
 public class StringTools
 {
 	/**
-	 * Tests the {@link #splitText(String, int)} method.
+	 * Tests various methods of this class.
 	 * 
 	 * @param args
 	 * 		No need.
@@ -86,8 +90,18 @@ public class StringTools
 		// test expr
 //		List<Integer> list = extractValues("1,2,3,8,9,10-18,56,98,2,6,8");
 //		System.out.println(list);
+		
+		// test rtl cleaning
+		String str = removeNonLatinChars("sdsfsd fتثتqsdsq");
+		System.out.println(str);
 	}
-
+	
+	/////////////////////////////////////////////////////////////////
+	// LOGGER		/////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////
+	/** Common object used for logging */
+	public static HierarchicalLogger logger = HierarchicalLoggerManager.getHierarchicalLogger();
+	
 	/////////////////////////////////////////////////////////////////
 	// COMPARISON		/////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
@@ -198,8 +212,15 @@ public class StringTools
 	private final static String PUNCTUATION = "'()<>:,\\-!.\";&@%+";
 	/** Regex used to detect HTML hyperlink tags */
 	private final static Pattern HL_PATTERN = Pattern.compile("</?a ?[^>]*>");
-	/** Regex used to detect non-latin letters */
-	private final static Pattern NL_PATTERN = Pattern.compile("[^"+PUNCTUATION+"\\sA-Za-z0-9]");
+//	/** Regex used to detect non-latin letters */
+//	private final static Pattern NL_PATTERN = Pattern.compile("[^"+PUNCTUATION+"\\sA-Za-z0-9]");
+	/** List of allowed "latin" characters, used when cleaning articles */
+	private final static List<Character> LATIN_CHARS = Arrays.asList(
+		'\'', '(', ')', '<', '>', ':', ',' ,'\\', '-', '!', '.', '"', ';', '&', '@', '%', '+', ' ',
+		'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
+		'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
+		'0', '1', '2', '3', '4', '4', '5', '6', '7', '8', '9'
+	);
 	
 	/**
 	 * Cleans the specified string, in order to remove characters
@@ -212,6 +233,9 @@ public class StringTools
 	 */
 	public static String cleanText(String input)
 	{	String output = input;
+		
+		// clean spaces
+		output = cleanSpaces(output);
 		
 		String previous = output;
 		do
@@ -370,23 +394,12 @@ public class StringTools
 		// remove empty parentheses
 		output = output.replaceAll("\\(\\)", "");
 		
-		// removes characters which are neither punctuation, whitespaces, letters or digits
+		// remove characters which are neither punctuation, whitespaces, letters or digits
 //		output = output.replaceAll("[^"+PUNCTUATION+"\\s\\p{L}\\d]", "");
 		output = output.replaceAll("[^"+PUNCTUATION+"\\s\\p{L}0-9]", "");
 		
-		// removes non-latin letters
-		String diacLess = removeDiacritics(output);
-		Matcher matcher = NL_PATTERN.matcher(diacLess);
-		String tmp = "";
-		int prevPos = 0;
-		while(matcher.find())
-		{	int pos = matcher.start();
-			tmp = tmp + output.substring(prevPos,pos);
-			prevPos = pos + 1;
-		}
-		if(prevPos<output.length())
-			tmp = tmp + output.substring(prevPos,output.length());
-		output = tmp;
+		// remove non-latin characters
+		output = removeNonLatinChars(output);
 		
 		return output;
 	}
@@ -396,7 +409,9 @@ public class StringTools
 	/////////////////////////////////////////////////////////////////
 	/**
 	 * Process the specified string in order to remove
-	 * space character-related problems.
+	 * space character-related problems. All whitespaces are
+	 * replaced by standard spaces, excepted '\n'. All 
+	 * consecutive redundant whitespaces are removed.
 	 *  
 	 * @param string
 	 * 		The original string (not modified).
@@ -407,9 +422,13 @@ public class StringTools
 	{	String result = string;
 		
 		if(result!=null)
-		{	// replace all white spaces by regular spaces
-			result = result.replaceAll("\\s", " ");
+		{	// replace all carriage return chars by newline ones
+			result = result.replace('\r', '\n');
+			// replace all consecutive new line chars by a single one
+			result = result.replaceAll("\\n+", "\\n");
 			
+			// replace all white spaces (except newline chars) by regular spaces
+			result = result.replaceAll("[\\s^\\n]", " ");
 			// replace all consecutive spaces by a single one
 			result = result.replaceAll(" +", " ");
 			
@@ -571,7 +590,7 @@ public class StringTools
 			// sentence too long for maxSize
 			if(length > maxSize)
 			{	// if only one sentence: must split using a lesser criterion
-				char candidates[] = {'\n','\r','!','?',';',',','|',':','(',' '};
+				char candidates[] = {'\n','\r','!','?',':',';',',','"','\'','|','(',' ','-','.'};
 				int i = 0;
 				int from;
 				while(i<candidates.length && start==prevEnd)
@@ -584,10 +603,13 @@ public class StringTools
 					while(from!=-1 && (from-start)<maxSize);
 					i++;
 				}
-				// if none found, exception
+					
+				// if none found...
 				if(start==prevEnd)
-				{	String sentence = text.substring(start,curEnd);
-					throw new IllegalArgumentException("The sentence \""+sentence+"\" ("+(curEnd-start)+" chars) is too long and cannot be split for maxSize="+maxSize);
+				{	//String sentence = text.substring(start,curEnd);
+					//throw new IllegalArgumentException("The sentence \""+sentence+"\" ("+(curEnd-start)+" chars) is too long and cannot be split for maxSize="+maxSize);
+					// just one single word? there must a problem... cut anyway!
+					prevEnd = start + maxSize;
 				}
 				else
 					prevEnd ++;
@@ -797,5 +819,52 @@ public class StringTools
 		result = result + "^";
 		
 		return result;
+	}
+	
+	/**
+	 * Removes all the characters supposed to be written from right to left,
+	 * as they mess up the regex searches, and are generally not supported
+	 * by the recognizers. 
+	 * 
+	 * @param input
+	 * 		Original string.
+	 * @return
+	 * 		Same string, without the RTL characters.
+	 */
+	public static String removeNonLatinChars(String input)
+	{	logger.increaseOffset();
+		boolean disp = input.length()>100000;
+		String result = input;
+		
+		if (input!=null)
+		{	// first version, regex-based: problems when dealing with bidirectional texts (eg english + arabic)
+//			String diacLess = removeDiacritics(result);
+//			Matcher matcher = NL_PATTERN.matcher(diacLess);
+//			String tmp = "";
+//			int prevPos = 0;
+//			while(matcher.find())
+//			{	int pos = matcher.start();
+//				tmp = tmp + result.substring(prevPos,pos);
+//				prevPos = pos + 1;
+//			}
+//			if(prevPos<result.length())
+//				tmp = tmp + result.substring(prevPos,result.length());
+//			result = tmp;
+			
+			// second version: brutal, but seems more robust
+			StringBuffer tmp = new StringBuffer();
+			for(int i=0;i<input.length();i++) 
+			{	if(disp && (i+1)%50000==0)
+					logger.log("Processing char "+(i+1)+"/"+input.length());
+				
+				char c = input.charAt(i);
+				if(LATIN_CHARS.contains(c))
+					tmp.append(c);
+	        }
+			result = tmp.toString();
+	    }
+		
+		logger.decreaseOffset();
+		 return result;
 	}
 }

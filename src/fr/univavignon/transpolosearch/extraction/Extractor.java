@@ -26,7 +26,10 @@ import java.net.URL;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Scanner;
 
 import org.xml.sax.SAXException;
@@ -133,6 +136,11 @@ public class Extractor
 		
 		// setup the output folder
 		String outFolder = keywords.replace(' ','_');
+		if(website!=null)
+		{	URL url = new URL(website);
+			String host = url.getHost();
+			outFolder = outFolder + "_" + host;
+		}
 		FileNames.setOutputFolder(outFolder);
 		
 		// perform the Web search
@@ -254,10 +262,11 @@ public class Extractor
 		logger.increaseOffset();
 		
 		// perform the social search
-		SocialSearchResults results = performSocialSearch(keywords, startDate, endDate, extendedSocialSearch);
+		boolean includeComments = false;
+		SocialSearchResults results = performSocialSearch(keywords, startDate, endDate, extendedSocialSearch, includeComments);
 		
 		// convert the posts to proper articles
-		results.buildArticles();
+		results.buildArticles(includeComments);
 		
 		// possibly filter the articles depending on the compulsory expression
 		results.filterByContent(null,null,true,compulsoryExpression);
@@ -285,6 +294,49 @@ public class Extractor
 	/////////////////////////////////////////////////////////////////
 	/** List of engines used for the Web search */
 	private final List<AbstractWebEngine> webEngines = new ArrayList<AbstractWebEngine>();
+//	/** Comparator used for result keys */
+//	private static final Comparator<String> KEY_COMPARATOR = new Comparator<String>() 
+//	{	@Override
+//		public int compare(String key1, String key2) 
+//		{	int result;
+//			Integer d1 = null;
+//			Integer r1 = null;
+//			Integer d2 = null;
+//			Integer r2 = null;
+//			
+//			if(key1.contains("-"))
+//			{	String tmp1[] = key1.split("-");
+//				d1 = Integer.parseInt(tmp1[0]);
+//				r1 = Integer.parseInt(tmp1[1]);
+//			}
+//			else
+//				r1 = Integer.parseInt(key1);
+//			
+//			if(key2.contains("-"))
+//			{	String tmp2[] = key2.split("-");
+//				d2 = Integer.parseInt(tmp2[0]);
+//				r2 = Integer.parseInt(tmp2[1]);
+//			}
+//			else
+//				r2 = Integer.parseInt(key2);
+//			
+//			if(d1==null)
+//				if(d2==null)
+//					result = r1.compareTo(r2);
+//				else
+//					result = -1;
+//			else
+//				if(d2==null)
+//					result = 1;
+//				else
+//				{	result = d1.compareTo(d2);
+//					if(result==0)
+//						result = r1.compareTo(r2);
+//				}
+//			
+//			return result;
+//		}
+//	};
 	
 	/**
 	 * Initializes the default search engines.
@@ -360,7 +412,7 @@ public class Extractor
 			WebSearchResults result = new WebSearchResults();
 			
 			for(AbstractWebEngine engine: webEngines)
-			{	List<URL> urls = new ArrayList<URL>();
+			{	Map<String,URL> urls;
 				
 				// possibly use cached results
 				String cacheFilePath = FileNames.FO_WEB_SEARCH_RESULTS + File.separator + engine.getName();
@@ -370,11 +422,15 @@ public class Extractor
 				File cacheFile = new File(cacheFilePath);
 				if(cachedSearch && cacheFile.exists())
 				{	logger.log("Loading the previous search results from file "+cacheFilePath);
+					urls = new HashMap<String,URL>();	
 					Scanner sc = FileTools.openTextFileRead(cacheFile,"UTF-8");
 					while(sc.hasNextLine())
-					{	String urlStr = sc.nextLine();
+					{	String line = sc.nextLine();
+						String tmp[] = line.split("\t");
+						String key = tmp[0].trim();
+						String urlStr = tmp[1].trim();
 						URL url = new URL(urlStr);
-						urls.add(url);
+						urls.put(key,url);
 					}
 					logger.log("Number of URLs loaded: "+urls.size());
 				}
@@ -390,20 +446,27 @@ public class Extractor
 						if(cachedSearch)
 						{	logger.log("Recording all URLs in text file \""+cacheFilePath+"\"");
 							PrintWriter pw = FileTools.openTextFileWrite(cacheFile,"UTF-8");
-							for(URL url: urls)
-								pw.println(url.toString());
+							for(Entry<String, URL> entry: urls.entrySet())
+							{	String key = entry.getKey();
+								URL url = entry.getValue();
+								pw.println(key+"\t"+url.toString());
+							}
 							pw.close();
 						}
 					logger.decreaseOffset();
 				}
 				
+//				// sort the URL keys
+//				TreeSet<String> keys = new TreeSet<String>(KEY_COMPARATOR);
+//				keys.addAll(urls.keySet());
+				
 				// add to the overall map of URLs
 				String engineName = engine.getName();
-				int rank = 1;
-				for(URL url: urls)
-				{	String urlStr = url.toString();
+				for(Entry<String,URL> entry: urls.entrySet())
+				{	String rank = entry.getKey();
+					URL url = entry.getValue();
+					String urlStr = url.toString();
 					result.addResult(urlStr, engineName, rank);
-					rank++;
 				}
 			}
 		logger.decreaseOffset();
@@ -451,13 +514,16 @@ public class Extractor
 	 * 		or {@code null} for no constraint.
 	 * @param extendedSearch
 	 * 		Whether or not to look for the posts of the commenting users. 
+	 * @param includeComments 
+	 * 		Whether ({@code true}) or not ({@code false}) to include comments 
+	 * 		in the proper article (or just the main post).
 	 * @return
 	 * 		List of results taking the form of URLs.
 	 * 
 	 * @throws IOException
 	 * 		Problem accessing the Web.
 	 */
-	private SocialSearchResults performSocialSearch(String keywords, Date startDate, Date endDate, boolean extendedSearch) throws IOException
+	private SocialSearchResults performSocialSearch(String keywords, Date startDate, Date endDate, boolean extendedSearch, boolean includeComments) throws IOException
 	{	boolean cachedSearch = true; //TODO for debug
 		// log search parameters
 		logger.log("Parameters:");
@@ -514,7 +580,7 @@ public class Extractor
 				int rank = 1;
 				for(SocialSearchResult post: posts)
 				{	post.rank = rank;
-					post.buildArticle();
+					post.buildArticle(includeComments);
 					result.addResult(post);
 					rank++;
 				}

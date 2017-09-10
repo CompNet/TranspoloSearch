@@ -63,7 +63,7 @@ public class WebSearchResults extends AbstractSearchResults<WebSearchResult>
 	 * @return
 	 * 		The created/completed search result object.
 	 */
-	public WebSearchResult addResult(String url, String engineName, int rank)
+	public WebSearchResult addResult(String url, String engineName, String rank)
 	{	String cleanUrl = cleanUrl(url);
 		
 		WebSearchResult result = results.get(cleanUrl);
@@ -162,10 +162,13 @@ if(url.contains("cookies"))
 	}
 	
 	/////////////////////////////////////////////////////////////////
-	// EXPORT		/////////////////////////////////////////////////
+	// CSV			/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
+	/** Used to init the header of the CSV file */
+	private final static String HEADER_P1 = "Title,URL,Status,Length";
+	
 	/**
-	 * Records all result URL in a single CSV file.
+	 * Records all result URLs in a single CSV file.
 	 * 
 	 * @param fileName
 	 * 		Name of the created file.  
@@ -176,7 +179,7 @@ if(url.contains("cookies"))
 	 * 		Problem while opening the CSV file.
 	 */
 	public void exportAsCsv(String fileName) throws UnsupportedEncodingException, FileNotFoundException
-	{	logger.log("Recording all the Web search results in a single file");
+	{	logger.log("Recording all the Web search results in a file"+fileName);
 		logger.increaseOffset();
 		
 		// create folder
@@ -187,7 +190,7 @@ if(url.contains("cookies"))
 		
 		// open file and write header
 		PrintWriter pw = FileTools.openTextFileWrite(cacheFilePath,"UTF-8");
-		{	String line = "Title,URL,Status,Length";
+		{	String line = HEADER_P1;
 			for(String engineName: engineNames)
 				line = line + "," + engineName;
 			pw.println(line);
@@ -215,12 +218,12 @@ if(url.contains("cookies"))
 			if(length!=null)
 				line = line + length;
 			// ranks
-			Map<String,Integer> ranks = result.ranks;
+			Map<String,String> ranks = result.ranks;
 			for(String engineName: engineNames)
 			{	line = line + ",";
-				Integer rank = ranks.get(engineName);
+				String rank = ranks.get(engineName);
 				if(rank!=null)
-					line = line + rank;
+					line = line + "\"" + rank + "\"";
 			}
 			pw.println(line);
 		}
@@ -228,7 +231,10 @@ if(url.contains("cookies"))
 
 		logger.decreaseOffset();
 	}
-
+	
+	/////////////////////////////////////////////////////////////////
+	// EVENTS		/////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////
 	@Override
 	public void exportEvents(boolean bySentence) throws UnsupportedEncodingException, FileNotFoundException
 	{	String fileName;
@@ -242,10 +248,11 @@ if(url.contains("cookies"))
 			PrintWriter pw = FileTools.openTextFileWrite(filePath, "UTF-8");
 			
 			// write header
-			List<String> startCols = Arrays.asList(COL_PAGE_TITLE, COL_PAGE_URL, COL_LENGTH, COL_PUB_DATE);
+			List<String> startCols = Arrays.asList(COL_COMMENTS, COL_PAGE_TITLE, COL_PAGE_URL, COL_LENGTH, 
+					COL_PUB_DATE, COL_AUTHORS);
 			List<String> endCols = Arrays.asList(COL_PAGE_STATUS, COL_EVENT_RANK, COL_EVENT_DATES,
 					COL_EVENT_LOCATIONS, COL_EVENT_PERSONS, COL_EVENT_ORGANIZATIONS, COL_EVENT_FUNCTIONS,
-					COL_EVENT_PRODUCTIONS, COL_EVENT_MEETINGS, COL_COMMENTS
+					COL_EVENT_PRODUCTIONS, COL_EVENT_MEETINGS
 			);
 			List<String> cols = new ArrayList<String>();
 			cols.addAll(startCols);

@@ -156,7 +156,7 @@ public abstract class AbstractInternalDelegateLinker<T> extends AbstractDelegate
 				prepareLinker();
 				T intRes = linkEntities(article, mentions, entities);
 				
-				// possibly record entities as they are outputted (useful for debug)
+				// possibly record entities as they are output (useful for debug)
 				if(linker.doesOutputRawResults())
 				{	logger.log("Record raw "+linkerName+" results");
 					writeRawResults(article, intRes);

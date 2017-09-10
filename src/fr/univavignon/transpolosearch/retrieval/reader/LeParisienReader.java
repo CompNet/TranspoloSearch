@@ -168,101 +168,107 @@ public class LeParisienReader extends ArticleReader
 				throw new IllegalArgumentException("No <article> element found in the Web page");
 			Element articleElt = articleElts.first();
 			Element fullElt = articleElt.getElementsByAttributeValueContaining(HtmlNames.ATT_CLASS, CLASS_ARTICLE_MAIN).first();
-			Element infoElt = fullElt.getElementsByAttributeValueContaining(HtmlNames.ATT_CLASS, CLASS_INFO).first();
-
-			// check if the access is restricted
-			String text = articleElt.text();
-			if(text.contains(MSG_RESTRICTED))
-				logger.log("WARNING: The access to this article is limited, only the beginning is available.");
-	
-			// get the title
-			Element titleElt = fullElt.getElementsByAttributeValueContaining(HtmlNames.ATT_CLASS, CLASS_TITLE).first();
-			title = titleElt.text(); 
-			title = removeGtst(title).trim();
-			title = title.replace("\"","'");
-			logger.log("Get title: \""+title+"\"");
-	
-			// retrieve the dates
-			Element datesElt = infoElt.getElementsByAttributeValueContaining(HtmlNames.ATT_CLASS, CLASS_DATES).first();
-			Element spanElt = datesElt.child(0);
-			List<TextNode> textNodes = spanElt.textNodes();
-			String pubDateStr = textNodes.get(0).text().trim();
-			String updtDateStr = null;
-			if(textNodes.size()>1)
-				updtDateStr = textNodes.get(1).text().trim().substring(UPDT_PREFIX.length());
-			try
-			{	publishingDate = DATE_FORMAT.parse(pubDateStr);
-				logger.log("Found the publishing date: "+publishingDate);
-				if(updtDateStr!=null)
-				{	modificationDate = DATE_FORMAT.parse(updtDateStr);
-					logger.log("Found the last modification date: "+modificationDate);
-				}
-				else
-					logger.log("Did not find any last modification date");
-			}
-			catch (java.text.ParseException e) 
-			{	e.printStackTrace();
-			}
-			
-			// retrieve the authors
-			Element authorElt = infoElt.getElementsByAttributeValueContaining(HtmlNames.ATT_CLASS, CLASS_AUTHORS).first();
-			if(authorElt!=null)
-			{	String authorName = authorElt.text();
-				authorName = removeGtst(authorName);
-				authors.add(authorName);
-				logger.log("Authors: ");
-				logger.log(authors);
+			if(fullElt==null)
+			{	logger.log("WARNING: Could not find the \"article-full\" element >> probably a list of articles (by opposition to a single specific article)");
+				throw new ReaderException("Could not access the article content");
 			}
 			else
-				logger.log("Could not find any author for this article");
-	
-			// get the description
-			Elements descriptionElts = fullElt.getElementsByAttributeValueContaining(HtmlNames.ATT_CLASS, CLASS_DESCRIPTION);
-			Element descriptionElt = null;
-			if(!descriptionElts.isEmpty())
-			{	descriptionElt = descriptionElts.first();
-				processAnyElement(descriptionElt, rawStr, linkedStr);
+			{	Element infoElt = fullElt.getElementsByAttributeValueContaining(HtmlNames.ATT_CLASS, CLASS_INFO).first();
+				
+				// check if the access is restricted
+				String text = articleElt.text();
+				if(text.contains(MSG_RESTRICTED))
+					logger.log("WARNING: The access to this article is limited, only the beginning is available.");
+		
+				// get the title
+				Element titleElt = fullElt.getElementsByAttributeValueContaining(HtmlNames.ATT_CLASS, CLASS_TITLE).first();
+				title = titleElt.text(); 
+				title = removeGtst(title).trim();
+				title = title.replace("\"","'");
+				logger.log("Get title: \""+title+"\"");
+		
+				// retrieve the dates
+				Element datesElt = infoElt.getElementsByAttributeValueContaining(HtmlNames.ATT_CLASS, CLASS_DATES).first();
+				Element spanElt = datesElt.child(0);
+				List<TextNode> textNodes = spanElt.textNodes();
+				String pubDateStr = textNodes.get(0).text().trim();
+				String updtDateStr = null;
+				if(textNodes.size()>1)
+					updtDateStr = textNodes.get(1).text().trim().substring(UPDT_PREFIX.length());
+				try
+				{	publishingDate = DATE_FORMAT.parse(pubDateStr);
+					logger.log("Found the publishing date: "+publishingDate);
+					if(updtDateStr!=null)
+					{	modificationDate = DATE_FORMAT.parse(updtDateStr);
+						logger.log("Found the last modification date: "+modificationDate);
+					}
+					else
+						logger.log("Did not find any last modification date");
+				}
+				catch (java.text.ParseException e) 
+				{	e.printStackTrace();
+				}
+				
+				// retrieve the authors
+				Element authorElt = infoElt.getElementsByAttributeValueContaining(HtmlNames.ATT_CLASS, CLASS_AUTHORS).first();
+				if(authorElt!=null)
+				{	String authorName = authorElt.text();
+					authorName = removeGtst(authorName);
+					authors.add(authorName);
+					logger.log("Authors: ");
+					logger.log(authors);
+				}
+				else
+					logger.log("Could not find any author for this article");
+		
+				// get the description
+				Elements descriptionElts = fullElt.getElementsByAttributeValueContaining(HtmlNames.ATT_CLASS, CLASS_DESCRIPTION);
+				Element descriptionElt = null;
+				if(!descriptionElts.isEmpty())
+				{	descriptionElt = descriptionElts.first();
+					processAnyElement(descriptionElt, rawStr, linkedStr);
+				}
+				
+				// processing the article main content
+				if(descriptionElt==null)
+				{	Element bodyElt = fullElt.getElementsByAttributeValueContaining(HtmlNames.ATT_CLASS, CLASS_ARTICLE_BODY).first();
+					descriptionElt = bodyElt.child(0);
+				}
+				Element contentElt = descriptionElt.nextElementSibling();
+				while(contentElt!=null)
+				{	Attributes attr = contentElt.attributes();
+					if(attr.size()==0)
+						processAnyElement(contentElt, rawStr, linkedStr);
+					contentElt = contentElt.nextElementSibling();
+				}
+				
+				// create and init article object
+				result = new Article(name);
+				result.setTitle(title);
+				result.setUrl(url);
+				result.initRetrievalDate();
+				result.setLanguage(language);
+				result.setPublishingDate(publishingDate);
+				if(modificationDate!=null)
+					result.setModificationDate(modificationDate);
+				if(authors!=null)
+					result.addAuthors(authors);
+				
+				// clean text
+				String rawText = rawStr.toString();
+				result.setRawText(rawText);
+				logger.log("Length of the raw text: "+rawText.length()+" chars.");
+				String linkedText = linkedStr.toString();
+				result.setLinkedText(linkedText);
+				logger.log("Length of the linked text: "+linkedText.length()+" chars.");
+				
+				// get original html source code
+				logger.log("Get original HTML source code.");
+				String originalPage = document.toString();
+				result.setOriginalPage(originalPage);
+				logger.log("Length of the original page: "+originalPage.length()+" chars.");
 			}
 			
-			// processing the article main content
-			if(descriptionElt==null)
-			{	Element bodyElt = fullElt.getElementsByAttributeValueContaining(HtmlNames.ATT_CLASS, CLASS_ARTICLE_BODY).first();
-				descriptionElt = bodyElt.child(0);
-			}
-			Element contentElt = descriptionElt.nextElementSibling();
-			while(contentElt!=null)
-			{	Attributes attr = contentElt.attributes();
-				if(attr.size()==0)
-					processAnyElement(contentElt, rawStr, linkedStr);
-				contentElt = contentElt.nextElementSibling();
-			}
-			
-			// create and init article object
-			result = new Article(name);
-			result.setTitle(title);
-			result.setUrl(url);
-			result.initRetrievalDate();
-			result.setLanguage(language);
-			result.setPublishingDate(publishingDate);
-			if(modificationDate!=null)
-				result.setModificationDate(modificationDate);
-			if(authors!=null)
-				result.addAuthors(authors);
-			
-			// clean text
-			String rawText = rawStr.toString();
-			result.setRawText(rawText);
-			logger.log("Length of the raw text: "+rawText.length()+" chars.");
-			String linkedText = linkedStr.toString();
-			result.setLinkedText(linkedText);
-			logger.log("Length of the linked text: "+linkedText.length()+" chars.");
-			
-			// get original html source code
-			logger.log("Get original HTML source code.");
-			String originalPage = document.toString();
-			result.setOriginalPage(originalPage);
-			logger.log("Length of the original page: "+originalPage.length()+" chars.");
-
 			long endTime = System.currentTimeMillis();
 			logger.log("Total duration: "+(endTime-startTime)+" ms.");
 		}

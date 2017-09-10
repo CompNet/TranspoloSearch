@@ -172,9 +172,9 @@ class HeidelTimeDelegateRecognizer extends AbstractModelbasedInternalDelegateRec
 		List<String> parts = StringTools.splitText(text, MAX_SIZE);
 		
 		for(int i=0;i<parts.size();i++)
-		{	logger.log("Processing HeidelTime part #"+(i+1)+"/"+parts.size());
+		{	String part = parts.get(i);
+			logger.log("Processing HeidelTime part #"+(i+1)+"/"+parts.size()+" ("+part.length()+" chars)");
 			logger.increaseOffset();
-			String part = parts.get(i);
 			try
 			{	String answer;
 				

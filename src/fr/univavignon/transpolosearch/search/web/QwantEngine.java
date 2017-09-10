@@ -24,10 +24,10 @@ import java.io.IOException;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.client.ClientProtocolException;
@@ -110,10 +110,10 @@ public class QwantEngine extends AbstractWebEngine
 	// SEARCH		/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
 	@Override
-	public List<URL> search(String keywords, String website, Date startDate, Date endDate)  throws IOException
+	public Map<String,URL> search(String keywords, String website, Date startDate, Date endDate)  throws IOException
 	{	logger.log("Applying Qwant Search");
 		logger.increaseOffset();
-		List<URL> result = new ArrayList<URL>();
+		Map<String,URL> result = new HashMap<String,URL>();
 		
 		// init search parameters
 		logger.log("Keywords: "+keywords);
@@ -147,10 +147,11 @@ public class QwantEngine extends AbstractWebEngine
 	    	LocalDate endLocalDate = LocalDate.of(year, month, day);
 	    	
 	    	// process separately each day of the considered time period
+	    	int dayIdx = 1;
 	    	while(currentLocalDate.isBefore(endLocalDate) || currentLocalDate.isEqual(endLocalDate))
 	    	{	logger.log("Processing date "+currentLocalDate);
 				try
-	    		{	searchQwant(baseUrl, baseQuery, currentLocalDate, result);
+	    		{	searchQwant(baseUrl, baseQuery, currentLocalDate, dayIdx, result);
 	    		}
 	    		catch(ParseException e)
 		    	{	e.printStackTrace();
@@ -159,6 +160,7 @@ public class QwantEngine extends AbstractWebEngine
 	    		
 	    		// deal with the next day
 	    		currentLocalDate = currentLocalDate.plusDays(1);
+	    		dayIdx++;
 	    	}
 			logger.decreaseOffset();
 		}
@@ -168,7 +170,7 @@ public class QwantEngine extends AbstractWebEngine
 		{	logger.log("No date detected");
 			
 			try
-			{	searchQwant(baseUrl, baseQuery, null, result);
+			{	searchQwant(baseUrl, baseQuery, null, 0, result);
 			}
 			catch(ParseException e)
 	    	{	e.printStackTrace();
@@ -191,6 +193,8 @@ public class QwantEngine extends AbstractWebEngine
 	 * 		Base query (to be completed, too).
 	 * @param targetedDate
 	 * 		Date of the searched articles (can be {@code null}, if none).
+	 * @param dayIdx 
+	 * 		Number of the date in the targeted period.
 	 * @param result
 	 * 		Current list of URL.
 	 * 
@@ -201,8 +205,10 @@ public class QwantEngine extends AbstractWebEngine
 	 * @throws ParseException
 	 * 		Problem while parsing Qwant JSON results.
 	 */
-	private void searchQwant(String baseUrl, String baseQuery, LocalDate targetedDate, List<URL> result) throws ClientProtocolException, IOException, ParseException
-	{	// repeat because of the pagination system
+	private void searchQwant(String baseUrl, String baseQuery, LocalDate targetedDate, int dayIdx, Map<String,URL> result) throws ClientProtocolException, IOException, ParseException
+	{	int resIdx = 1;
+		
+		// repeat because of the pagination system
 		int lastRes = 0;
 		boolean goOn = true;
 		do
@@ -255,7 +261,13 @@ public class QwantEngine extends AbstractWebEngine
 						String urlStr = (String)itemJson.get("url");
 						logger.log("url: "+urlStr);
 						URL resUrl = new URL(urlStr);
-						result.add(resUrl);
+						String key;
+						if(dayIdx==0)
+							key = Integer.toString(resIdx);
+						else
+							key = dayIdx+"-"+resIdx;
+						result.put(key,resUrl);
+						resIdx++;
 						logger.decreaseOffset();
 						i++;
 					}
@@ -289,7 +301,7 @@ public class QwantEngine extends AbstractWebEngine
 		Date startDate = null;//new GregorianCalendar(2016,3,1).getTime();
 		Date endDate = null;//new GregorianCalendar(2016,3,2).getTime();
 		
-		List<URL> result = engine.search(keywords, website, startDate, endDate);
+		Map<String,URL> result = engine.search(keywords, website, startDate, endDate);
 		
 		System.out.println(result);
 	}

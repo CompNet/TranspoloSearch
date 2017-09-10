@@ -36,12 +36,18 @@ import facebook4j.Paging;
 import facebook4j.Post;
 import facebook4j.Reading;
 import facebook4j.ResponseList;
+import facebook4j.User;
 import facebook4j.conf.Configuration;
 import facebook4j.conf.ConfigurationBuilder;
 import fr.univavignon.transpolosearch.data.search.SocialSearchResult;
+import fr.univavignon.transpolosearch.tools.file.FileNames;
+import fr.univavignon.transpolosearch.tools.file.FileTools;
 import fr.univavignon.transpolosearch.tools.keys.KeyHandler;
 
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -49,7 +55,10 @@ import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.GregorianCalendar;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Scanner;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -61,6 +70,8 @@ import java.util.TreeSet;
  * http://facebook4j.github.io/en/code-examples.html
  * https://developers.facebook.com/docs/graph-api/using-graph-api
  * http://stackoverflow.com/questions/13165589/facebook-api-access-with-username-password-via-client-software#
+ * <br/>
+ * Site used to get the page/user ids: https://findmyfbid.in/
  * 
  * @author Vincent Labatut
  */
@@ -97,7 +108,52 @@ public class FacebookEngine extends AbstractSocialEngine
 		Configuration config = cb.build();
 		factory = new FacebookFactory(config);
 	}
-
+	
+	/////////////////////////////////////////////////////////////////
+	// USER/PAGE IDS	/////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////
+	/** Map of predefined Facebook page ids (associated to exact names) */
+	private final static Map<String,String> PAGE_IDS = new HashMap<String,String>();
+	/** Map of predefined Facebook user ids (associated to exact names) */
+	private final static Map<String,String> USER_IDS = new HashMap<String,String>();
+	/**
+	 * Loads both maps: the first column is the exact name (must match the query),
+	 * the second one is the page id, and the third one is the user id (can be empty).
+	 */
+	static
+	{	String filePath = FileNames.FO_MISC + File.separator + FileNames.FI_FACEBOOK_IDS;
+		try
+		{	logger.log("Loading the predefined Facebook user and page ids");
+			logger.increaseOffset();
+			Scanner scanner = FileTools.openTextFileRead(filePath, "UTF-8");
+			int c = 0;
+			while(scanner.hasNextLine())
+			{	c++;
+				String line = scanner.nextLine();
+				String tmp[] = line.split("\t");
+				String name = tmp[0];
+				String pageId = tmp[1];
+				if(pageId.isEmpty())
+					pageId = null;
+				PAGE_IDS.put(name, pageId);
+				if(tmp.length>2)
+				{	String userId = tmp[2];
+					if(userId.isEmpty())
+						userId = null;
+					USER_IDS.put(name, userId);
+				}
+			}
+			logger.log("Loaded " + c + " entries");
+			logger.increaseOffset();
+		} 
+		catch (FileNotFoundException e) 
+		{	e.printStackTrace();
+		} 
+		catch (UnsupportedEncodingException e) 
+		{	e.printStackTrace();
+		}
+	}
+	
 	/////////////////////////////////////////////////////////////////
 	// SERVICE		/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
@@ -225,7 +281,6 @@ public class FacebookEngine extends AbstractSocialEngine
 		logger.increaseOffset();
 		List<SocialSearchResult> result = new ArrayList<SocialSearchResult>();
 		
-		String query = keywords;
 		Reading reading = null;
 		if(startDate!=null && endDate!=null)
 		{	reading = new Reading();
@@ -235,101 +290,248 @@ public class FacebookEngine extends AbstractSocialEngine
 		
 		Facebook facebook = factory.getInstance();
 		try
-		{	logger.log("Look for the FB page corresponding to \""+keywords+"\"");
+		{	List<String> ids = new ArrayList<String>();
+			
+			// look for the name in the predefined ids
+			logger.log("Look up the name to find a predefined FB id:");
 			logger.increaseOffset();
-			ResponseList<Page> pages =  facebook.searchPages(query);
-			if(pages.isEmpty())
-				logger.log("No page found at all");
-			else
-			{	logger.log("Found at least "+pages.size()+" pages: using the first one");
-				Page firstPage = pages.get(0);
-				String pageId = firstPage.getId();
-				logger.log("Title="+firstPage.getName()+", id="+pageId);
-				
-				// get all the posts of the targeted page
-				List<Post> pagePosts = getPosts(pageId, facebook, reading);
-				
-		        // get the comments associated to all the targeted posts
-				Set<String> authorIds = new TreeSet<String>();
-				logger.log("Retrieving the comments for each post (for the specified period, if any)");
-				logger.increaseOffset();
-				for(Post post: pagePosts)
-				{	// get the message text
-					String msg = post.getMessage();
-					msg = msg.replaceAll("\\s+", " ");
-					logger.log("Message: \""+msg+"\"");
-					// get the meta-data
-					String id = post.getId();
-					Date date = post.getCreatedTime();
-					Category auth = post.getFrom();
-					String authName;
-					if(auth==null)
-						authName = "N/A";
-					else
-						authName = auth.getName();
-					// create the post object
-					SocialSearchResult p = new SocialSearchResult(id, authName, date, getName(), msg);
-					p.url = post.getLink();
-					result.add(p);
-					
-					// retrieve the comments associated to the message
-					List<Comment> comments = getComments(post, facebook, reading);
-					// add them to the current post
-					for(Comment comment: comments)
-					{	// get the message text
-						msg = comment.getMessage();
-						msg = msg.replaceAll("\\s+", " ");
-						// get the meta-data
-						id = comment.getId();
-						date = comment.getCreatedTime();
-						auth = comment.getFrom();
-						authName = auth.getName();
-						// create the post object
-						SocialSearchResult com = new SocialSearchResult(id, authName, date, getName(), msg);
-						p.comments.add(com);
-						// add to the comment author to the list
-						String authId = auth.getId();
-						authorIds.add(authId);
-					}
-				}
-				logger.decreaseOffset();
-				
-				// get the authors posts for this period
-				logger.log("Retrieving the posts of the commenting authors (for the specified period, if any)");
-				logger.increaseOffset();
-				for(String authId: authorIds)
-				{	logger.log("Processing id"+authId);
-					logger.increaseOffset();
-					List<Post> authPosts = getPosts(authId, facebook, reading);
-					for(Post post: authPosts)
-					{	// get the message text
-						String msg = post.getMessage();
-						msg = msg.replaceAll("\\s+", " ");
-						logger.log("Message: \""+msg+"\"");
-						// get the meta-data
-						String id = post.getId();
-						Date date = post.getCreatedTime();
-						Category auth = post.getFrom();
-						String authName = auth.getName();
-						// create the post object
-						SocialSearchResult p = new SocialSearchResult(id, authName, date, getName(), msg);
-						p.url = post.getLink();
-						result.add(p);
-						
-						// TODO we do not get the comments, this time (we could if needed)
-					}
-					logger.decreaseOffset();
-				}
-				logger.decreaseOffset();
+			{	String pageId = PAGE_IDS.get(keywords);
+				if(pageId!=null)
+					ids.add(pageId);
+				logger.log("Page id: "+pageId);
+				String userId = USER_IDS.get(keywords);
+				if(userId!=null)
+					ids.add(userId);
+				logger.log("User id: "+userId);
+			}
+			logger.decreaseOffset();
+			
+			// if there is no predefined id for this name, we look it up on facebook
+			if(ids.isEmpty())
+			{	logger.log("No predefined id found for \""+keywords+"\" >> we look it up through FB");
+				String id = getPageOrUserId(keywords,facebook);
+				if(id==null)
+					logger.log("We could not find any id for the targeted person");
+				else
+					ids.add(id);
 			}
 			
-			logger.decreaseOffset();
+			// process all remaining page or user id
+			for(String id: ids)
+			{	List<SocialSearchResult> res = retrieveContent(keywords, id, facebook, reading);
+				result.addAll(res);
+			}
 		} 
 		catch (FacebookException e) 
 		{	//System.err.println(e.getMessage());
 			e.printStackTrace();
 			throw new IOException(e.getMessage());
 		}
+		
+		logger.decreaseOffset();
+		return result;
+	}
+	
+	/**
+	 * Returns a FB id for the specified name. We first look for a page,
+	 * and if we don't find one, for a user. This is because public persons
+	 * usually use a page for their communication. 
+	 * <br/>
+	 * If at some point we get several pages or users compatible with the
+	 * specified name, we use the first one (we trust the order of the results
+	 * returned by the FB API is relevant and favors public figures). 
+	 *  
+	 * @param keywords
+	 * 		Name of the targeted person.
+	 * @param facebook
+	 * 		Current instance of the search engine. 
+	 * @return
+	 * 		A string corresponding to the best id found, or {@code null}
+	 * 		if node could be found at all.
+	 * 
+	 * @throws FacebookException
+	 * 		Problem while accessing the Facebook API. 
+	 */
+	private String getPageOrUserId(String keywords, Facebook facebook) throws FacebookException
+	{	String result = null;
+		logger.increaseOffset();
+		
+		logger.log("Look for the FB page corresponding to \""+keywords+"\"");
+		logger.increaseOffset();
+		{	ResponseList<Page> pages =  facebook.searchPages(keywords);
+			if(pages.isEmpty())
+				logger.log("No page found at all");
+			else
+			{	logger.log("Found at least "+pages.size()+" pages");
+				List<Page> list = new ArrayList<Page>();
+				logger.increaseOffset();
+				{	for(Page page: pages)
+					{	String pageId = page.getId();
+						String pageName = page.getName();
+						if(pageName.equalsIgnoreCase(keywords))
+						{	logger.log("Title="+pageName+", id="+pageId+" >> seems relevant");
+							list.add(page);
+						}
+						else
+							logger.log("Title="+pageName+", id="+pageId+" >> rejected because the name is not exactly the same");
+					}
+				}
+				logger.decreaseOffset();
+				
+				logger.log("Found "+list.size()+" pages fitting the name");
+				Page page = list.get(0);
+				result = page.getId();
+				logger.log("WARNING: we trust the FB search engine... and use only the first one it returned ("+result+")");
+			}
+		}
+		logger.decreaseOffset();
+
+		if(result!=null)
+			logger.log("An appropriate page was found, so we do not look for a user id");
+		else
+		{	logger.log("Look for the FB user corresponding to \""+keywords+"\"");
+			logger.increaseOffset();
+			{	ResponseList<User> users =  facebook.searchUsers(keywords);
+				if(users.isEmpty())
+					logger.log("No user found at all");
+				else
+				{	logger.log("Found at least "+users.size()+" users");
+					List<User> list = new ArrayList<User>();
+					logger.increaseOffset();
+					{	for(User user: users)
+						{	String userId = user.getId();
+							String userName = user.getName();
+							if(userName.equalsIgnoreCase(keywords))
+							{	logger.log("Name="+userName+", id="+userId+" >> seems relevant");
+								list.add(user);
+							}
+							else
+								logger.log("Name="+userName+", id="+userId+" >> rejected because the name is not exactly the same");
+						}
+					}
+					logger.decreaseOffset();
+					
+					logger.log("Found "+list.size()+" users fitting the name");
+					User user = list.get(0);
+					result = user.getId();
+					logger.log("WARNING: we trust the FB search engine... and use only the first one it returned ("+result+")");
+				}
+			}
+			logger.decreaseOffset();
+		}
+		
+		logger.decreaseOffset();
+		return result;
+	}
+	
+	/**
+	 * Retrieves the post authored by the specified id (possibly for the period encoded in the reading).
+	 * The direct comments are also retrieved, as well as the posts published by their commenters on
+	 * the same period.
+	 *  
+	 * @param keywords
+	 * 		Name of the targeted person.
+	 * @param id
+	 * 		Id of the targeted person.
+	 * @param facebook
+	 * 		Current instance of the FB search engine.
+	 * @param reading
+	 * 		Graph API reading options (in our case: dates).
+	 * 		
+	 * @return
+	 * 		The list of posts associated to the page or user.
+	 * 
+	 * @throws FacebookException
+	 * 		Problem while accessing the FB API.
+	 */
+	private List<SocialSearchResult> retrieveContent(String keywords, String id, Facebook facebook, Reading reading) throws FacebookException
+	{	logger.log("Retrieving the content for id "+id);
+		logger.increaseOffset();
+		List<SocialSearchResult> result = new ArrayList<SocialSearchResult>();
+		
+		// get all the posts of the targeted id
+		List<Post> pagePosts = getPosts(id, facebook, reading);
+		
+        // get the comments associated to all the targeted posts
+		Set<String> authorIds = new TreeSet<String>();
+		Map<String,String> authorNames = new HashMap<String,String>();
+		logger.log("Retrieving the comments for each post (for the specified period, if any)");
+		logger.increaseOffset();
+		for(Post post: pagePosts)
+		{	// get the message text
+			String msg = post.getMessage();
+			msg = msg.replaceAll("\\s+", " ");
+			logger.log("Message: \""+msg+"\"");
+			// get the meta-data
+			String ctntId = post.getId();
+			Date date = post.getCreatedTime();
+			Category auth = post.getFrom();
+			String authName;
+			if(auth==null)
+				authName = keywords;
+			else
+				authName = auth.getName();
+			// create the post object
+			SocialSearchResult p = new SocialSearchResult(ctntId, authName, date, getName(), msg, true);
+			p.url = post.getLink();
+			result.add(p);
+			
+			// retrieve the comments associated to the message
+			List<Comment> comments = getComments(post, facebook, reading);
+			// add them to the current post
+			for(Comment comment: comments)
+			{	// get the message text
+				msg = comment.getMessage();
+				msg = msg.replaceAll("\\s+", " ");
+				// get the meta-data
+				ctntId = comment.getId();
+				date = comment.getCreatedTime();
+				auth = comment.getFrom();
+				authName = auth.getName();
+				// create the post object
+				SocialSearchResult com = new SocialSearchResult(ctntId, authName, date, getName(), msg, false);
+				p.comments.add(com);
+				// add to the comment author to the list
+				String authId = auth.getId();
+				authorIds.add(authId);
+				authorNames.put(authId, authName);
+			}
+		}
+		logger.decreaseOffset();
+		
+		// get the authors posts for this period
+		logger.log("Retrieving the posts of the commenting authors (for the specified period, if any)");
+		logger.increaseOffset();
+		for(String authId: authorIds)
+		{	logger.log("Processing id"+authId);
+			logger.increaseOffset();
+			List<Post> authPosts = getPosts(authId, facebook, reading);
+			for(Post post: authPosts)
+			{	// get the message text
+				String msg = post.getMessage();
+				msg = msg.replaceAll("\\s+", " ");
+				logger.log("Message: \""+msg+"\"");
+				// get the meta-data
+				String ctntId = post.getId();
+				Date date = post.getCreatedTime();
+				Category auth = post.getFrom();
+				String authName;
+				if(auth==null)
+					authName = authorNames.get(authId);
+				if(auth==null)
+					authName = "N/A";
+				else
+					authName = auth.getName();
+				// create the post object
+				SocialSearchResult p = new SocialSearchResult(ctntId, authName, date, getName(), msg, false);
+				p.url = post.getLink();
+				result.add(p);
+				
+				// TODO we do not get the comments, this time (we could if needed)
+			}
+			logger.decreaseOffset();
+		}
+		logger.decreaseOffset();
 		
 		logger.decreaseOffset();
 		return result;

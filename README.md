@@ -46,6 +46,7 @@ Here are the dependencies for TranspoloSearch:
     * BFM TV (www.bfmtv.com)
     * Capital (www.capital.fr)
     * Closer (www.closermag.fr)
+    * Dernières Nouvelles d'Alsace (www.dna.fr)
     * Europe 1 (www.europe1.fr)
     * France Culture (www.franceculture.fr)
     * France TV (www.france.tv)
@@ -53,6 +54,7 @@ Here are the dependencies for TranspoloSearch:
     * Huffington Post France (www.huffingtonpost.fr)
     * JeuxVidéos.com (www.jeuxvideo.com)
     * L'Equipe (www.lequipe.fr)
+    * L'Est Républicain (www.estrepublicain.fr)
     * L'Opinion (www.lopinion.fr)
     * La Croix (www.la-croix.com)
     * La Croix du Nord (www.croixdunord)
@@ -71,15 +73,17 @@ Here are the dependencies for TranspoloSearch:
     * RFI (www.rfi.fr)
     * RTBF (www.rtbf.be)
     * RTL (www.rtl.fr)
+    * Rue 89 (tempsreel.nouvelobs.com/rue89/) (and regional variants, e.g. www.rue89strasbourg.com)
     * Sciences et Avenir (www.sciencesetavenir.fr)
     * Sud Ouest (www.sudouest.fr)
     * TF1 (www.tf1.fr)
     * Valeurs Actuelles (www.valeursactuelles.com)
     * Voici (www.voici.fr)
+  * For these journal-specific reader, we could define a generic process consisting in looking for an HTML element with a predefined class for authors, another for title, etc. One would just have to define the appropriate classes (or other HTML info): updating such reader would be easier.
 * Search engines:
-  * Add the Duck Duck Go search engine. As of 2016/04/21, the Instant Answer API is too restricted to return results we could use in TranspoloSearch. See [this page](https://api.duckduckgo.com/api) for a description of the API. Also, it is powered by other search engines already integrated in TranspoloSearch.
+  * Add the Duck Duck Go search engine. As of 2017/04/21, the Instant Answer API is too restricted to return results we could use in TranspoloSearch. See [this page](https://api.duckduckgo.com/api) for a description of the API. Also, it is powered by other search engines already integrated in TranspoloSearch.
   * Add the Yahoo search engine. Apparently, Yahoo is powered by Bing since 2011, so not worth it since we already have Bing.
-  * Add the Baidu search engine. As of 2016/04/22, the documentation is in Chinese only (https://www.programmableweb.com/api/baidu).
+  * Add the Baidu search engine. As of 2017/04/22, the documentation is in Chinese only (https://www.programmableweb.com/api/baidu).
   * Add the Orange search engine, which focuses on French (http://www.lemoteur.fr/).
   * Add the BoardReader search engine, which focuses on Q/A and Forum websites (http://boardreader.com/).
   * Add the Exalead search engine, originally designed for intranets (https://www.exalead.com/search/web/).  

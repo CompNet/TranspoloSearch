@@ -262,6 +262,29 @@ public class Test
 	}
 	
 	/////////////////////////////////////////////////////////////////
+	// COMPARISON		/////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////
+	/**
+	 * Compares the list of URLs resulting from two searches.
+	 * 
+	 * @throws Exception
+	 * 		Something went wrong during the search. 
+	 */
+	private static void compareSearches(String folder1, String folder2) throws Exception
+	{	logger.setName("Compare-Searches");
+		logger.log("Compare "+folder1+" vs. "+folder2);
+		logger.increaseOffset();
+		
+		// open first file
+		
+		// open second file
+		// compare results
+		// record comparison outcome
+		
+		logger.decreaseOffset();
+	}
+	
+	/////////////////////////////////////////////////////////////////
 	// SEARCH		/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
 	/**
@@ -322,9 +345,10 @@ public class Test
 		DateFormat df = new SimpleDateFormat("yyyyMMdd");
 		
 		String params[][] = {
-			{"Anne Hidalgo", "Hidalgo"},
-			{"Cécile Helle", "Helle"},
-			{"Martine Aubry", "Aubry"}
+			{"Anne Hidalgo", "Hidalgo"}
+//			{"Cécile Helle", "Helle"},
+//			{"Martine Aubry", "Aubry"},
+//			{"Roland Ries", "Ries"}
 		};
 		
 		for(String[] param: params)
@@ -344,6 +368,10 @@ public class Test
 		}
 	}
 }
+
+// TODO médias sociaux: rajouter dans le csv le nombre de commentaires associés à chaque post
+//		en fait : rajouter le CSV pr médias sociaux (indép. d'évts)
+// TODO rajouter séparateur avant/après patronyme
 
 // dates: 6/3 >> 10/3
 // pers: C. Helle + M. Aubry + A. Hidalgo

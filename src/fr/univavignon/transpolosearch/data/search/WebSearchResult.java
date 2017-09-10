@@ -89,8 +89,8 @@ public class WebSearchResult extends AbstractSearchResult
 	/////////////////////////////////////////////////////////////////
 	// ENGINES		/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
-	/** Ranks of this results according to the search engines who returned it */
-	public Map<String,Integer> ranks = new HashMap<String,Integer>();
+	/** Ranks of this result according to the search engines who returned it */
+	public Map<String,String> ranks = new HashMap<String,String>();
 	
 	/**
 	 * Indicates the rank the specified engine gave to this result.
@@ -100,7 +100,7 @@ public class WebSearchResult extends AbstractSearchResult
 	 * @param rank
 	 * 		Rank given by search engine.
 	 */
-	public void addEngine(String engineName, int rank)
+	public void addEngine(String engineName, String rank)
 	{	ranks.put(engineName,rank);
 	}
 	
@@ -137,6 +137,24 @@ public class WebSearchResult extends AbstractSearchResult
 			result = false;
 		}
 		
+		return result;
+	}
+	
+	@Override
+	protected boolean filterByKeyword(String compulsoryExpression, int nbr)
+	{	boolean result = true;
+		
+		logger.log("Processing article "+article.getTitle()+" ("+nbr+")");
+		logger.increaseOffset();
+		{	String rawText = article.getRawText();
+			if(!rawText.contains(compulsoryExpression))
+			{	logger.log("Discarding article "+article.getTitle()+" ("+article.getUrl()+")");
+				status = "Missing keyword";
+				result = false;
+			}
+		}
+		logger.decreaseOffset();
+			
 		return result;
 	}
 	
@@ -180,11 +198,25 @@ public class WebSearchResult extends AbstractSearchResult
 				map.put(WebSearchResults.COL_PUB_DATE,pubDateStr);
 			}
 			
+			// author(s)
+			List<String> authors = article.getAuthors();
+			if(!authors.isEmpty())
+			{	Iterator<String> it = authors.iterator();
+				String authorStr = it.next();
+				String authorsStr = "\"" + authorStr;
+				while(it.hasNext())
+				{	authorStr = it.next();
+					authorsStr = authorsStr + ", " + authorStr;
+				}
+				authorsStr = authorsStr + "\"";
+				map.put(WebSearchResults.COL_AUTHORS,authorsStr);
+			}
+			
 			// search engine ranks
-			for(Entry<String,Integer> entry: ranks.entrySet())
+			for(Entry<String,String> entry: ranks.entrySet())
 			{	String engineName = entry.getKey();
-				Integer rk = entry.getValue();
-				map.put(WebSearchResults.COL_RANK+engineName,rk.toString());
+				String rk = entry.getValue();
+				map.put(WebSearchResults.COL_RANK+engineName,rk);
 			}
 
 			if(event!=null)

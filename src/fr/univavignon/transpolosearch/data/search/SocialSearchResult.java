@@ -63,13 +63,17 @@ public class SocialSearchResult extends AbstractSearchResult
 	 * 		Name of the social media publishing this post.
 	 * @param content 
 	 * 		Textual content of this post.
+	 * @param original
+	 * 		Whether the post was written by the targeted author, 
+	 * 		or by one of the commenters.
 	 */
-	public SocialSearchResult(String id, String author, Date date, String source, String content)
+	public SocialSearchResult(String id, String author, Date date, String source, String content, boolean original)
 	{	this.id = id;
 		this.author = author;
 		this.date = date;
 		this.source = source;
 		this.content = content;
+		this.original = original;
 	}
 	
 	/////////////////////////////////////////////////////////////////
@@ -77,6 +81,12 @@ public class SocialSearchResult extends AbstractSearchResult
 	/////////////////////////////////////////////////////////////////
 	/** Unique ID of the post */
 	public String id;
+	
+	/////////////////////////////////////////////////////////////////
+	// ORIGINAL		/////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////
+	/** Whether the post was written by the targeted author, or by one of the commenters */
+	public boolean original;
 	
 	/////////////////////////////////////////////////////////////////
 	// CONTENT		/////////////////////////////////////////////////
@@ -127,23 +137,31 @@ public class SocialSearchResult extends AbstractSearchResult
 	 * Convert this post under the form of a proper {@code Article}. 
 	 * The comments are added as paragraphs after the actual post content.
 	 * 
+	 * @param includeComments 
+	 * 		Whether ({@code true}) or not ({@code false}) to include comments 
+	 * 		in the proper article (or just the main post).
+	 * 
 	 * @throws IOException 
 	 * 		Problem while recording the article.
 	 */
-	public void buildArticle() throws IOException
+	public void buildArticle(boolean includeComments) throws IOException
 	{	String corpusFolder = FileNames.FO_SOCIAL_SEARCH_RESULTS + File.separator + source;
 		article = new Article(id, corpusFolder);
 
 		// content
 		String text = content;
-		for(SocialSearchResult com: comments)
-			text = text + "\n\n" + com.content;
+		if(includeComments)
+		{	for(SocialSearchResult com: comments)
+				text = text + "\n\n" + com.content;
+		}
 		article.setRawText(text);
 		article.setLinkedText(text);
 		article.cleanContent();
 		
 		// metadata
 		article.setTitle(id);
+		if(author!=null)
+			article.addAuthor(author);
 		article.setLanguage(ArticleLanguage.FR);	// TODO we suppose the language is French, to be generalized later
 		article.setPublishingDate(date);
 		Calendar cal = Calendar.getInstance();
@@ -153,6 +171,29 @@ public class SocialSearchResult extends AbstractSearchResult
 		
 		// record to file
 		article.write();
+	}
+	
+	@Override
+	protected boolean filterByKeyword(String compulsoryExpression, int nbr)
+	{	boolean result = true;
+		
+		logger.log("Processing article "+article.getTitle()+" ("+nbr+")");
+		logger.increaseOffset();
+		{	// filter only if the article was not authored by the target
+			if(!original)
+			{	String rawText = article.getRawText();
+				if(!rawText.contains(compulsoryExpression))
+				{	logger.log("Discarding article "+article.getTitle()+" ("+article.getUrl()+")");
+					status = "Missing keyword";
+					result = false;
+				}
+			}
+			else
+				logger.log("This article was written by the targetted person, and we therefore keep it");
+		}
+		logger.decreaseOffset();
+			
+		return result;
 	}
 	
 	/////////////////////////////////////////////////////////////////
@@ -173,6 +214,7 @@ public class SocialSearchResult extends AbstractSearchResult
 		writer.println(author);
 		writer.println(DATE_FORMAT.format(date));
 		writer.println(source);
+		writer.println(original);
 		writer.println(content);
 		if(url==null)
 			writer.println("N/A");
@@ -202,8 +244,10 @@ public class SocialSearchResult extends AbstractSearchResult
 			String dateStr = scanner.nextLine().trim();
 			Date date = DATE_FORMAT.parse(dateStr);
 			String source = scanner.nextLine().trim();
+			String originalStr = scanner.nextLine().trim();
+			boolean original = Boolean.parseBoolean(originalStr);
 			String content = scanner.nextLine().trim();
-			result = new SocialSearchResult(id, author, date, source, content);
+			result = new SocialSearchResult(id, author, date, source, content, original);
 			String urlStr = scanner.nextLine().trim();
 			if(!urlStr.equals("N/A"))
 			{	URL url = new URL(urlStr);
@@ -259,7 +303,9 @@ public class SocialSearchResult extends AbstractSearchResult
 			if(article.getUrl()!=null)
 				map.put(AbstractSearchResults.COL_PAGE_URL,"\""+article.getUrl().toString()+"\"");
 			map.put(AbstractSearchResults.COL_LENGTH,"\""+article.getRawText().length()+"\"");
-			map.put(AbstractSearchResults.COL_PAGE_STATUS,status);
+			map.put(AbstractSearchResults.COL_AUTHORS,"\""+article.getAuthors().get(0)+"\"");
+			map.put(AbstractSearchResults.COL_ORIGINAL,"\""+original+"\"");
+			map.put(AbstractSearchResults.COL_PAGE_STATUS,"\""+status+"\"");
 			map.put(AbstractSearchResults.COL_COMMENTS,"");
 			
 			// publication date

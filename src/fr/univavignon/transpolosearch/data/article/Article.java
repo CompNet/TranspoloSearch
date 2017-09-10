@@ -39,6 +39,8 @@ import fr.univavignon.transpolosearch.data.entity.mention.Mentions;
 import fr.univavignon.transpolosearch.processing.InterfaceRecognizer;
 import fr.univavignon.transpolosearch.tools.file.FileNames;
 import fr.univavignon.transpolosearch.tools.file.FileTools;
+import fr.univavignon.transpolosearch.tools.log.HierarchicalLogger;
+import fr.univavignon.transpolosearch.tools.log.HierarchicalLoggerManager;
 import fr.univavignon.transpolosearch.tools.string.StringTools;
 import fr.univavignon.transpolosearch.tools.xml.XmlNames;
 import fr.univavignon.transpolosearch.tools.xml.XmlTools;
@@ -76,6 +78,12 @@ public class Article implements Comparable<Article>
 		
 		initFiles(corpusFolder);
 	}
+	
+	/////////////////////////////////////////////////////////////////
+	// LOGGER		/////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////
+	/** Common object used for logging */
+	public static HierarchicalLogger logger = HierarchicalLoggerManager.getHierarchicalLogger();
 	
 	/////////////////////////////////////////////////////////////////
 	// NAME				/////////////////////////////////////////////
@@ -457,14 +465,22 @@ public class Article implements Comparable<Article>
 	 * can become incorrect.
 	 */
 	public void cleanContent()
-	{	// raw text	
+	{	logger.log("Clean article content (can take quite some time for very long articles)");
+		logger.increaseOffset();
+		
+		// raw text
+		logger.log("Clean raw text");
 		rawText = StringTools.cleanText(rawText);
 		
 		// linked text
+		logger.log("Clean linked text");
 		linkedText = StringTools.cleanText(linkedText);
 		
 		// remove < and > signs
+		logger.log("Remove tag signs");
 		removeTagSigns();
+		
+		logger.decreaseOffset();
 	}
 	
 	/**
@@ -628,12 +644,12 @@ public class Article implements Comparable<Article>
 		}
 		result.setLinkedText(linkedText);
 		
-		// clean the texts
-		result.cleanContent();
-		// possibly re-record the article if its content was changed due to cleaning
-		boolean changed = !rawText.equals(result.getRawText()) || !linkedText.equals(result.getLinkedText());
-		if(changed)
-			result.write();
+//		// clean the texts
+//		result.cleanContent();
+//		// possibly re-record the article if its content was changed due to cleaning
+//		boolean changed = !rawText.equals(result.getRawText()) || !linkedText.equals(result.getLinkedText());
+//		if(changed)
+//			result.write();
 	}
 	
 	/**
