@@ -144,7 +144,7 @@ if(url.contains("cookies"))
 			
 			// init
 			ArticleRetriever articleRetriever = new ArticleRetriever(true); //TODO cache disabled for debugging
-//			articleRetriever.setLanguage(ArticleLanguage.FR);
+//			articleRetriever.setLanguage(ArticleLanguage.FR);	// we don't need that anymore, since we can now determine the language automatically
 			
 			int count = 0;
 			int total = 0;

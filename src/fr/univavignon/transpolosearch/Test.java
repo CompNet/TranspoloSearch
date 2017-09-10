@@ -120,14 +120,6 @@ public class Test
 	private static HierarchicalLogger logger = HierarchicalLoggerManager.getHierarchicalLogger();
 	
 	/////////////////////////////////////////////////////////////////
-	// MISC			/////////////////////////////////////////////////
-	/////////////////////////////////////////////////////////////////
-	private void updateArticleLanguage(String folder)
-	{	
-		
-	}
-	
-	/////////////////////////////////////////////////////////////////
 	// RETRIEVAL	/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
 	/**
@@ -144,7 +136,7 @@ public class Test
 		// problem cases:
 		// - comments longer than the article text
 		// - all the article text in a single element (eg. <p>)
-		// - page listing articles (instead of focusing on a single one)
+		// - page is a list of articles (instead of just a single one)
 		
 //		URL url = new URL("http://www.lemonde.fr/culture/article/2014/07/16/la-prise-de-position-d-olivier-py-sur-le-fn-a-heurte-les-avignonnais_4457735_3246.html");
 //		URL url = new URL("http://www.lemonde.fr/afrique/article/2015/05/02/au-togo-l-opposition-coincee-apres-son-echec-a-la-presidentielle_4626476_3212.html");
@@ -506,7 +498,6 @@ if(line.contains("marseillan"))
 // TODO médias sociaux: rajouter dans le csv le nombre de commentaires associés à chaque post
 //		en fait : rajouter le CSV pr médias sociaux (indép. d'évts)
 // TODO rajouter séparateur avant/après patronyme
-// TODO utiliser OpenCalais pour détecter la langue (et filtrer) ?
 
 // dates: 6/3 >> 10/3
 // pers: C. Helle + M. Aubry + A. Hidalgo

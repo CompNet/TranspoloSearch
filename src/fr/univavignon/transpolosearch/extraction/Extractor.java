@@ -210,7 +210,7 @@ public class Extractor
 		results.detectMentions(recognizer);
 		
 		// possibly filter the articles depending on the dates and compulsory expression
-		results.filterByContent(startDate,endDate,searchDate,compulsoryExpression,language);
+		results.filterByContent(startDate, endDate, searchDate, compulsoryExpression, language);
 		results.exportAsCsv(FileNames.FI_SEARCH_RESULTS_CONTENT);
 
 		// displays the remaining articles with their mentions	//TODO maybe get the entities instead of the mention, eventually?

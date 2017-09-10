@@ -30,10 +30,12 @@ import java.util.Map.Entry;
 
 import org.xml.sax.SAXException;
 
+import fr.univavignon.transpolosearch.data.article.ArticleLanguage;
 import fr.univavignon.transpolosearch.data.event.Event;
 import fr.univavignon.transpolosearch.retrieval.ArticleRetriever;
 import fr.univavignon.transpolosearch.retrieval.reader.ReaderException;
 import fr.univavignon.transpolosearch.tools.file.FileNames;
+import fr.univavignon.transpolosearch.tools.string.StringTools;
 import fr.univavignon.transpolosearch.tools.time.Period;
 import fr.univavignon.transpolosearch.tools.time.TimeFormatting;
 
@@ -130,6 +132,10 @@ public class WebSearchResult extends AbstractSearchResult
 		logger.log("Retrieving article #"+nbr+" at URL "+url);
 		try
 		{	article = articleRetriever.process(url);
+String text = article.getRawText();
+ArticleLanguage language = StringTools.detectLanguage(text, false);
+article.setLanguage(language);
+article.write();
 		}
 		catch (ReaderException e)
 		{	logger.log("WARNING: Could not retrieve the article at URL "+url.toString()+" >> removing it from the result list.");
