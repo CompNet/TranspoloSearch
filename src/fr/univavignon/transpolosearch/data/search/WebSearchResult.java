@@ -33,12 +33,10 @@ import java.util.regex.Pattern;
 
 import org.xml.sax.SAXException;
 
-import fr.univavignon.transpolosearch.data.article.ArticleLanguage;
 import fr.univavignon.transpolosearch.data.event.Event;
 import fr.univavignon.transpolosearch.retrieval.ArticleRetriever;
 import fr.univavignon.transpolosearch.retrieval.reader.ReaderException;
 import fr.univavignon.transpolosearch.tools.file.FileNames;
-import fr.univavignon.transpolosearch.tools.string.StringTools;
 import fr.univavignon.transpolosearch.tools.time.Period;
 import fr.univavignon.transpolosearch.tools.time.TimeFormatting;
 
@@ -135,12 +133,13 @@ public class WebSearchResult extends AbstractSearchResult
 		logger.log("Retrieving article #"+nbr+" at URL "+url);
 		try
 		{	article = articleRetriever.process(url);
-String text = article.getRawText();//TODO remove all this once the articles have been updated
-ArticleLanguage language = StringTools.detectLanguage(text, false);
-article.setLanguage(language);
-if(url.equals("https://www.marianne.net/politique/le-ralliement-de-delanoe-macron-c-est-la-vieille-garde-du-ps-qui-traine-des-pieds"))
-	System.out.print("");
-article.write();
+//force re-detection of language when opening each article		
+//String text = article.getRawText();//TODO remove all this once the articles have been updated
+//ArticleLanguage language = StringTools.detectLanguage(text, false);
+//article.setLanguage(language);
+//if(url.equals("https://www.marianne.net/politique/le-ralliement-de-delanoe-macron-c-est-la-vieille-garde-du-ps-qui-traine-des-pieds"))
+//	System.out.print("");
+//article.write();
 		}
 		catch (ReaderException e)
 		{	logger.log("WARNING: Could not retrieve the article at URL "+url.toString()+" >> removing it from the result list.");
@@ -182,7 +181,8 @@ article.write();
 	}
 	
 	/**
-	 * Records the results of the web search as a CSV file.
+	 * Returns a map of strings used above to record the results of 
+	 * the web search as a CSV file.
 	 * 
 	 * @return
 	 * 		Map representing the events associated to this Web

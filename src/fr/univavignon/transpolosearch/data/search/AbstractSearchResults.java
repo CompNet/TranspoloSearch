@@ -20,13 +20,16 @@ package fr.univavignon.transpolosearch.data.search;
 
 import java.io.FileNotFoundException;
 import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
 import fr.univavignon.transpolosearch.data.article.ArticleLanguage;
+import fr.univavignon.transpolosearch.data.event.Event;
 import fr.univavignon.transpolosearch.processing.InterfaceRecognizer;
 import fr.univavignon.transpolosearch.processing.ProcessorException;
 import fr.univavignon.transpolosearch.tools.log.HierarchicalLogger;
@@ -84,10 +87,10 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 	// FILTERING	/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
 	/**
-	 * Discards results whose language does not matche the targetted one.
+	 * Discards results whose language does not matche the targeted one.
 	 *
 	 * @param language
-	 * 		Targetted language of the articles.
+	 * 		targeted language of the articles.
 	 */
 	private void filterByLanguage(ArticleLanguage language)
 	{	logger.log("Removing articles not matching the language constraint: "+language);
@@ -176,7 +179,7 @@ if(result instanceof WebSearchResult && ((WebSearchResult)result).url.equalsIgno
 	 * 		String expression which must be present in the article,
 	 * 		or {@code null} if there is no such constraint.
 	 * @param language
-	 * 		Targetted language of the articles.
+	 * 		targeted language of the articles.
 	 */
 	public void filterByContent(Date startDate, Date endDate, boolean searchDate, String compulsoryExpression, ArticleLanguage language)
 	{	logger.log("Starting filtering the articles");
@@ -199,7 +202,7 @@ if(result instanceof WebSearchResult && ((WebSearchResult)result).url.equalsIgno
 		if(language!=null)
 			filterByLanguage(language);
 		else
-			logger.log("No targetted language to process");
+			logger.log("No targeted language to process");
 		
 		// possibly filter the resulting texts depending on the compulsory expression
 		if(compulsoryExpression!=null)
@@ -275,6 +278,11 @@ if(result instanceof WebSearchResult && ((WebSearchResult)result).url.equalsIgno
 	/////////////////////////////////////////////////////////////////
 	// EVENTS		/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
+	/** Results corresponding to the events constituting the clusters */
+	protected List<List<T>> mapClustRes = new ArrayList<List<T>>();
+	/** Position in the result corresponding to the events constituting the clusters */
+	protected List<List<Integer>> mapClustEvt = new ArrayList<List<Integer>>();
+	
 	/**
 	 * Identifies the events described in the articles associated to
 	 * the search results.
@@ -342,6 +350,8 @@ if(result instanceof WebSearchResult && ((WebSearchResult)result).url.equalsIgno
 	public static final String COL_COMMENTS = "Comments";
 	/** Whether a social post was written by the targeted person, or not */
 	public static final String COL_ORIGINAL = "Original post";
+	/** Number of the cluster of events */
+	public static final String COL_CLUSTER = "Cluster";
 	
 	/**
 	 * Records the results of the search as a CSV file.
@@ -349,11 +359,112 @@ if(result instanceof WebSearchResult && ((WebSearchResult)result).url.equalsIgno
 	 * @param bySentence 
 	 * 		Whether the events are searched in the whole article or in
 	 * 		individual sentences.
+	 * @param byCluster
+	 * 		Whether the individual instances of events should be recorded,
+	 * 		or the clusters of events detected later.
 	 * 
 	 * @throws UnsupportedEncodingException
 	 * 		Problem while accessing to the result file.
 	 * @throws FileNotFoundException
 	 * 		Problem while accessing to the result file.
 	 */
-	public abstract void exportEvents(boolean bySentence) throws UnsupportedEncodingException, FileNotFoundException;
+	public abstract void exportEvents(boolean bySentence, boolean byCluster) throws UnsupportedEncodingException, FileNotFoundException;
+
+	/**
+	 * Identify groups of similar events among the previously identified events.
+	 * 
+	 * @param threshold
+	 * 		A real value ranging from 0 (all events are considered similar, whatever they are)
+	 * 		to 1 (events must be perfectly similar). It is the minimal required similarity.
+	 */
+	public void clusterEvents(float threshold)
+	{	logger.log("Clustering events from all the articles");
+		logger.increaseOffset();
+			mapClustRes.clear();
+			mapClustEvt.clear();
+		
+			// build a list of all events
+			List<Event> allEvents = new ArrayList<Event>();
+			Map<Integer,T> resMap = new HashMap<Integer,T>();
+			Map<Integer,Integer> evtMap = new HashMap<Integer,Integer>();
+			int idx = 0;
+			for(T result: results.values())
+			{	if(result.status==null)
+				{	for(int i=0;i<result.events.size();i++)
+					{	Event event = result.events.get(i);
+						allEvents.add(event);
+						resMap.put(idx, result);
+						evtMap.put(idx, i);
+						idx++;
+					}
+				}
+			}
+			
+			// compare all pairs of events
+			float simMat[][] = new float[allEvents.size()][allEvents.size()];
+			for(int i=0;i<allEvents.size()-1;i++)
+			{	Event event1 = allEvents.get(i);
+				for(int j=i+1;j<allEvents.size();j++)
+				{	Event event2 = allEvents.get(j);
+					float sim = event1.processJaccardSimilarity(event2);
+					simMat[i][j] = sim;
+					simMat[j][i] = sim;
+				}
+			}
+			
+			// roughly process the groups
+			List<List<Integer>> groups = new ArrayList<List<Integer>>();
+			for(int i=0;i<allEvents.size();i++)
+			{	// init first group
+				if(groups.isEmpty())
+				{	List<Integer> list = new ArrayList<Integer>();
+					list.add(i);
+					groups.add(list);
+				}
+				// compare to existing groups
+				else
+				{	// find the group with the maximal minimal similarity
+					float bestSim = 0;
+					List<Integer> bestGroup = null;
+					for(List<Integer> group: groups)
+					{	// find the minimal similarity for this group
+						float minSim = 1;
+						for(int j=0;j<group.size();j++)
+						{	float sim = simMat[i][j];
+							if(sim<minSim)
+								minSim = sim;
+						}
+						// keep only if it improves the current best
+						if(minSim>bestSim)
+						{	bestSim = minSim;
+							bestGroup = group;
+						}
+					}
+					// compare the best similarity to the threshold
+					if(bestSim>=threshold)
+						bestGroup.add(i);
+					else
+					{	List<Integer> list = new ArrayList<Integer>();
+						list.add(i);
+						groups.add(list);
+					}
+				}
+			}
+			
+			// setup event clusters
+			for(List<Integer> group: groups)
+			{	List<T> clusterRes = new ArrayList<T>();
+				mapClustRes.add(clusterRes);
+				List<Integer> clusterEvt = new ArrayList<Integer>();
+				mapClustEvt.add(clusterEvt);
+				for(int e: group)
+				{	T res = resMap.get(e);
+					clusterRes.add(res);
+					int evt = evtMap.get(e);
+					clusterEvt.add(evt);
+				}
+			}		
+		logger.decreaseOffset();
+		logger.log("Event clustering complete: "+mapClustRes.size()+" clusters detected for "+allEvents.size()+" events");
+	}
 }

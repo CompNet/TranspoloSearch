@@ -131,6 +131,8 @@ class OpenCalaisDelegateRecognizer extends AbstractModellessInternalDelegateReco
 	private static final int MAX_SIZE = 10000;
 	/** Delay between two remote invocations (4 queries per second max, as of 08/2015) */
 	private static final long DELAY = 250;
+	/** Message returned when the limit of request is reached */
+	private static final String QUOTA_MESSAGE = "You exceeded the concurrent request limit for your license key. Please try again later or contact support to upgrade your license.";
 	
 	@Override
 	protected List<String> detectMentions(Article article) throws ProcessorException
@@ -306,9 +308,17 @@ class OpenCalaisDelegateRecognizer extends AbstractModellessInternalDelegateReco
 			String ocAnswer = it.next();
 			
 			// if the answer is actually an error message
-			if(ocAnswer.startsWith("{") && ocAnswer.contains("Unsupported-Language"))
-			{	logger.log("OpenCalais detected (possibly incorrectly) a language it does not support and returned an error code");
+			if(ocAnswer.equals(QUOTA_MESSAGE))
+			{	logger.log("ERROR: OpenCalais returned an error message regarding the limited number of request you can make.");
 				logger.log(ocAnswer);
+				throw new ProcessorException("OpenCalais quota reached");
+			}
+			else if(ocAnswer.startsWith("{"))
+			{	logger.log(ocAnswer);
+				if(ocAnswer.contains("Unsupported-Language"))
+				{	logger.log("WARNING: OpenCalais detected (possibly incorrectly) a language it does not support and returned an error code");
+					logger.log(ocAnswer);
+				}
 			}
 			
 			// otherwise, if we can process the answer

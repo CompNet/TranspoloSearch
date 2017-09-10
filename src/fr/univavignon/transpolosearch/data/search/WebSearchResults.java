@@ -232,26 +232,35 @@ if(url.contains("cookies"))
 	// EVENTS		/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
 	@Override
-	public void exportEvents(boolean bySentence) throws UnsupportedEncodingException, FileNotFoundException
+	public void exportEvents(boolean bySentence, boolean byCluster) throws UnsupportedEncodingException, FileNotFoundException
 	{	String fileName;
 		if(bySentence)
-			fileName = FileNames.FI_EVENT_TABLE_SENTENCE;
+			if(byCluster)
+				fileName = FileNames.FI_CLUSTER_TABLE_SENTENCE;
+			else
+				fileName = FileNames.FI_EVENT_TABLE_SENTENCE;
 		else
-			fileName = FileNames.FI_EVENT_TABLE_ARTICLE;
+			if(byCluster)
+				fileName = FileNames.FI_CLUSTER_TABLE_ARTICLE;
+			else
+				fileName = FileNames.FI_EVENT_TABLE_ARTICLE;
 		String filePath = FileNames.FO_WEB_SEARCH_RESULTS + File.separator + fileName;
 		logger.log("Recording the events as a CVS file: "+filePath);
 		logger.decreaseOffset();
 			PrintWriter pw = FileTools.openTextFileWrite(filePath, "UTF-8");
 			
 			// write header
-			List<String> startCols = Arrays.asList(COL_COMMENTS, COL_TITLE, COL_URL, COL_LENGTH, 
-					COL_PUB_DATE, COL_AUTHORS);
+			List<String> startCols = Arrays.asList(COL_COMMENTS);
+			List<String> midCols = Arrays.asList(COL_TITLE, COL_URL, COL_LENGTH, COL_PUB_DATE, COL_AUTHORS);
 			List<String> endCols = Arrays.asList(COL_STATUS, COL_EVENT_RANK, COL_EVENT_DATES,
 					COL_EVENT_LOCATIONS, COL_EVENT_PERSONS, COL_EVENT_ORGANIZATIONS, COL_EVENT_FUNCTIONS,
 					COL_EVENT_PRODUCTIONS, COL_EVENT_MEETINGS
 			);
 			List<String> cols = new ArrayList<String>();
 			cols.addAll(startCols);
+			if(byCluster)
+				cols.add(COL_CLUSTER);
+			cols.addAll(midCols);
 			for(String engineName: engineNames)
 				cols.add(COL_RANK+engineName); 
 			cols.addAll(endCols);
@@ -265,27 +274,59 @@ if(url.contains("cookies"))
 			pw.println();
 			
 			// write data
-			logger.log("Treat each article separately");
 			int total = 0;
-			for(WebSearchResult result: results.values())
-			{	List<Map<String,String>> lines = result.exportEvents();
-				for(Map<String,String> line: lines)
-				{	it = cols.iterator();
-					while(it.hasNext())
-					{	String col = it.next();
-						String val = line.get(col);
-						if(val!=null)
-							pw.print(val);
-						if(it.hasNext())
-							pw.print(",");
+			if(byCluster)
+			{	logger.log("Treat each cluster separately");
+				for(int i=0;i<mapClustRes.size();i++)
+				{	List<WebSearchResult> res = mapClustRes.get(i);
+					List<Integer> evt = mapClustEvt.get(i);
+					for(int j=0;j<res.size();j++)
+					{	// setup the line
+						WebSearchResult r = res.get(j);
+						List<Map<String,String>> lines = r.exportEvents();
+						int idx = evt.get(j);
+						Map<String,String> line = lines.get(idx);
+						line.put(COL_CLUSTER, Integer.toString(i+1));
+						// write the line
+						it = cols.iterator();
+						while(it.hasNext())
+						{	String col = it.next();
+							String val = line.get(col);
+							if(val!=null)
+								pw.print(val);
+							if(it.hasNext())
+								pw.print(",");
+						}
+						pw.println();
 					}
-					pw.println();
-					total++;
+				total = i;
+				}
+			}
+			else
+			{	logger.log("Treat each article separately");
+				for(WebSearchResult result: results.values())
+				{	List<Map<String,String>> lines = result.exportEvents();
+					for(Map<String,String> line: lines)
+					{	it = cols.iterator();
+						while(it.hasNext())
+						{	String col = it.next();
+							String val = line.get(col);
+							if(val!=null)
+								pw.print(val);
+							if(it.hasNext())
+								pw.print(",");
+						}
+						pw.println();
+						total++;
+					}
 				}
 			}
 			
 			pw.close();
 		logger.decreaseOffset();
-		logger.log("Wrote "+total+" events");
+		if(byCluster)
+			logger.log("Wrote "+total+" event clusters");
+		else
+			logger.log("Wrote "+total+" events");
 	}
 }

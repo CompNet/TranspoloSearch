@@ -246,7 +246,7 @@ public abstract class ArticleReader
 	 * @param language
 	 * 		Language of the retrieved article, or {@code null} if it is unknown.
 	 * @return
-	 * 		An Article object corresponding to the targetted URL.
+	 * 		An Article object corresponding to the targeted URL.
 	 * 
 	 * @throws ReaderException
 	 * 		Problem while retrieving the article.
@@ -1502,7 +1502,7 @@ public abstract class ArticleReader
 				
 				// the text but must non-empty, and contains something else than spaces
 				if(!text.trim().isEmpty())
-				{	// if at the begining of a new line, or already preceeded by a space, remove leading spaces
+				{	// if at the beginning of a new line, or already preceded by a space, remove leading spaces
 					while(rawStr.length()>0 
 							&& (rawStr.charAt(rawStr.length()-1)=='\n' || rawStr.charAt(rawStr.length()-1)==' ') 
 							&& text.startsWith(" "))
@@ -1510,6 +1510,7 @@ public abstract class ArticleReader
 					
 					// complete string buffers
 					rawStr.append(text);
+//System.out.println(linkedStr.length());				
 					linkedStr.append(text);
 				}
 			}

@@ -80,10 +80,10 @@ public abstract class AbstractSearchResult
 	public Article article = null;
 	
 	/**
-	 * Discards results not matching the targetted language.
+	 * Discards results not matching the targeted language.
 	 *  
 	 * @param language
-	 * 		The targetted language.
+	 * 		The targeted language.
 	 * @param nbr
 	 * 		Number of this result in the collection.
 	 * @return
@@ -96,9 +96,9 @@ public abstract class AbstractSearchResult
 			logger.log("Article language: "+lang+" (vs. "+language+")");
 			boolean result = language!=lang;
 			if(result)
-				logger.log("The article language matches the targetted one >> we keep it");
+				logger.log("The article language matches the targeted one >> we keep it");
 			else
-				logger.log("The article language does not match the targetted one >> we discard it");
+				logger.log("The article language does not match the targeted one >> we discard it");
 			
 			// possibly remove the article
 			if(result)
@@ -147,7 +147,7 @@ public abstract class AbstractSearchResult
 			
 			// possibly remove the article/mentions
 			if(result)
-				status = "Missing targetted date";
+				status = "Missing targeted date";
 		
 		logger.decreaseOffset();
 		return result;

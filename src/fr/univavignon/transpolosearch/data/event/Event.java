@@ -536,6 +536,85 @@ public class Event
 	}
 	
 	/////////////////////////////////////////////////////////////////
+	// SIMILARITY		/////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////
+	/**
+	 * Process a similarity measure characterizing this event and
+	 * the specified one. In this very basic approach, we use Jaccard's
+	 * coefficient applied to the events constituting mentions.
+	 * 
+	 * @param event
+	 * 		The event to compare to this event.
+	 * @return
+	 * 		The similarity measure for this pair of events.
+	 */
+	public float processJaccardSimilarity(Event event)
+	{	int unions = 0;
+		int intersections = 0;
+		
+		// functions
+		{	Set<String> inter = new TreeSet<String>(functions);
+			inter.retainAll(event.functions);
+			intersections = intersections + inter.size();
+			Set<String> union = new TreeSet<String>(functions);
+			union.addAll(event.functions);
+			unions = unions + union.size();
+		}
+		// locations
+		{	Set<String> inter = new TreeSet<String>(locations);
+			inter.retainAll(event.locations);
+			intersections = intersections + inter.size();
+			Set<String> union = new TreeSet<String>(locations);
+			union.addAll(event.locations);
+			unions = unions + union.size();
+		}
+		// meetings
+		{	Set<String> inter = new TreeSet<String>(functions);
+			inter.retainAll(event.functions);
+			intersections = intersections + inter.size();
+			Set<String> union = new TreeSet<String>(functions);
+			union.addAll(event.functions);
+			unions = unions + union.size();
+		}
+		// organizations
+		{	Set<String> inter = new TreeSet<String>(organizations);
+			inter.retainAll(event.organizations);
+			intersections = intersections + inter.size();
+			Set<String> union = new TreeSet<String>(organizations);
+			union.addAll(event.organizations);
+			unions = unions + union.size();
+		}
+		// period
+		{	// TODO for now we ignore the periods (?)
+		}
+		// persons
+		{	Set<String> inter = new TreeSet<String>(persons);
+			inter.retainAll(event.persons);
+			intersections = intersections + inter.size();
+			Set<String> union = new TreeSet<String>(persons);
+			union.addAll(event.persons);
+			unions = unions + union.size();
+		}
+		// productions
+		{	Set<String> inter = new TreeSet<String>(productions);
+			inter.retainAll(event.productions);
+			intersections = intersections + inter.size();
+			Set<String> union = new TreeSet<String>(productions);
+			union.addAll(event.productions);
+			unions = unions + union.size();
+		}
+		
+		// TODO we should actually compare the entities, not the mentions.
+		// but for this, we need first to unify them over the corpus.
+		// and for this, we need to adapt this class to store mentions/entities instead of just strings
+		
+		// similarity measure
+		float result = intersections / (float)unions;
+		
+		return result;
+	}
+	
+	/////////////////////////////////////////////////////////////////
 	// XML				/////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
 	/**

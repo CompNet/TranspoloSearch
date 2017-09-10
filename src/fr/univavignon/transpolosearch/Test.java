@@ -470,26 +470,38 @@ if(line.contains("marseillan"))
 		DateFormat df = new SimpleDateFormat("yyyyMMdd");
 		
 		String params[][] = {
-			{"Anne Hidalgo", "Hidalgo"}
-//			{"Cécile Helle", "Helle"},
-//			{"Martine Aubry", "Aubry"}
-//			{"Roland Ries", "Ries"}
+			{"Anne Hidalgo", "Hidalgo", null}
+//			{"Anne Hidalgo", "Hidalgo", "http://www.leparisien.fr/"}
+//			{"Cécile Helle", "Helle", null}
+//			{"Cécile Helle", "Helle", "http://www.laprovence.com/"}
+//			{"Martine Aubry", "Aubry", null}
+//			{"Martine Aubry", "Aubry", "http://www.lavoixdunord.fr/"}
+//			{"Roland Ries", "Ries", null}
+			
+//			{"Bruno Julliard", "Julliard", null}
+//			{"Jean-Louis Missika", "Missika", null}
+//			{"Ian Brossat", "Brossat", null}
+//			{"Christophe Najdovski", "Najdovski", null}
+//			{"Nathalie Kosciusko-Morizet", "Kosciusko-Morizet", null}
+//			{"Claude Goasguen", "Goasguen", null}
+//			{"Brigitte Kuster", "Kuster", null}
 		};
 		
 		for(String[] param: params)
 		{	String keywords = param[0];
 			String compulsoryExpression = param[1];
+			String website = param[2];
 			
-			String website = null;
 			Date startDate = df.parse("20170306");
 			Date endDate = df.parse("20170310");
 			boolean searchDate = true;
 			boolean extendedSocialSearch = true;
 			ArticleLanguage language = ArticleLanguage.FR;
+			float threshold = 0.1f;
 			
 			logger.log("Processing "+keywords);
 			logger.increaseOffset();
-				extractor.performExtraction(keywords, website, startDate, endDate, searchDate, compulsoryExpression, extendedSocialSearch, language);
+				extractor.performExtraction(keywords, website, startDate, endDate, searchDate, compulsoryExpression, extendedSocialSearch, language, threshold);
 			logger.decreaseOffset();
 		}
 	}
@@ -497,3 +509,4 @@ if(line.contains("marseillan"))
 
 // TODO médias sociaux: rajouter dans le csv le nombre de commentaires associés à chaque post
 //		en fait : rajouter le CSV pr médias sociaux (indép. d'évts)
+// TODO quand on détecte les entités, il faudrait aussi le faire sur le titre

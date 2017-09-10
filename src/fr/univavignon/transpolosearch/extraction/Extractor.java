@@ -120,7 +120,10 @@ public class Extractor
 	 * 		{@code false}, only the posts on the targeted page and their direct comments
 	 * 		are returned. 
 	 * @param language
-	 * 		Language targetted during the search.
+	 * 		Language targeted during the search.
+	 * @param threshold
+	 * 		Threshold used when clustering the events, it ranges from 0 (all events in the
+	 * 		same cluster) to 1 (exact match required).
 	 * 
 	 * @throws IOException 
 	 * 		Problem accessing the Web or a file.
@@ -133,7 +136,7 @@ public class Extractor
 	 * @throws ProcessorException 
 	 * 		Problem while detecting the entity mentions.
 	 */
-	public void performExtraction(String keywords, String website, Date startDate, Date endDate, boolean searchDate, String compulsoryExpression, boolean extendedSocialSearch, ArticleLanguage language) throws IOException, ReaderException, ParseException, SAXException, ProcessorException
+	public void performExtraction(String keywords, String website, Date startDate, Date endDate, boolean searchDate, String compulsoryExpression, boolean extendedSocialSearch, ArticleLanguage language, float threshold) throws IOException, ReaderException, ParseException, SAXException, ProcessorException
 	{	logger.log("Starting the information extraction");
 		logger.increaseOffset();
 		
@@ -148,11 +151,11 @@ public class Extractor
 		
 		// perform the Web search
 		logger.log("Performing the Web search");
-		performWebExtraction(keywords, website, startDate, endDate, searchDate, compulsoryExpression, language);
+		performWebExtraction(keywords, website, startDate, endDate, searchDate, compulsoryExpression, language, threshold);
 		
 		// perform the social search
 		logger.log("Performing the social media search");
-		performSocialExtraction(keywords, startDate, endDate, compulsoryExpression, extendedSocialSearch, language);
+		performSocialExtraction(keywords, startDate, endDate, compulsoryExpression, extendedSocialSearch, language, threshold);
 		
 		logger.decreaseOffset();
 		logger.log("Information extraction over");
@@ -179,7 +182,9 @@ public class Extractor
 	 * 		String expression which must be present in the article,
 	 * 		or {@code null} if there is no such constraint.
 	 * @param language
-	 * 		Language targetted during the search.
+	 * 		Language targeted during the search.
+	 * @param threshold
+	 * 		Threshold used when clustering the events.
 	 * 
 	 * @throws IOException 
 	 * 		Problem accessing the Web or a file.
@@ -192,7 +197,7 @@ public class Extractor
 	 * @throws ProcessorException 
 	 * 		Problem while detecting the entity mentions.
 	 */
-	private void performWebExtraction(String keywords, String website, Date startDate, Date endDate, boolean searchDate, String compulsoryExpression, ArticleLanguage language) throws IOException, ReaderException, ParseException, SAXException, ProcessorException
+	private void performWebExtraction(String keywords, String website, Date startDate, Date endDate, boolean searchDate, String compulsoryExpression, ArticleLanguage language, float threshold) throws IOException, ReaderException, ParseException, SAXException, ProcessorException
 	{	logger.log("Starting the web extraction");
 		logger.increaseOffset();
 		
@@ -213,15 +218,20 @@ public class Extractor
 		results.filterByContent(startDate, endDate, searchDate, compulsoryExpression, language);
 		results.exportAsCsv(FileNames.FI_SEARCH_RESULTS_CONTENT);
 
-		// displays the remaining articles with their mentions	//TODO maybe get the entities instead of the mention, eventually?
+		// displays the remaining articles with their mentions	//TODO maybe get the entities instead of the mentions, eventually?
 		results.displayRemainingMentions(); //TODO for debug only
 		
 		// extract events from the remaining articles and mentions
 		boolean bySentence[] = {false,true};
 		for(boolean bs: bySentence)
-		{	results.extractEvents(bs);
+		{	// identify the events
+			results.extractEvents(bs);
 			// export the events as a table
-			results.exportEvents(bs);
+			results.exportEvents(bs, false);
+			// try to group similar events together
+			results.clusterEvents(threshold);
+			// export the resulting groups as a table
+			results.exportEvents(bs, true);
 		}
 		
 		logger.decreaseOffset();
@@ -251,7 +261,10 @@ public class Extractor
 	 * 		String expression which must be present in the groups of posts,
 	 * 		or {@code null} if there is no such constraint.
 	 * @param language
-	 * 		Language targetted during the search.
+	 * 		Language targeted during the search.
+	 * @param threshold
+	 * 		Threshold used when clustering the events, it ranges from 0 (all events in the
+	 * 		same cluster) to 1 (exact match required).
 	 * 
 	 * @throws IOException 
 	 * 		Problem accessing the Web or a file.
@@ -264,7 +277,7 @@ public class Extractor
 	 * @throws ProcessorException 
 	 * 		Problem while detecting the entity mentions.
 	 */
-	private void performSocialExtraction(String keywords, Date startDate, Date endDate, String compulsoryExpression, boolean extendedSocialSearch, ArticleLanguage language) throws IOException, ReaderException, ParseException, SAXException, ProcessorException
+	private void performSocialExtraction(String keywords, Date startDate, Date endDate, String compulsoryExpression, boolean extendedSocialSearch, ArticleLanguage language, float threshold) throws IOException, ReaderException, ParseException, SAXException, ProcessorException
 	{	logger.log("Starting the social media extraction");
 		logger.increaseOffset();
 		
@@ -289,7 +302,11 @@ public class Extractor
 		for(boolean bs: bySentence)
 		{	results.extractEvents(bs);
 			// export the events as a table
-			results.exportEvents(bs);
+			results.exportEvents(bs, false);
+			// try to group similar events together
+			results.clusterEvents(threshold);
+			// export the resulting groups as a table
+			results.exportEvents(bs, true);
 		}
 		
 		logger.decreaseOffset();

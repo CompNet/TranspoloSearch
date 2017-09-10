@@ -198,7 +198,7 @@ public class SocialSearchResult extends AbstractSearchResult
 				}
 			}
 			else
-				logger.log("This article was written by the targetted person, and we therefore keep it");
+				logger.log("This article was written by the targeted person, and we therefore keep it");
 		}
 		logger.decreaseOffset();
 			
@@ -291,7 +291,8 @@ public class SocialSearchResult extends AbstractSearchResult
 	}
 	
 	/**
-	 * Records the results of the social search as a CSV file.
+	 * Returns a map of strings used above to record the results of 
+	 * the social search as a CSV file.
 	 * 
 	 * @return
 	 * 		Map representing the events associated to this social
