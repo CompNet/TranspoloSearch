@@ -1,5 +1,7 @@
 package fr.univavignon.transpolosearch.tools.string;
 
+import java.io.IOException;
+
 /*
  * TranspoloSearch
  * Copyright 2015-17 Vincent Labatut
@@ -34,6 +36,18 @@ import java.util.regex.Pattern;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Combinations;
 
+import com.google.common.base.Optional;
+import com.optimaize.langdetect.LanguageDetector;
+import com.optimaize.langdetect.LanguageDetectorBuilder;
+import com.optimaize.langdetect.i18n.LdLocale;
+import com.optimaize.langdetect.ngram.NgramExtractors;
+import com.optimaize.langdetect.profiles.LanguageProfile;
+import com.optimaize.langdetect.profiles.LanguageProfileReader;
+import com.optimaize.langdetect.text.CommonTextObjectFactories;
+import com.optimaize.langdetect.text.TextObject;
+import com.optimaize.langdetect.text.TextObjectFactory;
+
+import fr.univavignon.transpolosearch.data.article.ArticleLanguage;
 import fr.univavignon.transpolosearch.tools.log.HierarchicalLogger;
 import fr.univavignon.transpolosearch.tools.log.HierarchicalLoggerManager;
 
@@ -50,8 +64,11 @@ public class StringTools
 	 * 
 	 * @param args
 	 * 		No need.
+	 * 
+	 * @throws Exception
+	 * 		Whatever exception was thrown. 
 	 */
-	public static void main(String[] args)
+	public static void main(String[] args) throws Exception
 	{	
 		// test split
 //		String text = "This is a first sentence. Cela semble marcher très bien."
@@ -92,8 +109,25 @@ public class StringTools
 //		System.out.println(list);
 		
 		// test rtl cleaning
-		String str = removeNonLatinChars("sdsfsd fتثتqsdsq");
-		System.out.println(str);
+//		String str = removeNonLatinChars("sdsfsd fتثتqsdsq");
+//		System.out.println(str);
+		
+		// language detection
+		String texts[] = 
+		{	// french
+			"Le Bureau des Légendes Saison 2 streaming vf HD Au sein de la DGSE (Direction Générale de la Sécurité Extérieure), un département appelé le Bureau des légendes (BDL) pilote à distance les agents les plus importants des services de renseignements français : les clandestins. En immersion dans des pays hostiles, leur mission consiste à repérer les personnes susceptibles d'être recrutées comme source de renseignements. Opérant dans l'ombre 'sous légende', c'est-à-dire sous une identité fabriquée de toutes pièces, ils vivent durant de longues années dans une duplicité permanente.De retour d'une mission clandestine de six années à Damas, notre héros - plus connu sous le nom de code Malotru - est promu au sein du BDL et reprend peu à peu pied dans sa vraie vie. Mais contrairement à toute procédure de sécurité, il semble ne pas abandonner sa légende et l'identité sous laquelle il vivait en Syrie.",
+			// english
+			"Washington is the 18th largest state with an area of 71,362 square miles (184,827 sq km), and the 13th most populous state with over 7 million people. Approximately 60 percent of Washington's residents live in the Seattle metropolitan area, the center of transportation, business, and industry along the Puget Sound region of the Salish Sea, an inlet of the Pacific Ocean consisting of numerous islands, deep fjords, and bays carved out by glaciers. The remainder of the state consists of deep temperate rainforests in the west, mountain ranges in the west, central, northeast and far southeast, and a semi-arid basin region in the east, central, and south, given over to intensive agriculture. Washington is the second most populous state on the West Coast and in the Western United States, after California. Mount Rainier, an active stratovolcano, is the state's highest elevation at almost 14,411 feet (4,392 m) and is the most topographically prominent mountain in the contiguous United States.",
+			// spanish
+			"Fue nombrado en homenaje al líder de las fuerzas estadounidenses de la Guerra de la Independencia de EE. UU. de 1776 y primer presidente de Estados Unidos, George Washington. Los nombres de muchas ciudades y condados de Estados Unidos rinden homenaje a diversos presidentes estadounidenses, pero el estado de Washington es el único estado en ser nombrado en homenaje a un presidente estadounidense. Para diferenciarla de la capital de Estados Unidos, Washington D. C., en Estados Unidos, se suele llamar 'estado de Washington' al estado y 'D. C.' (abreviatura de 'Distrito de Columbia', District of Columbia en inglés), 'ciudad federal' o 'ciudad de Washington' o a la capital nacional.",
+			// german
+			"Gemessen an seiner Fläche steht Washington unter den US-Bundesstaaten mit 184.665 Quadratkilometern an 18. Stelle, gemessen an seiner Bevölkerung von 6.724.540 Einwohnern an 13. Stelle (Stand 2010). Der Großteil der Bevölkerung konzentriert sich rund um den Puget Sound, eine etwa 150 km lange, inselreiche und weitverzweigte Bucht im Westen des Staates, an dem auch die Hauptstadt Olympia sowie Seattle, die mit Abstand größte Stadt, liegen."
+		};
+		for(String text: texts)
+		{	System.out.println(text);
+			ArticleLanguage lg = detectLanguage(text, false);
+			System.out.println(">> "+lg);
+		}
 	}
 	
 	/////////////////////////////////////////////////////////////////
@@ -763,6 +797,76 @@ public class StringTools
 				// we also try only the lastnames
 				if(!result.contains(lastnames))
 					result.add(lastnames);
+			}
+		}
+		
+		return result;
+	}
+	
+	/////////////////////////////////////////////////////////////////
+	// LANGUAGE			/////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////
+	/** Object used to detect the language of a text */
+	private static LanguageDetector LANGUAGE_DETECTOR = null;
+	/** Object used by the language detector for long texts */
+	private static TextObjectFactory TEXT_FACTORY_LONG = null;
+	/** Object used by the language detector for short texts */
+	private static TextObjectFactory TEXT_FACTORY_SHORT = null;
+
+	/**
+	 * Detects the language in the specified text, and return the corresponding enum value.
+	 * If the language does not correspond to one of the enumerated languages, then the
+	 * method returns {@code null}.
+	 * 
+	 * @param text
+	 * 		The text whose language we want to detect. 
+	 * @param shortText
+	 * 		Whether the text is short ({@code true}) or long ({@code false}). 
+	 * @return 
+	 * 		The {@link ArticleLanguage} value associated to the detected language,
+	 * 		or {@code null} if the language could be recognized or is not enumerated.
+	 *  
+	 * @throws IOException 
+	 * 		Problem while initializing the library.
+	 */
+	public static ArticleLanguage detectLanguage(String text, boolean shortText) throws IOException
+	{	ArticleLanguage result = null;
+		
+		if(text!=null && !text.isEmpty())
+		{	// init language detector
+			if(LANGUAGE_DETECTOR==null)
+			{	List<LanguageProfile> languageProfiles = new LanguageProfileReader().readAllBuiltIn();
+				LANGUAGE_DETECTOR = LanguageDetectorBuilder.create(NgramExtractors.standard())
+					.withProfiles(languageProfiles)
+					.build();
+			}
+			// init text factory
+			TextObjectFactory textObjectFactory;
+			if(shortText)
+			{	if(TEXT_FACTORY_SHORT==null)
+					TEXT_FACTORY_SHORT = CommonTextObjectFactories.forDetectingShortCleanText();
+				textObjectFactory = TEXT_FACTORY_SHORT;
+			}
+			else
+			{	if(TEXT_FACTORY_LONG==null)
+				TEXT_FACTORY_LONG = CommonTextObjectFactories.forDetectingOnLargeText();
+				textObjectFactory = TEXT_FACTORY_LONG;
+			}
+			
+			// process the text
+			TextObject textObject = textObjectFactory.forText(text);
+			Optional<LdLocale> lang = LANGUAGE_DETECTOR.detect(textObject);
+			if(lang.isPresent())
+			{	LdLocale loc = lang.get();
+				String iso = loc.getLanguage();
+				switch(iso)
+				{	case "fr": 
+						result = ArticleLanguage.FR;
+						break;
+					case "en": 
+						result = ArticleLanguage.EN;
+						break;
+				}
 			}
 		}
 		

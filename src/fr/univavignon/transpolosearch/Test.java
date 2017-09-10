@@ -96,9 +96,6 @@ public class Test
 	 */
 	public static void main(String[] args) throws Exception
 	{	
-		// test the language detection lib
-//		testLanguageDetection();
-		
 		// retrieval
 //		testRetrievalGeneric();
 		
@@ -120,45 +117,6 @@ public class Test
 	/////////////////////////////////////////////////////////////////
 	/** Common object used for logging */
 	private static HierarchicalLogger logger = HierarchicalLoggerManager.getHierarchicalLogger();
-	
-	/////////////////////////////////////////////////////////////////
-	// MISC			/////////////////////////////////////////////////
-	/////////////////////////////////////////////////////////////////
-	/**
-	 * Test the language detection library.
-	 * 
-	 * @throws Exception
-	 * 		Whatever exception.
-	 */
-	private static void testLanguageDetection() throws Exception
-	{	// init test texts 
-		String testStr[] = 
-		{	// french
-			"Le Bureau des Légendes Saison 2 streaming vf HD Au sein de la DGSE (Direction Générale de la Sécurité Extérieure), un département appelé le Bureau des légendes (BDL) pilote à distance les agents les plus importants des services de renseignements français : les clandestins. En immersion dans des pays hostiles, leur mission consiste à repérer les personnes susceptibles d'être recrutées comme source de renseignements. Opérant dans l'ombre 'sous légende', c'est-à-dire sous une identité fabriquée de toutes pièces, ils vivent durant de longues années dans une duplicité permanente.De retour d'une mission clandestine de six années à Damas, notre héros - plus connu sous le nom de code Malotru - est promu au sein du BDL et reprend peu à peu pied dans sa vraie vie. Mais contrairement à toute procédure de sécurité, il semble ne pas abandonner sa légende et l'identité sous laquelle il vivait en Syrie.",
-			// english
-			"Washington is the 18th largest state with an area of 71,362 square miles (184,827 sq km), and the 13th most populous state with over 7 million people. Approximately 60 percent of Washington's residents live in the Seattle metropolitan area, the center of transportation, business, and industry along the Puget Sound region of the Salish Sea, an inlet of the Pacific Ocean consisting of numerous islands, deep fjords, and bays carved out by glaciers. The remainder of the state consists of deep temperate rainforests in the west, mountain ranges in the west, central, northeast and far southeast, and a semi-arid basin region in the east, central, and south, given over to intensive agriculture. Washington is the second most populous state on the West Coast and in the Western United States, after California. Mount Rainier, an active stratovolcano, is the state's highest elevation at almost 14,411 feet (4,392 m) and is the most topographically prominent mountain in the contiguous United States.",
-			// spanish
-			"Fue nombrado en homenaje al líder de las fuerzas estadounidenses de la Guerra de la Independencia de EE. UU. de 1776 y primer presidente de Estados Unidos, George Washington. Los nombres de muchas ciudades y condados de Estados Unidos rinden homenaje a diversos presidentes estadounidenses, pero el estado de Washington es el único estado en ser nombrado en homenaje a un presidente estadounidense. Para diferenciarla de la capital de Estados Unidos, Washington D. C., en Estados Unidos, se suele llamar 'estado de Washington' al estado y 'D. C.' (abreviatura de 'Distrito de Columbia', District of Columbia en inglés), 'ciudad federal' o 'ciudad de Washington' o a la capital nacional.",
-			// german
-			"Gemessen an seiner Fläche steht Washington unter den US-Bundesstaaten mit 184.665 Quadratkilometern an 18. Stelle, gemessen an seiner Bevölkerung von 6.724.540 Einwohnern an 13. Stelle (Stand 2010). Der Großteil der Bevölkerung konzentriert sich rund um den Puget Sound, eine etwa 150 km lange, inselreiche und weitverzweigte Bucht im Westen des Staates, an dem auch die Hauptstadt Olympia sowie Seattle, die mit Abstand größte Stadt, liegen."
-		};
-	
-		// init language detector
-		List<LanguageProfile> languageProfiles = new LanguageProfileReader().readAllBuiltIn();
-		LanguageDetector languageDetector = LanguageDetectorBuilder.create(NgramExtractors.standard())
-	        .withProfiles(languageProfiles)
-	        .build();
-		TextObjectFactory textObjectFactory = CommonTextObjectFactories.forDetectingOnLargeText();
-//		TextObjectFactory textObjectFactory = CommonTextObjectFactories.forDetectingShortCleanText();
-		
-		// process each text
-		for(String str: testStr)
-		{	System.out.println(str);
-			TextObject textObject = textObjectFactory.forText(str);
-			Optional<LdLocale> lang = languageDetector.detect(textObject);
-			System.out.println(">> "+lang);
-		}
-	}
 	
 	/////////////////////////////////////////////////////////////////
 	// RETRIEVAL	/////////////////////////////////////////////////
