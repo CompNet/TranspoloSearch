@@ -32,8 +32,11 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Scanner;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import fr.univavignon.transpolosearch.data.article.Article;
 import fr.univavignon.transpolosearch.data.article.ArticleLanguage;
@@ -184,8 +187,11 @@ public class SocialSearchResult extends AbstractSearchResult
 		logger.increaseOffset();
 		{	// filter only if the article was not authored by the target
 			if(!original)
-			{	String rawText = article.getRawText();
-				if(!rawText.contains(compulsoryExpression))
+			{	String text = article.getRawText().toLowerCase(Locale.ENGLISH);
+				String expr = compulsoryExpression.toLowerCase(Locale.ENGLISH);
+				Pattern pattern = Pattern.compile("\\b"+expr+"\\b");
+		        Matcher matcher = pattern.matcher(text);
+		        if(!matcher.find())
 				{	logger.log("Discarding article "+article.getTitle()+" ("+article.getUrl()+")");
 					status = "Missing keyword";
 					result = false;

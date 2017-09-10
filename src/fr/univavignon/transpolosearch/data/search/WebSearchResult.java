@@ -25,8 +25,11 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.xml.sax.SAXException;
 
@@ -152,8 +155,11 @@ article.write();
 		
 		logger.log("Processing article "+article.getTitle()+" ("+nbr+")");
 		logger.increaseOffset();
-		{	String rawText = article.getRawText();
-			if(!rawText.contains(compulsoryExpression))
+		{	String text = article.getRawText().toLowerCase(Locale.ENGLISH);
+			String expr = compulsoryExpression.toLowerCase(Locale.ENGLISH);
+			Pattern pattern = Pattern.compile("\\b"+expr+"\\b");
+	        Matcher matcher = pattern.matcher(text);
+	        if(!matcher.find())
 			{	logger.log("Discarding article "+article.getTitle()+" ("+article.getUrl()+")");
 				status = "Missing keyword";
 				result = false;
