@@ -460,7 +460,7 @@ public class StringTools
 		{	// replace all carriage return chars by newline ones
 			result = result.replace('\r', '\n');
 			// replace all consecutive new line chars by a single one
-			result = result.replaceAll("\\n+", "\\n");
+			result = result.replaceAll("\\n+", "\n");
 			
 			// replace all white spaces (except newline chars) by regular spaces
 			result = result.replaceAll("[\\s^\\n]", " ");
@@ -954,9 +954,13 @@ public class StringTools
 //		boolean disp = input.length()>100000;
 		String result = input;
 		
+/* TODO pb when dealing with non-latin diacritics.
+ * 	example : "Super Mario Bros. Anime Movie Restored (Best Quality!) . English subbed . スーパーマリオブラザーズ ピーチ姫救出大作戦!"
+ */
+		
 		if (input!=null)
-		{	// first version, regex-based: problems when dealing with bidirectional texts (eg english + arabic)
-//			String diacLess = removeDiacritics(result);
+		{	String diacLess = removeDiacritics(result);
+			// first version, regex-based: problems when dealing with bidirectional texts (eg english + arabic)
 //			Matcher matcher = NL_PATTERN.matcher(diacLess);
 //			String tmp = "";
 //			int prevPos = 0;
@@ -969,16 +973,18 @@ public class StringTools
 //				tmp = tmp + result.substring(prevPos,result.length());
 //			result = tmp;
 			
-			// second version: brutal, but seems more robust
+			// second version: brute force, but seems more robust
 			StringBuffer tmp = new StringBuffer();
-			for(int i=0;i<input.length();i++) 
+			for(int i=0;i<diacLess.length();i++) 
 			{	
 //				if(disp && (i+1)%50000==0)
-//					logger.log("Processing char "+(i+1)+"/"+input.length());
+//					logger.log("Processing char "+(i+1)+"/"+diacLess.length());
 				
-				char c = input.charAt(i);
+				char c = diacLess.charAt(i);
 				if(LATIN_CHARS.contains(c))
-					tmp.append(c);
+				{	char cc = input.charAt(i);
+					tmp.append(cc);
+				}
 	        }
 			result = tmp.toString();
 	    }

@@ -154,7 +154,7 @@ class OpeNerDelegateRecognizer extends AbstractModellessInternalDelegateRecogniz
 	/** Mention recognizer URL */
 	private static final String RECOGNIZER_URL = SERVICE_URL + "/ner";
 	/** Maximal request size for OpeNer (the doc recommends 1000) */
-	private static final int MAX_SIZE = 500;
+	private static final int MAX_SIZE = 1000;	//500
 	/** Sleep periods (in ms) */ // this is actually not needed anymore
 	private static final long SLEEP_PERIOD = 100;
 	

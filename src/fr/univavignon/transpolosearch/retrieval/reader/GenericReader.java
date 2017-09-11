@@ -120,7 +120,8 @@ public class GenericReader extends ArticleReader
 			new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX",Locale.FRENCH),
 			new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssX",Locale.FRENCH),
 			new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss",Locale.FRENCH),
-			new SimpleDateFormat("yyyy-MM-dd'T'HH:mm",Locale.FRENCH)
+			new SimpleDateFormat("yyyy-MM-dd'T'HH:mm",Locale.FRENCH),
+			new SimpleDateFormat("dd/MM/yyyy",Locale.FRENCH)			
 		};
 	
 	@Override

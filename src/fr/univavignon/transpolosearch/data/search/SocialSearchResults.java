@@ -23,6 +23,8 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -84,6 +86,88 @@ public class SocialSearchResults extends AbstractSearchResults<SocialSearchResul
 		logger.log("Article recording complete ("+total+")");
 	}
 
+	/////////////////////////////////////////////////////////////////
+	// CSV			/////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////
+	/**
+	 * Records all result URLs in a single CSV file.
+	 * 
+	 * @param fileName
+	 * 		Name of the created file.  
+	 * 
+	 * @throws UnsupportedEncodingException
+	 * 		Problem while opening the CSV file.
+	 * @throws FileNotFoundException
+	 * 		Problem while opening the CSV file.
+	 */
+	public void exportAsCsv(String fileName) throws UnsupportedEncodingException, FileNotFoundException
+	{	logger.log("Recording all the social search results in a file"+fileName);
+		logger.increaseOffset();
+		DateFormat df = new SimpleDateFormat("yyyy-MM-dd");
+		
+		// create folder
+		File folder = new File(FileNames.FO_SOCIAL_SEARCH_RESULTS);
+		folder.mkdirs();
+		String cacheFilePath = folder + File.separator + fileName;
+		logger.log("Recording in CSV file \""+cacheFilePath+"\"");
+		
+		// open file and write header
+		PrintWriter pw = FileTools.openTextFileWrite(cacheFilePath,"UTF-8");
+		{	String line = "\""+COL_TITLE+"\",\""+COL_STATUS+"\",\""+COL_PUB_DATE+"\",\""+COL_AUTHORS+"\",\""+COL_ORIGINAL+"\",\""+COL_ENGINE+"\",\""+COL_LENGTH+"\"";
+			pw.println(line);
+		}
+		
+		// write data and close file
+		for(SocialSearchResult result: results.values())
+		{	String line = "";
+		
+			// title
+			String title = null;
+			if(result.article!=null)
+				title = result.article.getTitle();
+			if(title!=null)
+				line = line + "\"" + title + "\"";
+			
+			// status
+			line = line + ",";
+			if(result.status!=null)
+				line = line + "\"" + result.status + "\"";
+			
+			// date
+			line = line + ",";
+			if(result.date!=null)
+			{	String dateStr = df.format(result.date);
+				line = line + "\"" + dateStr + "\"";
+			}
+			
+			// author
+			line = line + ",";
+			if(result.author!=null)
+				line = line + "\"" + result.author + "\"";
+			
+			// original
+			line = line + ",";
+			line = line + "\"" + result.original + "\"";
+			
+			// engine
+			line = line + ",";
+			line = line + "\"" + result.source + "\"";
+			
+			// length
+			line = line + ",";
+			Integer length = null;
+			if(result.article!=null)
+				length = result.article.getRawText().length();
+			if(length!=null)
+				line = line + length;
+			
+			pw.println(line);
+		}
+		pw.close();
+
+		logger.decreaseOffset();
+	}
+	
 	/////////////////////////////////////////////////////////////////
 	// EVENTS		/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////

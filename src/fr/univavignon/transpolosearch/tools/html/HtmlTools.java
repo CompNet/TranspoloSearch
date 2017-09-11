@@ -95,7 +95,7 @@ public class HtmlTools
 		{	result = dateFormat.parse(valueStr);
 		}
 		catch (ParseException e)
-		{	e.printStackTrace();
+		{	//e.printStackTrace();
 		}
 	
 		return result;

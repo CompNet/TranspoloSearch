@@ -109,6 +109,8 @@ public class Test
 		// compare searches
 //		compareSearches("Anne_Hidalgo_1", "Anne_Hidalgo_2");
 //		compareSearches("Anne_Hidalgo_2", "Anne_Hidalgo_2ext");
+//		compareSearches("Cécile_Helle_1", "Cécile_Helle_2");
+//		compareSearches("Martine_Aubry_1", "Martine_Aubry_2");//TODO pb ici (?)
 		
 		logger.close();
 	}
@@ -433,7 +435,7 @@ if(line.contains("marseillan"))
 		List<Result> result = gs.searchGoogle(keywords, website, sortCriterion);
 		
 		List<String> msgs = new ArrayList<String>();
-		logger.log("Displaying results: "+result.size()+"/"+gs.MAX_RES_NBR);
+		logger.log("Displaying results: "+result.size()+"/"+GoogleEngine.MAX_RES_NBR);
 		logger.increaseOffset();
 			int i = 0;
 			for(Result res: result)
@@ -470,20 +472,20 @@ if(line.contains("marseillan"))
 		DateFormat df = new SimpleDateFormat("yyyyMMdd");
 		
 		String params[][] = {
-			{"Anne Hidalgo", "Hidalgo", null}
-//			{"Anne Hidalgo", "Hidalgo", "http://www.leparisien.fr/"}
-//			{"Cécile Helle", "Helle", null}
-//			{"Cécile Helle", "Helle", "http://www.laprovence.com/"}
+//			{"Anne Hidalgo", "Hidalgo", null},
+//			{"Anne Hidalgo", "Hidalgo", "http://www.leparisien.fr/"},
+//			{"Cécile Helle", "Helle", null},
+//			{"Cécile Helle", "Helle", "http://www.laprovence.com/"},
 //			{"Martine Aubry", "Aubry", null}
-//			{"Martine Aubry", "Aubry", "http://www.lavoixdunord.fr/"}
+			{"Martine Aubry", "Aubry", "http://www.lavoixdunord.fr/"}
 //			{"Roland Ries", "Ries", null}
 			
-//			{"Bruno Julliard", "Julliard", null}
-//			{"Jean-Louis Missika", "Missika", null}
-//			{"Ian Brossat", "Brossat", null}
-//			{"Christophe Najdovski", "Najdovski", null}
-//			{"Nathalie Kosciusko-Morizet", "Kosciusko-Morizet", null}
-//			{"Claude Goasguen", "Goasguen", null}
+//			{"Bruno Julliard", "Julliard", null},
+//			{"Jean-Louis Missika", "Missika", null},
+//			{"Ian Brossat", "Brossat", null},
+//			{"Christophe Najdovski", "Najdovski", null},
+//			{"Nathalie Kosciusko-Morizet", "Kosciusko-Morizet", null},
+//			{"Claude Goasguen", "Goasguen", null},
 //			{"Brigitte Kuster", "Kuster", null}
 		};
 		
@@ -510,3 +512,4 @@ if(line.contains("marseillan"))
 // TODO médias sociaux: rajouter dans le csv le nombre de commentaires associés à chaque post
 //		en fait : rajouter le CSV pr médias sociaux (indép. d'évts)
 // TODO quand on détecte les entités, il faudrait aussi le faire sur le titre
+// TODO solve pb with method removing non-latin characters

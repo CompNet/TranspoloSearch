@@ -153,9 +153,9 @@ public class Extractor
 		logger.log("Performing the Web search");
 		performWebExtraction(keywords, website, startDate, endDate, searchDate, compulsoryExpression, language, threshold);
 		
-		// perform the social search
-		logger.log("Performing the social media search");
-		performSocialExtraction(keywords, startDate, endDate, compulsoryExpression, extendedSocialSearch, language, threshold);
+//		// perform the social search
+//		logger.log("Performing the social media search");
+//		performSocialExtraction(keywords, startDate, endDate, compulsoryExpression, extendedSocialSearch, language, threshold);
 		
 		logger.decreaseOffset();
 		logger.log("Information extraction over");
@@ -210,13 +210,17 @@ public class Extractor
 		// retrieve the corresponding articles
 		results.retrieveArticles();
 		results.exportAsCsv(FileNames.FI_SEARCH_RESULTS_URL);
+
+		// possibly filter the articles depending on the content
+		results.filterByContent(compulsoryExpression, language);
+		results.exportAsCsv(FileNames.FI_SEARCH_RESULTS_CONTENT);
 		
 		// detect the entity mentions
 		results.detectMentions(recognizer);
 		
-		// possibly filter the articles depending on the dates and compulsory expression
-		results.filterByContent(startDate, endDate, searchDate, compulsoryExpression, language);
-		results.exportAsCsv(FileNames.FI_SEARCH_RESULTS_CONTENT);
+		// possibly filter the articles depending on the entities
+		results.filterByEntity(startDate, endDate, searchDate);
+		results.exportAsCsv(FileNames.FI_SEARCH_RESULTS_ENTITY);
 
 		// displays the remaining articles with their mentions	//TODO maybe get the entities instead of the mentions, eventually?
 		results.displayRemainingMentions(); //TODO for debug only
@@ -288,11 +292,17 @@ public class Extractor
 		// convert the posts to proper articles
 		results.buildArticles(includeComments);
 		
-		// possibly filter the articles depending on the compulsory expression
-		results.filterByContent(null,null,true,compulsoryExpression,language);
+		// possibly filter the articles depending on the content
+		results.filterByContent(compulsoryExpression,language);
+		results.exportAsCsv(FileNames.FI_SEARCH_RESULTS_CONTENT);
 		
 		// detect the entity mentions
 		results.detectMentions(recognizer);
+		
+		// possibly filter the articles depending on the entities
+// unnecessary, unless we add other entity-based constraints than dates		
+//		results.filterByEntity(null,null,true);
+//		results.exportAsCsv(FileNames.FI_SEARCH_RESULTS_ENTITY);
 		
 		// displays the remaining articles with their mentions	//TODO maybe get the entities instead of the mention, eventually?
 		results.displayRemainingMentions(); //TODO for debug only
@@ -631,6 +641,6 @@ public class Extractor
 	 */
 	private void initDefaultRecognizer() throws ProcessorException
 	{	recognizer = new StraightCombiner();
-		recognizer.setCacheEnabled(true);//TODO false for debugging
+		recognizer.setCacheEnabled(false);//TODO false for debugging
 	}
 }

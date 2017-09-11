@@ -194,25 +194,32 @@ if(url.contains("cookies"))
 		
 		// write data and close file
 		for(WebSearchResult result: results.values())
-		{	// title
-			String line = "\"";
+		{	String line = "";
+		
+			// title
 			String title = null;
 			if(result.article!=null)
 				title = result.article.getTitle();
 			if(title!=null)
-				line = line + title;
+				line = line + "\"" + title + "\"";
+			
 			// url
-			line = line + "\",\"" + result.url + "\",";
-			// status
-			if(result.status!=null)
-				line = line + result.status;
 			line = line + ",";
+			line = line + "\"" + result.url + "\"";
+			
+			// status
+			line = line + ",";
+			if(result.status!=null)
+				line = line + "\"" + result.status + "\"";
+			
 			// length
+			line = line + ",";
 			Integer length = null;
 			if(result.article!=null)
 				length = result.article.getRawText().length();
 			if(length!=null)
 				line = line + length;
+			
 			// ranks
 			Map<String,String> ranks = result.ranks;
 			for(String engineName: engineNames)
@@ -221,6 +228,7 @@ if(url.contains("cookies"))
 				if(rank!=null)
 					line = line + "\"" + rank + "\"";
 			}
+			
 			pw.println(line);
 		}
 		pw.close();

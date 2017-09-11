@@ -134,7 +134,7 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 		logger.decreaseOffset();
 		logger.log("Date-based filtering complete: "+count+"/"+total);
 	}
-
+	
 	/**
 	 * Discards results corresponding only to articles not containing 
 	 * the compulsory expression.
@@ -168,32 +168,19 @@ if(result instanceof WebSearchResult && ((WebSearchResult)result).url.equalsIgno
 	 * in the specified date range, or not containing the 
 	 * compulsory expression.
 	 *  
-	 * @param startDate
-	 * 		Start of the time period.
-	 * @param endDate
-	 * 		End of the time period.
-	 * @param searchDate
-	 * 		Whether the date constraint was applied before ({@code true}) at search time,
-	 * 		or should be applied <i>a posteriori</i> here ({@code false}).
 	 * @param compulsoryExpression
 	 * 		String expression which must be present in the article,
 	 * 		or {@code null} if there is no such constraint.
 	 * @param language
 	 * 		targeted language of the articles.
 	 */
-	public void filterByContent(Date startDate, Date endDate, boolean searchDate, String compulsoryExpression, ArticleLanguage language)
-	{	logger.log("Starting filtering the articles");
+	public void filterByContent(String compulsoryExpression, ArticleLanguage language)
+	{	logger.log("Starting filtering the articles by content");
 		logger.increaseOffset();
 		
 		// log stuff
 		logger.log("Parameters:");
 		logger.increaseOffset();
-			logger.log("startDate="+startDate);
-			logger.log("endDate="+endDate);
-			String txt = "searchDate="+searchDate;
-			if(searchDate)
-				txt = txt + "(dates are ignored here, because they were already used during the search)";
-			logger.log(txt);
 			logger.log("compulsoryExpression="+compulsoryExpression);
 			logger.log("language="+language);
 		logger.decreaseOffset();
@@ -209,8 +196,39 @@ if(result instanceof WebSearchResult && ((WebSearchResult)result).url.equalsIgno
 			filterByKeyword(compulsoryExpression);
 		else
 			logger.log("No compulsory expression to process");
-
-		// possibly filter the resulting texts depending on the dates they contain
+		
+		logger.decreaseOffset();
+		logger.log("Content-based filtering complete");
+	}
+	
+	/**
+	 * Discards results describing only events not contained
+	 * in the specified time period.
+	 * 
+	 * @param startDate
+	 * 		Start of the time period.
+	 * @param endDate
+	 * 		End of the time period.
+	 * @param searchDate
+	 * 		Whether the date constraint was applied before ({@code true}) at search time,
+	 * 		or should be applied <i>a posteriori</i> here ({@code false}).
+	 */
+	public void filterByEntity(Date startDate, Date endDate, boolean searchDate)
+	{	logger.log("Starting filtering the articles by entity");
+		logger.increaseOffset();
+		
+		// log stuff
+		logger.log("Parameters:");
+		logger.increaseOffset();
+			logger.log("startDate="+startDate);
+			logger.log("endDate="+endDate);
+			String txt = "searchDate="+searchDate;
+			if(searchDate)
+				txt = txt + "(dates are ignored here, because they were already used during the search)";
+			logger.log(txt);
+		logger.decreaseOffset();
+		
+		// possibly filter the texts depending on the dates they contain
 		if(!searchDate)
 		{	if(startDate==null || endDate==null)
 				logger.log("WARNING: one date is null, so both of them are ignored");
@@ -219,9 +237,9 @@ if(result instanceof WebSearchResult && ((WebSearchResult)result).url.equalsIgno
 		}
 		
 		logger.decreaseOffset();
-		logger.log("Article filtering complete");
+		logger.log("Entity-based filtering complete");
 	}
-		
+	
 	/////////////////////////////////////////////////////////////////
 	// MENTIONS		/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
@@ -253,7 +271,7 @@ if(result instanceof WebSearchResult && ((WebSearchResult)result).url.equalsIgno
 			}
 		
 		logger.decreaseOffset();
-		logger.log("Mention detection complete: ("+count+"/"+total+")");
+		logger.log("Mention detection complete: ("+count+" for "+total+" articles)");
 	}
 
 	/**
@@ -330,6 +348,8 @@ if(result instanceof WebSearchResult && ((WebSearchResult)result).url.equalsIgno
 	public static final String COL_SOCIAL_ENGINE = "Social media";
 	/** Rank according to some search engine */
 	public static final String COL_RANK = "Rank ";
+	/** Name of the search engine or social media */
+	public static final String COL_ENGINE = "Engine";
 	/** Rank of the event in the article */
 	public static final String COL_EVENT_RANK = "Event rank";
 	/** Dates associated to the event */
