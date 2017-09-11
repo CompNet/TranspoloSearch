@@ -36,7 +36,17 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.ExecutorService;
 import java.util.Scanner;
+
+import jsat.DataSet;
+import jsat.SimpleDataSet;
+import jsat.classifiers.DataPoint;
+import jsat.clustering.PAM;
+import jsat.linear.DenseVector;
+import jsat.linear.Vec;
+import jsat.linear.distancemetrics.DistanceMetric;
+import jsat.linear.distancemetrics.MahalanobisDistance;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
@@ -236,13 +246,96 @@ public class Test
 	}
 
 	/////////////////////////////////////////////////////////////////
-	// TEST CLUSTERING	/////////////////////////////////////////////
+	// COMPARISON		/////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
-	private void testClustering()
-	{	
-
+	private class PredefinedDistanceMetric implements DistanceMetric
+	{	public PredefinedDistanceMetric()
+		{	// TODO Auto-generated method stub
+		}
+		
+		@Override
+		public boolean supportsAcceleration()
+		{	return false;
+		}
+		
+		@Override
+		public double metricBound()
+		{	return 1;
+		}
+		
+		@Override
+		public boolean isSymmetric()
+		{	return false;
+		}
+		
+		@Override
+		public boolean isSubadditive()
+		{	return false;
+		}
+		
+		@Override
+		public boolean isIndiscemible()
+		{	return true;
+		}
+		
+		@Override
+		public List<Double> getQueryInfo(Vec q)
+		{	return null;
+		}
+		
+		@Override
+		public List<Double> getAccelerationCache(List<? extends Vec> vecs, ExecutorService threadpool) 
+		{	return null;
+		}
+		
+		@Override
+		public List<Double> getAccelerationCache(List<? extends Vec> vecs)
+		{	return null;
+		}
+		
+		@Override
+		public double dist(int a, Vec b, List<Double> qi, List<? extends Vec> vecs, List<Double> cache) 
+		{	throw new IllegalArgumentException();
+		}
+		
+		@Override
+		public double dist(int a, Vec b, List<? extends Vec> vecs, List<Double> cache) 
+		{	throw new IllegalArgumentException();
+		}
+		
+		@Override
+		public double dist(int a, int b, List<? extends Vec> vecs, List<Double> cache) 
+		{	// TODO Auto-generated method stub
+			return 0;
+		}
+		
+		@Override
+		public double dist(Vec a, Vec b)
+		{	throw new IllegalArgumentException();
+		}
+		
+	    @Override
+	    public PredefinedDistanceMetric clone()
+	    {	PredefinedDistanceMetric res = new PredefinedDistanceMetric();
+	    	// TODO Auto-generated method stub
+			return res;
+	    }
 	}
-
+	
+	private void testClustering()
+	{	List<DataPoint> dp = new ArrayList<DataPoint>();
+		for(int i=0;i<10;i++)
+		{	Vec v = new DenseVector(Arrays.asList((double)i));
+			DataPoint d = new DataPoint(v);
+			dp.add(d);
+		}
+		SimpleDataSet ds = new SimpleDataSet(dp);
+		DistanceMetric dm = new PredefinedDistanceMetric();
+		PAM pam = new PAM(dm);
+		int[] membership = new int[dp.size()];
+		pam.cluster(ds, membership);
+	}
+	
 	/////////////////////////////////////////////////////////////////
 	// COMPARISON		/////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
