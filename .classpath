@@ -44,7 +44,6 @@
 	<classpathentry kind="lib" path="lib/language-detector-0.6.jar"/>
 	<classpathentry kind="lib" path="lib/guava-23.0.jar"/>
 	<classpathentry kind="lib" path="lib/slf4j-api-1.7.6.jar"/>
-	<classpathentry kind="lib" path="lib/JSAT-0.0.8.jar" sourcepath="lib/JSAT-0.0.8-sources.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="lib" path="lib/htmllexer.jar"/>
 	<classpathentry kind="lib" path="lib/htmlparser.jar"/>
