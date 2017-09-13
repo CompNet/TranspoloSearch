@@ -39,6 +39,7 @@ import java.util.Map.Entry;
 import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.Scanner;
+import java.util.TreeSet;
 
 import jsat.DataSet;
 import jsat.SimpleDataSet;
@@ -75,6 +76,7 @@ import com.optimaize.langdetect.text.TextObjectFactory;
 
 import fr.univavignon.transpolosearch.data.article.ArticleLanguage;
 import fr.univavignon.transpolosearch.data.event.MyPam;
+import fr.univavignon.transpolosearch.data.event.PredefinedDistanceMetric;
 import fr.univavignon.transpolosearch.data.search.AbstractSearchResults;
 import fr.univavignon.transpolosearch.extraction.Extractor;
 import fr.univavignon.transpolosearch.retrieval.ArticleRetriever;
@@ -116,10 +118,10 @@ public class Test
 //		testGoogleSearch();
 		
 		// whole process
-//		testExtractor();
+		testExtractor();
 		
 		// compare searches
-//			// hidalgo
+			// hidalgo
 //			compareSearches("Anne_Hidalgo_1", "Anne_Hidalgo_2");
 //			compareSearches("Anne_Hidalgo_2", "Anne_Hidalgo_2ext");
 //			compareSearches("Anne_Hidalgo_2", "Anne_Hidalgo_www.leparisien.fr");
@@ -130,9 +132,21 @@ public class Test
 //			// aubry
 //			compareSearches("Martine_Aubry_1", "Martine_Aubry_2");
 //			compareSearches("Martine_Aubry_1", "Martine_Aubry_www.lavoixdunord.fr");
-
+		
+		// merge results
+//			// hidalgo
+//			combineSearches(Arrays.asList("Anne_Hidalgo_1","Anne_Hidalgo_2","Anne_Hidalgo_2ext","Anne_Hidalgo_www.leparisien.fr"));
+//			combineSearches(Arrays.asList("Anne_Hidalgo_2","Anne_Hidalgo_2ext","Anne_Hidalgo_www.leparisien.fr"));
+//			combineSearches(Arrays.asList("Anne_Hidalgo_2ext","Anne_Hidalgo_www.leparisien.fr"));
+//			// helle
+//			combineSearches(Arrays.asList("Cécile_Helle_1","Cécile_Helle_2","Cécile_Helle_www.laprovence.com"));
+//			combineSearches(Arrays.asList("Cécile_Helle_2","Cécile_Helle_www.laprovence.com"));
+//			// aubry
+//			combineSearches(Arrays.asList("Martine_Aubry_1","Martine_Aubry_2","Martine_Aubry_www.lavoixdunord.fr"));
+//			combineSearches(Arrays.asList("Martine_Aubry_2","Martine_Aubry_www.lavoixdunord.fr"));
+		
 		// clustering
-		testClustering();
+//		testClustering();
 		
 		logger.close();
 	}
@@ -258,120 +272,6 @@ public class Test
 		logger.decreaseOffset();
 		logger.log("Test terminated");
 	}
-
-	/////////////////////////////////////////////////////////////////
-	// COMPARISON		/////////////////////////////////////////////
-	/////////////////////////////////////////////////////////////////
-	private class PredefinedDistanceMetric implements DistanceMetric
-	{	double[][] dist;
-		
-		private PredefinedDistanceMetric()
-		{	
-			//
-		}
-		public PredefinedDistanceMetric(List<DataPoint> dp)
-		{	Random r = new Random();
-			
-			dist = new double[dp.size()][dp.size()];
-			for(int i=0;i<dp.size();i++)
-			{	for(int j=0;j<dp.size();j++)
-				{	if(i==j)
-						dist[i][j] = 0;
-					else
-					{	if(i<dp.size()/2 && j<dp.size()/2 || i>=dp.size()/2 && j>=dp.size()/2)
-							dist[i][j] = r.nextDouble()*0.05;
-						else
-							dist[i][j] = r.nextDouble();
-						dist[j][i] = dist[i][j];
-					}
-				}
-			}
-		}
-		
-		@Override
-		public boolean supportsAcceleration()
-		{	return false;
-		}
-		
-		@Override
-		public double metricBound()
-		{	return 1;
-		}
-		
-		@Override
-		public boolean isSymmetric()
-		{	return false;
-		}
-		
-		@Override
-		public boolean isSubadditive()
-		{	return false;
-		}
-		
-		@Override
-		public boolean isIndiscemible()
-		{	return true;
-		}
-		
-		@Override
-		public List<Double> getQueryInfo(Vec q)
-		{	return null;
-		}
-		
-		@Override
-		public List<Double> getAccelerationCache(List<? extends Vec> vecs, ExecutorService threadpool) 
-		{	return null;
-		}
-		
-		@Override
-		public List<Double> getAccelerationCache(List<? extends Vec> vecs)
-		{	return null;
-		}
-		
-		@Override
-		public double dist(int a, Vec b, List<Double> qi, List<? extends Vec> vecs, List<Double> cache) 
-		{	throw new IllegalArgumentException();
-		}
-		
-		@Override
-		public double dist(int a, Vec b, List<? extends Vec> vecs, List<Double> cache) 
-		{	throw new IllegalArgumentException();
-		}
-		
-		@Override
-		public double dist(int a, int b, List<? extends Vec> vecs, List<Double> cache) 
-		{	return dist[a][b];
-		}
-		
-		@Override
-		public double dist(Vec a, Vec b)
-		{	throw new IllegalArgumentException();
-		}
-		
-	    @Override
-	    public PredefinedDistanceMetric clone()
-	    {	PredefinedDistanceMetric res = new PredefinedDistanceMetric();
-	    	res.dist = dist;
-			return res;
-	    }
-	}
-	
-	private static void testClustering()
-	{	List<DataPoint> dp = new ArrayList<DataPoint>();
-		for(int i=0;i<10;i++)
-		{	Vec v = new DenseVector(Arrays.asList((double)i));
-			DataPoint d = new DataPoint(v);
-			dp.add(d);
-		}
-		SimpleDataSet ds = new SimpleDataSet(dp);
-		DistanceMetric dm = new Test().new PredefinedDistanceMetric(dp);
-		MyPam pam = new MyPam(dm);
-		int[] membership = new int[dp.size()];
-		pam.cluster(ds, membership);
-		
-		for(int i=0;i<membership.length;i++)
-			System.out.println(membership[i]);
-	}
 	
 	/////////////////////////////////////////////////////////////////
 	// COMPARISON		/////////////////////////////////////////////
@@ -380,11 +280,11 @@ public class Test
 	private static final String COL_COMPARISON = "Comparison result";
 	
 	/**
-	 * Loads a CSV file representing a collection of URLs, and
-	 * put them (and their metadata) in a map for later use.
+	 * Loads a CSV file representing a collection of results, and
+	 * put them in a map for later use.
 	 * 
-	 * @param folder
-	 * 		Folder corresponding to the search (keywors, possibly website).
+	 * @param path
+	 * 		Path of the CSV file corresponding to the search.
 	 * @return
 	 * 		A map representing the collection of URLs.
 	 * 
@@ -393,18 +293,15 @@ public class Test
 	 * @throws UnsupportedEncodingException
 	 * 		Problem while reading the CSV file.
 	 */
-	private static Map<String,Map<String,String>> loadSearchCSV(String folder) throws FileNotFoundException, UnsupportedEncodingException
+	private static Map<String,Map<String,String>> loadCSV(String path) throws FileNotFoundException, UnsupportedEncodingException
 	{	// open file
-		FileNames.setOutputFolder(folder);
-		String filePath = FileNames.FO_WEB_SEARCH_RESULTS + File.separator + FileNames.FI_SEARCH_RESULTS_CONTENT;
-		Scanner scanner = FileTools.openTextFileRead(filePath,"UTF-8");
+		Scanner scanner = FileTools.openTextFileRead(path,"UTF-8");
 		
 		// get header
 		String header = scanner.nextLine();
 		String colNames[] = header.split(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)", -1);	//this is taken from https://stackoverflow.com/questions/1757065/java-splitting-a-comma-separated-string-but-ignoring-commas-in-quotes
 		for(int i=0;i<colNames.length;i++)
 			colNames[i] = colNames[i].replace('"',' ').trim();
-		
 		
 		// get content
 		Map<String,Map<String,String>> result = new HashMap<String,Map<String,String>>();
@@ -419,11 +316,12 @@ if(line.contains("marseillan"))
 				String value = tmp[i].replace('"',' ').trim();
 				map.put(key,value);
 			}
-			String url = map.get(AbstractSearchResults.COL_URL);
-			result.put(url,map);
+			String key = map.get(AbstractSearchResults.COL_URL);
+			if(key==null)
+				key = map.get(AbstractSearchResults.COL_URL_ID);
+			result.put(key,map);
 		}
 		
-		FileNames.setOutputFolder(null);
 		return result;
 	}
 	
@@ -456,10 +354,15 @@ if(line.contains("marseillan"))
 		for(String engineName: AbstractWebEngine.ENGINE_NAMES)
 			colNames.add(engineName);
 		
-		// get both files
+		// read both files
 		logger.log("Load the files");
-		Map<String,Map<String,String>> map1 = loadSearchCSV(folder1);
-		Map<String,Map<String,String>> map2 = loadSearchCSV(folder2);
+		FileNames.setOutputFolder(folder1);
+		String filePath1 = FileNames.FO_WEB_SEARCH_RESULTS + File.separator + FileNames.FI_SEARCH_RESULTS_ENTITY;
+		Map<String,Map<String,String>> map1 = loadCSV(filePath1);
+		FileNames.setOutputFolder(folder2);
+		String filePath2 = FileNames.FO_WEB_SEARCH_RESULTS + File.separator + FileNames.FI_SEARCH_RESULTS_ENTITY;
+		Map<String,Map<String,String>> map2 = loadCSV(filePath2);
+		FileNames.setOutputFolder(null);
 
 		// compare them
 		logger.log("Compare them");
@@ -513,7 +416,7 @@ if(line.contains("marseillan"))
 		}
 		
 		// record comparison outcome
-		String filePath = FileNames.FO_OUTPUT + File.separator + "comparison_"+folder1+"_vs_"+folder2+".csv";
+		String filePath = FileNames.FO_OUTPUT + File.separator + "comparison_" + folder1 + "_vs_" + folder2 + FileNames.EX_CSV;
 		logger.log("Record the comparison results in file "+filePath);
 		PrintWriter pw = FileTools.openTextFileWrite(filePath, "UTF-8");
 		// write header
@@ -541,6 +444,119 @@ if(line.contains("marseillan"))
 				pw.println(line);
 			}
 		}
+		pw.close();
+		
+		logger.decreaseOffset();
+	}
+	
+	/**
+	 * Combines the results from several distinct searches into a single file,
+	 * to ease their comparison and assessment.
+	 * @param folders
+	 * 		Folders of the searches to combine.
+	 * 
+	 * @throws FileNotFoundException
+	 * 		Problem while accessing the output file.
+	 * @throws UnsupportedEncodingException
+	 * 		Problem while accessing the output file.
+	 */
+	private static void combineSearches(List<String> folders) throws FileNotFoundException, UnsupportedEncodingException
+	{	logger.setName("Combine-Searches");
+		logger.log("Combine folders: ");
+		logger.log(folders); 
+		logger.increaseOffset();
+		
+		// set up column names for the output file
+		List<String> colNames = new ArrayList<String>(Arrays.asList(
+			AbstractSearchResults.COL_URL_ID,
+			AbstractSearchResults.COL_TITLE_CONTENT
+		));
+		for(String folder: folders)
+		{	String colName = AbstractSearchResults.COL_STATUS + " " + folder;
+			colNames.add(colName);
+		}
+		
+		// read all files
+		logger.log("Load the files");
+		List<Map<String,Map<String,String>>> maps = new ArrayList<Map<String,Map<String,String>>>();
+		for(String folder: folders)
+		{	FileNames.setOutputFolder(folder);
+			String filePath = FileNames.FO_OUTPUT + File.separator + FileNames.FI_SEARCH_COMBINED_RESULTS;
+			Map<String,Map<String,String>> map = loadCSV(filePath);
+			FileNames.setOutputFolder(null);
+			maps.add(map);
+		}
+		
+		// merge them
+		logger.log("Combine them");
+		Map<String,Map<String,String>> urlMap = new HashMap<String,Map<String,String>>();
+		Map<String,Map<String,String>> idMap = new HashMap<String,Map<String,String>>();
+		for(int i=0;i<folders.size();i++)
+		{	String folder = folders.get(i);
+			String colName = AbstractSearchResults.COL_STATUS + " " + folder;
+			
+			Map<String,Map<String,String>> map = maps.get(i);
+			for(Entry<String, Map<String,String>> entry: map.entrySet())
+			{	// get the map of values
+				Map<String,String> value = entry.getValue();
+				String status = value.get(AbstractSearchResults.COL_STATUS);
+				// get the key
+				String key = entry.getKey();
+				Map<String, Map<String, String>> mainMap;
+				if(key.startsWith("http"))
+					mainMap = urlMap;
+				else
+					mainMap = idMap;
+				// insert or complete (if it already exists)
+				Map<String,String> temp = mainMap.get(key);
+				if(temp==null)
+				{	temp = value;
+					temp.remove(AbstractSearchResults.COL_STATUS);
+					for(String fold: folders)
+					{	String cn = AbstractSearchResults.COL_STATUS + " " + fold;
+						temp.put(cn, "<Absent>");
+					}
+					mainMap.put(key, temp);
+				}
+				temp.put(colName, status);
+			}
+		}
+		
+		// open the output file
+		String filePath = FileNames.FO_OUTPUT + File.separator + "combined";
+		for(String folder: folders)
+			filePath = filePath + "_" + folder;
+		filePath = filePath + FileNames.EX_CSV;
+		logger.log("Record the combined results in file "+filePath);
+		PrintWriter pw = FileTools.openTextFileWrite(filePath, "UTF-8");
+		// write header
+		{	String header = "";
+			for(String colName: colNames)
+			{	if(!header.isEmpty())
+					header = header + ",";
+				header = header + "\"" + colName + "\"";
+			}
+			pw.println(header);
+		}
+		// write data
+		List<Map<String,Map<String,String>>> allMaps = Arrays.asList(urlMap, idMap);
+		for(Map<String,Map<String,String>> amap: allMaps)
+		{	TreeSet<String> keys = new TreeSet<String>(amap.keySet());
+			for(String key: keys)
+			{	Map<String,String> map = amap.get(key);
+				String line = "";
+				for(String colName: colNames)
+				{	if(!line.isEmpty())
+						line = line + ",";
+					String val = map.get(colName);
+					if(val==null)
+						val = "";
+					line = line + "\"" + val + "\"";
+				}
+				pw.println(line);
+			}
+		}
+		// close file
 		pw.close();
 		
 		logger.decreaseOffset();
@@ -608,20 +624,20 @@ if(line.contains("marseillan"))
 		DateFormat df = new SimpleDateFormat("yyyyMMdd");
 		
 		String params[][] = {
-			{"Anne Hidalgo", "Hidalgo", null}
+			{"Anne Hidalgo", "Hidalgo", null},
 //			{"Anne Hidalgo", "Hidalgo", "http://www.leparisien.fr/"},
 //			{"Cécile Helle", "Helle", null},
 //			{"Cécile Helle", "Helle", "http://www.laprovence.com/"},
-//			{"Martine Aubry", "Aubry", null}
+//			{"Martine Aubry", "Aubry", null},
 //			{"Martine Aubry", "Aubry", "http://www.lavoixdunord.fr/"}
 //			{"Roland Ries", "Ries", null}
 			
-//			{"Bruno Julliard", "Julliard", null}
-//			{"Jean-Louis Missika", "Missika", null}
-//			{"Ian Brossat", "Brossat", null}
-//			{"Christophe Najdovski", "Najdovski", null}
-//			{"Nathalie Kosciusko-Morizet", "Kosciusko-Morizet", null}
-//			{"Claude Goasguen", "Goasguen", null}
+//			{"Bruno Julliard", "Julliard", null},
+//			{"Jean-Louis Missika", "Missika", null},
+//			{"Ian Brossat", "Brossat", null},
+//			{"Christophe Najdovski", "Najdovski", null},
+//			{"Nathalie Kosciusko-Morizet", "Kosciusko-Morizet", null},
+//			{"Claude Goasguen", "Goasguen", null},
 //			{"Brigitte Kuster", "Kuster", null}
 		};
 		
@@ -635,17 +651,15 @@ if(line.contains("marseillan"))
 			boolean searchDate = true;
 			boolean extendedSocialSearch = true;
 			ArticleLanguage language = ArticleLanguage.FR;
-			float threshold = 0.1f;
 			
 			logger.log("Processing "+keywords);
 			logger.increaseOffset();
-				extractor.performExtraction(keywords, website, startDate, endDate, searchDate, compulsoryExpression, extendedSocialSearch, language, threshold);
+				extractor.performExtraction(keywords, website, startDate, endDate, searchDate, compulsoryExpression, extendedSocialSearch, language);
 			logger.decreaseOffset();
 		}
 	}
 }
 
 // TODO médias sociaux: rajouter dans le csv le nombre de commentaires associés à chaque post
-//		en fait : rajouter le CSV pr médias sociaux (indép. d'évts)
 // TODO quand on détecte les entités, il faudrait aussi le faire sur le titre
 // TODO solve pb with method removing non-latin characters

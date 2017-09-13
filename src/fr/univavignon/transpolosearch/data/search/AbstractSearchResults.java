@@ -19,8 +19,10 @@ package fr.univavignon.transpolosearch.data.search;
  */
 
 import java.io.FileNotFoundException;
+import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -30,10 +32,17 @@ import java.util.TreeSet;
 
 import fr.univavignon.transpolosearch.data.article.ArticleLanguage;
 import fr.univavignon.transpolosearch.data.event.Event;
+import fr.univavignon.transpolosearch.data.event.MyPam;
+import fr.univavignon.transpolosearch.data.event.PredefinedDistanceMetric;
 import fr.univavignon.transpolosearch.processing.InterfaceRecognizer;
 import fr.univavignon.transpolosearch.processing.ProcessorException;
 import fr.univavignon.transpolosearch.tools.log.HierarchicalLogger;
 import fr.univavignon.transpolosearch.tools.log.HierarchicalLoggerManager;
+import jsat.SimpleDataSet;
+import jsat.classifiers.DataPoint;
+import jsat.linear.DenseVector;
+import jsat.linear.Vec;
+import jsat.linear.distancemetrics.DistanceMetric;
 
 /**
  * Collection of search results returned by a collection of
@@ -372,6 +381,10 @@ if(result instanceof WebSearchResult && ((WebSearchResult)result).url.equalsIgno
 	public static final String COL_ORIGINAL = "Original post";
 	/** Number of the cluster of events */
 	public static final String COL_CLUSTER = "Cluster";
+	/** Column name for the URL of the web search or id of the social search */
+	public static final String COL_URL_ID = "URL/ID";
+	/** Column name for the title of the web search or content of the social search */
+	public static final String COL_TITLE_CONTENT = "Title/Content";
 	
 	/**
 	 * Records the results of the search as a CSV file.
@@ -392,12 +405,8 @@ if(result instanceof WebSearchResult && ((WebSearchResult)result).url.equalsIgno
 
 	/**
 	 * Identify groups of similar events among the previously identified events.
-	 * 
-	 * @param threshold
-	 * 		A real value ranging from 0 (all events are considered similar, whatever they are)
-	 * 		to 1 (events must be perfectly similar). It is the minimal required similarity.
 	 */
-	public void clusterEvents(float threshold)
+	public void clusterEvents()
 	{	logger.log("Clustering events from all the articles");
 		logger.increaseOffset();
 			mapClustRes.clear();
@@ -420,71 +429,68 @@ if(result instanceof WebSearchResult && ((WebSearchResult)result).url.equalsIgno
 				}
 			}
 			
-			// compare all pairs of events
-			float simMat[][] = new float[allEvents.size()][allEvents.size()];
-			for(int i=0;i<allEvents.size()-1;i++)
-			{	Event event1 = allEvents.get(i);
-				for(int j=i+1;j<allEvents.size();j++)
-				{	Event event2 = allEvents.get(j);
-					float sim = event1.processJaccardSimilarity(event2);
-					simMat[i][j] = sim;
-					simMat[j][i] = sim;
+			if(allEvents.size()<2)
+				logger.log("Not enough events to process, so no event clustering");
+			else
+			{	// init the distances between events
+				DistanceMetric dm = new PredefinedDistanceMetric(allEvents);
+				
+				// build a dummy dataset
+				List<DataPoint> dp = new ArrayList<DataPoint>();
+				for(int i=0;i<allEvents.size();i++)
+				{	Vec v = new DenseVector(Arrays.asList((double)i));
+					DataPoint d = new DataPoint(v);
+					dp.add(d);
 				}
-			}
-			
-			// roughly process the groups
-			List<List<Integer>> groups = new ArrayList<List<Integer>>();
-			for(int i=0;i<allEvents.size();i++)
-			{	// init first group
-				if(groups.isEmpty())
-				{	List<Integer> list = new ArrayList<Integer>();
-					list.add(i);
-					groups.add(list);
-				}
-				// compare to existing groups
-				else
-				{	// find the group with the maximal minimal similarity
-					float bestSim = 0;
-					List<Integer> bestGroup = null;
-					for(List<Integer> group: groups)
-					{	// find the minimal similarity for this group
-						float minSim = 1;
-						for(int j=0;j<group.size();j++)
-						{	float sim = simMat[i][j];
-							if(sim<minSim)
-								minSim = sim;
-						}
-						// keep only if it improves the current best
-						if(minSim>bestSim)
-						{	bestSim = minSim;
-							bestGroup = group;
-						}
+				SimpleDataSet ds = new SimpleDataSet(dp);
+				
+				// apply partition around medoids (PAM)
+				MyPam pam = new MyPam(dm);
+				int[] membership = new int[allEvents.size()];
+				pam.cluster(ds, membership);
+				
+				// setup event clusters
+				for(int m=0;m<membership.length;m++)
+				{	// get group membership for the current event
+					int memb = membership[m];
+				
+					// build/get both group lists
+					List<T> clusterRes;
+					List<Integer> clusterEvt;
+					if(mapClustRes.size()<=memb)
+					{	clusterRes = new ArrayList<T>();
+						mapClustRes.add(clusterRes);
+						clusterEvt = new ArrayList<Integer>();
+						mapClustEvt.add(clusterEvt);
 					}
-					// compare the best similarity to the threshold
-					if(bestSim>=threshold)
-						bestGroup.add(i);
 					else
-					{	List<Integer> list = new ArrayList<Integer>();
-						list.add(i);
-						groups.add(list);
+					{	clusterRes = mapClustRes.get(memb);
+						clusterEvt = mapClustEvt.get(memb);
 					}
-				}
-			}
-			
-			// setup event clusters
-			for(List<Integer> group: groups)
-			{	List<T> clusterRes = new ArrayList<T>();
-				mapClustRes.add(clusterRes);
-				List<Integer> clusterEvt = new ArrayList<Integer>();
-				mapClustEvt.add(clusterEvt);
-				for(int e: group)
-				{	T res = resMap.get(e);
+					
+					// add the event to both lists
+					T res = resMap.get(m);
 					clusterRes.add(res);
-					int evt = evtMap.get(e);
+					int evt = evtMap.get(m);
 					clusterEvt.add(evt);
 				}
-			}		
+			}
+			
 		logger.decreaseOffset();
 		logger.log("Event clustering complete: "+mapClustRes.size()+" clusters detected for "+allEvents.size()+" events");
 	}
+
+	/////////////////////////////////////////////////////////////////
+	// CSV			/////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////
+	/**
+	 * Receives a print writer and writes a summary of these results.
+	 * This method is meant to be used when exporting a combined file
+	 * of both web and social results.
+	 * 
+	 * @param pw
+	 * 		Print write pointing at a file which was previously opened
+	 * 		in write mode.
+	 */
+	public abstract void writeCombinedResults(PrintWriter pw);
 }

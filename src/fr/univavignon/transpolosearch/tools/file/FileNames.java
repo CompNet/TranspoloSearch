@@ -209,6 +209,8 @@ public class FileNames
 	public final static String FI_CLUSTER_TABLE_SENTENCE = "cluster_table_bysentence" + FileNames.EX_CSV;
 	/** List of Facebook ids */
 	public final static String FI_FACEBOOK_IDS = "fb_ids" + FileNames.EX_TEXT;
+	/** File containing the combined web and social search results */
+	public final static String FI_SEARCH_COMBINED_RESULTS = "search_combined" + FileNames.EX_CSV;
 	
 	
 	

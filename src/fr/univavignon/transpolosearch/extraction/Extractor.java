@@ -19,8 +19,10 @@ package fr.univavignon.transpolosearch.extraction;
  */
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.text.ParseException;
@@ -37,6 +39,7 @@ import org.xml.sax.SAXException;
 import com.gargoylesoftware.htmlunit.FailingHttpStatusCodeException;
 
 import fr.univavignon.transpolosearch.data.article.ArticleLanguage;
+import fr.univavignon.transpolosearch.data.search.AbstractSearchResults;
 import fr.univavignon.transpolosearch.data.search.SocialSearchResult;
 import fr.univavignon.transpolosearch.data.search.SocialSearchResults;
 import fr.univavignon.transpolosearch.data.search.WebSearchResults;
@@ -121,9 +124,6 @@ public class Extractor
 	 * 		are returned. 
 	 * @param language
 	 * 		Language targeted during the search.
-	 * @param threshold
-	 * 		Threshold used when clustering the events, it ranges from 0 (all events in the
-	 * 		same cluster) to 1 (exact match required).
 	 * 
 	 * @throws IOException 
 	 * 		Problem accessing the Web or a file.
@@ -136,7 +136,7 @@ public class Extractor
 	 * @throws ProcessorException 
 	 * 		Problem while detecting the entity mentions.
 	 */
-	public void performExtraction(String keywords, String website, Date startDate, Date endDate, boolean searchDate, String compulsoryExpression, boolean extendedSocialSearch, ArticleLanguage language, float threshold) throws IOException, ReaderException, ParseException, SAXException, ProcessorException
+	public void performExtraction(String keywords, String website, Date startDate, Date endDate, boolean searchDate, String compulsoryExpression, boolean extendedSocialSearch, ArticleLanguage language) throws IOException, ReaderException, ParseException, SAXException, ProcessorException
 	{	logger.log("Starting the information extraction");
 		logger.increaseOffset();
 		
@@ -151,230 +151,29 @@ public class Extractor
 		
 		// perform the Web search
 		logger.log("Performing the Web search");
-		performWebExtraction(keywords, website, startDate, endDate, searchDate, compulsoryExpression, language, threshold);
+		WebSearchResults webRes = performWebExtraction(keywords, website, startDate, endDate, searchDate, compulsoryExpression, language);
 		
 		// perform the social search
+		SocialSearchResults socialRes = null;
 		if(website==null)
 		{	logger.log("Performing the social media search");
-			performSocialExtraction(keywords, startDate, endDate, compulsoryExpression, extendedSocialSearch, language, threshold);
+			socialRes = performSocialExtraction(keywords, startDate, endDate, compulsoryExpression, extendedSocialSearch, language);
 		}
 		else
 			logger.log("Skipping the social search, since the focus is on a specific website ("+website+")");
+		
+		// merge both results in a single file
+		exportCombinedResultsAsCsv(webRes, socialRes);
 		
 		logger.decreaseOffset();
 		logger.log("Information extraction over");
 	}
 
-	/**
-	 * Launches the main search.
-	 * 
-	 * @param keywords
-	 * 		Person we want to look up.
-	 * @param website
-	 * 		Target site, or {@ode null} to search the whole Web.
-	 * @param startDate
-	 * 		Start of the period we want to consider, 
-	 * 		or {@code null} for no constraint.
-	 * @param endDate
-	 * 		End of the period we want to consider,
-	 * 		or {@code null} for no constraint.
-	 * @param searchDate
-	 * 		If {@code true}, both dates will be used directly in the Web search.
-	 * 		Otherwise, they will be used <i>a posteri</i> to filter the detected events.
-	 * 		If one of the dates is {@code null}, this parameter has no effect.
-	 * @param compulsoryExpression
-	 * 		String expression which must be present in the article,
-	 * 		or {@code null} if there is no such constraint.
-	 * @param language
-	 * 		Language targeted during the search.
-	 * @param threshold
-	 * 		Threshold used when clustering the events.
-	 * 
-	 * @throws IOException 
-	 * 		Problem accessing the Web or a file.
-	 * @throws SAXException 
-	 * 		Problem while retrieving a Web page.
-	 * @throws ParseException 
-	 * 		Problem while retrieving a Web page.
-	 * @throws ReaderException 
-	 * 		Problem while retrieving a Web page.
-	 * @throws ProcessorException 
-	 * 		Problem while detecting the entity mentions.
-	 */
-	private void performWebExtraction(String keywords, String website, Date startDate, Date endDate, boolean searchDate, String compulsoryExpression, ArticleLanguage language, float threshold) throws IOException, ReaderException, ParseException, SAXException, ProcessorException
-	{	logger.log("Starting the web extraction");
-		logger.increaseOffset();
-		
-		// perform the Web search
-		WebSearchResults results = performWebSearch(keywords, website, startDate, endDate, searchDate);
-
-		// filter Web pages (remove PDFs, and so on)
-		results.filterByUrl();
-		
-		// retrieve the corresponding articles
-		results.retrieveArticles();
-		results.exportAsCsv(FileNames.FI_SEARCH_RESULTS_URL);
-
-		// possibly filter the articles depending on the content
-		results.filterByContent(compulsoryExpression, language);
-		results.exportAsCsv(FileNames.FI_SEARCH_RESULTS_CONTENT);
-		
-		// detect the entity mentions
-		results.detectMentions(recognizer);
-		
-		// possibly filter the articles depending on the entities
-		results.filterByEntity(startDate, endDate, searchDate);
-		results.exportAsCsv(FileNames.FI_SEARCH_RESULTS_ENTITY);
-
-		// displays the remaining articles with their mentions	//TODO maybe get the entities instead of the mentions, eventually?
-		results.displayRemainingMentions(); //TODO for debug only
-		
-		// extract events from the remaining articles and mentions
-		boolean bySentence[] = {false,true};
-		for(boolean bs: bySentence)
-		{	// identify the events
-			results.extractEvents(bs);
-			// export the events as a table
-			results.exportEvents(bs, false);
-			// try to group similar events together
-			results.clusterEvents(threshold);
-			// export the resulting groups as a table
-			results.exportEvents(bs, true);
-		}
-		
-		logger.decreaseOffset();
-		logger.log("Web extraction over");
-	}
-	
 	/////////////////////////////////////////////////////////////////
-	// PROCESS		/////////////////////////////////////////////////
-	/////////////////////////////////////////////////////////////////
-	/**
-	 * Launches the main search.
-	 * 
-	 * @param keywords
-	 * 		Person we want to look up.
-	 * @param startDate
-	 * 		Start of the period we want to consider, 
-	 * 		or {@code null} for no constraint.
-	 * @param endDate
-	 * 		End of the period we want to consider,
-	 * 		or {@code null} for no constraint.
-	 * @param extendedSocialSearch
-	 * 		Whether the social media search should retrieve the posts published by the
-	 * 		users commenting the posts of interest, for the considered period. If 
-	 * 		{@code false}, only the posts on the targeted page and their direct comments
-	 * 		are returned. 
-	 * @param compulsoryExpression
-	 * 		String expression which must be present in the groups of posts,
-	 * 		or {@code null} if there is no such constraint.
-	 * @param language
-	 * 		Language targeted during the search.
-	 * @param threshold
-	 * 		Threshold used when clustering the events, it ranges from 0 (all events in the
-	 * 		same cluster) to 1 (exact match required).
-	 * 
-	 * @throws IOException 
-	 * 		Problem accessing the Web or a file.
-	 * @throws SAXException 
-	 * 		Problem while retrieving a Web page.
-	 * @throws ParseException 
-	 * 		Problem while retrieving a Web page.
-	 * @throws ReaderException 
-	 * 		Problem while retrieving a Web page.
-	 * @throws ProcessorException 
-	 * 		Problem while detecting the entity mentions.
-	 */
-	private void performSocialExtraction(String keywords, Date startDate, Date endDate, String compulsoryExpression, boolean extendedSocialSearch, ArticleLanguage language, float threshold) throws IOException, ReaderException, ParseException, SAXException, ProcessorException
-	{	logger.log("Starting the social media extraction");
-		logger.increaseOffset();
-		
-		// perform the social search
-		boolean includeComments = false;
-		SocialSearchResults results = performSocialSearch(keywords, startDate, endDate, extendedSocialSearch, includeComments);
-		
-		// convert the posts to proper articles
-		results.buildArticles(includeComments);
-		
-		// possibly filter the articles depending on the content
-		results.filterByContent(compulsoryExpression,language);
-		results.exportAsCsv(FileNames.FI_SEARCH_RESULTS_CONTENT);
-		
-		// detect the entity mentions
-		results.detectMentions(recognizer);
-		
-		// possibly filter the articles depending on the entities
-// unnecessary, unless we add other entity-based constraints than dates		
-//		results.filterByEntity(null,null,true);
-//		results.exportAsCsv(FileNames.FI_SEARCH_RESULTS_ENTITY);
-		
-		// displays the remaining articles with their mentions	//TODO maybe get the entities instead of the mention, eventually?
-		results.displayRemainingMentions(); //TODO for debug only
-		
-		// extract events from the remaining articles and mentions
-		boolean bySentence[] = {false,true};
-		for(boolean bs: bySentence)
-		{	results.extractEvents(bs);
-			// export the events as a table
-			results.exportEvents(bs, false);
-			// try to group similar events together
-			results.clusterEvents(threshold);
-			// export the resulting groups as a table
-			results.exportEvents(bs, true);
-		}
-		
-		logger.decreaseOffset();
-		logger.log("Social media extraction over");
-	}
-	
-	/////////////////////////////////////////////////////////////////
-	// WEB SEARCH	/////////////////////////////////////////////////
+	// WEB SEARCH			/////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
 	/** List of engines used for the Web search */
 	private final List<AbstractWebEngine> webEngines = new ArrayList<AbstractWebEngine>();
-//	/** Comparator used for result keys */
-//	private static final Comparator<String> KEY_COMPARATOR = new Comparator<String>() 
-//	{	@Override
-//		public int compare(String key1, String key2) 
-//		{	int result;
-//			Integer d1 = null;
-//			Integer r1 = null;
-//			Integer d2 = null;
-//			Integer r2 = null;
-//			
-//			if(key1.contains("-"))
-//			{	String tmp1[] = key1.split("-");
-//				d1 = Integer.parseInt(tmp1[0]);
-//				r1 = Integer.parseInt(tmp1[1]);
-//			}
-//			else
-//				r1 = Integer.parseInt(key1);
-//			
-//			if(key2.contains("-"))
-//			{	String tmp2[] = key2.split("-");
-//				d2 = Integer.parseInt(tmp2[0]);
-//				r2 = Integer.parseInt(tmp2[1]);
-//			}
-//			else
-//				r2 = Integer.parseInt(key2);
-//			
-//			if(d1==null)
-//				if(d2==null)
-//					result = r1.compareTo(r2);
-//				else
-//					result = -1;
-//			else
-//				if(d2==null)
-//					result = 1;
-//				else
-//				{	result = d1.compareTo(d2);
-//					if(result==0)
-//						result = r1.compareTo(r2);
-//				}
-//			
-//			return result;
-//		}
-//	};
 	
 	/**
 	 * Initializes the default search engines.
@@ -516,8 +315,91 @@ public class Extractor
 		return result;
 	}
 	
+	/**
+	 * Launches the main search.
+	 * 
+	 * @param keywords
+	 * 		Person we want to look up.
+	 * @param website
+	 * 		Target site, or {@ode null} to search the whole Web.
+	 * @param startDate
+	 * 		Start of the period we want to consider, 
+	 * 		or {@code null} for no constraint.
+	 * @param endDate
+	 * 		End of the period we want to consider,
+	 * 		or {@code null} for no constraint.
+	 * @param searchDate
+	 * 		If {@code true}, both dates will be used directly in the Web search.
+	 * 		Otherwise, they will be used <i>a posteri</i> to filter the detected events.
+	 * 		If one of the dates is {@code null}, this parameter has no effect.
+	 * @param compulsoryExpression
+	 * 		String expression which must be present in the article,
+	 * 		or {@code null} if there is no such constraint.
+	 * @param language
+	 * 		Language targeted during the search.
+	 * 
+	 * @return
+	 * 		The Web search results.
+	 * 
+	 * @throws IOException 
+	 * 		Problem accessing the Web or a file.
+	 * @throws SAXException 
+	 * 		Problem while retrieving a Web page.
+	 * @throws ParseException 
+	 * 		Problem while retrieving a Web page.
+	 * @throws ReaderException 
+	 * 		Problem while retrieving a Web page.
+	 * @throws ProcessorException 
+	 * 		Problem while detecting the entity mentions.
+	 */
+	private WebSearchResults performWebExtraction(String keywords, String website, Date startDate, Date endDate, boolean searchDate, String compulsoryExpression, ArticleLanguage language) throws IOException, ReaderException, ParseException, SAXException, ProcessorException
+	{	logger.log("Starting the web extraction");
+		logger.increaseOffset();
+		
+		// perform the Web search
+		WebSearchResults results = performWebSearch(keywords, website, startDate, endDate, searchDate);
+
+		// filter Web pages (remove PDFs, and so on)
+		results.filterByUrl();
+		
+		// retrieve the corresponding articles
+		results.retrieveArticles();
+		results.exportAsCsv(FileNames.FI_SEARCH_RESULTS_URL);
+
+		// possibly filter the articles depending on the content
+		results.filterByContent(compulsoryExpression, language);
+		results.exportAsCsv(FileNames.FI_SEARCH_RESULTS_CONTENT);
+		
+		// detect the entity mentions
+		results.detectMentions(recognizer);
+		
+		// possibly filter the articles depending on the entities
+		results.filterByEntity(startDate, endDate, searchDate);
+		results.exportAsCsv(FileNames.FI_SEARCH_RESULTS_ENTITY);
+
+		// displays the remaining articles with their mentions	//TODO maybe get the entities instead of the mentions, eventually?
+		results.displayRemainingMentions(); //TODO for debug only
+		
+		// extract events from the remaining articles and mentions
+		boolean bySentence[] = {false,true};
+		for(boolean bs: bySentence)
+		{	// identify the events
+			results.extractEvents(bs);
+			// export the events as a table
+			results.exportEvents(bs, false);
+			// try to group similar events together
+			results.clusterEvents();
+			// export the resulting groups as a table
+			results.exportEvents(bs, true);
+		}
+		
+		logger.decreaseOffset();
+		logger.log("Web extraction over");
+		return results;
+	}
+	
 	/////////////////////////////////////////////////////////////////
-	// SOCIAL MEDIA SEARCH	/////////////////////////////////////////
+	// SOCIAL SEARCH	/////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
 	/** List of engines used to search social medias */
 	private final List<AbstractSocialEngine> socialEngines = new ArrayList<AbstractSocialEngine>();
@@ -629,6 +511,85 @@ public class Extractor
 		return result;
 	}
 	
+	/**
+	 * Launches the main search.
+	 * 
+	 * @param keywords
+	 * 		Person we want to look up.
+	 * @param startDate
+	 * 		Start of the period we want to consider, 
+	 * 		or {@code null} for no constraint.
+	 * @param endDate
+	 * 		End of the period we want to consider,
+	 * 		or {@code null} for no constraint.
+	 * @param extendedSocialSearch
+	 * 		Whether the social media search should retrieve the posts published by the
+	 * 		users commenting the posts of interest, for the considered period. If 
+	 * 		{@code false}, only the posts on the targeted page and their direct comments
+	 * 		are returned. 
+	 * @param compulsoryExpression
+	 * 		String expression which must be present in the groups of posts,
+	 * 		or {@code null} if there is no such constraint.
+	 * @param language
+	 * 		Language targeted during the search.
+	 * 
+	 * @return
+	 * 		The social search results.
+	 * 
+	 * @throws IOException 
+	 * 		Problem accessing the Web or a file.
+	 * @throws SAXException 
+	 * 		Problem while retrieving a Web page.
+	 * @throws ParseException 
+	 * 		Problem while retrieving a Web page.
+	 * @throws ReaderException 
+	 * 		Problem while retrieving a Web page.
+	 * @throws ProcessorException 
+	 * 		Problem while detecting the entity mentions.
+	 */
+	private SocialSearchResults performSocialExtraction(String keywords, Date startDate, Date endDate, String compulsoryExpression, boolean extendedSocialSearch, ArticleLanguage language) throws IOException, ReaderException, ParseException, SAXException, ProcessorException
+	{	logger.log("Starting the social media extraction");
+		logger.increaseOffset();
+		
+		// perform the social search
+		boolean includeComments = false;
+		SocialSearchResults results = performSocialSearch(keywords, startDate, endDate, extendedSocialSearch, includeComments);
+		
+		// convert the posts to proper articles
+		results.buildArticles(includeComments);
+		
+		// possibly filter the articles depending on the content
+		results.filterByContent(compulsoryExpression,language);
+		results.exportAsCsv(FileNames.FI_SEARCH_RESULTS_CONTENT);
+		
+		// detect the entity mentions
+		results.detectMentions(recognizer);
+		
+		// possibly filter the articles depending on the entities
+// unnecessary, unless we add other entity-based constraints than dates		
+//		results.filterByEntity(null,null,true);
+//		results.exportAsCsv(FileNames.FI_SEARCH_RESULTS_ENTITY);
+		
+		// displays the remaining articles with their mentions	//TODO maybe get the entities instead of the mention, eventually?
+		results.displayRemainingMentions(); //TODO for debug only
+		
+		// extract events from the remaining articles and mentions
+		boolean bySentence[] = {false,true};
+		for(boolean bs: bySentence)
+		{	results.extractEvents(bs);
+			// export the events as a table
+			results.exportEvents(bs, false);
+			// try to group similar events together
+			results.clusterEvents();
+			// export the resulting groups as a table
+			results.exportEvents(bs, true);
+		}
+		
+		logger.decreaseOffset();
+		logger.log("Social media extraction over");
+		return results;
+	}
+	
 	/////////////////////////////////////////////////////////////////
 	// ENTITIES		/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
@@ -645,6 +606,50 @@ public class Extractor
 	 */
 	private void initDefaultRecognizer() throws ProcessorException
 	{	recognizer = new StraightCombiner();
-		recognizer.setCacheEnabled(false);//TODO false for debugging
+		recognizer.setCacheEnabled(true);//TODO set to false for debugging
+	}
+
+	/////////////////////////////////////////////////////////////////
+	// MERGE		/////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////
+	/**
+	 * Takes the search results coming from both the web and social
+	 * searches, and combines them in a single file for easier assessment.
+	 * 
+	 * @param webRes
+	 * 		Web search results.
+	 * @param socialRes
+	 * 		Social search results.
+	 * 
+	 * @throws FileNotFoundException
+	 * 		Problem while accessing the output file. 
+	 * @throws UnsupportedEncodingException 
+	 * 		Problem while accessing the output file. 
+	 */
+	private void exportCombinedResultsAsCsv(WebSearchResults webRes, SocialSearchResults socialRes) throws UnsupportedEncodingException, FileNotFoundException
+	{	logger.log("Merging the results in a single file.");
+		logger.increaseOffset();
+		
+		// open file and write header
+		String filePath = FileNames.FO_OUTPUT + File.separator + FileNames.FI_SEARCH_COMBINED_RESULTS;
+		PrintWriter pw = FileTools.openTextFileWrite(filePath, "UTF-8");
+		pw.println("\""+AbstractSearchResults.COL_URL_ID+"\",\""+AbstractSearchResults.COL_TITLE_CONTENT+"\",\""+AbstractSearchResults.COL_STATUS+"\"");
+		
+		// web search results
+		if(webRes==null)
+			logger.log("No Web search results to process.");
+		else
+			webRes.writeCombinedResults(pw);
+		
+		// social search results
+		if(socialRes==null)
+			logger.log("No social search results to process.");
+		else
+			socialRes.writeCombinedResults(pw);
+		
+		// close the output file
+		pw.close();
+		
+		logger.decreaseOffset();
 	}
 }

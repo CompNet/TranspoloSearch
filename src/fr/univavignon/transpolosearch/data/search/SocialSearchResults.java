@@ -168,6 +168,35 @@ public class SocialSearchResults extends AbstractSearchResults<SocialSearchResul
 		logger.decreaseOffset();
 	}
 	
+	@Override
+	public void writeCombinedResults(PrintWriter pw)
+	{	for(SocialSearchResult result: results.values())
+		{	String line = "";
+			
+			// id
+			line = line + "\"" + result.id + "\"";
+			
+			// content
+			line = line + ",";
+			String content = null;
+			if(result.article!=null)
+			{	content = result.article.getRawText();
+				content = content.replace('\n',' ');
+				content = content.replace('"','\'');
+			}
+			if(content!=null)
+				line = line + "\"" + content + "\"";
+			
+			// status
+			line = line + ",";
+			if(result.status!=null)
+				line = line + "\"" + result.status + "\"";
+			
+			pw.println(line);
+		}
+
+	}
+	
 	/////////////////////////////////////////////////////////////////
 	// EVENTS		/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
