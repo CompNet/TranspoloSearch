@@ -36,6 +36,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.Scanner;
 
@@ -73,6 +74,7 @@ import com.optimaize.langdetect.text.TextObject;
 import com.optimaize.langdetect.text.TextObjectFactory;
 
 import fr.univavignon.transpolosearch.data.article.ArticleLanguage;
+import fr.univavignon.transpolosearch.data.event.MyPam;
 import fr.univavignon.transpolosearch.data.search.AbstractSearchResults;
 import fr.univavignon.transpolosearch.extraction.Extractor;
 import fr.univavignon.transpolosearch.retrieval.ArticleRetriever;
@@ -114,7 +116,7 @@ public class Test
 //		testGoogleSearch();
 		
 		// whole process
-		testExtractor();
+//		testExtractor();
 		
 		// compare searches
 //			// hidalgo
@@ -128,6 +130,9 @@ public class Test
 //			// aubry
 //			compareSearches("Martine_Aubry_1", "Martine_Aubry_2");
 //			compareSearches("Martine_Aubry_1", "Martine_Aubry_www.lavoixdunord.fr");
+
+		// clustering
+		testClustering();
 		
 		logger.close();
 	}
@@ -258,8 +263,29 @@ public class Test
 	// COMPARISON		/////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
 	private class PredefinedDistanceMetric implements DistanceMetric
-	{	public PredefinedDistanceMetric()
-		{	// TODO Auto-generated method stub
+	{	double[][] dist;
+		
+		private PredefinedDistanceMetric()
+		{	
+			//
+		}
+		public PredefinedDistanceMetric(List<DataPoint> dp)
+		{	Random r = new Random();
+			
+			dist = new double[dp.size()][dp.size()];
+			for(int i=0;i<dp.size();i++)
+			{	for(int j=0;j<dp.size();j++)
+				{	if(i==j)
+						dist[i][j] = 0;
+					else
+					{	if(i<dp.size()/2 && j<dp.size()/2 || i>=dp.size()/2 && j>=dp.size()/2)
+							dist[i][j] = r.nextDouble()*0.05;
+						else
+							dist[i][j] = r.nextDouble();
+						dist[j][i] = dist[i][j];
+					}
+				}
+			}
 		}
 		
 		@Override
@@ -314,8 +340,7 @@ public class Test
 		
 		@Override
 		public double dist(int a, int b, List<? extends Vec> vecs, List<Double> cache) 
-		{	// TODO Auto-generated method stub
-			return 0;
+		{	return dist[a][b];
 		}
 		
 		@Override
@@ -326,12 +351,12 @@ public class Test
 	    @Override
 	    public PredefinedDistanceMetric clone()
 	    {	PredefinedDistanceMetric res = new PredefinedDistanceMetric();
-	    	// TODO Auto-generated method stub
+	    	res.dist = dist;
 			return res;
 	    }
 	}
 	
-	private void testClustering()
+	private static void testClustering()
 	{	List<DataPoint> dp = new ArrayList<DataPoint>();
 		for(int i=0;i<10;i++)
 		{	Vec v = new DenseVector(Arrays.asList((double)i));
@@ -339,10 +364,13 @@ public class Test
 			dp.add(d);
 		}
 		SimpleDataSet ds = new SimpleDataSet(dp);
-		DistanceMetric dm = new PredefinedDistanceMetric();
-		PAM pam = new PAM(dm);
+		DistanceMetric dm = new Test().new PredefinedDistanceMetric(dp);
+		MyPam pam = new MyPam(dm);
 		int[] membership = new int[dp.size()];
 		pam.cluster(ds, membership);
+		
+		for(int i=0;i<membership.length;i++)
+			System.out.println(membership[i]);
 	}
 	
 	/////////////////////////////////////////////////////////////////
