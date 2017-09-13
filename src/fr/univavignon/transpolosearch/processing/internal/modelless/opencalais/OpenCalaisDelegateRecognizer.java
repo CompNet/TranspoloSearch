@@ -128,7 +128,7 @@ class OpenCalaisDelegateRecognizer extends AbstractModellessInternalDelegateReco
 	/** Key name for OpenCalais */
 	public static final String KEY_NAME = "OpenCalais";
 	/** Maximal request size */
-	private static final int MAX_SIZE = 10000;
+	private static final int MAX_SIZE = 20000;	//10000
 	/** Delay between two remote invocations (4 queries per second max, as of 08/2015) */
 	private static final long DELAY = 250;
 	/** Message returned when the limit of request is reached */
@@ -361,11 +361,13 @@ class OpenCalaisDelegateRecognizer extends AbstractModellessInternalDelegateReco
 //					fixRelativePositions(root, result);
 				}
 				catch (JDOMException e)
-				{	e.printStackTrace();
+				{	System.out.println(ocAnswer);
+					e.printStackTrace();
 					throw new ProcessorException(e.getMessage());
 				}
 				catch (IOException e)
-				{	e.printStackTrace();
+				{	System.err.println(ocAnswer);
+					e.printStackTrace();
 					throw new ProcessorException(e.getMessage());
 				}
 			}

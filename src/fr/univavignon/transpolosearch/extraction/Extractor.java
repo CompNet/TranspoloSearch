@@ -153,9 +153,13 @@ public class Extractor
 		logger.log("Performing the Web search");
 		performWebExtraction(keywords, website, startDate, endDate, searchDate, compulsoryExpression, language, threshold);
 		
-//		// perform the social search
-//		logger.log("Performing the social media search");
-//		performSocialExtraction(keywords, startDate, endDate, compulsoryExpression, extendedSocialSearch, language, threshold);
+		// perform the social search
+		if(website==null)
+		{	logger.log("Performing the social media search");
+			performSocialExtraction(keywords, startDate, endDate, compulsoryExpression, extendedSocialSearch, language, threshold);
+		}
+		else
+			logger.log("Skipping the social search, since the focus is on a specific website ("+website+")");
 		
 		logger.decreaseOffset();
 		logger.log("Information extraction over");

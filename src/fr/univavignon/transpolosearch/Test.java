@@ -117,10 +117,17 @@ public class Test
 		testExtractor();
 		
 		// compare searches
-//		compareSearches("Anne_Hidalgo_1", "Anne_Hidalgo_2");
-//		compareSearches("Anne_Hidalgo_2", "Anne_Hidalgo_2ext");
-//		compareSearches("Cécile_Helle_1", "Cécile_Helle_2");
-//		compareSearches("Martine_Aubry_1", "Martine_Aubry_2");//TODO pb ici (?)
+//			// hidalgo
+//			compareSearches("Anne_Hidalgo_1", "Anne_Hidalgo_2");
+//			compareSearches("Anne_Hidalgo_2", "Anne_Hidalgo_2ext");
+//			compareSearches("Anne_Hidalgo_2", "Anne_Hidalgo_www.leparisien.fr");
+//			compareSearches("Anne_Hidalgo_2ext", "Anne_Hidalgo_www.leparisien.fr");
+//			// helle
+//			compareSearches("Cécile_Helle_1", "Cécile_Helle_2");
+//			compareSearches("Cécile_Helle_2", "Cécile_Helle_www.laprovence.com");
+//			// aubry
+//			compareSearches("Martine_Aubry_1", "Martine_Aubry_2");
+//			compareSearches("Martine_Aubry_1", "Martine_Aubry_www.lavoixdunord.fr");
 		
 		logger.close();
 	}
@@ -573,20 +580,20 @@ if(line.contains("marseillan"))
 		DateFormat df = new SimpleDateFormat("yyyyMMdd");
 		
 		String params[][] = {
-//			{"Anne Hidalgo", "Hidalgo", null},
+			{"Anne Hidalgo", "Hidalgo", null}
 //			{"Anne Hidalgo", "Hidalgo", "http://www.leparisien.fr/"},
 //			{"Cécile Helle", "Helle", null},
 //			{"Cécile Helle", "Helle", "http://www.laprovence.com/"},
 //			{"Martine Aubry", "Aubry", null}
-			{"Martine Aubry", "Aubry", "http://www.lavoixdunord.fr/"}
+//			{"Martine Aubry", "Aubry", "http://www.lavoixdunord.fr/"}
 //			{"Roland Ries", "Ries", null}
 			
-//			{"Bruno Julliard", "Julliard", null},
-//			{"Jean-Louis Missika", "Missika", null},
-//			{"Ian Brossat", "Brossat", null},
-//			{"Christophe Najdovski", "Najdovski", null},
-//			{"Nathalie Kosciusko-Morizet", "Kosciusko-Morizet", null},
-//			{"Claude Goasguen", "Goasguen", null},
+//			{"Bruno Julliard", "Julliard", null}
+//			{"Jean-Louis Missika", "Missika", null}
+//			{"Ian Brossat", "Brossat", null}
+//			{"Christophe Najdovski", "Najdovski", null}
+//			{"Nathalie Kosciusko-Morizet", "Kosciusko-Morizet", null}
+//			{"Claude Goasguen", "Goasguen", null}
 //			{"Brigitte Kuster", "Kuster", null}
 		};
 		
