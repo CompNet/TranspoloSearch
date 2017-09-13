@@ -660,6 +660,6 @@ if(line.contains("marseillan"))
 	}
 }
 
-// TODO médias sociaux: rajouter dans le csv le nombre de commentaires associés à chaque post
+// TODO médias sociaux: rajouter dans le csv le nombre de commentaires associés à chaque post + likes + shares
 // TODO quand on détecte les entités, il faudrait aussi le faire sur le titre
 // TODO solve pb with method removing non-latin characters
