@@ -186,7 +186,7 @@ if(url.contains("cookies"))
 		
 		// open file and write header
 		PrintWriter pw = FileTools.openTextFileWrite(cacheFilePath,"UTF-8");
-		{	String line = "\""+COL_TITLE+"\",\""+COL_URL+"\",\""+COL_STATUS+"\",\""+COL_LENGTH+"\"";
+		{	String line = "\""+COL_TITLE+"\",\""+COL_URL+"\",\""+COL_STATUS+"\",\""+COL_LENGTH+"\",\""+COL_ARTICLE_CLUSTER+"\"";
 			for(String engineName: engineNames)
 				line = line + "," + engineName;
 			pw.println(line);
@@ -219,6 +219,11 @@ if(url.contains("cookies"))
 				length = result.article.getRawText().length();
 			if(length!=null)
 				line = line + length;
+			
+			// cluster
+			line = line + ",";
+			if(result.cluster!=null)
+				line = line + result.cluster;
 			
 			// ranks
 			Map<String,String> ranks = result.ranks;

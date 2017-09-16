@@ -155,12 +155,12 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 			}
 	
 			// process the distance between all results
-			double distanceMatrix[][] = new double[results.size()][results.size()];
-			for(int i=0;i<results.size()-1;i++)
+			double distanceMatrix[][] = new double[remainingRes.size()][remainingRes.size()];
+			for(int i=0;i<remainingRes.size()-1;i++)
 			{	double length1 = lengths.get(i);
 				ObjectToCounterMap<String> counter1 = counters.get(i);
 				
-				for(int j=i+1;j<results.size();j++)
+				for(int j=i+1;j<remainingRes.size();j++)
 				{	double length2 = lengths.get(j);
 					ObjectToCounterMap<String> counter2 = counters.get(j);
 					
@@ -189,12 +189,13 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 			SimpleDataSet ds = new SimpleDataSet(dp);
 			
 			// proceed with the cluster analysis
-	        KMeans simpleKMeans = new HamerlyKMeans(dm,SeedSelection.FARTHEST_FIRST);
-			Clusterer clusterer = new XMeans(simpleKMeans);
+//	        KMeans simpleKMeans = new HamerlyKMeans(dm,SeedSelection.FARTHEST_FIRST);
+//			Clusterer clusterer = new XMeans(simpleKMeans);
+			Clusterer clusterer = new MyPam(dm);
 			int[] membership = new int[remainingRes.size()];
 			clusterer.cluster(ds, membership);
 			
-			// set upt the clusters in the results themselves
+			// set up the clusters in the results themselves
 			int maxClust = 0;
 			int i = 0;
 			for(T result: remainingRes)

@@ -113,7 +113,7 @@ public class SocialSearchResults extends AbstractSearchResults<SocialSearchResul
 		
 		// open file and write header
 		PrintWriter pw = FileTools.openTextFileWrite(cacheFilePath,"UTF-8");
-		{	String line = "\""+COL_TITLE+"\",\""+COL_STATUS+"\",\""+COL_PUB_DATE+"\",\""+COL_AUTHORS+"\",\""+COL_ORIGINAL+"\",\""+COL_ENGINE+"\",\""+COL_LENGTH+"\"";
+		{	String line = "\""+COL_TITLE+"\",\""+COL_STATUS+"\",\""+COL_PUB_DATE+"\",\""+COL_AUTHORS+"\",\""+COL_ORIGINAL+"\",\""+COL_ENGINE+"\",\""+COL_LENGTH+"\",\""+COL_ARTICLE_CLUSTER+"\"";
 			pw.println(line);
 		}
 		
@@ -160,6 +160,11 @@ public class SocialSearchResults extends AbstractSearchResults<SocialSearchResul
 				length = result.article.getRawText().length();
 			if(length!=null)
 				line = line + length;
+			
+			// cluster
+			line = line + ",";
+			if(result.cluster!=null)
+				line = line + result.cluster;
 			
 			pw.println(line);
 		}

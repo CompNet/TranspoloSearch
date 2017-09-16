@@ -662,4 +662,9 @@ if(line.contains("marseillan"))
 
 // TODO médias sociaux: rajouter dans le csv le nombre de commentaires associés à chaque post + likes + shares
 // TODO quand on détecte les entités, il faudrait aussi le faire sur le titre
-// TODO solve pb with method removing non-latin characters
+// TODO solve pb with method removing non-latin characters (diacritics removal can cause shortest text
+//	sol: vérifier si même longueur, et sinon parcourir jusqu'à trouver différence, insérer espace (?)
+// TODO améliorer la classif:
+//  - autres classif (hiérarchique?)
+//	- virer les stop words?
+
