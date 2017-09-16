@@ -329,6 +329,10 @@ public class SocialSearchResult extends AbstractSearchResult
 			if(source!=null)
 				map.put(AbstractSearchResults.COL_SOCIAL_ENGINE,source);
 			
+			// possibly the article cluster
+			if(cluster!=null)
+				map.put(WebSearchResults.COL_ARTICLE_CLUSTER,Integer.toString(cluster));
+			
 			if(event!=null)
 			{	map.put(AbstractSearchResults.COL_EVENT_RANK,Integer.toString(rank));
 				

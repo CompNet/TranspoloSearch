@@ -76,7 +76,7 @@ import com.optimaize.langdetect.text.TextObjectFactory;
 
 import fr.univavignon.transpolosearch.data.article.ArticleLanguage;
 import fr.univavignon.transpolosearch.data.event.MyPam;
-import fr.univavignon.transpolosearch.data.event.PredefinedDistanceMetric;
+import fr.univavignon.transpolosearch.data.event.DummyDistanceMetric;
 import fr.univavignon.transpolosearch.data.search.AbstractSearchResults;
 import fr.univavignon.transpolosearch.extraction.Extractor;
 import fr.univavignon.transpolosearch.retrieval.ArticleRetriever;

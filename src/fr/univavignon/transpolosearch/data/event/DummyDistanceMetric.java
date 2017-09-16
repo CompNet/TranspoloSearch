@@ -13,24 +13,16 @@ import jsat.linear.distancemetrics.DistanceMetric;
  * @author Vincent Labatut
  */
 @SuppressWarnings({ "javadoc", "serial" })
-public class PredefinedDistanceMetric implements DistanceMetric
+public class DummyDistanceMetric implements DistanceMetric
 {	double[][] dist;
 	
-	private PredefinedDistanceMetric()
+	private DummyDistanceMetric()
 	{	
 		//
 	}
-	public PredefinedDistanceMetric(List<Event> events)
-	{	dist = new double[events.size()][events.size()];
-		for(int i=0;i<events.size()-1;i++)
-		{	Event event1 = events.get(i);
-			for(int j=i+1;j<events.size();j++)
-			{	Event event2 = events.get(j);
-				float sim = event1.processJaccardSimilarity(event2);
-				dist[i][j] = 1 - sim;
-				dist[j][i] = 1 - sim;
-			}
-		}
+	
+	public DummyDistanceMetric(double[][] dist)
+	{	this.dist = dist;
 	}
 	
 	@Override
@@ -94,8 +86,8 @@ public class PredefinedDistanceMetric implements DistanceMetric
 	}
 	
     @Override
-    public PredefinedDistanceMetric clone()
-    {	PredefinedDistanceMetric res = new PredefinedDistanceMetric();
+    public DummyDistanceMetric clone()
+    {	DummyDistanceMetric res = new DummyDistanceMetric();
     	res.dist = dist;
 		return res;
     }

@@ -226,6 +226,10 @@ public class WebSearchResult extends AbstractSearchResult
 				map.put(WebSearchResults.COL_AUTHORS,authorsStr);
 			}
 			
+			// possibly the article cluster
+			if(cluster!=null)
+				map.put(WebSearchResults.COL_ARTICLE_CLUSTER,Integer.toString(cluster));
+			
 			// search engine ranks
 			for(Entry<String,String> entry: ranks.entrySet())
 			{	String engineName = entry.getKey();

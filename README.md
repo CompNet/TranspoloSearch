@@ -25,12 +25,27 @@ This software is currently in development. Don't use it (yet)!
 
 ## Dependencies
 Here are the dependencies for TranspoloSearch:
-* A bunch of JARs from the [Google APIs Client Library for Java](https://developers.google.com/api-client-library/java/apis/customsearch/v1)
-* [jsoup](http://jsoup.org/) to handle HTML files 
-* [Apache Commons Codec](https://commons.apache.org/proper/commons-codec/)
-* [JSON.simple](https://code.google.com/archive/p/json-simple/) to parse JSON documents
-* [JSTAT](https://github.com/EdwardRaff/JSAT) to cluster events
-* Certain classes (mainly those related to Named Entity Recognition) were taken from our own tool [Nerwip](https://github.com/CompNet/Nerwip) (and sometimes modified)
+* Misc.:
+  * A bunch of JARs from the [Google APIs Client Library for Java](https://developers.google.com/api-client-library/java/apis/customsearch/v1)
+  * [jsoup](http://jsoup.org/) to handle HTML files 
+  * [Apache Commons Codec](https://commons.apache.org/proper/commons-codec/)
+  * [JSON.simple](https://code.google.com/archive/p/json-simple/) to parse JSON documents
+  * [JSTAT](https://github.com/EdwardRaff/JSAT) to cluster events
+* NER Tools:
+  * Libraries:
+    * [alias-i LingPipe](http://alias-i.com/lingpipe/)
+    * [HeidelTime](https://code.google.com/p/heideltime/)
+    * [Nero](https://nero.irisa.fr/)
+    * [TagEN](http://gurau-audibert.hd.free.fr/josdblog/wp-content/uploads/2008/03/TagEN.tar.gz)
+    * Certain classes were taken from our own tool [Nerwip](https://github.com/CompNet/Nerwip) (and sometimes modified)
+  * Web services:
+    * [Thomson Reuters OpenCalais](http://new.opencalais.com/)
+    * [OpeNER](http://www.opener-project.eu/)
+  * Libraries required by certain NER tools:
+    * [TreeTagger](http://www.cis.uni-muenchen.de/~schmid/tools/TreeTagger/), needed by HeidelTime.
+  * Non-included libraries: some libraries are not included and must be installed manually.
+    * [OpenFST](http://www.openfst.org/), needed by Nero (see its `README` file in folder `res`, for instructions).
+    * [Wapiti](http://wapiti.limsi.fr/), needed by Nero (again, see its `README` file in folder `res`, for instructions).
 
 ## Todo
 * Define a black list corresponding to satirical journals (Gorafi, Infos du monde, Nordpresse, Sud ou Est, etc.)
@@ -91,4 +106,5 @@ Here are the dependencies for TranspoloSearch:
   * Add Twitter support.
 
 ## References
-[MLE'15] [Le Web comme miroir du travail politique quotidien ? Reconstituer l'écho médiatique en ligne des événements d'un agenda d'élu](http://agorantic.univ-avignon.fr/wp-content/uploads/sites/13/2014/10/Publications-Agorantic1.pdf). G. Marrel, V. Labatut & M. El Bèze. 13ème Congrès de l'Association Française de Science Politique (AFSP), 2015, 25p.
+* **[MLE'15]** [Le Web comme miroir du travail politique quotidien ? Reconstituer l'écho médiatique en ligne des événements d'un agenda d'élu](http://agorantic.univ-avignon.fr/wp-content/uploads/sites/13/2014/10/Publications-Agorantic1.pdf). G. Marrel, V. Labatut & M. El Bèze. 13ème Congrès de l'Association Française de Science Politique (AFSP), Aix-en-Provence, 2015, 25p.
+* **[ML'17]** La visibilité politique en ligne: Contribution à la mesure de l’e-reputation politique d’un maire urbain, G. Marrel & V. Labatut. Colloque Big data et visibilité en ligne: un enjeu pluridisciplinaire de l'économie numérique, Fort-de-France, 2017.

@@ -286,14 +286,14 @@ if(url.contains("cookies"))
 			// write header
 			List<String> startCols = Arrays.asList(COL_COMMENTS);
 			List<String> midCols = Arrays.asList(COL_TITLE, COL_URL, COL_LENGTH, COL_PUB_DATE, COL_AUTHORS);
-			List<String> endCols = Arrays.asList(COL_STATUS, COL_EVENT_RANK, COL_EVENT_DATES,
+			List<String> endCols = Arrays.asList(COL_STATUS, COL_ARTICLE_CLUSTER, COL_EVENT_RANK, COL_EVENT_DATES,
 					COL_EVENT_LOCATIONS, COL_EVENT_PERSONS, COL_EVENT_ORGANIZATIONS, COL_EVENT_FUNCTIONS,
 					COL_EVENT_PRODUCTIONS, COL_EVENT_MEETINGS
 			);
 			List<String> cols = new ArrayList<String>();
 			cols.addAll(startCols);
 			if(byCluster)
-				cols.add(COL_CLUSTER);
+				cols.add(COL_EVENT_CLUSTER);
 			cols.addAll(midCols);
 			for(String engineName: engineNames)
 				cols.add(COL_RANK+engineName); 
@@ -320,7 +320,7 @@ if(url.contains("cookies"))
 						List<Map<String,String>> lines = r.exportEvents();
 						int idx = evt.get(j);
 						Map<String,String> line = lines.get(idx);
-						line.put(COL_CLUSTER, Integer.toString(i+1));
+						line.put(COL_EVENT_CLUSTER, Integer.toString(i+1));
 						// write the line
 						it = cols.iterator();
 						while(it.hasNext())

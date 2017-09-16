@@ -30,16 +30,28 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
+import com.aliasi.tokenizer.IndoEuropeanTokenizerFactory;
+import com.aliasi.tokenizer.LowerCaseTokenizerFactory;
+import com.aliasi.tokenizer.Tokenizer;
+import com.aliasi.tokenizer.TokenizerFactory;
+import com.aliasi.util.Counter;
+import com.aliasi.util.ObjectToCounterMap;
+
 import fr.univavignon.transpolosearch.data.article.ArticleLanguage;
 import fr.univavignon.transpolosearch.data.event.Event;
 import fr.univavignon.transpolosearch.data.event.MyPam;
-import fr.univavignon.transpolosearch.data.event.PredefinedDistanceMetric;
+import fr.univavignon.transpolosearch.data.event.DummyDistanceMetric;
 import fr.univavignon.transpolosearch.processing.InterfaceRecognizer;
 import fr.univavignon.transpolosearch.processing.ProcessorException;
 import fr.univavignon.transpolosearch.tools.log.HierarchicalLogger;
 import fr.univavignon.transpolosearch.tools.log.HierarchicalLoggerManager;
 import jsat.SimpleDataSet;
 import jsat.classifiers.DataPoint;
+import jsat.clustering.Clusterer;
+import jsat.clustering.SeedSelectionMethods.SeedSelection;
+import jsat.clustering.kmeans.HamerlyKMeans;
+import jsat.clustering.kmeans.KMeans;
+import jsat.clustering.kmeans.XMeans;
 import jsat.linear.DenseVector;
 import jsat.linear.Vec;
 import jsat.linear.distancemetrics.DistanceMetric;
@@ -92,6 +104,110 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 		return result;
 	}
 	
+	/** Tokenizer used to classify the results */
+	private static TokenizerFactory TOKENIZER_FACTORY;
+	/** Initialization of the tokenizer */
+	static
+	{	TOKENIZER_FACTORY = IndoEuropeanTokenizerFactory.INSTANCE;
+		TOKENIZER_FACTORY = new LowerCaseTokenizerFactory(TOKENIZER_FACTORY);
+//		TOKENIZER_FACTORY = new EnglishStopTokenizerFactory(TOKENIZER_FACTORY);		//stop list, but only for English
+//		TOKENIZER_FACTORY = new PorterStemmerTokenizerFactory(TOKENIZER_FACTORY);	// don't know if the stemmer supports French
+		
+	}
+    
+	/**
+	 * Identifies clusters of similar results (independently from
+	 * the mentions detected later). 
+	 * <br/>
+	 * Most of this source code was taken from the LinkPipe website.
+	 * http://alias-i.com/lingpipe/demos/tutorial/cluster/src/TokenCosineDocCluster.java
+	 */
+	public void clusterArticles()
+	{	logger.log("Clustering the articles");
+		logger.increaseOffset();
+			// each result is processed separately
+			List<T> remainingRes = new ArrayList<T>();
+			List<Double> lengths = new ArrayList<Double>();
+			List<ObjectToCounterMap<String>> counters = new ArrayList<ObjectToCounterMap<String>>();
+			for(T result: results.values())
+			{	if(result.status==null)
+				{	remainingRes.add(result);
+					
+					// tokenize
+					String text = result.article.getRawText();
+					char[] charText = text.toCharArray();
+					Tokenizer tokenizer = TOKENIZER_FACTORY.tokenizer(charText,0,charText.length);//TODO vérifier si on vire la ponctuation
+					ObjectToCounterMap<String> counter = new ObjectToCounterMap<String>();
+					counters.add(counter);
+					String token;
+			    	while((token=tokenizer.nextToken()) != null)
+			    		counter.increment(token);
+			    	
+			    	// compute length
+			    	double sum = 0.0;
+		            for (Counter c : counter.values())
+		            {	double count = c.doubleValue();
+		                sum = sum + count;  // tf =sqrt(count); sum += tf * tf
+		            }
+			    	double length = Math.sqrt(sum);
+			    	lengths.add(length);
+				}
+			}
+	
+			// process the distance between all results
+			double distanceMatrix[][] = new double[results.size()][results.size()];
+			for(int i=0;i<results.size()-1;i++)
+			{	double length1 = lengths.get(i);
+				ObjectToCounterMap<String> counter1 = counters.get(i);
+				
+				for(int j=i+1;j<results.size();j++)
+				{	double length2 = lengths.get(j);
+					ObjectToCounterMap<String> counter2 = counters.get(j);
+					
+					double productVal = 0.0;
+					for (String token : counter1.keySet())
+				    {	int count1 = counter1.getCount(token);
+						int count2 = counter2.getCount(token);
+				        productVal = productVal + Math.sqrt(count2 * count1); // tf = sqrt(count)
+				    }
+					
+					double cosVal = productVal / (length1 * length2);
+					double dist = 1.0 - cosVal;
+					distanceMatrix[i][j] = dist;
+					distanceMatrix[j][i] = dist;
+				}
+			}
+			DistanceMetric dm = new DummyDistanceMetric(distanceMatrix);
+			
+			// build a dummy dataset
+			List<DataPoint> dp = new ArrayList<DataPoint>();
+			for(int i=0;i<remainingRes.size();i++)
+			{	Vec v = new DenseVector(Arrays.asList((double)i));
+				DataPoint d = new DataPoint(v);
+				dp.add(d);
+			}
+			SimpleDataSet ds = new SimpleDataSet(dp);
+			
+			// proceed with the cluster analysis
+	        KMeans simpleKMeans = new HamerlyKMeans(dm,SeedSelection.FARTHEST_FIRST);
+			Clusterer clusterer = new XMeans(simpleKMeans);
+			int[] membership = new int[remainingRes.size()];
+			clusterer.cluster(ds, membership);
+			
+			// set upt the clusters in the results themselves
+			int maxClust = 0;
+			int i = 0;
+			for(T result: remainingRes)
+			{	result.cluster = membership[i];
+				if(membership[i] > maxClust)
+					maxClust = membership[i];
+				i++;
+			}
+			
+		logger.decreaseOffset();
+		logger.log("Article clustering complete: "+(maxClust+1)+" clusters detected for "+remainingRes.size()+" remaining articles");
+	}
+
 	/////////////////////////////////////////////////////////////////
 	// FILTERING	/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
@@ -379,8 +495,10 @@ if(result instanceof WebSearchResult && ((WebSearchResult)result).url.equalsIgno
 	public static final String COL_COMMENTS = "Comments";
 	/** Whether a social post was written by the targeted person, or not */
 	public static final String COL_ORIGINAL = "Original post";
-	/** Number of the cluster of events */
-	public static final String COL_CLUSTER = "Cluster";
+	/** ID of the cluster of events */
+	public static final String COL_EVENT_CLUSTER = "Event Cluster";
+	/** ID of the cluster of articles */
+	public static final String COL_ARTICLE_CLUSTER = "Article Cluster";
 	/** Column name for the URL of the web search or id of the social search */
 	public static final String COL_URL_ID = "URL/ID";
 	/** Column name for the title of the web search or content of the social search */
@@ -433,7 +551,17 @@ if(result instanceof WebSearchResult && ((WebSearchResult)result).url.equalsIgno
 				logger.log("Not enough events to process, so no event clustering");
 			else
 			{	// init the distances between events
-				DistanceMetric dm = new PredefinedDistanceMetric(allEvents);
+				double[][] dist = new double[allEvents.size()][allEvents.size()];
+				for(int i=0;i<allEvents.size()-1;i++)
+				{	Event event1 = allEvents.get(i);
+					for(int j=i+1;j<allEvents.size();j++)
+					{	Event event2 = allEvents.get(j);
+						float sim = event1.processJaccardSimilarity(event2);
+						dist[i][j] = 1 - sim;
+						dist[j][i] = 1 - sim;
+					}
+				}
+				DistanceMetric dm = new DummyDistanceMetric(dist);
 				
 				// build a dummy dataset
 				List<DataPoint> dp = new ArrayList<DataPoint>();

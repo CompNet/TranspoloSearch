@@ -376,9 +376,13 @@ public class Extractor
 		// possibly filter the articles depending on the entities
 		results.filterByEntity(startDate, endDate, searchDate);
 		results.exportAsCsv(FileNames.FI_SEARCH_RESULTS_ENTITY);
-
+		
 		// displays the remaining articles with their mentions	//TODO maybe get the entities instead of the mentions, eventually?
 		results.displayRemainingMentions(); //TODO for debug only
+		
+		// cluster the article by content
+		results.clusterArticles();
+		results.exportAsCsv(FileNames.FI_SEARCH_RESULTS_CLUSTERS);
 		
 		// extract events from the remaining articles and mentions
 		boolean bySentence[] = {false,true};
@@ -572,6 +576,10 @@ public class Extractor
 		
 		// displays the remaining articles with their mentions	//TODO maybe get the entities instead of the mention, eventually?
 		results.displayRemainingMentions(); //TODO for debug only
+		
+		// cluster the article by content
+		results.clusterArticles();
+		results.exportAsCsv(FileNames.FI_SEARCH_RESULTS_CLUSTERS);
 		
 		// extract events from the remaining articles and mentions
 		boolean bySentence[] = {false,true};

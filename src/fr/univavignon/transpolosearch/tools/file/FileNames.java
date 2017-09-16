@@ -199,6 +199,8 @@ public class FileNames
 	public final static String FI_SEARCH_RESULTS_CONTENT = "search_3_content_filtered" + FileNames.EX_CSV;
 	/** File containing the search results after entity filtering */
 	public final static String FI_SEARCH_RESULTS_ENTITY = "search_4_entity_filtered" + FileNames.EX_CSV;
+	/** File containing the search results after article clustering */
+	public final static String FI_SEARCH_RESULTS_CLUSTERS = "search_5_article_clusters" + FileNames.EX_CSV;
 	/** Events file, by article */
 	public final static String FI_EVENT_TABLE_ARTICLE = "event_table_byarticle" + FileNames.EX_CSV;
 	/** Events file, by sentence */
