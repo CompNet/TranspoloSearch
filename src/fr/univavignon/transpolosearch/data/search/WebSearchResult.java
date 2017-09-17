@@ -228,7 +228,7 @@ public class WebSearchResult extends AbstractSearchResult
 			
 			// possibly the article cluster
 			if(cluster!=null)
-				map.put(WebSearchResults.COL_ARTICLE_CLUSTER,Integer.toString(cluster));
+				map.put(WebSearchResults.COL_ARTICLE_CLUSTER,cluster);
 			
 			// search engine ranks
 			for(Entry<String,String> entry: ranks.entrySet())

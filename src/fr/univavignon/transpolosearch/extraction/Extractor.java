@@ -381,7 +381,7 @@ public class Extractor
 		results.displayRemainingMentions(); //TODO for debug only
 		
 		// cluster the article by content
-		results.clusterArticles();
+		results.clusterArticles(language);
 		results.exportAsCsv(FileNames.FI_SEARCH_RESULTS_CLUSTERS);
 		
 		// extract events from the remaining articles and mentions
@@ -578,7 +578,7 @@ public class Extractor
 		results.displayRemainingMentions(); //TODO for debug only
 		
 		// cluster the article by content
-		results.clusterArticles();
+		results.clusterArticles(language);
 		results.exportAsCsv(FileNames.FI_SEARCH_RESULTS_CLUSTERS);
 		
 		// extract events from the remaining articles and mentions

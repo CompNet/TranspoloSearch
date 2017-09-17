@@ -30,11 +30,15 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
+import com.aliasi.cluster.CompleteLinkClusterer;
+import com.aliasi.cluster.Dendrogram;
+import com.aliasi.cluster.HierarchicalClusterer;
 import com.aliasi.tokenizer.IndoEuropeanTokenizerFactory;
 import com.aliasi.tokenizer.LowerCaseTokenizerFactory;
 import com.aliasi.tokenizer.Tokenizer;
 import com.aliasi.tokenizer.TokenizerFactory;
 import com.aliasi.util.Counter;
+import com.aliasi.util.Distance;
 import com.aliasi.util.ObjectToCounterMap;
 
 import fr.univavignon.transpolosearch.data.article.ArticleLanguage;
@@ -45,13 +49,11 @@ import fr.univavignon.transpolosearch.processing.InterfaceRecognizer;
 import fr.univavignon.transpolosearch.processing.ProcessorException;
 import fr.univavignon.transpolosearch.tools.log.HierarchicalLogger;
 import fr.univavignon.transpolosearch.tools.log.HierarchicalLoggerManager;
+import fr.univavignon.transpolosearch.tools.string.StopWordsManager;
+import fr.univavignon.transpolosearch.tools.string.StringTools;
 import jsat.SimpleDataSet;
 import jsat.classifiers.DataPoint;
 import jsat.clustering.Clusterer;
-import jsat.clustering.SeedSelectionMethods.SeedSelection;
-import jsat.clustering.kmeans.HamerlyKMeans;
-import jsat.clustering.kmeans.KMeans;
-import jsat.clustering.kmeans.XMeans;
 import jsat.linear.DenseVector;
 import jsat.linear.Vec;
 import jsat.linear.distancemetrics.DistanceMetric;
@@ -121,10 +123,16 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 	 * <br/>
 	 * Most of this source code was taken from the LinkPipe website.
 	 * http://alias-i.com/lingpipe/demos/tutorial/cluster/src/TokenCosineDocCluster.java
+	 * 
+	 * @param language
+	 * 		Language of the articles.
 	 */
-	public void clusterArticles()
+	public void clusterArticles(ArticleLanguage language)
 	{	logger.log("Clustering the articles");
 		logger.increaseOffset();
+			List<String> stopWords = StopWordsManager.getStopWords(language);
+			ObjectToCounterMap<String> overallCounter = new ObjectToCounterMap<String>();
+			
 			// each result is processed separately
 			List<T> remainingRes = new ArrayList<T>();
 			List<Double> lengths = new ArrayList<Double>();
@@ -134,26 +142,44 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 				{	remainingRes.add(result);
 					
 					// tokenize
-					String text = result.article.getRawText();
-					char[] charText = text.toCharArray();
+					String rawText = result.article.getRawText();
+					String cleanText = rawText.replaceAll("\\n", " ");
+					cleanText = cleanText.replaceAll("\\d+"," ");
+					cleanText = StringTools.removePunctuation(cleanText);
+					char[] charText = cleanText.toCharArray();
 					Tokenizer tokenizer = TOKENIZER_FACTORY.tokenizer(charText,0,charText.length);//TODO vérifier si on vire la ponctuation
 					ObjectToCounterMap<String> counter = new ObjectToCounterMap<String>();
 					counters.add(counter);
 					String token;
 			    	while((token=tokenizer.nextToken()) != null)
-			    		counter.increment(token);
+			    	{	if(!stopWords.contains(token))
+			    		{	counter.increment(token);
+			    			overallCounter.increment(token);
+			    			//logger.log(token);
+			    		}
+			    	}
 			    	
 			    	// compute length
 			    	double sum = 0.0;
-		            for (Counter c : counter.values())
+		            for(Counter c : counter.values())
 		            {	double count = c.doubleValue();
 		                sum = sum + count;  // tf =sqrt(count); sum += tf * tf
 		            }
 			    	double length = Math.sqrt(sum);
 			    	lengths.add(length);
-				}
+				}	
 			}
-	
+			
+        	// display word counts for the whole corpus
+			logger.log("Word frequencies after tokenization:");
+			logger.increaseOffset();
+				for(String key: overallCounter.keysOrderedByCountList())
+	            {	Counter counter = overallCounter.get(key);
+	            	int val = counter.intValue();
+	            	logger.log(key+": "+val);
+	            }
+			logger.decreaseOffset();
+			
 			// process the distance between all results
 			double distanceMatrix[][] = new double[remainingRes.size()][remainingRes.size()];
 			for(int i=0;i<remainingRes.size()-1;i++)
@@ -177,36 +203,62 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 					distanceMatrix[j][i] = dist;
 				}
 			}
-			DistanceMetric dm = new DummyDistanceMetric(distanceMatrix);
+//			DistanceMetric dm = new DummyDistanceMetric(distanceMatrix);	// jstat cluster analysis
+			Distance<Integer> dl = new Distance<Integer>()					// lingpipe cluster analysis
+			{	@Override
+				public double distance(Integer e1, Integer e2)
+				{	double result = distanceMatrix[e1][e2];
+					return result;
+				}
+			};
 			
 			// build a dummy dataset
-			List<DataPoint> dp = new ArrayList<DataPoint>();
+//			List<DataPoint> dp = new ArrayList<DataPoint>();				// jstat
+//			for(int i=0;i<remainingRes.size();i++)
+//			{	Vec v = new DenseVector(Arrays.asList((double)i));
+//				DataPoint d = new DataPoint(v);
+//				dp.add(d);
+//			}
+//			SimpleDataSet ds = new SimpleDataSet(dp);
+			Set<Integer> dd = new TreeSet<Integer>();						// lingpipe
 			for(int i=0;i<remainingRes.size();i++)
-			{	Vec v = new DenseVector(Arrays.asList((double)i));
-				DataPoint d = new DataPoint(v);
-				dp.add(d);
-			}
-			SimpleDataSet ds = new SimpleDataSet(dp);
+				dd.add(i);
 			
 			// proceed with the cluster analysis
-//	        KMeans simpleKMeans = new HamerlyKMeans(dm,SeedSelection.FARTHEST_FIRST);
-//			Clusterer clusterer = new XMeans(simpleKMeans);
-			Clusterer clusterer = new MyPam(dm);
-			int[] membership = new int[remainingRes.size()];
-			clusterer.cluster(ds, membership);
-			
+//			Clusterer clusterer = new MyPam(dm);							// jstat
+//			int[] membership = new int[remainingRes.size()];
+//			clusterer.cluster(ds, membership);
+	        HierarchicalClusterer<Integer> clusterer = 						// lingpipe
+	        		new CompleteLinkClusterer<Integer>(dl);
+        	Dendrogram<Integer> dendro = clusterer.hierarchicalCluster(dd);
+
 			// set up the clusters in the results themselves
-			int maxClust = 0;
-			int i = 0;
-			for(T result: remainingRes)
-			{	result.cluster = membership[i];
-				if(membership[i] > maxClust)
-					maxClust = membership[i];
-				i++;
-			}
+//			int maxClust = 0;												// jstat
+//			int i = 0;
+//			for(T result: remainingRes)
+//			{	result.cluster = membership[i];
+//				if(membership[i] > maxClust)
+//					maxClust = membership[i];
+//				i++;
+//			}
+        	for(int k=2;k<=remainingRes.size();k++)
+        	{	Set<Set<Integer>> partition = dendro.partitionK(k);
+        		int j = 1;
+        		for(Set<Integer> part: partition)
+        		{	for(int i: part)
+	        		{	T res = remainingRes.get(i);
+	        			if(res.cluster==null)
+	        				res.cluster = Integer.toString(j);
+	        			else
+	        				res.cluster = res.cluster + ":" + j;
+	        		}
+        			j++;
+        		}
+        	}
 			
 		logger.decreaseOffset();
-		logger.log("Article clustering complete: "+(maxClust+1)+" clusters detected for "+remainingRes.size()+" remaining articles");
+//		logger.log("Article clustering complete: "+(maxClust+1)+" clusters detected for "+remainingRes.size()+" remaining articles");	// jstat
+		logger.log("Article clustering complete");																						// lingpipe
 	}
 
 	/////////////////////////////////////////////////////////////////

@@ -53,7 +53,7 @@ public class StopWordsManager
 	 * @return
 	 * 		List of stop words for the specified language.
 	 */
-	public List<String> getStopWords(ArticleLanguage language)
+	public static List<String> getStopWords(ArticleLanguage language)
 	{	if(STOP_WORDS.isEmpty())
 		{	try 
 			{	loadData();
@@ -80,7 +80,7 @@ public class StopWordsManager
 	 * @throws FileNotFoundException 
 	 * 		Problem while accessing the stopword file. 
 	 */
-	private void loadData() throws FileNotFoundException, UnsupportedEncodingException
+	private static void loadData() throws FileNotFoundException, UnsupportedEncodingException
 	{	for(ArticleLanguage language: ArticleLanguage.values())
 		{	List<String> list = new ArrayList<String>();
 			STOP_WORDS.put(language,list);

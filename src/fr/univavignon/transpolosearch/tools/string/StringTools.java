@@ -53,8 +53,18 @@ import fr.univavignon.transpolosearch.tools.log.HierarchicalLogger;
 import fr.univavignon.transpolosearch.tools.log.HierarchicalLoggerManager;
 
 /**
- * This class contains various methods
- * used when processing strings.
+ * This class contains various methods used when processing strings.
+ * <br/>
+ * We consider a text to be clean if it contains only Latin letters
+ * (possibly with diacritics), digits, punctuation as defined in
+ * {@link #PUNCTUATION}, regular spaces and new lines {@code '\n'}.
+ * This holds for an article body: in addition, an article title must
+ * not contain new lines neither double quotes {@code '"'}, so that
+ * we can include it in CSV files.
+ * 
+ * <br/>
+ * TODO For each method, clearly identify which time of text it is
+ * meant to process: raw article? clean article? raw title? etc. 
  *  
  * @author Vincent Labatut
  */
@@ -188,11 +198,14 @@ public class StringTools
 	}
 	
 	/////////////////////////////////////////////////////////////////
-	// CHARACTER TYPES	/////////////////////////////////////////////
+	// PUNCTUATION		/////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
+	/** Accepted punctuation marks */
+	private final static String PUNCTUATION = "'()<>:,\\-!.\";&@%+";
+	
 	/**
-	 * Checks whether the specified character
-	 * is a punctuation mark or not.
+	 * Checks whether the specified character is a punctuation mark or not.
+	 * This holds only for <i>clean</i> texts (cf. the class documentation).
 	 * 
 	 * @param c
 	 * 		The character of interest.
@@ -200,8 +213,31 @@ public class StringTools
 	 * 		{@code true} iff the character is a punctuation mark.
 	 */
 	public static boolean isPunctuation(int c)
-	{	String string = new String(new int[]{c},0,1);
-		boolean result = Pattern.matches("\\p{Punct}", string);
+	{	//String string = new String(new int[]{c},0,1);
+		//boolean result = Pattern.matches("\\p{Punct}", string);
+		
+		int pos = PUNCTUATION.indexOf(c);
+		boolean result = pos>=0;
+		
+		return result;
+	}
+	
+	/**
+	 * Removes the punctuation as defined in {@link #PUNCTUATION}. It also
+	 * removes multiple consecutive regular spaces. The goal is to get a string
+	 * that is easy to tokenize.
+	 * <br/>
+	 * This method is meant to be applied on <i>clean</i> text or title (it does
+	 * not handle fancy characters).
+	 * 
+	 * @param str
+	 * 		The text to process.
+	 * @return
+	 * 		The same text without any punctuation.
+	 */
+	public static String removePunctuation(String str)
+	{	String result = str.replaceAll("["+PUNCTUATION+"]"," ");
+		result = result.replaceAll(" +", " ");
 		return result;
 	}
 	
@@ -243,8 +279,6 @@ public class StringTools
 	/////////////////////////////////////////////////////////////////
 	// CLEAN			/////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
-	/** Accepted punctuation marks */
-	private final static String PUNCTUATION = "'()<>:,\\-!.\";&@%+";
 	/** Regex used to detect HTML hyperlink tags */
 	private final static Pattern HL_PATTERN = Pattern.compile("</?a ?[^>]*>");
 //	/** Regex used to detect non-latin letters */
