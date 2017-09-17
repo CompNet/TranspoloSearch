@@ -45,6 +45,7 @@ import fr.univavignon.transpolosearch.data.article.ArticleLanguage;
 import fr.univavignon.transpolosearch.data.event.Event;
 import fr.univavignon.transpolosearch.data.event.MyPam;
 import fr.univavignon.transpolosearch.data.event.DummyDistanceMetric;
+import fr.univavignon.transpolosearch.data.event.Silhouette;
 import fr.univavignon.transpolosearch.processing.InterfaceRecognizer;
 import fr.univavignon.transpolosearch.processing.ProcessorException;
 import fr.univavignon.transpolosearch.tools.log.HierarchicalLogger;
@@ -241,6 +242,8 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 //					maxClust = membership[i];
 //				i++;
 //			}
+        	int bestK = 0;
+        	double bestSil = 0;
         	for(int k=2;k<=remainingRes.size();k++)
         	{	Set<Set<Integer>> partition = dendro.partitionK(k);
         		int j = 1;
@@ -254,7 +257,14 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 	        		}
         			j++;
         		}
+        		double sil = Silhouette.processSilhouette(distanceMatrix, partition);
+        		logger.log("k="+k+" >> Silhouete="+sil);
+        		if(sil>bestSil)
+        		{	bestSil = sil;
+        			bestK = k;
+        		}
         	}
+    		logger.log("Best partition: k="+bestK+" (Silhouette="+bestSil);
 			
 		logger.decreaseOffset();
 //		logger.log("Article clustering complete: "+(maxClust+1)+" clusters detected for "+remainingRes.size()+" remaining articles");	// jstat

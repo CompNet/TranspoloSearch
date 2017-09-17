@@ -8,7 +8,7 @@ import jsat.linear.distancemetrics.DistanceMetric;
 
 /**
  * Minimal implementation of a distance, used to compare events 
- * and cluster them with {@link MyPam}.
+ * and cluster them with {@link MyPam} (JStat Library).
  *  
  * @author Vincent Labatut
  */
