@@ -1,5 +1,7 @@
 package fr.univavignon.transpolosearch.data.event;
 
+import java.util.Arrays;
+
 /*
  * TranspoloSearch
  * Copyright 2015-17 Vincent Labatut
@@ -48,13 +50,20 @@ public class Silhouette
 	{	// process similarity between each instance and each cluster
 		double[] intraDists = new double[dist.length];
 		double[] bestInterDists = new double[dist.length];
+		Arrays.fill(bestInterDists, 1);
+		TreeSet<Integer> singletons = new TreeSet<Integer>();
 		for(Set<Integer> part: partition)
 		{	// processing the instances belonging to the current cluster
 			for(int i: part)
 			{	intraDists[i] = 0;
-				for(int j: part)
-				{	if(i!=j)
-						intraDists[i] = intraDists[i] + dist[i][j];
+				if(part.size()==1)
+					singletons.add(i);
+				else
+				{	for(int j: part)
+					{	if(i!=j)
+							intraDists[i] = intraDists[i] + dist[i][j];
+					}
+					intraDists[i] = intraDists[i] / (part.size()-1);
 				}
 			}
 			
@@ -68,6 +77,7 @@ public class Silhouette
 			{	double tempDist = 0;
 				for(int j: part)
 					tempDist = tempDist + dist[i][j];
+				tempDist = tempDist / part.size();
 				if(tempDist<bestInterDists[i])
 					bestInterDists[i] = tempDist;
 			}
@@ -76,7 +86,7 @@ public class Silhouette
 		// processing the measure for each instance
 		double[] indivSil = new double[dist.length];
 		for(int i=0;i<dist.length;i++)
-		{	if(intraDists[i]==bestInterDists[i])
+		{	if(singletons.contains(i) || intraDists[i]==bestInterDists[i])
 				indivSil[i] = 0;
 			else if(intraDists[i]<bestInterDists[i])
 				indivSil[i] = 1 - intraDists[i]/bestInterDists[i];

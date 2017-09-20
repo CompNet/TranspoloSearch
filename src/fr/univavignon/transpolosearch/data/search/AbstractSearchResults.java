@@ -27,6 +27,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -37,9 +38,7 @@ import com.aliasi.tokenizer.IndoEuropeanTokenizerFactory;
 import com.aliasi.tokenizer.LowerCaseTokenizerFactory;
 import com.aliasi.tokenizer.Tokenizer;
 import com.aliasi.tokenizer.TokenizerFactory;
-import com.aliasi.util.Counter;
 import com.aliasi.util.Distance;
-import com.aliasi.util.ObjectToCounterMap;
 
 import fr.univavignon.transpolosearch.data.article.ArticleLanguage;
 import fr.univavignon.transpolosearch.data.event.Event;
@@ -129,15 +128,17 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 	 * 		Language of the articles.
 	 */
 	public void clusterArticles(ArticleLanguage language)
-	{	logger.log("Clustering the articles");
+	{	boolean lingpipe = true;
+		
+		logger.log("Clustering the articles");
 		logger.increaseOffset();
 			List<String> stopWords = StopWordsManager.getStopWords(language);
-			ObjectToCounterMap<String> overallCounter = new ObjectToCounterMap<String>();
+			Map<String,Integer> cf = new HashMap<String,Integer>();	// collection frequency (for information)
+			Map<String,Integer> df = new HashMap<String,Integer>();	// document frequency
 			
-			// each result is processed separately
+			// tokenize and process separately tf and df 
 			List<T> remainingRes = new ArrayList<T>();
-			List<Double> lengths = new ArrayList<Double>();
-			List<ObjectToCounterMap<String>> counters = new ArrayList<ObjectToCounterMap<String>>();
+			List<Map<String,Integer>> tfList = new ArrayList<Map<String,Integer>>();
 			for(T result: results.values())
 			{	if(result.status==null)
 				{	remainingRes.add(result);
@@ -148,129 +149,250 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 					cleanText = cleanText.replaceAll("\\d+"," ");
 					cleanText = StringTools.removePunctuation(cleanText);
 					char[] charText = cleanText.toCharArray();
-					Tokenizer tokenizer = TOKENIZER_FACTORY.tokenizer(charText,0,charText.length);//TODO vérifier si on vire la ponctuation
-					ObjectToCounterMap<String> counter = new ObjectToCounterMap<String>();
-					counters.add(counter);
+					Tokenizer tokenizer = TOKENIZER_FACTORY.tokenizer(charText,0,charText.length);
+					Map<String,Integer> tf = new HashMap<String,Integer>();
+					tfList.add(tf);
 					String token;
 			    	while((token=tokenizer.nextToken()) != null)
 			    	{	if(!stopWords.contains(token))
-			    		{	counter.increment(token);
-			    			overallCounter.increment(token);
+			    		{	// update term frequency
+			    			Integer c = tf.get(token);
+			    			if(c==null)
+			    				c = 0;
+			    			c++;
+			    			tf.put(token,c);
+			    			// update document frequency
+			    			if(c==1)
+			    			{	c = df.get(token);
+			    				if(c==null)
+			    					c = 0;
+			    				c++;
+			    				df.put(token, c);
+			    			
+			    			}
+			    			// update collection frequency
+			    			c = cf.get(token);
+			    			if(c==null)
+			    				c = 0;
+			    			c++;
+			    			cf.put(token, c);
+
 			    			//logger.log(token);
 			    		}
 			    	}
-			    	
-			    	// compute length
-			    	double sum = 0.0;
-		            for(Counter c : counter.values())
-		            {	double count = c.doubleValue();
-		                sum = sum + count;  // tf =sqrt(count); sum += tf * tf
-		            }
-			    	double length = Math.sqrt(sum);
-			    	lengths.add(length);
 				}	
 			}
 			
-        	// display word counts for the whole corpus
-			logger.log("Word frequencies after tokenization:");
-			logger.increaseOffset();
-				for(String key: overallCounter.keysOrderedByCountList())
-	            {	Counter counter = overallCounter.get(key);
-	            	int val = counter.intValue();
-	            	logger.log(key+": "+val);
-	            }
-			logger.decreaseOffset();
-			
-			// process the distance between all results
-			double distanceMatrix[][] = new double[remainingRes.size()][remainingRes.size()];
-			for(int i=0;i<remainingRes.size()-1;i++)
-			{	double length1 = lengths.get(i);
-				ObjectToCounterMap<String> counter1 = counters.get(i);
+			if(remainingRes.size()<3)
+			{	logger.log("There are not enough articles to perform clustering >> all documents are put in the same unique cluster");
+				for(T result: remainingRes)
+					result.cluster = "N/A";
+			}
+			else
+			{	// display word counts for the whole corpus
+				logger.log("Word frequencies after tokenization:");
+				logger.increaseOffset();
+					TreeSet<String> orderedTerms = new TreeSet<String>(cf.keySet());
+					for(String term: orderedTerms)
+		            {	int valCf = cf.get(term);
+		            	logger.log(term+": "+valCf);
+		            }
+				logger.decreaseOffset();
 				
-				for(int j=i+1;j<remainingRes.size();j++)
-				{	double length2 = lengths.get(j);
-					ObjectToCounterMap<String> counter2 = counters.get(j);
+				// normalize df to get idf
+				Map<String,Double> idf = new HashMap<String,Double>();	// inverse document frequency
+				for(Entry<String,Integer> entry : df.entrySet())
+	            {	String token = entry.getKey();
+	            	int valDf = entry.getValue();
+	                double valIdf = Math.log10(remainingRes.size() / (valDf + 1.0));
+	                idf.put(token, valIdf);
+	            }
+				
+				// combine to get tf-idf
+				List<Map<String,Double>> tfidfList = new ArrayList<Map<String,Double>>();	// tf-idf
+				for(Map<String,Integer> tf: tfList)
+				{	Map<String,Double> tfidf = new HashMap<String,Double>();
+					tfidfList.add(tfidf);
+					for(Entry<String,Integer> entry : tf.entrySet())
+					{	String token = entry.getKey();
+						int valTf = entry.getValue();
+						double valIdf = idf.get(token);
+						double valTfidf = valTf * valIdf;
+						tfidf.put(token, valTfidf);
+					}
+				}
+				
+				// process the norm of each document
+				List<Double> norms = new ArrayList<Double>(remainingRes.size());
+				for(Map<String,Double> tfidf: tfidfList)
+				{	double norm = 0;
+					for(Double valTfidf: tfidf.values())
+						norm = norm + valTfidf*valTfidf;
+					norm = Math.sqrt(norm);
+					norms.add(norm);
+				}
+				
+				// process the cos distance between all results
+				double distanceMatrix[][] = new double[remainingRes.size()][remainingRes.size()];
+				for(int i=0;i<remainingRes.size()-1;i++)
+				{	double norm1 = norms.get(i);
+					Map<String,Double> tfidf1 = tfidfList.get(i);
 					
-					double productVal = 0.0;
-					for (String token : counter1.keySet())
-				    {	int count1 = counter1.getCount(token);
-						int count2 = counter2.getCount(token);
-				        productVal = productVal + Math.sqrt(count2 * count1); // tf = sqrt(count)
-				    }
-					
-					double cosVal = productVal / (length1 * length2);
-					double dist = 1.0 - cosVal;
-					distanceMatrix[i][j] = dist;
-					distanceMatrix[j][i] = dist;
+					for(int j=i+1;j<remainingRes.size();j++)
+					{	double norm2 = norms.get(j);
+						Map<String,Double> tfidf2 = tfidfList.get(j);
+						
+						double productVal = 0;
+						for(Entry<String,Double> entry: tfidf1.entrySet())
+					    {	double valTfidf1 = entry.getValue();
+					    	String token = entry.getKey();
+					    	if(tfidf2.containsKey(token))
+							{	double valTfidf2 = tfidf2.get(token);
+					        	productVal = productVal + Math.sqrt(valTfidf1 * valTfidf2);
+							}
+					    }
+						
+						double cosVal = productVal / (norm1 * norm2);
+						double dist = 1.0 - cosVal;
+						distanceMatrix[i][j] = dist;
+						distanceMatrix[j][i] = dist;
+					}
+				}
+
+				// record distance matrix (for debug)
+//				try
+//				{	PrintWriter pw = FileTools.openTextFileWrite("dist.csv", "UTF-8");
+//					for(int i=0;i<remainingRes.size();i++)
+//					{	for(int j=0;j<remainingRes.size();j++)
+//						{	if(j>0)
+//								pw.print(",");
+//							pw.print(distanceMatrix[i][j]);
+//						}
+//						pw.println();
+//					}
+//					pw.close();
+//				} 
+//				catch(UnsupportedEncodingException | FileNotFoundException e) 
+//				{	e.printStackTrace();
+//				}
+			
+				// perform the clustering using the Jstat library (PAM)
+				if(!lingpipe)
+					clusterArticlesPam(distanceMatrix,remainingRes);
+				// or using the LingPipe library (hierarchical + Silhouette)
+				else
+				{	boolean outputHierarchy = false;
+					clusterArticlesHierSilh(distanceMatrix,remainingRes, outputHierarchy);
 				}
 			}
-//			DistanceMetric dm = new DummyDistanceMetric(distanceMatrix);	// jstat cluster analysis
-			Distance<Integer> dl = new Distance<Integer>()					// lingpipe cluster analysis
-			{	@Override
-				public double distance(Integer e1, Integer e2)
-				{	double result = distanceMatrix[e1][e2];
-					return result;
-				}
-			};
 			
-			// build a dummy dataset
-//			List<DataPoint> dp = new ArrayList<DataPoint>();				// jstat
-//			for(int i=0;i<remainingRes.size();i++)
-//			{	Vec v = new DenseVector(Arrays.asList((double)i));
-//				DataPoint d = new DataPoint(v);
-//				dp.add(d);
-//			}
-//			SimpleDataSet ds = new SimpleDataSet(dp);
-			Set<Integer> dd = new TreeSet<Integer>();						// lingpipe
-			for(int i=0;i<remainingRes.size();i++)
-				dd.add(i);
-			
-			// proceed with the cluster analysis
-//			Clusterer clusterer = new MyPam(dm);							// jstat
-//			int[] membership = new int[remainingRes.size()];
-//			clusterer.cluster(ds, membership);
-	        HierarchicalClusterer<Integer> clusterer = 						// lingpipe
-	        		new CompleteLinkClusterer<Integer>(dl);
-        	Dendrogram<Integer> dendro = clusterer.hierarchicalCluster(dd);
+		logger.decreaseOffset();
+		logger.log("Article clustering complete");																						// lingpipe
+	}
+	
+	/**
+	 * Performs the clustering using the Jstat library and
+	 * the PAM algorithm (partitioning around k-medoids).
+	 * 
+	 * @param distanceMatrix
+	 * 		Distance matrix between texts.
+	 * @param remainingRes
+	 * 		List of the processed objects.
+	 */
+	private void clusterArticlesPam(double[][] distanceMatrix, List<T> remainingRes)
+	{	// build the distance object
+		DistanceMetric dm = new DummyDistanceMetric(distanceMatrix);
+		
+		// build a dummy dataset
+		List<DataPoint> dp = new ArrayList<DataPoint>();
+		for(int i=0;i<remainingRes.size();i++)
+		{	Vec v = new DenseVector(Arrays.asList((double)i));
+			DataPoint d = new DataPoint(v);
+			dp.add(d);
+		}
+		SimpleDataSet ds = new SimpleDataSet(dp);
+		
+		// proceed with the cluster analysis
+		Clusterer clusterer = new MyPam(dm);
+		int[] membership = new int[remainingRes.size()];
+		clusterer.cluster(ds, membership);
+		
+		// set up the clusters in the results themselves
+		int maxClust = 0;
+		int i = 0;
+		for(T result: remainingRes)
+		{	result.cluster = Integer.toString(membership[i]);
+			if(membership[i] > maxClust)
+				maxClust = membership[i];
+			i++;
+		}
+		
+		logger.log("Result: "+(maxClust+1)+" clusters detected for "+remainingRes.size()+" remaining articles");
+	}
+	
+	/**
+	 * Performs the clustering using the LingPipe library and
+	 * the hierarchical clustering algorithm, with the Silhouette
+	 * measure to select the best cut.
+	 * 
+	 * @param distanceMatrix
+	 * 		Distance matrix between texts.
+	 * @param remainingRes
+	 * 		List of the processed objects.
+	 * @param outputHierarchy
+	 * 		Whether or not output the whole hierarchy in the CSV
+	 * 		files generated later.
+	 */
+	private void clusterArticlesHierSilh(double[][] distanceMatrix, List<T> remainingRes, boolean outputHierarchy)
+	{	// process the dummy distances
+		Distance<Integer> dl = new Distance<Integer>()
+		{	@Override
+			public double distance(Integer e1, Integer e2)
+			{	double result = distanceMatrix[e1][e2];
+				return result;
+			}
+		};
+		
+		// build a dummy dataset
+		Set<Integer> dd = new TreeSet<Integer>();						// lingpipe
+		for(int i=0;i<remainingRes.size();i++)
+			dd.add(i);
+		
+		// proceed with the cluster analysis
+        HierarchicalClusterer<Integer> clusterer = 						// lingpipe
+        		new CompleteLinkClusterer<Integer>(dl);
+    	Dendrogram<Integer> dendro = clusterer.hierarchicalCluster(dd);
 
-			// set up the clusters in the results themselves
-//			int maxClust = 0;												// jstat
-//			int i = 0;
-//			for(T result: remainingRes)
-//			{	result.cluster = membership[i];
-//				if(membership[i] > maxClust)
-//					maxClust = membership[i];
-//				i++;
-//			}
-        	int bestK = 0;
-        	double bestSil = 0;
-        	for(int k=2;k<=remainingRes.size();k++)
-        	{	Set<Set<Integer>> partition = dendro.partitionK(k);
-        		int j = 1;
-        		for(Set<Integer> part: partition)
-        		{	for(int i: part)
+		// set up the clusters in the results themselves
+    	int bestK = 0;													// lingpipe
+    	double bestSil = -1;
+    	for(int k=2;k<=remainingRes.size();k++)
+    	{	Set<Set<Integer>> partition = dendro.partitionK(k);
+    		// get the silhouette
+    		double sil = Silhouette.processSilhouette(distanceMatrix, partition);
+    		logger.log("k="+k+" >> Silhouete="+sil);
+    		if(sil>bestSil)
+			{	bestSil = sil;
+				bestK = k;
+			}
+    		// setup cluster in result
+    		if(outputHierarchy || bestK==k)
+    		{	int j = 1;
+	    		for(Set<Integer> part: partition)
+	    		{	for(int i: part)
 	        		{	T res = remainingRes.get(i);
-	        			if(res.cluster==null)
+	        			if(res.cluster==null || !outputHierarchy)
 	        				res.cluster = Integer.toString(j);
 	        			else
 	        				res.cluster = res.cluster + ":" + j;
 	        		}
-        			j++;
-        		}
-        		double sil = Silhouette.processSilhouette(distanceMatrix, partition);
-        		logger.log("k="+k+" >> Silhouete="+sil);
-        		if(sil>bestSil)
-        		{	bestSil = sil;
-        			bestK = k;
-        		}
-        	}
-    		logger.log("Best partition: k="+bestK+" (Silhouette="+bestSil);
-			
-		logger.decreaseOffset();
-//		logger.log("Article clustering complete: "+(maxClust+1)+" clusters detected for "+remainingRes.size()+" remaining articles");	// jstat
-		logger.log("Article clustering complete");																						// lingpipe
+	    			j++;
+	    		}
+    		}
+    	}
+		logger.log("Best partition: k="+bestK+" (Silhouette="+bestSil);
 	}
-
+	
 	/////////////////////////////////////////////////////////////////
 	// FILTERING	/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
