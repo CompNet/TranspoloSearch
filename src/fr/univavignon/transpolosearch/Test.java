@@ -624,7 +624,7 @@ if(line.contains("marseillan"))
 		DateFormat df = new SimpleDateFormat("yyyyMMdd");
 		
 		String params[][] = {
-//			{"Anne Hidalgo", "Hidalgo", null},
+			{"Anne Hidalgo", "Hidalgo", null},
 //			{"Anne Hidalgo", "Hidalgo", "http://www.leparisien.fr/"},
 //			{"Cécile Helle", "Helle", null},
 //			{"Cécile Helle", "Helle", "http://www.laprovence.com/"},
@@ -632,13 +632,13 @@ if(line.contains("marseillan"))
 //			{"Martine Aubry", "Aubry", "http://www.lavoixdunord.fr/"}
 //			{"Roland Ries", "Ries", null}
 			
-			{"Bruno Julliard", "Julliard", null},
-			{"Jean-Louis Missika", "Missika", null},
-			{"Ian Brossat", "Brossat", null},
-			{"Christophe Najdovski", "Najdovski", null},
-			{"Nathalie Kosciusko-Morizet", "Kosciusko-Morizet", null},
-			{"Claude Goasguen", "Goasguen", null},
-			{"Brigitte Kuster", "Kuster", null}
+//			{"Bruno Julliard", "Julliard", null},
+//			{"Jean-Louis Missika", "Missika", null},
+//			{"Ian Brossat", "Brossat", null},
+//			{"Christophe Najdovski", "Najdovski", null},
+//			{"Nathalie Kosciusko-Morizet", "Kosciusko-Morizet", null},
+//			{"Claude Goasguen", "Goasguen", null},
+//			{"Brigitte Kuster", "Kuster", null}
 		};
 		
 		for(String[] param: params)

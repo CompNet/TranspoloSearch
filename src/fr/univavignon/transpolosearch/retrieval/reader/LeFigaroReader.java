@@ -246,11 +246,17 @@ public class LeFigaroReader extends ArticleReader
 			if(authors!=null)
 				result.addAuthors(authors);
 			
-			// clean text
+			// add the title to the content, just in case the entity appears there but not in the article body
 			String rawText = rawStr.toString();
+			String linkedText = linkedStr.toString();
+			if(title!=null && !title.isEmpty())
+			{	rawText = title + "\n" + rawText;
+				linkedText = title + "\n" + linkedText;
+			}
+			
+			// clean text
 			result.setRawText(rawText);
 			logger.log("Length of the raw text: "+rawText.length()+" chars.");
-			String linkedText = linkedStr.toString();
 			result.setLinkedText(linkedText);
 			logger.log("Length of the linked text: "+linkedText.length()+" chars.");
 

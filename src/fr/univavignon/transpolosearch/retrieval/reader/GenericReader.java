@@ -232,13 +232,19 @@ public class GenericReader extends ArticleReader
 			if(modificationDate!=null)
 				result.setModificationDate(modificationDate);
 			
-			// clean text
+			// add the title to the content, just in case the entity appears there but not in the article body
 			String rawText = rawStr.toString();
+			String linkedText = linkedStr.toString();
+			if(title!=null && !title.isEmpty())
+			{	rawText = title + "\n" + rawText;
+				linkedText = title + "\n" + linkedText;
+			}
+			
+			// clean text
 //			rawText = cleanText(rawText);
 //			rawText = ArticleCleaning.replaceChars(rawText);
 			result.setRawText(rawText);
-			logger.log("Length of the raw text: "+rawText.length()+" chars.");
-			String linkedText = linkedStr.toString();
+			logger.log("Length of the raw text: "+rawText.length()+" chars.");			
 //			linkedText = cleanText(linkedText);
 //			linkedText = ArticleCleaning.replaceChars(linkedText);
 			result.setLinkedText(linkedText);

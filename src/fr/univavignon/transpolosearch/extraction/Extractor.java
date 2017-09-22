@@ -150,8 +150,8 @@ public class Extractor
 		FileNames.setOutputFolder(outFolder);
 		
 		// perform the Web search
-//		logger.log("Performing the Web search");
-//		WebSearchResults webRes = performWebExtraction(keywords, website, startDate, endDate, searchDate, compulsoryExpression, language);
+		logger.log("Performing the Web search");
+		WebSearchResults webRes = performWebExtraction(keywords, website, startDate, endDate, searchDate, compulsoryExpression, language);
 		
 		// perform the social search
 		SocialSearchResults socialRes = null;
@@ -163,7 +163,7 @@ public class Extractor
 			logger.log("Skipping the social search, since the focus is on a specific website ("+website+")");
 		
 		// merge both results in a single file
-		exportCombinedResultsAsCsv(null, socialRes);
+		exportCombinedResultsAsCsv(webRes, socialRes);
 		
 		logger.decreaseOffset();
 		logger.log("Information extraction over");
