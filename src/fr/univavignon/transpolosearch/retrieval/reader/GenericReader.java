@@ -154,9 +154,7 @@ public class GenericReader extends ArticleReader
 			else
 			{	Element titleElt = titleElts.get(0);
 				title = titleElt.text();
-				title = removeGtst(title);
-				title = title.replace("\"","'");
-				title = title.replaceAll("[\\s]+"," ");
+				title = StringTools.cleanTitle(title);
 				logger.log("Get title: "+title);
 			}
 			
@@ -216,10 +214,7 @@ public class GenericReader extends ArticleReader
 				if(title.isEmpty())
 					title = "Untitled";
 				else
-				{	title = removeGtst(title);
-					title = title.replace("\"","'");
-					title = title.replaceAll("[\\s]+"," ");
-				}
+					title = StringTools.cleanTitle(title);
 			}
 			
 			// create article object

@@ -780,9 +780,7 @@ public class WikipediaReader extends ArticleReader
 			// get its title
 			Element firstHeadingElt = document.getElementsByAttributeValue(HtmlNames.ATT_ID,ID_TITLE).get(0);
 			String title = firstHeadingElt.text();
-			title = removeGtst(title);
-			title = title.replace("\"","'");
-			title = title.replaceAll("[\\s]+"," ");
+			title = StringTools.cleanTitle(title);
 			logger.log("Get title: "+title);
 			
 			// get raw and linked texts

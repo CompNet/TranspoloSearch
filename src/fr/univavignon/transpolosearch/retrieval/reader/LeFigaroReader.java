@@ -177,9 +177,7 @@ public class LeFigaroReader extends ArticleReader
 			List<TextNode> textNodes = titleElt.textNodes();	// we need to ignore "avant-première" and other similar indications
 			for(TextNode textNode: textNodes)
 				title = title + " " + textNode.text();
-			title = removeGtst(title).trim();
-			title = title.replace("\"","'");
-			title = title.replaceAll("[\\s]+"," ");
+			title = StringTools.cleanTitle(title);
 			logger.log("Get title: \""+title+"\"");
 			
 			// retrieve the dates

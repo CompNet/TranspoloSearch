@@ -151,9 +151,7 @@ public class LiberationReader extends ArticleReader
 			// get its title
 			Element titleElt = document.getElementsByTag(HtmlNames.ELT_TITLE).first();
 			String title = titleElt.text();
-			title = removeGtst(title);
-			title = title.replace("\"","'");
-			title = title.replaceAll("[\\s]+"," ");
+			title = StringTools.cleanTitle(title);
 			logger.log("Get title: "+title);
 			
 			// check if the access is restricted
