@@ -988,13 +988,9 @@ public class StringTools
 //		boolean disp = input.length()>100000;
 		String result = input;
 		
-/* TODO pb when dealing with non-latin diacritics.
- * 	example : "Super Mario Bros. Anime Movie Restored (Best Quality!) . English subbed . スーパーマリオブラザーズ ピーチ姫救出大作戦!"
- */
-		
 		if (input!=null)
-		{	String diacLess = removeDiacritics(result);
-			// first version, regex-based: problems when dealing with bidirectional texts (eg english + arabic)
+		{	// first version, regex-based: problems when dealing with bidirectional texts (eg english + arabic)
+//			String diacLess = removeDiacritics(result);
 //			Matcher matcher = NL_PATTERN.matcher(diacLess);
 //			String tmp = "";
 //			int prevPos = 0;
@@ -1008,13 +1004,30 @@ public class StringTools
 //			result = tmp;
 			
 			// second version: brute force, but seems more robust
+//			String diacLess = removeDiacritics(result);			
+//			StringBuffer tmp = new StringBuffer();
+//			for(int i=0;i<diacLess.length();i++) 
+//			{	
+////				if(disp && (i+1)%50000==0)
+////					logger.log("Processing char "+(i+1)+"/"+diacLess.length());
+//				
+//				char c = diacLess.charAt(i);
+//				if(LATIN_CHARS.contains(c))
+//				{	char cc = input.charAt(i);
+//					tmp.append(cc);
+//				}
+//	        }
+//			result = tmp.toString();
+			/* TODO pb when dealing with non-latin diacritics.
+			 * 	example : "Super Mario Bros. Anime Movie Restored (Best Quality!) . English subbed . スーパーマリオブラザーズ ピーチ姫救出大作戦!"
+			 */
+			
+			// third version: even bruter force
 			StringBuffer tmp = new StringBuffer();
-			for(int i=0;i<diacLess.length();i++) 
-			{	
-//				if(disp && (i+1)%50000==0)
-//					logger.log("Processing char "+(i+1)+"/"+diacLess.length());
-				
-				char c = diacLess.charAt(i);
+			for(int i=0;i<result.length();i++) 
+			{	String charStr = Character.toString(result.charAt(i));
+				String diacLess = removeDiacritics(charStr);
+				char c = diacLess.charAt(0);
 				if(LATIN_CHARS.contains(c))
 				{	char cc = input.charAt(i);
 					tmp.append(cc);
