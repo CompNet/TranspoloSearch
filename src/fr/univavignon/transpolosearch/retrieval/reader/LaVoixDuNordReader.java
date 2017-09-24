@@ -222,16 +222,19 @@ public class LaVoixDuNordReader extends ArticleReader
 			if(parElts.isEmpty())
 				throw new ReaderException("Could not find the body of the article at URL "+url);
 			else
-			{	String classStr;
-				Element parElt = parElts.first();
-				do
-				{	processAnyElement(parElt, rawStr, linkedStr);
+			{	Iterator<Element> it = parElts.iterator();
+				Element parElt = it.next();
+				String classStr = parElt.attr(HtmlNames.ATT_CLASS);
+				while(!classStr.equalsIgnoreCase(CLASS_ARTICLE_END))
+				{	
+if(url.toString().equals("http://www.lavoixdunord.fr/131481/article/2017-03-12/les-marches-toujours-un-grand-rendez-vous-pour-les-militants"))					
+	System.out.print("");
+					processAnyElement(parElt, rawStr, linkedStr);
 					rawStr.append("\n");
 					linkedStr.append("\n");
-					parElt = parElt.nextElementSibling();
+					parElt = it.next();
 					classStr = parElt.attr(HtmlNames.ATT_CLASS);
 				}
-				while(!classStr.equalsIgnoreCase(CLASS_ARTICLE_END));
 			}
 			
 			// create and init article object

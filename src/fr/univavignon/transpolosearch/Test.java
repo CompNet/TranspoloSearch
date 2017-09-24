@@ -626,11 +626,11 @@ if(line.contains("marseillan"))
 		String params[][] = {
 			{"Anne Hidalgo", "Hidalgo", null},
 //			{"Anne Hidalgo", "Hidalgo", "http://www.leparisien.fr/"},
-//			{"Cécile Helle", "Helle", null},
+			{"Cécile Helle", "Helle", null},
 //			{"Cécile Helle", "Helle", "http://www.laprovence.com/"},
-//			{"Martine Aubry", "Aubry", null},
+			{"Martine Aubry", "Aubry", null},
 //			{"Martine Aubry", "Aubry", "http://www.lavoixdunord.fr/"}
-//			{"Roland Ries", "Ries", null}
+			{"Roland Ries", "Ries", null}
 			
 //			{"Bruno Julliard", "Julliard", null},
 //			{"Jean-Louis Missika", "Missika", null},
@@ -647,7 +647,7 @@ if(line.contains("marseillan"))
 			String website = param[2];
 			
 			Date startDate = df.parse("20170306");
-			Date endDate = df.parse("20170310");
+			Date endDate = df.parse("20170312");
 			boolean searchDate = true;
 			boolean extendedSocialSearch = true;
 			ArticleLanguage language = ArticleLanguage.FR;
@@ -661,10 +661,61 @@ if(line.contains("marseillan"))
 }
 
 // TODO médias sociaux: rajouter dans le csv le nombre de commentaires associés à chaque post + likes + shares
-// TODO quand on détecte les entités, il faudrait aussi le faire sur le titre
-// TODO solve pb with method removing non-latin characters (diacritics removal can cause shortest text
-//	sol: vérifier si même longueur, et sinon parcourir jusqu'à trouver différence, insérer espace (?)
-// TODO améliorer la classif:
-//  - autres classif (hiérarchique?)
-//	- virer les stop words?
-
+// TODO Il semblerait que Tagen ne marche pas
+/*
+ * 2017-09-24.15-49-17 (0) /bin/sh
+                        -c
+                        ./res/ner/tagen/tagen :mucfr --align --yes --Verbose out/Martine_Aubry/web_search/_pages/http%3A%2F%2Flactualitedessocialistes.hautetfort.com%2Ftag%2Fchanson%2Bfrancaise/TAGEN_model=MucFr_ignPro=false_ignNbr=false_exclude=false/temp.txt out/Martine_Aubry/web_search/_pages/http%3A%2F%2Flactualitedessocialistes.hautetfort.com%2Ftag%2Fchanson%2Bfrancaise/TAGEN_model=MucFr_ignPro=false_ignNbr=false_exclude=false/output.txt
+Creating temporary directory
+Converting in Unicode UCS-2 Little Endian
+./res/ner/tagen/bin/Asc2Uni: error while loading shared libraries: libstdc++.so.6: cannot open shared object file: No such file or directory
+Executing Unitex
+	Normalize
+./res/ner/tagen/bin/Normalize: error while loading shared libraries: libstdc++.so.6: cannot open shared object file: No such file or directory
+	Tokenize
+./res/ner/tagen/bin/Tokenize: error while loading shared libraries: libstdc++.so.6: cannot open shared object file: No such file or directory
+	Dico
+./res/ner/tagen/bin/Dico: error while loading shared libraries: libstdc++.so.6: cannot open shared object file: No such file or directory
+./res/ner/tagen/bin/SortTxt: error while loading shared libraries: libstdc++.so.6: cannot open shared object file: No such file or directory
+./res/ner/tagen/bin/SortTxt: error while loading shared libraries: libstdc++.so.6: cannot open shared object file: No such file or directory
+./res/ner/tagen/bin/SortTxt: error while loading shared libraries: libstdc++.so.6: cannot open shared object file: No such file or directory
+	Locate
+./res/ner/tagen/bin/Locate: error while loading shared libraries: libstdc++.so.6: cannot open shared object file: No such file or directory
+	Concord
+./res/ner/tagen/bin/Concord: error while loading shared libraries: libstdc++.so.6: cannot open shared object file: No such file or directory
+Converting in ASCII
+./res/ner/tagen/bin/Uni2Asc: error while loading shared libraries: libstdc++.so.6: cannot open shared object file: No such file or directory
+Deleting exceptions
+rm: cannot remove '/tmp/tagen9299/temp.txt.tag': No such file or directory
+Aligning with source text
+./res/ner/tagen/bin/Align: error while loading shared libraries: libstdc++.so.6: cannot open shared object file: No such file or directory
+rm: cannot remove '/tmp/tagen9299/temp.txt.align': No such file or directory
+Deleting temporary directory
+2017-09-24.15-49-17 (0) Console output:
+2017-09-24.15-49-17 (0) 
+Creating temporary directory
+Converting in Unicode UCS-2 Little Endian
+./res/ner/tagen/bin/Asc2Uni: error while loading shared libraries: libstdc++.so.6: cannot open shared object file: No such file or directory
+Executing Unitex
+	Normalize
+./res/ner/tagen/bin/Normalize: error while loading shared libraries: libstdc++.so.6: cannot open shared object file: No such file or directory
+	Tokenize
+./res/ner/tagen/bin/Tokenize: error while loading shared libraries: libstdc++.so.6: cannot open shared object file: No such file or directory
+	Dico
+./res/ner/tagen/bin/Dico: error while loading shared libraries: libstdc++.so.6: cannot open shared object file: No such file or directory
+./res/ner/tagen/bin/SortTxt: error while loading shared libraries: libstdc++.so.6: cannot open shared object file: No such file or directory
+./res/ner/tagen/bin/SortTxt: error while loading shared libraries: libstdc++.so.6: cannot open shared object file: No such file or directory
+./res/ner/tagen/bin/SortTxt: error while loading shared libraries: libstdc++.so.6: cannot open shared object file: No such file or directory
+	Locate
+./res/ner/tagen/bin/Locate: error while loading shared libraries: libstdc++.so.6: cannot open shared object file: No such file or directory
+	Concord
+./res/ner/tagen/bin/Concord: error while loading shared libraries: libstdc++.so.6: cannot open shared object file: No such file or directory
+Converting in ASCII
+./res/ner/tagen/bin/Uni2Asc: error while loading shared libraries: libstdc++.so.6: cannot open shared object file: No such file or directory
+Deleting exceptions
+rm: cannot remove '/tmp/tagen9299/temp.txt.tag': No such file or directory
+Aligning with source text
+./res/ner/tagen/bin/Align: error while loading shared libraries: libstdc++.so.6: cannot open shared object file: No such file or directory
+rm: cannot remove '/tmp/tagen9299/temp.txt.align': No such file or directory
+Deleting temporary directory
+ */

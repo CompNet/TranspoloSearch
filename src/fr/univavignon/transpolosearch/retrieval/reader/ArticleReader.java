@@ -353,6 +353,12 @@ public abstract class ArticleReader
 						"Error message: "+e.getMessage()
 					));
 				}
+				catch(IOException e)
+				{	logger.log(Arrays.asList(
+						"WARNING: Problem while accessing the webpage.",
+						"Error message: "+e.getMessage()
+					));
+				}
 			}
 			while(again);
 			logger.decreaseOffset();
