@@ -1525,7 +1525,6 @@ public abstract class ArticleReader
 					
 					// complete string buffers
 					rawStr.append(text);
-//System.out.println(linkedStr.length());				
 					linkedStr.append(text);
 				}
 			}

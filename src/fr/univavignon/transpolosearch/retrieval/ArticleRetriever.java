@@ -156,8 +156,8 @@ public class ArticleRetriever
 		// choose the reader depending on the URL base
 		logger.log("Selecting reader: ");
 		logger.increaseOffset();
-		ArticleReader reader = ArticleReader.buildReader(address);
-		String name = reader.getName(url);
+			ArticleReader reader = ArticleReader.buildReader(address);
+			String name = reader.getName(url);
 		logger.log("Detected domain: "+reader.getDomain());
 		logger.decreaseOffset();
 		

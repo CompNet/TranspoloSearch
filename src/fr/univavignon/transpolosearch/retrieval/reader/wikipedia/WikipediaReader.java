@@ -252,7 +252,7 @@ public class WikipediaReader extends ArticleReader
 		String eltClass = element.attr(HtmlNames.ATT_CLASS);
 		
 		if(eltClass==null || 
-			// we don't need phonetic transcriptions, and they can mess up NER tools
+			// we don't need phonetic transcriptions, and they can mess up recognizers
 			(!eltClass.contains(CLASS_IPA)
 			// we also ignore WP buttons such as the "edit" links placed in certain section headers
 			&& !eltClass.contains(CLASS_EDIT)
@@ -780,7 +780,6 @@ public class WikipediaReader extends ArticleReader
 			// get its title
 			Element firstHeadingElt = document.getElementsByAttributeValue(HtmlNames.ATT_ID,ID_TITLE).get(0);
 			String title = firstHeadingElt.text();
-			title = StringTools.cleanTitle(title);
 			logger.log("Get title: "+title);
 			
 			// get raw and linked texts
@@ -882,6 +881,7 @@ public class WikipediaReader extends ArticleReader
 			result.setTitle(title);
 			result.setUrl(url);
 			result.initRetrievalDate();
+			result.setLanguage(language);
 			
 			// clean text
 			String rawText = rawStr.toString();
@@ -894,13 +894,6 @@ public class WikipediaReader extends ArticleReader
 //			linkedText = ArticleCleaning.replaceChars(linkedText);
 			result.setLinkedText(linkedText);
 			logger.log("Length of the linked text: "+linkedText.length()+" chars.");
-
-			// language
-			if(language==null)
-			{	language = StringTools.detectLanguage(rawText,false);
-				logger.log("Detected language: "+language);
-			}
-			result.setLanguage(language);
 			
 			// get original html source code
 			logger.log("Get original HTML source code.");

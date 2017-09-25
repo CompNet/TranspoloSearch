@@ -480,6 +480,15 @@ public class Article implements Comparable<Article>
 		logger.log("Remove tag signs");
 		removeTagSigns();
 		
+		// clean title
+		logger.log("Possibly setup title (if none), and clean it");
+		if(title==null || title.isEmpty())
+		{	int length = Math.min(50,rawText.length());
+			if(length>0)
+				title = rawText.substring(0,length);
+		}
+		title = StringTools.cleanTitle(title);
+		
 		logger.decreaseOffset();
 	}
 	
