@@ -1,4 +1,4 @@
-package fr.univavignon.transpolosearch.retrieval.reader;
+package fr.univavignon.transpolosearch.retrieval.reader.journals;
 
 /*
  * TranspoloSearch
@@ -63,6 +63,7 @@ import org.jsoup.select.Elements;
 import fr.univavignon.transpolosearch.data.article.Article;
 import fr.univavignon.transpolosearch.data.article.ArticleLanguage;
 import fr.univavignon.transpolosearch.retrieval.reader.ArticleReader;
+import fr.univavignon.transpolosearch.retrieval.reader.GenericReader;
 import fr.univavignon.transpolosearch.retrieval.reader.ReaderException;
 import fr.univavignon.transpolosearch.tools.file.FileNames;
 import fr.univavignon.transpolosearch.tools.file.FileTools;

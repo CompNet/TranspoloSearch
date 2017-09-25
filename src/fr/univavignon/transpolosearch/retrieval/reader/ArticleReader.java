@@ -54,6 +54,15 @@ import org.jsoup.select.Elements;
 
 import fr.univavignon.transpolosearch.data.article.Article;
 import fr.univavignon.transpolosearch.data.article.ArticleLanguage;
+import fr.univavignon.transpolosearch.retrieval.reader.journals.LExpressReader;
+import fr.univavignon.transpolosearch.retrieval.reader.journals.LaProvenceReader;
+import fr.univavignon.transpolosearch.retrieval.reader.journals.LaVoixDuNordReader;
+import fr.univavignon.transpolosearch.retrieval.reader.journals.LeFigaroReader;
+import fr.univavignon.transpolosearch.retrieval.reader.journals.LeMondeReader;
+import fr.univavignon.transpolosearch.retrieval.reader.journals.LeParisienReader;
+import fr.univavignon.transpolosearch.retrieval.reader.journals.LePointReader;
+import fr.univavignon.transpolosearch.retrieval.reader.journals.LiberationReader;
+import fr.univavignon.transpolosearch.retrieval.reader.wikipedia.WikipediaReader;
 import fr.univavignon.transpolosearch.tools.file.FileNames;
 import fr.univavignon.transpolosearch.tools.file.FileTools;
 import fr.univavignon.transpolosearch.tools.html.HtmlNames;

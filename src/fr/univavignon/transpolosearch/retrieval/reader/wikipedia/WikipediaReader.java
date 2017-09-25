@@ -1,4 +1,4 @@
-package fr.univavignon.transpolosearch.retrieval.reader;
+package fr.univavignon.transpolosearch.retrieval.reader.wikipedia;
 
 /*
  * TranspoloSearch
