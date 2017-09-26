@@ -28,4 +28,26 @@ public enum ArticleLanguage
 	EN,
 	/** French */
 	FR;
+	
+	/**
+	 * Returns the word "and" in this language. This is used when replacing 
+	 * the symbol "&" during text cleaning.
+	 * 
+	 * @return
+	 * 		A string corresponding to the word "and" in this language.
+	 */
+	public String getEt()
+	{	String result = null;
+		
+		switch(this)
+		{	case EN:
+				result = "and";
+				break;
+			case FR:
+				result = "et";
+				break;
+		}
+		
+		return result;
+	}
 }
