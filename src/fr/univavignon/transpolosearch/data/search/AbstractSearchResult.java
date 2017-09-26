@@ -72,6 +72,22 @@ public abstract class AbstractSearchResult
 	/////////////////////////////////////////////////////////////////
 	/** Last operation conducted on the result during its processing */
 	public String status = null;
+	/** Problematic status: no mention was found in the page */
+	public final static String STATUS_NO_MENTION = "No mention found";
+	/** Problematic status: no event was found in the page */
+	public final static String STATUS_NO_EVENT = "No event found";
+	/** Problematic status: the targeted date was found in the page */
+	public final static String STATUS_MISSING_DATE = "Missing targeted date";
+	/** Problematic status: the targeted name was found in the page */
+	public final static String STATUS_MISSING_KEYWORD = "Missing keyword";
+	/** Problematic status: the page is not written using the targeted language */
+	public final static String STATUS_INCORRECT_LANGUAGE = "Incorrect language";
+	/** Problematic status: the format of the document is not supported */
+	public final static String STATUS_UNSUPPORTED_FORMAT = "Unsupported format";
+	/** Problematic status: the page is not an article, but a list of articles */
+	public final static String STATUS_LIST = "List of articles";
+	/** Problematic status: the document could not be retrieved */
+	public final static String STATUS_UNAVAILABLE = "URL unvailable";
 	
 	/////////////////////////////////////////////////////////////////
 	// CLUSTER		/////////////////////////////////////////////////
@@ -108,7 +124,7 @@ public abstract class AbstractSearchResult
 			
 			// possibly remove the article
 			if(result)
-				status = "Incorrect language";
+				status = STATUS_INCORRECT_LANGUAGE;
 
 		logger.decreaseOffset();
 		return result;
@@ -153,7 +169,7 @@ public abstract class AbstractSearchResult
 			
 			// possibly remove the article/mentions
 			if(result)
-				status = "Missing targeted date";
+				status = STATUS_MISSING_DATE;
 		
 		logger.decreaseOffset();
 		return result;
@@ -198,7 +214,7 @@ public abstract class AbstractSearchResult
 			int result = mentions.getMentions().size();
 			logger.log("Found "+result+" entities");
 			if(result==0)
-				status = "No mention found";
+				status = STATUS_NO_MENTION;
 		logger.decreaseOffset();
 		return result;
 	}
@@ -416,7 +432,7 @@ public abstract class AbstractSearchResult
 			int result = events.size();
 			logger.log("Found "+result+" events");
 			if(result==0)
-				status = "No event found";
+				status = STATUS_NO_EVENT;
 		logger.decreaseOffset();
 		return result;
 	}

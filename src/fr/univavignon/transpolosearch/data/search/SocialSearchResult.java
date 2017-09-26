@@ -193,7 +193,7 @@ public class SocialSearchResult extends AbstractSearchResult
 		        Matcher matcher = pattern.matcher(text);
 		        if(!matcher.find())
 				{	logger.log("Discarding article "+article.getTitle()+" ("+article.getUrl()+")");
-					status = "Missing keyword";
+					status = STATUS_MISSING_KEYWORD;
 					result = false;
 				}
 			}

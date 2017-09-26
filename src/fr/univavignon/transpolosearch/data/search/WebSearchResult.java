@@ -79,7 +79,7 @@ public class WebSearchResult extends AbstractSearchResult
 		// we don't process PDF files
 		if(url.endsWith(FileNames.EX_PDF))
 		{	logger.log("The following URL points towards a PDF, we cannot currently use it: "+url);
-			status = "PDF file";
+			status = STATUS_UNSUPPORTED_FORMAT;
 			result = true;
 		}
 		
@@ -141,9 +141,17 @@ public class WebSearchResult extends AbstractSearchResult
 //	System.out.print("");
 //article.write();
 		}
-		catch (ReaderException e)
-		{	logger.log("WARNING: Could not retrieve the article at URL "+url.toString()+" >> removing it from the result list.");
-			status = "Article unvailable";
+		catch(ReaderException e)
+		{	// the targeted page is a list of articles, not a single article
+			if(e.isArticleList())
+			{	logger.log("WARNING: The following URL is not a single article, but rather an article list "+url.toString()+" >> removing it from the result list.");
+				status = STATUS_LIST;
+			}
+			// we just couldn't access the targeted page
+			else
+			{	logger.log("WARNING: Could not retrieve the article at URL "+url.toString()+" >> removing it from the result list.");
+				status = STATUS_UNAVAILABLE;
+			}
 			result = false;
 		}
 		
@@ -162,7 +170,7 @@ public class WebSearchResult extends AbstractSearchResult
 	        Matcher matcher = pattern.matcher(text);
 	        if(!matcher.find())
 			{	logger.log("Discarding article "+article.getTitle()+" ("+article.getUrl()+")");
-				status = "Missing keyword";
+				status = STATUS_MISSING_KEYWORD;
 				result = false;
 			}
 		}
