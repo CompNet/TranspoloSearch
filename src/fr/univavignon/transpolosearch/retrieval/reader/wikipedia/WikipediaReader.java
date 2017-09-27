@@ -428,6 +428,7 @@ public class WikipediaReader extends ArticleReader
 					linkedStr.deleteCharAt(linkedStr.length()-1);
 				}
 			}
+			
 			// possibly remove the preceding space
 			if(rawStr.length()>0)
 			{	char c = rawStr.charAt(rawStr.length()-1);
@@ -436,6 +437,7 @@ public class WikipediaReader extends ArticleReader
 					linkedStr.deleteCharAt(linkedStr.length()-1);
 				}
 			}
+			
 			// possibly add a column
 			if(rawStr.length()>0)
 			{	char c = rawStr.charAt(rawStr.length()-1);
@@ -444,6 +446,7 @@ public class WikipediaReader extends ArticleReader
 					linkedStr.append(":");
 				}
 			}
+			
 			// process each list element
 			Elements elements = element.children();
 			Iterator<Element> it = elements.iterator();
