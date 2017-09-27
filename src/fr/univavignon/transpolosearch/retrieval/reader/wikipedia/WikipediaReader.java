@@ -18,32 +18,15 @@ package fr.univavignon.transpolosearch.retrieval.reader.wikipedia;
  * along with TranspoloSearch. If not, see <http://www.gnu.org/licenses/>.
  */
 
-import java.io.BufferedReader;
-import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
 import java.net.URL;
-import java.text.Normalizer;
-import java.text.Normalizer.Form;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
-import java.util.Set;
-import java.util.TreeSet;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.zip.GZIPInputStream;
-import java.util.zip.Inflater;
-import java.util.zip.InflaterInputStream;
 
 import org.apache.http.ParseException;
 import org.apache.http.client.ClientProtocolException;
-import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.nodes.Node;
@@ -54,8 +37,6 @@ import fr.univavignon.transpolosearch.data.article.Article;
 import fr.univavignon.transpolosearch.data.article.ArticleLanguage;
 import fr.univavignon.transpolosearch.retrieval.reader.ArticleReader;
 import fr.univavignon.transpolosearch.retrieval.reader.ReaderException;
-import fr.univavignon.transpolosearch.tools.file.FileNames;
-import fr.univavignon.transpolosearch.tools.file.FileTools;
 import fr.univavignon.transpolosearch.tools.html.HtmlNames;
 import fr.univavignon.transpolosearch.tools.string.StringTools;
 
@@ -65,20 +46,61 @@ import fr.univavignon.transpolosearch.tools.string.StringTools;
  * 
  * @author Vincent Labatut
  */
-@SuppressWarnings("unused")
 public class WikipediaReader extends ArticleReader
-{
+{	
+	/**
+	 * Method defined only for a quick test.
+	 * 
+	 * @param args
+	 * 		Not used.
+	 * 
+	 * @throws Exception
+	 * 		Whatever exception. 
+	 */
+	public static void main(String[] args) throws Exception
+	{	URL url = new URL("https://fr.wikipedia.org/wiki/Boeing_767");
+		
+		ArticleReader reader = new WikipediaReader();
+		Article article = reader.processUrl(url, ArticleLanguage.FR);
+		article.cleanContent();
+		System.out.println(article);
+		article.write();
+	}
+	
+	/////////////////////////////////////////////////////////////////
+	// NAME				/////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////
+	@Override
+	public String getName(URL url)
+	{	String address = url.toString();
+		
+		// get the last part of the URL as the page name
+		String temp[] = address.split("/");
+		String result = temp[temp.length-1];
+		
+		// remove diacritics
+		result = StringTools.removeDiacritics(result);
+		
+		return result;
+	}
+	
 	/////////////////////////////////////////////////////////////////
 	// DOMAIN			/////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
-	/** Text allowing to detect the wikipedia domain */
+	/** Text allowing to detect the Wikipedia domain */
 	public static final String DOMAIN = "wikipedia.org";
 	
 	@Override
 	public String getDomain()
 	{	return DOMAIN;
 	}
-
+	
+	/////////////////////////////////////////////////////////////////
+	// LANGUAGE			/////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////
+	/** Language of the page currently processed */
+	private ArticleLanguage language;
+	
 	/////////////////////////////////////////////////////////////////
 	// RETRIEVE			/////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////	
@@ -87,10 +109,12 @@ public class WikipediaReader extends ArticleReader
 	/** Id of the element containing the article title in the Wikipedia page */
 	private final static String ID_TITLE = "firstHeading";
 	
+	/** Class of announcements */
+	private final static String[] CLASS_ANNOUNCEMENTS = {"????","bandeau-article"};
 	/** Class of phonetic transcriptions */
-	private final static String CLASS_IPA = "IPA";
-	/** Class of WP messages */
-	private final static String CLASS_DABLINK = "dablink";
+	private final static String[] CLASS_IPA = {"IPA","API"};
+	/** Class of disambiguisation links */
+	private final static String CLASS_DISAMB_LINK = "plainlinks";
 	/** Class of WP edit buttons */
 	private final static String CLASS_EDIT = "editsection";
 	/** Class of external hyperlinks of the Wikipedia page */
@@ -112,9 +136,9 @@ public class WikipediaReader extends ArticleReader
 	/** Class of the element containing personal data box (?) */
 	private final static String CLASS_PERSONDATA = "persondata";
 	/** Class of the element containing the list of references */
-	private final static String CLASS_REFERENCES = "reflist";
+	private final static String[] CLASS_REFERENCES = {"reflist","references"};
 	/** Class of the element containing a related link */
-	private final static String CLASS_RELATEDLINK = "rellink";
+	private final static String CLASS_RELATEDLINK = "rellink"; //TODO seems obsolete
 	/** Class of the element containing the table of content */
 	private final static String CLASS_TABLEOFCONTENT = "toc";
 	/** Class used for certain pictures */
@@ -148,36 +172,10 @@ public class WikipediaReader extends ArticleReader
 		"texts of songs", "theme exhibitions", "theme exhibitions (selection)",
 		"works"
 	);
-
-	/**
-	 * Retrieve the text located in 
-	 * a paragraph (P) HTML element.
-	 * 
-	 * @param element
-	 * 		Element to be processed.
-	 * @param rawStr
-	 * 		Current raw text string.
-	 * @param linkedStr
-	 * 		Current text with hyperlinks.
-	 */
-	@Override
-	protected void processParagraphElement(Element element, StringBuilder rawStr, StringBuilder linkedStr)
-	{	// possibly add a new line character first
-		if(rawStr.length()>0 && rawStr.charAt(rawStr.length()-1)!='\n')
-		{	rawStr.append("\n");
-			linkedStr.append("\n");
-		}
-		
-		// recursive processing
-		processAnyElement(element,rawStr,linkedStr);
-		
-		// possibly add a new line character
-		if(rawStr.charAt(rawStr.length()-1)!='\n')
-		{	rawStr.append("\n");
-			linkedStr.append("\n");
-		}
-	}
-
+	
+	/////////////////////////////////////////////////////////////////
+	// QUOTES			/////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////
 	/**
 	 * Retrieve the text located in 
 	 * a quote (BLOCKQUOTE) HTML element.
@@ -196,9 +194,12 @@ public class WikipediaReader extends ArticleReader
 	{	boolean result = true;
 		
 		// possibly modify the previous characters 
-		if(rawStr.length()>0 && rawStr.charAt(rawStr.length()-1)=='\n')
-		{	rawStr.deleteCharAt(rawStr.length()-1);
-			linkedStr.deleteCharAt(linkedStr.length()-1);
+		if(rawStr.length()>0)
+		{	char c = rawStr.charAt(rawStr.length()-1);
+			if(c=='\n')
+			{	rawStr.deleteCharAt(rawStr.length()-1);
+				linkedStr.deleteCharAt(linkedStr.length()-1);
+			}
 		}
 		
 		// insert quotes
@@ -218,9 +219,12 @@ public class WikipediaReader extends ArticleReader
 		}
 		
 		// possibly modify the ending characters 
-		if(rawStr.length()>0 && rawStr.charAt(rawStr.length()-1)=='\n')
-		{	rawStr.deleteCharAt(rawStr.length()-1);
-			linkedStr.deleteCharAt(linkedStr.length()-1);
+		if(rawStr.length()>0)
+		{	char c = rawStr.charAt(rawStr.length()-1);
+			if(c=='\n')
+			{	rawStr.deleteCharAt(rawStr.length()-1);
+				linkedStr.deleteCharAt(linkedStr.length()-1);
+			}
 		}
 
 		// insert quotes
@@ -230,52 +234,13 @@ public class WikipediaReader extends ArticleReader
 		return result;
 	}
 	
+	/////////////////////////////////////////////////////////////////
+	// HYPERLINKS		/////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////
 	/**
-	 * Retrieve the text located in 
-	 * a span (SPAN) HTML element.
+	 * Retrieve the text located in a hyperlink (A) HTML element.
 	 * <br/>
-	 * We process everything but
-	 * the phonetic transcriptions.
-	 * 
-	 * @param element
-	 * 		Element to be processed.
-	 * @param rawStr
-	 * 		Current raw text string.
-	 * @param linkedStr
-	 * 		Current text with hyperlinks.
-	 * @return
-	 * 		{@code true} iff the element was processed.
-	 */
-	@Override
-	protected boolean processSpanElement(Element element, StringBuilder rawStr, StringBuilder linkedStr)
-	{	boolean result;
-		String eltClass = element.attr(HtmlNames.ATT_CLASS);
-		
-		if(eltClass==null || 
-			// we don't need phonetic transcriptions, and they can mess up recognizers
-			(!eltClass.contains(CLASS_IPA)
-			// we also ignore WP buttons such as the "edit" links placed in certain section headers
-			&& !eltClass.contains(CLASS_EDIT)
-			// language indications
-			&& !eltClass.contains(CLASS_LANGUAGEICON)))
-			
-		{	result = true;
-			// otherwise, we process what's inside the span tag
-			processAnyElement(element,rawStr,linkedStr);
-		}
-		
-		else
-			result = false;
-		
-		return result;
-	}
-	
-	/**
-	 * Retrieve the text located in 
-	 * a hyperlink (A) HTML element.
-	 * <br/>
-	 * We ignore all external links,
-	 * as well as linked images.
+	 * We ignore all external links, as well as linked images.
 	 * 
 	 * @param element
 	 * 		Element to be processed.
@@ -325,6 +290,24 @@ public class WikipediaReader extends ArticleReader
 		return result;
 	}
 	
+	/////////////////////////////////////////////////////////////////
+	// LISTS			/////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////
+	/** Whether to extract the textual content of lists, or not */
+	private boolean getLists = true;
+	
+	/**
+	 * Determines whether the reader will extract the text content
+	 * of lists present in the processed article, or not. By default,
+	 * the lists are extracted.
+	 * 
+	 * @param getLists
+	 * 		{@code true} to extract the lists.
+	 */
+	public void setGetLists(boolean getLists)
+	{	this.getLists = getLists;
+	}
+	
 	/**
 	 * Retrieve the text located in  list (UL or OL) HTML element.
 	 * <br/>
@@ -343,68 +326,80 @@ public class WikipediaReader extends ArticleReader
 	 */
 	@Override
 	protected void processListElement(Element element, StringBuilder rawStr, StringBuilder linkedStr, boolean ordered)
-	{	// possibly remove the last new line character
-		char c = rawStr.charAt(rawStr.length()-1);
-		if(c=='\n')
-		{	rawStr.deleteCharAt(rawStr.length()-1);
-			linkedStr.deleteCharAt(linkedStr.length()-1);
-		}
-		
-		// possibly remove preceeding space
-		c = rawStr.charAt(rawStr.length()-1);
-		if(c==' ')
-		{	rawStr.deleteCharAt(rawStr.length()-1);
-			linkedStr.deleteCharAt(linkedStr.length()-1);
-		}
-		
-		// possibly add a column
-		c = rawStr.charAt(rawStr.length()-1);
-		if(c!='.' && c!=':' && c!=';')
-		{	rawStr.append(":");
-			linkedStr.append(":");
-		}
-		
-		// process each list element
-		int count = 1;
-		for(Element listElt: element.getElementsByTag(HtmlNames.ELT_LI))
-		{	// add leading space
-			rawStr.append(" ");
-			linkedStr.append(" ");
-			
-			// possibly add number
-			if(ordered)
-			{	rawStr.append(count+") ");
-				linkedStr.append(count+") ");
-			}
-			count++;
-			
-			// get text and links
-			processAnyElement(listElt,rawStr,linkedStr);
-			
-			// possibly remove the last new line character
-			c = rawStr.charAt(rawStr.length()-1);
-			if(c=='\n')
-			{	rawStr.deleteCharAt(rawStr.length()-1);
-				linkedStr.deleteCharAt(linkedStr.length()-1);
+	{	if(getLists)
+		{	// possibly remove the last new line character
+			if(rawStr.length()>0)
+			{	char c = rawStr.charAt(rawStr.length()-1);
+				if(c=='\n')
+				{	rawStr.deleteCharAt(rawStr.length()-1);
+					linkedStr.deleteCharAt(linkedStr.length()-1);
+				}
 			}
 			
-			// add final separator
-			rawStr.append(";");
-			linkedStr.append(";");
-		}
-		
-		// possibly remove last separator
-		c = rawStr.charAt(rawStr.length()-1);
-		if(c==';')
-		{	rawStr.deleteCharAt(rawStr.length()-1);
-			linkedStr.deleteCharAt(linkedStr.length()-1);
-			c = rawStr.charAt(rawStr.length()-1);
-			if(c!='.')
-			{	rawStr.append(".");
-				linkedStr.append(".");
+			// possibly remove preceeding space
+			if(rawStr.length()>0)
+			{	char c = rawStr.charAt(rawStr.length()-1);
+				if(c==' ')
+				{	rawStr.deleteCharAt(rawStr.length()-1);
+					linkedStr.deleteCharAt(linkedStr.length()-1);
+				}
 			}
-			rawStr.append("\n");
-			linkedStr.append("\n");
+			
+			// possibly add a column
+			if(rawStr.length()>0)
+			{	char c = rawStr.charAt(rawStr.length()-1);
+				if(c!='.' && c!=':' && c!=';')
+				{	rawStr.append(":");
+					linkedStr.append(":");
+				}
+			}
+			
+			// process each list element
+			int count = 1;
+			for(Element listElt: element.getElementsByTag(HtmlNames.ELT_LI))
+			{	// add leading space
+				rawStr.append(" ");
+				linkedStr.append(" ");
+				
+				// possibly add number
+				if(ordered)
+				{	rawStr.append(count+") ");
+					linkedStr.append(count+") ");
+				}
+				count++;
+				
+				// get text and links
+				processAnyElement(listElt,rawStr,linkedStr);
+				
+				// possibly remove the last new line character
+				if(rawStr.length()>0)
+				{	char c = rawStr.charAt(rawStr.length()-1);
+					if(c=='\n')
+					{	rawStr.deleteCharAt(rawStr.length()-1);
+						linkedStr.deleteCharAt(linkedStr.length()-1);
+					}
+				}
+				
+				// add final separator
+				rawStr.append(";");
+				linkedStr.append(";");
+			}
+			
+			// possibly remove last separator
+			if(rawStr.length()>0)
+			{	char c = rawStr.charAt(rawStr.length()-1);
+				if(c==';')
+				{	rawStr.deleteCharAt(rawStr.length()-1);
+					linkedStr.deleteCharAt(linkedStr.length()-1);
+					c = rawStr.charAt(rawStr.length()-1);
+					if(c!='.')
+					{	rawStr.append(".");
+						linkedStr.append(".");
+					}
+					rawStr.append("\n");
+					linkedStr.append("\n");
+				}
+			}
 		}
 	}
 	
@@ -424,120 +419,170 @@ public class WikipediaReader extends ArticleReader
 	 */
 	@Override
 	protected void processDescriptionListElement(Element element, StringBuilder rawStr, StringBuilder linkedStr)
-	{	// possibly remove the last new line character
-		char c = rawStr.charAt(rawStr.length()-1);
-		if(c=='\n')
-		{	rawStr.deleteCharAt(rawStr.length()-1);
-			linkedStr.deleteCharAt(linkedStr.length()-1);
-		}
-		
-		// possibly remove preceeding space
-		c = rawStr.charAt(rawStr.length()-1);
-		if(c==' ')
-		{	rawStr.deleteCharAt(rawStr.length()-1);
-			linkedStr.deleteCharAt(linkedStr.length()-1);
-		}
-		
-		// possibly add a column
-		c = rawStr.charAt(rawStr.length()-1);
-		if(c!='.' && c!=':' && c!=';')
-		{	rawStr.append(":");
-			linkedStr.append(":");
-		}
-		
-		// process each list element
-		Elements elements = element.children();
-		Iterator<Element> it = elements.iterator();
-		Element tempElt = null;
-		if(it.hasNext())
-			tempElt = it.next();
-		while(tempElt!=null)
-		{	// add leading space
-			rawStr.append(" ");
-			linkedStr.append(" ");
-			
-			// get term
-			String tempName = tempElt.tagName();
-			if(tempName.equals(HtmlNames.ELT_DT))
-			{	// process term
-				processAnyElement(tempElt,rawStr,linkedStr);
-				
-				// possibly remove the last new line character
-				c = rawStr.charAt(rawStr.length()-1);
+	{	if(getLists)
+		{	// possibly remove the last new line character
+			if(rawStr.length()>0)
+			{	char c = rawStr.charAt(rawStr.length()-1);
 				if(c=='\n')
 				{	rawStr.deleteCharAt(rawStr.length()-1);
 					linkedStr.deleteCharAt(linkedStr.length()-1);
 				}
-				
-				// possibly remove preceeding space
-				c = rawStr.charAt(rawStr.length()-1);
+			}
+			// possibly remove the preceding space
+			if(rawStr.length()>0)
+			{	char c = rawStr.charAt(rawStr.length()-1);
 				if(c==' ')
 				{	rawStr.deleteCharAt(rawStr.length()-1);
 					linkedStr.deleteCharAt(linkedStr.length()-1);
 				}
-				
-				// possibly add a column and space
-				c = rawStr.charAt(rawStr.length()-1);
+			}
+			// possibly add a column
+			if(rawStr.length()>0)
+			{	char c = rawStr.charAt(rawStr.length()-1);
 				if(c!='.' && c!=':' && c!=';')
-				{	rawStr.append(": ");
-					linkedStr.append(": ");
+				{	rawStr.append(":");
+					linkedStr.append(":");
+				}
+			}
+			// process each list element
+			Elements elements = element.children();
+			Iterator<Element> it = elements.iterator();
+			Element tempElt = null;
+			if(it.hasNext())
+				tempElt = it.next();
+			while(tempElt!=null)
+			{	// add leading space
+				rawStr.append(" ");
+				linkedStr.append(" ");
+				
+				// get term
+				String tempName = tempElt.tagName();
+				if(tempName.equals(HtmlNames.ELT_DT))
+				{	// process term
+					processAnyElement(tempElt,rawStr,linkedStr);
+					
+					// possibly remove the last new line character
+					char c = rawStr.charAt(rawStr.length()-1);
+					if(c=='\n')
+					{	rawStr.deleteCharAt(rawStr.length()-1);
+						linkedStr.deleteCharAt(linkedStr.length()-1);
+					}
+					
+					// possibly remove preceeding space
+					c = rawStr.charAt(rawStr.length()-1);
+					if(c==' ')
+					{	rawStr.deleteCharAt(rawStr.length()-1);
+						linkedStr.deleteCharAt(linkedStr.length()-1);
+					}
+					
+					// possibly add a column and space
+					c = rawStr.charAt(rawStr.length()-1);
+					if(c!='.' && c!=':' && c!=';')
+					{	rawStr.append(": ");
+						linkedStr.append(": ");
+					}
+					
+					// go to next element
+					if(it.hasNext())
+						tempElt = it.next();
+					else
+						tempElt = null;
 				}
 				
-				// go to next element
-				if(it.hasNext())
-					tempElt = it.next();
-				else
-					tempElt = null;
+				// get definition
+//				if(tempName.equals(HtmlNames.ELT_DD))
+				if(tempElt!=null)
+				{	// process term
+					processAnyElement(tempElt,rawStr,linkedStr);
+					
+					// possibly remove the last new line character
+					char c = rawStr.charAt(rawStr.length()-1);
+					if(c=='\n')
+					{	rawStr.deleteCharAt(rawStr.length()-1);
+						linkedStr.deleteCharAt(linkedStr.length()-1);
+					}
+					
+					// possibly remove preceeding space
+					c = rawStr.charAt(rawStr.length()-1);
+					if(c==' ')
+					{	rawStr.deleteCharAt(rawStr.length()-1);
+						linkedStr.deleteCharAt(linkedStr.length()-1);
+					}
+					
+					// possibly add a semi-column
+					c = rawStr.charAt(rawStr.length()-1);
+					if(c!='.' && c!=':' && c!=';')
+					{	rawStr.append(";");
+						linkedStr.append(";");
+					}
+					
+					// go to next element
+					if(it.hasNext())
+						tempElt = it.next();
+					else
+						tempElt = null;
+				}
 			}
 			
-			// get definition
-//			if(tempName.equals(HtmlNames.ELT_DD))
-			if(tempElt!=null)
-			{	// process term
-				processAnyElement(tempElt,rawStr,linkedStr);
-				
-				// possibly remove the last new line character
-				c = rawStr.charAt(rawStr.length()-1);
-				if(c=='\n')
+			// possibly remove last separator
+			if(rawStr.length()>0)
+			{	char c = rawStr.charAt(rawStr.length()-1);
+				if(c==';')
 				{	rawStr.deleteCharAt(rawStr.length()-1);
 					linkedStr.deleteCharAt(linkedStr.length()-1);
+					c = rawStr.charAt(rawStr.length()-1);
+					if(c!='.')
+					{	rawStr.append(".");
+						linkedStr.append(".");
+					}
+					rawStr.append("\n");
+					linkedStr.append("\n");
 				}
-				
-				// possibly remove preceeding space
-				c = rawStr.charAt(rawStr.length()-1);
-				if(c==' ')
-				{	rawStr.deleteCharAt(rawStr.length()-1);
-					linkedStr.deleteCharAt(linkedStr.length()-1);
-				}
-				
-				// possibly add a semi-column
-				c = rawStr.charAt(rawStr.length()-1);
-				if(c!='.' && c!=':' && c!=';')
-				{	rawStr.append(";");
-					linkedStr.append(";");
-				}
-				
-				// go to next element
-				if(it.hasNext())
-					tempElt = it.next();
-				else
-					tempElt = null;
 			}
+		}
+	}
+	
+	/////////////////////////////////////////////////////////////////
+	// DIVIDERS			/////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////
+	/**
+	 * Retrieve the text located in 
+	 * a span (SPAN) HTML element.
+	 * <br/>
+	 * We process everything but
+	 * the phonetic transcriptions.
+	 * 
+	 * @param element
+	 * 		Element to be processed.
+	 * @param rawStr
+	 * 		Current raw text string.
+	 * @param linkedStr
+	 * 		Current text with hyperlinks.
+	 * @return
+	 * 		{@code true} iff the element was processed.
+	 */
+	@Override
+	protected boolean processSpanElement(Element element, StringBuilder rawStr, StringBuilder linkedStr)
+	{	boolean result;
+		String eltClass = element.attr(HtmlNames.ATT_CLASS);
+		
+		if(eltClass==null || 
+			// we don't need phonetic transcriptions, and they can mess up recognizers
+			(!eltClass.contains(CLASS_IPA[language.ordinal()])
+			// we also ignore WP buttons such as the "edit" links placed in certain section headers
+			&& !eltClass.contains(CLASS_EDIT)
+			// language indications
+			&& !eltClass.contains(CLASS_LANGUAGEICON)))
+			
+		{	result = true;
+			// otherwise, we process what's inside the span tag
+			processAnyElement(element,rawStr,linkedStr);
 		}
 		
-		// possibly remove last separator
-		c = rawStr.charAt(rawStr.length()-1);
-		if(c==';')
-		{	rawStr.deleteCharAt(rawStr.length()-1);
-			linkedStr.deleteCharAt(linkedStr.length()-1);
-			c = rawStr.charAt(rawStr.length()-1);
-			if(c!='.')
-			{	rawStr.append(".");
-				linkedStr.append(".");
-			}
-			rawStr.append("\n");
-			linkedStr.append("\n");
-		}
+		else
+			result = false;
+		
+		return result;
 	}
 	
 	/**
@@ -565,12 +610,12 @@ public class WikipediaReader extends ArticleReader
 //	System.out.print("");
 		
 		if(eltClass==null || 
-			// we ignore infoboxes
+			// we ignore tables of content
 			(!eltClass.contains(CLASS_TABLEOFCONTENT)
 			// list of bibiliographic references located at the end of the page
-			&& !eltClass.contains(CLASS_REFERENCES)
+			&& !eltClass.contains(CLASS_REFERENCES[language.ordinal()])
 			// WP warning links (disambiguation and such)
-			&& !eltClass.contains(CLASS_DABLINK)
+			&& !eltClass.contains(CLASS_DISAMB_LINK)
 			// related links
 			&& !eltClass.contains(CLASS_RELATEDLINK)
 			// audio or video clip
@@ -579,6 +624,8 @@ public class WikipediaReader extends ArticleReader
 			&& !eltClass.contains(CLASS_MAGNIFY)
 			// icons located at the top of the page
 			&& !eltClass.contains(CLASS_TOPICON)
+			// announcements at the top of the page
+			&& !eltClass.contains(CLASS_ANNOUNCEMENTS[language.ordinal()])
 			))
 		{	result = true;
 			processAnyElement(element, rawStr, linkedStr);
@@ -588,6 +635,24 @@ public class WikipediaReader extends ArticleReader
 			result = false;
 		
 		return result;
+	}
+	
+	/////////////////////////////////////////////////////////////////
+	// TABLES			/////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////
+	/** Whether to extract the textual content of tables, or not */
+	private boolean getTables = true;
+	
+	/**
+	 * Determines whether the reader will extract the text content
+	 * of table present in the processed article, or not. By default,
+	 * the tables are extracted.
+	 * 
+	 * @param getTables
+	 * 		{@code true} to extract the tables.
+	 */
+	public void setGetTables(boolean getTables)
+	{	this.getTables = getTables;
 	}
 	
 	/**
@@ -608,53 +673,106 @@ public class WikipediaReader extends ArticleReader
 	 */
 	@Override
 	protected boolean processTableElement(Element element, StringBuilder rawStr, StringBuilder linkedStr)
-	{	boolean result;
-		String eltClass = element.attr(HtmlNames.ATT_CLASS);
+	{	boolean result = false;
 		
-		if(eltClass==null || 
-			// we ignore infoboxes
-			(!eltClass.contains(CLASS_INFORMATIONBOX)
-			// and wikitables
-			&& !eltClass.contains(CLASS_WIKITABLE)
-			// navigation boxes
-			&& !eltClass.contains(CLASS_NAVIGATIONBOX)
-			// navigation boxes, WP warnings (incompleteness, etc.)
-			&& !eltClass.contains(CLASS_METADATA)
-			// personal data box (?)
-			&& !eltClass.contains(CLASS_PERSONDATA)))
+		if(getTables)
+		{	String eltClass = element.attr(HtmlNames.ATT_CLASS);
 			
-		{	result = true;
-			Element tbodyElt = element.children().get(0);
-			
-			for(Element rowElt: tbodyElt.children())
-			{	for(Element colElt: rowElt.children())
-				{	// process cell content
-					processAnyElement(colElt, rawStr, linkedStr);
-					
-					// possibly add final dot and space. 
-					if(rawStr.charAt(rawStr.length()-1)!=' ')
-					{	if(rawStr.charAt(rawStr.length()-1)=='.')
-						{	rawStr.append(" ");
-							linkedStr.append(" ");
-						}
-						else
-						{	rawStr.append(". ");
-							linkedStr.append(". ");
+			if(eltClass==null || 
+				// we ignore infoboxes
+				(!eltClass.contains(CLASS_INFORMATIONBOX)
+				// and wikitables
+				&& !eltClass.contains(CLASS_WIKITABLE)
+				// navigation boxes
+				&& !eltClass.contains(CLASS_NAVIGATIONBOX)
+				// navigation boxes, WP warnings (incompleteness, etc.)
+				&& !eltClass.contains(CLASS_METADATA)
+				// personal data box (?)
+				&& !eltClass.contains(CLASS_PERSONDATA)))
+				
+			{	result = true;
+				Element tbodyElt = element.children().get(0);
+				
+				for(Element rowElt: tbodyElt.children())
+				{	for(Element colElt: rowElt.children())
+					{	// process cell content
+						processAnyElement(colElt, rawStr, linkedStr);
+						
+						// possibly add final dot and space. 
+						if(rawStr.charAt(rawStr.length()-1)!=' ')
+						{	if(rawStr.charAt(rawStr.length()-1)=='.')
+							{	rawStr.append(" ");
+								linkedStr.append(" ");
+							}
+							else
+							{	rawStr.append(". ");
+								linkedStr.append(". ");
+							}
 						}
 					}
 				}
 			}
 		}
 		
-		else
-			result = false;
-		
 		return result;
+	}
+	
+	/////////////////////////////////////////////////////////////////
+	// MISC				/////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////
+	/** Whether to extract the sections, or not */
+	private boolean getSections = true;
+	
+	/**
+	 * Determines whether the reader will extract the sections
+	 * present in the processed article, or not. By default,
+	 * the sections are extracted.
+	 * 
+	 * @param getSections
+	 * 		{@code true} to extract the sections.
+	 */
+	public void setGetSections(boolean getSections)
+	{	this.getSections = getSections;
+	}
+	
+	/**
+	 * Retrieve the text located in 
+	 * a paragraph (P) HTML element.
+	 * 
+	 * @param element
+	 * 		Element to be processed.
+	 * @param rawStr
+	 * 		Current raw text string.
+	 * @param linkedStr
+	 * 		Current text with hyperlinks.
+	 */
+	@Override
+	protected void processParagraphElement(Element element, StringBuilder rawStr, StringBuilder linkedStr)
+	{	// possibly add a new line character first
+		if(rawStr.length()>0)
+		{	char c =  rawStr.charAt(rawStr.length()-1);
+			if(c!='\n')
+			{	rawStr.append("\n");
+				linkedStr.append("\n");
+			}
+		}
+		
+		// recursive processing
+		processAnyElement(element,rawStr,linkedStr);
+		
+		// possibly add a new line character
+		if(rawStr.length()>0)
+		{	char c = rawStr.charAt(rawStr.length()-1);
+			if(c!='\n')
+			{	rawStr.append("\n");
+				linkedStr.append("\n");
+			}
+		}
 	}
 	
 	/**
 	 * Extract text and hyperlinks from an element
-	 * supposingly containing only text.
+	 * supposedly containing only text.
 	 * 
 	 * @param textElement
 	 * 		The element to be processed.
@@ -675,7 +793,8 @@ public class WikipediaReader extends ArticleReader
 				// section headers: same thing
 				if(eltName.equals(HtmlNames.ELT_H2) || eltName.equals(HtmlNames.ELT_H3)
 					|| eltName.equals(HtmlNames.ELT_H4) || eltName.equals(HtmlNames.ELT_H5) || eltName.equals(HtmlNames.ELT_H6))
-				{	processParagraphElement(element,rawStr,linkedStr);
+				{	if(getSections)
+						processParagraphElement(element,rawStr,linkedStr);
 				}
 	
 				// paragraphs inside paragraphs are processed recursively
@@ -691,7 +810,7 @@ public class WikipediaReader extends ArticleReader
 				
 				// small caps are placed before phonetic transcriptions of names, which we avoid
 				else if(eltName.equals(HtmlNames.ELT_SMALL))
-				{	// we don't need them, and they can mess up NER tools
+				{	// we don't need them, and they can mess up recognizers
 				}
 				
 				// we ignore certain types of span (phonetic trancription, WP buttons...) 
@@ -748,7 +867,7 @@ public class WikipediaReader extends ArticleReader
 			{	// get the text
 				TextNode textNode = (TextNode) node;
 				String text = textNode.text();
-				// if at the begining of a new line, or already preceeded by a space, remove leading spaces
+				// if at the beginning of a new line, or already preceded by a space, remove leading spaces
 				while(rawStr.length()>0 
 						&& (rawStr.charAt(rawStr.length()-1)=='\n' || rawStr.charAt(rawStr.length()-1)==' ') 
 						&& text.startsWith(" "))
@@ -761,9 +880,13 @@ public class WikipediaReader extends ArticleReader
 		}
 	}
 	
+	/////////////////////////////////////////////////////////////////
+	// PROCESS			/////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////
 	@Override
 	public Article processUrl(URL url, ArticleLanguage language) throws ReaderException
 	{	Article result = null;
+		this.language = language;
 		String name = getName(url);
 		
 		try

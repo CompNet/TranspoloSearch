@@ -19,7 +19,9 @@ package fr.univavignon.transpolosearch.retrieval.reader;
  */
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
@@ -73,6 +75,35 @@ public class GenericReader extends ArticleReader
 		Article article = reader.processUrl(url, ArticleLanguage.FR);
 		System.out.println(article);
 		article.write();
+	}
+	
+	/////////////////////////////////////////////////////////////////
+	// MISC				/////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////
+	@Override
+	public String getName(URL url)
+	{	String address = url.toString();
+		
+		// convert the full URL to a file-compatible name
+		String result = null;
+		try 
+		{	result = URLEncoder.encode(address,"UTF-8");
+			// reverse the transformation :
+			// String original = URLDecoder.decode(result, "UTF-8");
+		
+			// needed if the URL is longer than the max length authorized by the OS for folder names
+			if(result.length()>255)	
+				result = result.substring(0,255);
+
+		}
+		catch (UnsupportedEncodingException e)
+		{	e.printStackTrace();
+		}
+		
+		// alternative : generate a random name (not reproducible, though)
+//		UUID.randomUUID();
+
+		return result;
 	}
 	
 	/////////////////////////////////////////////////////////////////

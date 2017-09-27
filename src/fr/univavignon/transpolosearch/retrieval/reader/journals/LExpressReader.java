@@ -50,7 +50,7 @@ import fr.univavignon.transpolosearch.tools.string.StringTools;
  * 
  * @author Vincent Labatut
  */
-public class LExpressReader extends ArticleReader
+public class LExpressReader extends AbstractJournalReader
 {	
 	/**
 	 * Method defined only for a quick test.
@@ -112,7 +112,7 @@ public class LExpressReader extends ArticleReader
 		// just a list of articles: nothing to get from that
 		if(url.toString().contains("/archives/"))
 		{	logger.log("ERROR: The document is not an article, but a list of articles (URL "+url+")");
-			throw new ReaderException("The document is not article, but a list of articles (URL "+url+")",true);
+			throw new ReaderException("The document is not an article, but a list of articles (URL "+url+")",true);
 		}
 		
 		// an actual article, processed appropriately
@@ -141,6 +141,9 @@ public class LExpressReader extends ArticleReader
 			Elements articleElts = document.getElementsByTag(HtmlNames.ELT_ARTICLE);
 			if(articleElts.size()==0)
 				throw new IllegalArgumentException("No <article> element found in the Web page");
+//			else if(articleElts.size()>1)
+//				logger.log("WARNING: found several <article> elements in the same page.");
+// TODO for this journal, the main content is in an article, but the links to related content also (so several article elements in the same page)
 			Element articleElt = articleElts.first();
 			Element headerElt = articleElt.getElementsByTag(HtmlNames.ELT_HEADER).first();
 			Element bodyElt = articleElt.getElementsByAttributeValueContaining(HtmlNames.ATT_CLASS, CLASS_CONTENT).first();

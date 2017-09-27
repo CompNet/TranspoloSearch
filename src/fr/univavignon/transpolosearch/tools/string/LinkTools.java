@@ -18,6 +18,9 @@ package fr.univavignon.transpolosearch.tools.string;
  * along with TranspoloSearch. If not, see <http://www.gnu.org/licenses/>.
  */
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * This class contains various methods
  * used when processing strings representing hyperlinks.
@@ -126,6 +129,37 @@ public class LinkTools
 			int endPos = result.indexOf(">", idx+2);
 			result = result.substring(0,startPos) + result.substring(endPos+1);
 			idx = result.indexOf("></");
+		}
+		
+		return result;
+	}
+
+	/////////////////////////////////////////////////////////////////
+	// URL				/////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////
+	/**
+	 * Scans the specified linked text, and returns a list of all the
+	 * URL present in this text as hyperlinks.
+	 * 
+	 * @param linkedText
+	 * 		The linked text to process.
+	 * @return
+	 * 		List of hyperlinks in this text.
+	 */
+	public static List<String> extractUrls(String linkedText)
+	{	List<String> result = new ArrayList<String>();
+		String tag = "<a ";
+		String att = " href=";
+	
+		int pos = linkedText.indexOf(tag);
+		while(pos!=-1 && pos<linkedText.length()-1)
+		{	int pos2 = linkedText.indexOf(att,pos);
+			int start = pos2 + att.length() + 1;
+			char delim = linkedText.charAt(start-1);
+			int end = linkedText.indexOf(delim,start);
+			String urlStr = linkedText.substring(start,end).trim();
+			result.add(urlStr);
+			pos = linkedText.indexOf(tag,pos+1);
 		}
 		
 		return result;
