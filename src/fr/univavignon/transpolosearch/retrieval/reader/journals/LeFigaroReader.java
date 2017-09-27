@@ -51,7 +51,7 @@ import fr.univavignon.transpolosearch.tools.string.StringTools;
  * 
  * @author Vincent Labatut
  */
-public class LeFigaroReader extends ArticleReader
+public class LeFigaroReader extends AbstractJournalReader
 {	
 	/**
 	 * Method defined only for a quick test.
@@ -137,7 +137,7 @@ public class LeFigaroReader extends ArticleReader
 			}
 			else 
 			{	if(articleElts.size()>1)
-					logger.log("WARNING: several articles present in this page, we take the first one.");
+					logger.log("WARNING: found several <article> elements in the same page.");
 				articleElt = articleElts.first();
 			}
 					

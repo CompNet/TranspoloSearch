@@ -50,7 +50,7 @@ import fr.univavignon.transpolosearch.tools.string.StringTools;
  * 
  * @author Vincent Labatut
  */
-public class LaProvenceReader extends ArticleReader
+public class LaProvenceReader extends AbstractJournalReader
 {	
 	/**
 	 * Method defined only for a quick test.
@@ -140,8 +140,9 @@ public class LaProvenceReader extends ArticleReader
 			Element articleElt = null;
 			if(articleElts.size()==0)
 				throw new IllegalArgumentException("No <article> element found in the Web page");
-			else 
-				articleElt = articleElts.first();
+			else if(articleElts.size()>1)
+				logger.log("WARNING: found several <article> elements in the same page.");
+			articleElt = articleElts.first();
 			Element infoElt = articleElt.getElementById(ID_INFO);
 			Element bodyElt = articleElt.getElementById(ID_BODY);
 			

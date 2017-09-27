@@ -23,14 +23,12 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.UnsupportedEncodingException;
 import java.net.ConnectException;
 import java.net.HttpURLConnection;
 import java.net.NoRouteToHostException;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.URL;
-import java.net.URLEncoder;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -146,9 +144,9 @@ public abstract class ArticleReader
 	public void setCacheEnabled(boolean enabled)
 	{	this.cache = enabled;
 	}
-
+	
 	/////////////////////////////////////////////////////////////////
-	// MISC				/////////////////////////////////////////////
+	// NAME				/////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
 	/**
 	 * Processes the name of the article
@@ -159,30 +157,7 @@ public abstract class ArticleReader
 	 * @return
 	 * 		Name of the article.
 	 */
-	public String getName(URL url)
-	{	String address = url.toString();
-		
-		// convert the full URL to a file-compatible name
-		String result = null;
-		try 
-		{	result = URLEncoder.encode(address,"UTF-8");
-			// reverse the transformation :
-			// String original = URLDecoder.decode(result, "UTF-8");
-		
-			// needed if the URL is longer than the max length authorized by the OS for folder names
-			if(result.length()>255)	
-				result = result.substring(0,255);
-
-		}
-		catch (UnsupportedEncodingException e)
-		{	e.printStackTrace();
-		}
-		
-		// alternative : generate a random name (not reproducible, though)
-//		UUID.randomUUID();
-
-		return result;
-	}
+	public abstract String getName(URL url);
 	
 	/////////////////////////////////////////////////////////////////
 	// DOMAIN			/////////////////////////////////////////////

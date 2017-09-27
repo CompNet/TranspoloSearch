@@ -49,7 +49,7 @@ import fr.univavignon.transpolosearch.tools.string.StringTools;
  * 
  * @author Vincent Labatut
  */
-public class LeMondeReader extends ArticleReader
+public class LeMondeReader extends AbstractJournalReader
 {
 	/**
 	 * Method defined only for a quick test.
@@ -134,7 +134,7 @@ public class LeMondeReader extends ArticleReader
 			if(articleElts.size()==0)
 				throw new IllegalArgumentException("No <article> element found in the Web page");
 			else if(articleElts.size()>1)
-				logger.log("WARNING: There are more than 1 <article> elements, which is unusual. Let's focus on the first.");
+				logger.log("WARNING: found several <article> elements in the same page.");
 			
 			// retrieve the dates
 //			Element signatureElt = articleElt.getElementsByAttributeValueContaining(HtmlNames.ATT_CLASS, CLASS_SIGNATURE).first();

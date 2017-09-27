@@ -326,41 +326,43 @@ public class StringTools
 	public static String cleanText(String input, ArticleLanguage language)
 	{	String output = input;
 		
-		// clean spaces
-		output = cleanSpaces(output);
-		
-		String previous = output;
-		do
-		{	previous = output;
+		if(input!=null)
+		{	// clean spaces
+			output = cleanSpaces(output);
 			
-			// move certain punctuation marks and special characters out of hyperlinks
-			String punctuation = "[ \\n\\.,;]";
-			output = output.replaceAll("<a ([^>]*?)>("+punctuation+"*)([^<]*?)("+punctuation+"*)</a>","$2<a $1>$3</a>$4");
-			output = output.replaceAll("<a ([^>]*?)>(\\()([^<]*?)(\\))</a>","$2<a $1>$3</a>$4");
-			output = output.replaceAll("<a ([^>]*?)>(\\[)([^<]*?)(\\])</a>","$2<a $1>$3</a>$4");
-			
-			// process the text which does not belong to hyperlink tags (i.e. the raw, non-html text)
-			String tmpStr = "";
-			int prevPos = 0;
-			Matcher matcher = HL_PATTERN.matcher(output);
-			while(matcher.find())
-			{	int startPos = matcher.start();
-				int endPos = matcher.end();
+			String previous = output;
+			do
+			{	previous = output;
+				
+				// move certain punctuation marks and special characters out of hyperlinks
+				String punctuation = "[ \\n\\.,;]";
+				output = output.replaceAll("<a ([^>]*?)>("+punctuation+"*)([^<]*?)("+punctuation+"*)</a>","$2<a $1>$3</a>$4");
+				output = output.replaceAll("<a ([^>]*?)>(\\()([^<]*?)(\\))</a>","$2<a $1>$3</a>$4");
+				output = output.replaceAll("<a ([^>]*?)>(\\[)([^<]*?)(\\])</a>","$2<a $1>$3</a>$4");
+				
+				// process the text which does not belong to hyperlink tags (i.e. the raw, non-html text)
+				String tmpStr = "";
+				int prevPos = 0;
+				Matcher matcher = HL_PATTERN.matcher(output);
+				while(matcher.find())
+				{	int startPos = matcher.start();
+					int endPos = matcher.end();
+					String substr = output.substring(prevPos,startPos);
+					substr = cleanInnerText(substr,language);
+					String tagStr = output.substring(startPos,endPos);
+					tmpStr = tmpStr + substr + tagStr;
+					prevPos = endPos;
+				}
+				int startPos = output.length();
 				String substr = output.substring(prevPos,startPos);
 				substr = cleanInnerText(substr,language);
-				String tagStr = output.substring(startPos,endPos);
-				tmpStr = tmpStr + substr + tagStr;
-				prevPos = endPos;
+				tmpStr = tmpStr + substr;
+				output = tmpStr;
 			}
-			int startPos = output.length();
-			String substr = output.substring(prevPos,startPos);
-			substr = cleanInnerText(substr,language);
-			tmpStr = tmpStr + substr;
-			output = tmpStr;
+			while(!output.equals(previous));
+			
+			output = output.trim();
 		}
-		while(!output.equals(previous));
-		
-		output = output.trim();
 		return output;
 	}
 	

@@ -49,7 +49,7 @@ import fr.univavignon.transpolosearch.tools.string.StringTools;
  * 
  * @author Vincent Labatut
  */
-public class LiberationReader extends ArticleReader
+public class LiberationReader extends AbstractJournalReader
 {
 	/**
 	 * Method defined only for a quick test.
@@ -135,7 +135,7 @@ public class LiberationReader extends ArticleReader
 			if(articleElts.size()==0)
 				throw new IllegalArgumentException("No <article> element found in the Web page");
 			else if(articleElts.size()>1)
-				logger.log("WARNING: There are more than 1 <article> elements, which is unusual. Let's focus on the first.");
+				logger.log("WARNING: found several <article> elements in the same page.");
 			Element headerElt = articleElt.getElementsByTag(HtmlNames.ELT_HEADER).first();
 			
 			// retrieve the dates
