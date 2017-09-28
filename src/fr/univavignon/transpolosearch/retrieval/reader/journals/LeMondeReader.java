@@ -93,7 +93,7 @@ public class LeMondeReader extends AbstractJournalReader
 	
 	/** Id of the element containing the article content in the Wikipedia page */
 	private final static String ID_ARTICLE_BODY = "articleBody";
-
+	
 	/** Class of the author names */
 	private final static String CLASS_AUTHOR = "auteur";
 	/** Itemprop of the article body */

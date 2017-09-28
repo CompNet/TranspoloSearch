@@ -58,7 +58,8 @@ public class WikipediaReader extends ArticleReader
 	 * 		Whatever exception. 
 	 */
 	public static void main(String[] args) throws Exception
-	{	URL url = new URL("https://fr.wikipedia.org/wiki/Boeing_767");
+	{	//URL url = new URL("https://fr.wikipedia.org/wiki/Boeing_767");
+		URL url = new URL("https://fr.wikipedia.org/wiki/Appareil_informatique");
 		
 		ArticleReader reader = new WikipediaReader();
 		Article article = reader.processUrl(url, ArticleLanguage.FR);
@@ -114,7 +115,7 @@ public class WikipediaReader extends ArticleReader
 	/** Class of phonetic transcriptions */
 	private final static String[] CLASS_IPA = {"IPA","API"};
 	/** Class of disambiguisation links */
-	private final static String CLASS_DISAMB_LINK = "plainlinks";
+	private final static String[] CLASS_DISAMB_LINK = {"plainlinks","homonymie"};
 	/** Class of WP edit buttons */
 	private final static String CLASS_EDIT = "editsection";
 	/** Class of external hyperlinks of the Wikipedia page */
@@ -154,24 +155,27 @@ public class WikipediaReader extends ArticleReader
 	private final static String PARAGRAPH_FORTHE = "For the";
 
 	/** List of sections to be ignored */
-	private final static List<String> IGNORED_SECTIONS = Arrays.asList(
-		"audio books", "audio recordings", /*"awards", "awards and honors",*/
-		"bibliography", "books",
-		"collections", "collections (selection)",
-		"directed",
-		"external links",
-		"film adaptations", "film and television adaptations", "filmography", "footnotes", "further reading",
-		"gallery",
-//		"honours",
-		"main writings",
-		"notes", "nudes",
-		"patents", "publications",
-		"quotes",
-		"references",
-		"secondary bibliography", "see also", "selected bibliography", "selected filmography", "selected list of works", "selected works", "self-portraits", "sources", "stage adaptations",
-		"texts of songs", "theme exhibitions", "theme exhibitions (selection)",
-		"works"
-	);
+	private final static List<List<String>> IGNORED_SECTIONS = Arrays.asList(
+		Arrays.asList("audio books", "audio recordings", /*"awards", "awards and honors",*/
+			"bibliography", "books",
+			"collections", "collections (selection)",
+			"directed",
+			"external links",
+			"film adaptations", "film and television adaptations", "filmography", "footnotes", "further reading",
+			"gallery",
+//			"honours",
+			"main writings",
+			"notes", "nudes",
+			"patents", "publications",
+			"quotes",
+			"references",
+			"secondary bibliography", "see also", "selected bibliography", "selected filmography", "selected list of works", "selected works", "self-portraits", "sources", "stage adaptations",
+			"texts of songs", "theme exhibitions", "theme exhibitions (selection)",
+			"works"),
+		Arrays.asList(
+			"annexes",
+			"notes et références","réferences"
+	));
 	
 	/////////////////////////////////////////////////////////////////
 	// QUOTES			/////////////////////////////////////////////
@@ -428,6 +432,7 @@ public class WikipediaReader extends ArticleReader
 					linkedStr.deleteCharAt(linkedStr.length()-1);
 				}
 			}
+			
 			// possibly remove the preceding space
 			if(rawStr.length()>0)
 			{	char c = rawStr.charAt(rawStr.length()-1);
@@ -436,6 +441,7 @@ public class WikipediaReader extends ArticleReader
 					linkedStr.deleteCharAt(linkedStr.length()-1);
 				}
 			}
+			
 			// possibly add a column
 			if(rawStr.length()>0)
 			{	char c = rawStr.charAt(rawStr.length()-1);
@@ -444,6 +450,7 @@ public class WikipediaReader extends ArticleReader
 					linkedStr.append(":");
 				}
 			}
+			
 			// process each list element
 			Elements elements = element.children();
 			Iterator<Element> it = elements.iterator();
@@ -615,7 +622,7 @@ public class WikipediaReader extends ArticleReader
 			// list of bibiliographic references located at the end of the page
 			&& !eltClass.contains(CLASS_REFERENCES[language.ordinal()])
 			// WP warning links (disambiguation and such)
-			&& !eltClass.contains(CLASS_DISAMB_LINK)
+			&& !eltClass.contains(CLASS_DISAMB_LINK[language.ordinal()])
 			// related links
 			&& !eltClass.contains(CLASS_RELATEDLINK)
 			// audio or video clip
@@ -926,7 +933,7 @@ public class WikipediaReader extends ArticleReader
 					processParagraphElement(element,fakeRaw,fakeLinked);
 					String str = fakeRaw.toString().trim().toLowerCase(Locale.ENGLISH);
 					// check section name
-					if(IGNORED_SECTIONS.contains(str))
+					if(IGNORED_SECTIONS.get(language.ordinal()).contains(str))
 						ignoringSection = true;
 					else
 					{	ignoringSection = false;

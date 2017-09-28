@@ -153,17 +153,17 @@ public class Extractor
 		logger.log("Performing the Web search");
 		WebSearchResults webRes = performWebExtraction(keywords, website, startDate, endDate, searchDate, compulsoryExpression, language);
 		
-		// perform the social search
-		SocialSearchResults socialRes = null;
-		if(website==null)
-		{	logger.log("Performing the social media search");
-			socialRes = performSocialExtraction(keywords, startDate, endDate, compulsoryExpression, extendedSocialSearch, language);
-		}
-		else
-			logger.log("Skipping the social search, since the focus is on a specific website ("+website+")");
-		
-		// merge both results in a single file
-		exportCombinedResultsAsCsv(webRes, socialRes);
+//		// perform the social search
+//		SocialSearchResults socialRes = null;
+//		if(website==null)
+//		{	logger.log("Performing the social media search");
+//			socialRes = performSocialExtraction(keywords, startDate, endDate, compulsoryExpression, extendedSocialSearch, language);
+//		}
+//		else
+//			logger.log("Skipping the social search, since the focus is on a specific website ("+website+")");
+//		
+//		// merge both results in a single file
+//		exportCombinedResultsAsCsv(webRes, socialRes);
 		
 		logger.decreaseOffset();
 		logger.log("Information extraction over");
@@ -370,32 +370,32 @@ public class Extractor
 		results.filterByContent(compulsoryExpression, language);
 		results.exportAsCsv(FileNames.FI_SEARCH_RESULTS_CONTENT);
 		
-		// detect the entity mentions
-		results.detectMentions(recognizer);
-		
-		// possibly filter the articles depending on the entities
-		results.filterByEntity(startDate, endDate, searchDate);
-		results.exportAsCsv(FileNames.FI_SEARCH_RESULTS_ENTITY);
-		
-		// displays the remaining articles with their mentions	//TODO maybe get the entities instead of the mentions, eventually?
-		results.displayRemainingMentions(); //TODO for debug only
-		
-		// cluster the article by content
-		results.clusterArticles(language);
-		results.exportAsCsv(FileNames.FI_SEARCH_RESULTS_CLUSTERS);
-		
-		// extract events from the remaining articles and mentions
-		boolean bySentence[] = {false,true};
-		for(boolean bs: bySentence)
-		{	// identify the events
-			results.extractEvents(bs);
-			// export the events as a table
-			results.exportEvents(bs, false);
-			// try to group similar events together
-			results.clusterEvents();
-			// export the resulting groups as a table
-			results.exportEvents(bs, true);
-		}
+//		// detect the entity mentions
+//		results.detectMentions(recognizer);
+//		
+//		// possibly filter the articles depending on the entities
+//		results.filterByEntity(startDate, endDate, searchDate);
+//		results.exportAsCsv(FileNames.FI_SEARCH_RESULTS_ENTITY);
+//		
+//		// displays the remaining articles with their mentions	//TODO maybe get the entities instead of the mentions, eventually?
+//		results.displayRemainingMentions(); //TODO for debug only
+//		
+//		// cluster the article by content
+//		results.clusterArticles(language);
+//		results.exportAsCsv(FileNames.FI_SEARCH_RESULTS_CLUSTERS);
+//		
+//		// extract events from the remaining articles and mentions
+//		boolean bySentence[] = {false,true};
+//		for(boolean bs: bySentence)
+//		{	// identify the events
+//			results.extractEvents(bs);
+//			// export the events as a table
+//			results.exportEvents(bs, false);
+//			// try to group similar events together
+//			results.clusterEvents();
+//			// export the resulting groups as a table
+//			results.exportEvents(bs, true);
+//		}
 		
 		logger.decreaseOffset();
 		logger.log("Web extraction over");

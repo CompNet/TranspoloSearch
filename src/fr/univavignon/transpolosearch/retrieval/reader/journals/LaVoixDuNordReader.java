@@ -198,10 +198,7 @@ public class LaVoixDuNordReader extends AbstractJournalReader
 				Element parElt = it.next();
 				String classStr = parElt.attr(HtmlNames.ATT_CLASS);
 				while(!classStr.equalsIgnoreCase(CLASS_ARTICLE_END))
-				{	
-if(url.toString().equals("http://www.lavoixdunord.fr/131481/article/2017-03-12/les-marches-toujours-un-grand-rendez-vous-pour-les-militants"))					
-	System.out.print("");
-					processAnyElement(parElt, rawStr, linkedStr);
+				{	processAnyElement(parElt, rawStr, linkedStr);
 					rawStr.append("\n");
 					linkedStr.append("\n");
 					parElt = it.next();
