@@ -67,9 +67,11 @@ public class WikipediaExtractor
 	public static void main(String[] args) throws Exception 
 	{	logger.setName("WP-extraction");
 		
-//		WikipediaExtractor we = new WikipediaExtractor(ArticleLanguage.FR);
-//		List<Article> articles = we.extractCollection("Recherche_d'information",2);
-//		System.out.println(articles);
+		String pageName = "Recherche_d'information";
+		
+		WikipediaExtractor we = new WikipediaExtractor(ArticleLanguage.FR);
+		List<Article> articles = we.extractCollection(pageName,2);
+		System.out.println(articles);
 		
 		normFiles();
 	}
@@ -279,27 +281,42 @@ public class WikipediaExtractor
 	 * 		List of new page names mentioned in the specified article.
 	 */
 	private List<String> getMentionedNames(Article article, Set<String> processedNames)
-	{	List<String> result = new LinkedList<String>();
-		
-		// get the urls of the pages mentioned in the article
-		String linkedText = article.getLinkedText();
-		List<String> tmp = LinkTools.extractUrls(linkedText);
-		Set<String> urls = new TreeSet<String>(tmp);
-		
-		// process each url
-		for(String url: urls)
-		{	// get the name for the current url
-			if(!url.startsWith(INTERNAL_LINK_PREFIX))
-			{	//throw new IllegalArgumentException("Incorrect internal WP URL: "+url);
-				logger.log("Found an unusual URL: "+url);
+	{	logger.log("Extracting the Wikipedia pages mentioned in the current page");
+		logger.increaseOffset();
+			List<String> result = new LinkedList<String>();
+			
+			// get the urls of the pages mentioned in the article
+			String linkedText = article.getLinkedText();
+			List<String> tmp = LinkTools.extractUrls(linkedText);
+			Set<String> urls = new TreeSet<String>(tmp);
+			
+			// process each url
+			logger.increaseOffset();
+			for(String url: urls)
+			{	// get the name for the current url
+				if(!url.startsWith(INTERNAL_LINK_PREFIX))
+				{	//throw new IllegalArgumentException("Incorrect internal WP URL: "+url);
+					logger.log("Found an unusual URL: "+url);
+				}
+				else
+				{	boolean ignore = false;
+					String name = url.substring(INTERNAL_LINK_PREFIX.length());
+					int pos = name.indexOf("/");
+					if(pos!=-1)
+					{	String pfx = name.substring(0,pos);
+						if(pfx.contains(":"))
+							ignore = true;
+					}
+					// must not have been processed before
+					if(!ignore && !processedNames.contains(name))
+					{	result.add(name);
+						logger.log("Adding "+name);
+					}
+				}
 			}
-			else
-			{	String name = url.substring(INTERNAL_LINK_PREFIX.length());
-				// must not have been processed before
-				if(!processedNames.contains(name))
-					result.add(name);
-			}
-		}
+			logger.decreaseOffset();
+		
+		logger.decreaseOffset();
 		return result;
 	}
 }

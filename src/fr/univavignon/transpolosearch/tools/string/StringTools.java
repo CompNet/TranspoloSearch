@@ -407,10 +407,10 @@ public class StringTools
 		// replace multiple consecutive spaces by a single one 
 		output = output.replaceAll("( )+", " ");
 
-		// normalize newlines
-		output = output.replaceAll("(\\r)+", "\n");
+//		// normalize newlines
+//		output = output.replaceAll("\\r", "\n");
 		// replace multiple consecutive newlines by a single one 
-		output = output.replaceAll("(\\n)+", "\n");
+		output = output.replaceAll("\\n\\n+", "\n\n");
 		
 		// remove spaces at the end of lines 
 		output = output.replaceAll(" \\n", "\n");
@@ -570,7 +570,7 @@ public class StringTools
 		{	// replace all carriage return chars by newline ones
 			result = result.replace('\r', '\n');
 			// replace all consecutive new line chars by a single one //TODO should we accept "\n\n" to get paragraphs?
-			result = result.replaceAll("\\n+", "\n");
+			result = result.replaceAll("\\n\\n+", "\n\n");
 			
 			// replace all white spaces (except newline chars) by regular spaces
 			result = result.replaceAll("[\\s&&[^\\n]]", " ");
