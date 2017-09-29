@@ -661,61 +661,7 @@ if(line.contains("marseillan"))
 }
 
 // TODO médias sociaux: rajouter dans le csv le nombre de commentaires associés à chaque post + likes + shares
-// TODO Il semblerait que Tagen ne marche pas
-/*
- * 2017-09-24.15-49-17 (0) /bin/sh
-                        -c
-                        ./res/ner/tagen/tagen :mucfr --align --yes --Verbose out/Martine_Aubry/web_search/_pages/http%3A%2F%2Flactualitedessocialistes.hautetfort.com%2Ftag%2Fchanson%2Bfrancaise/TAGEN_model=MucFr_ignPro=false_ignNbr=false_exclude=false/temp.txt out/Martine_Aubry/web_search/_pages/http%3A%2F%2Flactualitedessocialistes.hautetfort.com%2Ftag%2Fchanson%2Bfrancaise/TAGEN_model=MucFr_ignPro=false_ignNbr=false_exclude=false/output.txt
-Creating temporary directory
-Converting in Unicode UCS-2 Little Endian
-./res/ner/tagen/bin/Asc2Uni: error while loading shared libraries: libstdc++.so.6: cannot open shared object file: No such file or directory
-Executing Unitex
-	Normalize
-./res/ner/tagen/bin/Normalize: error while loading shared libraries: libstdc++.so.6: cannot open shared object file: No such file or directory
-	Tokenize
-./res/ner/tagen/bin/Tokenize: error while loading shared libraries: libstdc++.so.6: cannot open shared object file: No such file or directory
-	Dico
-./res/ner/tagen/bin/Dico: error while loading shared libraries: libstdc++.so.6: cannot open shared object file: No such file or directory
-./res/ner/tagen/bin/SortTxt: error while loading shared libraries: libstdc++.so.6: cannot open shared object file: No such file or directory
-./res/ner/tagen/bin/SortTxt: error while loading shared libraries: libstdc++.so.6: cannot open shared object file: No such file or directory
-./res/ner/tagen/bin/SortTxt: error while loading shared libraries: libstdc++.so.6: cannot open shared object file: No such file or directory
-	Locate
-./res/ner/tagen/bin/Locate: error while loading shared libraries: libstdc++.so.6: cannot open shared object file: No such file or directory
-	Concord
-./res/ner/tagen/bin/Concord: error while loading shared libraries: libstdc++.so.6: cannot open shared object file: No such file or directory
-Converting in ASCII
-./res/ner/tagen/bin/Uni2Asc: error while loading shared libraries: libstdc++.so.6: cannot open shared object file: No such file or directory
-Deleting exceptions
-rm: cannot remove '/tmp/tagen9299/temp.txt.tag': No such file or directory
-Aligning with source text
-./res/ner/tagen/bin/Align: error while loading shared libraries: libstdc++.so.6: cannot open shared object file: No such file or directory
-rm: cannot remove '/tmp/tagen9299/temp.txt.align': No such file or directory
-Deleting temporary directory
-2017-09-24.15-49-17 (0) Console output:
-2017-09-24.15-49-17 (0) 
-Creating temporary directory
-Converting in Unicode UCS-2 Little Endian
-./res/ner/tagen/bin/Asc2Uni: error while loading shared libraries: libstdc++.so.6: cannot open shared object file: No such file or directory
-Executing Unitex
-	Normalize
-./res/ner/tagen/bin/Normalize: error while loading shared libraries: libstdc++.so.6: cannot open shared object file: No such file or directory
-	Tokenize
-./res/ner/tagen/bin/Tokenize: error while loading shared libraries: libstdc++.so.6: cannot open shared object file: No such file or directory
-	Dico
-./res/ner/tagen/bin/Dico: error while loading shared libraries: libstdc++.so.6: cannot open shared object file: No such file or directory
-./res/ner/tagen/bin/SortTxt: error while loading shared libraries: libstdc++.so.6: cannot open shared object file: No such file or directory
-./res/ner/tagen/bin/SortTxt: error while loading shared libraries: libstdc++.so.6: cannot open shared object file: No such file or directory
-./res/ner/tagen/bin/SortTxt: error while loading shared libraries: libstdc++.so.6: cannot open shared object file: No such file or directory
-	Locate
-./res/ner/tagen/bin/Locate: error while loading shared libraries: libstdc++.so.6: cannot open shared object file: No such file or directory
-	Concord
-./res/ner/tagen/bin/Concord: error while loading shared libraries: libstdc++.so.6: cannot open shared object file: No such file or directory
-Converting in ASCII
-./res/ner/tagen/bin/Uni2Asc: error while loading shared libraries: libstdc++.so.6: cannot open shared object file: No such file or directory
-Deleting exceptions
-rm: cannot remove '/tmp/tagen9299/temp.txt.tag': No such file or directory
-Aligning with source text
-./res/ner/tagen/bin/Align: error while loading shared libraries: libstdc++.so.6: cannot open shared object file: No such file or directory
-rm: cannot remove '/tmp/tagen9299/temp.txt.align': No such file or directory
-Deleting temporary directory
- */
+// TODO Garder les entités apparaissant dans tous les articles de leur cluster
+// TODO Faire un clustering global FB+web
+// TODO Filtrer par date quand c'est possible, pour voir si ça améliore le beans
+// TODO annoter les dernières recherches
