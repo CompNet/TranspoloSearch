@@ -188,10 +188,11 @@ public class WikipediaReader extends ArticleReader
 			"works"),
 		Arrays.asList(
 			"annexes",
-			"bibliographie",	// TODO keep when dealing with biographies
+			"bibliographie",	// keep when dealing with biographies
 			"notes et références","références","notes",
-			"liens externes", "lien externe"
-//			"voir aussi"	//TODO keep when extracting networks of WP pages
+			"liens externes", "lien externe",
+//			"voir aussi"		// keep when extracting networks of WP pages
+			"source"
 	));
 	
 	/////////////////////////////////////////////////////////////////
