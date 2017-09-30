@@ -623,20 +623,18 @@ if(line.contains("marseillan"))
 		Extractor extractor = new Extractor();
 		
 		DateFormat df = new SimpleDateFormat("yyyyMMdd");
+		Date startDate = df.parse("20170306");
+		Date endDate = df.parse("20170312");
+		boolean searchDate = true;
+		boolean extendedSocialSearch = true;
+		ArticleLanguage language = ArticleLanguage.FR;
 		
 		List<List<Object>> params = Arrays.asList
-		(	Arrays.asList("Anne Hidalgo", "Hidalgo", Arrays.asList(null, "http://www.leparisien.fr/")),
-			Arrays.asList("Cécile Helle", "Helle", Arrays.asList("http://www.laprovence.com/")),
-			Arrays.asList("Martine Aubry", "Aubry", Arrays.asList("http://www.lavoixdunord.fr/")),
-			Arrays.asList("Roland Ries", "Ries", null),
-			
-			Arrays.asList("Bruno Julliard", "Julliard", null),
-			Arrays.asList("Jean-Louis Missika", "Missika", null),
-			Arrays.asList("Ian Brossat", "Brossat", null),
-			Arrays.asList("Christophe Najdovski", "Najdovski", null),
-			Arrays.asList("Nathalie Kosciusko-Morizet", "Kosciusko-Morizet", null),
-			Arrays.asList("Claude Goasguen", "Goasguen", null),
-			Arrays.asList("Brigitte Kuster", "Kuster", null)
+		(	Arrays.asList("Anne Hidalgo", "Hidalgo", Arrays.asList(null, "http://www.leparisien.fr/"),
+				Arrays.asList("Bruno Julliard", "Jean-Louis Missika", "Ian Brossat", "Christophe Najdovski", "Nathalie Kosciusko-Morizet", "Claude Goasguen", "Brigitte Kuster")),
+			Arrays.asList("Cécile Helle", "Helle", Arrays.asList("http://www.laprovence.com/"), null),
+			Arrays.asList("Martine Aubry", "Aubry", Arrays.asList("http://www.lavoixdunord.fr/"), null),
+			Arrays.asList("Roland Ries", "Ries", null, null)
 		);
 		
 		for(List<Object> param: params)
@@ -651,15 +649,15 @@ if(line.contains("marseillan"))
 			else
 				websites = (List<String>)param.get(2);
 			
-			Date startDate = df.parse("20170306");
-			Date endDate = df.parse("20170312");
-			boolean searchDate = true;
-			boolean extendedSocialSearch = true;
-			ArticleLanguage language = ArticleLanguage.FR;
+			List<String> additionalPages;
+			if(param.get(3)==null)
+				additionalPages = new ArrayList<String>();
+			else
+				additionalPages = (List<String>)param.get(3);
 			
 			logger.log("Processing "+keywords);
 			logger.increaseOffset();
-				extractor.performExtraction(keywords, websites, startDate, endDate, searchDate, compulsoryExpression, extendedSocialSearch, language);
+				extractor.performExtraction(keywords, websites, additionalPages, startDate, endDate, searchDate, compulsoryExpression, extendedSocialSearch, language);
 			logger.decreaseOffset();
 		}
 	}
@@ -669,6 +667,7 @@ if(line.contains("marseillan"))
 //      >> manque encore l'intégration des différents rangs dans les 2 exportations 
 //      >> à faire après instanciation
 // TODO instancier carrément les moteurs de recherche, ce qui permettra d'avoir des paramétrages différents
+//		- et aussi d'effectuer le caching dans le moteur lui même, plutot que l'extracteur
 // TODO Garder les entités apparaissant dans tous les articles de leur cluster
 // TODO Faire un clustering global FB+web
 // TODO Filtrer par date quand c'est possible, pour voir si ça améliore le beans

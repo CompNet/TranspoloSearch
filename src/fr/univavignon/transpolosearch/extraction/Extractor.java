@@ -105,6 +105,8 @@ public class Extractor
 	 * 		Person we want to look up.
 	 * @param websites
 	 * 		List of targeted sites, including {@ode null} to search the whole Web.
+	 * @param additionalPages 
+	 * 		List of secondary pages to process during the search on social media. 
 	 * @param startDate
 	 * 		Start of the period we want to consider, 
 	 * 		or {@code null} for no constraint.
@@ -137,7 +139,7 @@ public class Extractor
 	 * @throws ProcessorException 
 	 * 		Problem while detecting the entity mentions.
 	 */
-	public void performExtraction(String keywords, List<String> websites, Date startDate, Date endDate, boolean searchDate, String compulsoryExpression, boolean extendedSocialSearch, ArticleLanguage language) throws IOException, ReaderException, ParseException, SAXException, ProcessorException
+	public void performExtraction(String keywords, List<String> websites, List<String> additionalPages, Date startDate, Date endDate, boolean searchDate, String compulsoryExpression, boolean extendedSocialSearch, ArticleLanguage language) throws IOException, ReaderException, ParseException, SAXException, ProcessorException
 	{	logger.log("Starting the information extraction");
 		logger.increaseOffset();
 		
@@ -159,7 +161,7 @@ public class Extractor
 		
 		// perform the social search
 		logger.log("Performing the social media search");
-		SocialSearchResults socialRes = performSocialExtraction(keywords, startDate, endDate, compulsoryExpression, extendedSocialSearch, language);
+		SocialSearchResults socialRes = performSocialExtraction(keywords, additionalPages, startDate, endDate, compulsoryExpression, extendedSocialSearch, language);
 		
 		// merge both results in a single file
 		exportCombinedResultsAsCsv(webRes, socialRes);
@@ -446,6 +448,8 @@ public class Extractor
 	 * 
 	 * @param keywords
 	 * 		Person we want to look for.
+	 * @param additionalPages 
+	 * 		List of secondary pages to process during the search on social media. 
 	 * @param startDate
 	 * 		Start of the period we want to consider, 
 	 * 		or {@code null} for no constraint.
@@ -463,8 +467,10 @@ public class Extractor
 	 * @throws IOException
 	 * 		Problem accessing the Web.
 	 */
-	private SocialSearchResults performSocialSearch(String keywords, Date startDate, Date endDate, boolean extendedSearch, boolean includeComments) throws IOException
+	private SocialSearchResults performSocialSearch(String keywords, List<String> additionalPages, Date startDate, Date endDate, boolean extendedSearch, boolean includeComments) throws IOException
 	{	boolean cachedSearch = true; //TODO for debug
+		SocialSearchResults result = new SocialSearchResults();
+		
 		// log search parameters
 		logger.log("Parameters:");
 		logger.increaseOffset();
@@ -472,59 +478,63 @@ public class Extractor
 			logger.log("startDate="+startDate);
 			logger.log("endDate="+endDate);
 			logger.log("extendedSearch="+extendedSearch);
+			logger.log("additionalPages=");
+			if(!additionalPages.isEmpty())
+				logger.log(additionalPages);
 		logger.decreaseOffset();
 		
 		// apply each search engine
 		logger.log("Applying iteratively each social engine");
 		logger.increaseOffset();
-			SocialSearchResults result = new SocialSearchResults();
+		for(AbstractSocialEngine engine: socialEngines)
+		{	List<SocialSearchResult> posts = new ArrayList<SocialSearchResult>();
 			
-			for(AbstractSocialEngine engine: socialEngines)
-			{	List<SocialSearchResult> posts = new ArrayList<SocialSearchResult>();
-				
-				// possibly use cached results
-				String cacheFilePath = FileNames.FO_SOCIAL_SEARCH_RESULTS + File.separator + engine.getName();
-				File cacheFolder = new File(cacheFilePath);
-				cacheFolder.mkdirs();
-				cacheFilePath = cacheFilePath + File.separator + FileNames.FI_SEARCH_RESULTS;
-				File cacheFile = new File(cacheFilePath);
-				if(cachedSearch && cacheFile.exists())
-				{	logger.log("Loading the previous search results from file "+cacheFilePath);
-					Scanner sc = FileTools.openTextFileRead(cacheFile,"UTF-8");
-					while(sc.hasNextLine())
-					{	SocialSearchResult post = SocialSearchResult.readFromText(sc);
-						posts.add(post);
-					}
-					logger.log("Number of posts loaded (not counting the comments): "+posts.size());
+			// lookup the main string as well as the secondary ones
+			//TODO 
+			
+			// possibly use cached results
+			String cacheFilePath = FileNames.FO_SOCIAL_SEARCH_RESULTS + File.separator + engine.getName();
+			File cacheFolder = new File(cacheFilePath);
+			cacheFolder.mkdirs();
+			cacheFilePath = cacheFilePath + File.separator + FileNames.FI_SEARCH_RESULTS;
+			File cacheFile = new File(cacheFilePath);
+			if(cachedSearch && cacheFile.exists())
+			{	logger.log("Loading the previous search results from file "+cacheFilePath);
+				Scanner sc = FileTools.openTextFileRead(cacheFile,"UTF-8");
+				while(sc.hasNextLine())
+				{	SocialSearchResult post = SocialSearchResult.readFromText(sc);
+					posts.add(post);
 				}
-				
-				// search the results
-				else
-				{	logger.log("Applying search engine "+engine.getName());
-					logger.increaseOffset();
-						// apply the engine
-						posts = engine.search(keywords,startDate,endDate, extendedSearch);
-						
-						// possibly record its results
-						if(cachedSearch)
-						{	logger.log("Recording all posts in text file \""+cacheFilePath+"\"");
-							PrintWriter pw = FileTools.openTextFileWrite(cacheFile,"UTF-8");
-							for(SocialSearchResult post: posts)
-								post.writeAsText(pw);
-							pw.close();
-						}
-					logger.decreaseOffset();
-				}
-				
-				// add to the overall result object
-				int rank = 1;
-				for(SocialSearchResult post: posts)
-				{	post.rank = rank;
-					post.buildArticle(includeComments);
-					result.addResult(post);
-					rank++;
-				}
+				logger.log("Number of posts loaded (not counting the comments): "+posts.size());
 			}
+			
+			// search the results
+			else
+			{	logger.log("Applying search engine "+engine.getName());
+				logger.increaseOffset();
+					// apply the engine
+					posts = engine.search(keywords,startDate,endDate, extendedSearch);
+					
+					// possibly record its results
+					if(cachedSearch)
+					{	logger.log("Recording all posts in text file \""+cacheFilePath+"\"");
+						PrintWriter pw = FileTools.openTextFileWrite(cacheFile,"UTF-8");
+						for(SocialSearchResult post: posts)
+							post.writeAsText(pw);
+						pw.close();
+					}
+				logger.decreaseOffset();
+			}
+			
+			// add to the overall result object
+			int rank = 1;
+			for(SocialSearchResult post: posts)
+			{	post.rank = rank;
+				post.buildArticle(includeComments);
+				result.addResult(post);
+				rank++;
+			}
+		}
 		logger.decreaseOffset();
 		logger.log("Total number of posts found: "+result.size());
 		
@@ -536,6 +546,8 @@ public class Extractor
 	 * 
 	 * @param keywords
 	 * 		Person we want to look up.
+	 * @param additionalPages 
+	 * 		List of secondary pages to process during the search on social media. 
 	 * @param startDate
 	 * 		Start of the period we want to consider, 
 	 * 		or {@code null} for no constraint.
@@ -567,13 +579,13 @@ public class Extractor
 	 * @throws ProcessorException 
 	 * 		Problem while detecting the entity mentions.
 	 */
-	private SocialSearchResults performSocialExtraction(String keywords, Date startDate, Date endDate, String compulsoryExpression, boolean extendedSocialSearch, ArticleLanguage language) throws IOException, ReaderException, ParseException, SAXException, ProcessorException
+	private SocialSearchResults performSocialExtraction(String keywords, List<String> additionalPages, Date startDate, Date endDate, String compulsoryExpression, boolean extendedSocialSearch, ArticleLanguage language) throws IOException, ReaderException, ParseException, SAXException, ProcessorException
 	{	logger.log("Starting the social media extraction");
 		logger.increaseOffset();
 		
 		// perform the social search
 		boolean includeComments = false;
-		SocialSearchResults results = performSocialSearch(keywords, startDate, endDate, extendedSocialSearch, includeComments);
+		SocialSearchResults results = performSocialSearch(keywords, additionalPages, startDate, endDate, extendedSocialSearch, includeComments);
 		
 		// convert the posts to proper articles
 		results.buildArticles(includeComments);
