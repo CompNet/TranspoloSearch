@@ -51,11 +51,15 @@ public class SocialSearchResults extends AbstractSearchResults<SocialSearchResul
 	 * 
 	 * @param post
 	 * 		The social media posts to add to this collection of results.
+	 * @param engineName
+	 * 		Engine returning the post.
 	 */
-	public void addResult(SocialSearchResult post)
+	public void addResult(SocialSearchResult post, String engineName)
 	{	String resultId = post.id + "@" + post.source;
-		results.put(resultId, post);
-		engineNames.add(post.source);
+		SocialSearchResult result = results.get(resultId);
+		if(result==null)
+			results.put(resultId, post);
+		engineNames.add(engineName);
 	}
 	
 	/////////////////////////////////////////////////////////////////

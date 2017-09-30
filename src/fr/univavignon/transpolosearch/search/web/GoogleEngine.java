@@ -33,6 +33,7 @@ import java.net.URL;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -54,11 +55,67 @@ import java.util.Map;
 public class GoogleEngine extends AbstractWebEngine
 {
 	/**
+	 * Quick test.
+	 * 
+	 * @param args
+	 * 		Not used.
+	 * 
+	 * @throws Exception
+	 * 		Whatever problem. 
+	 */
+	public static void main(String[] args) throws Exception
+	{	logger.setName("Test-GoogleEngine");
+		logger.log("Start testing Google Custom Search");
+		logger.increaseOffset();
+		
+		// parameters
+		String keywords = "Cécile Helle";
+		String website = null;
+		String sortCriterion = "date:r:20150101:20150131";
+		GoogleEngine gs = new GoogleEngine(website,null,null);
+		
+		// launch search
+		List<Result> result = gs.searchGoogle(keywords, website, sortCriterion);
+		
+		List<String> msgs = new ArrayList<String>();
+		logger.log("Displaying results: "+result.size()+"/"+GoogleEngine.MAX_RES_NBR);
+		logger.increaseOffset();
+			int i = 0;
+			for(Result res: result)
+			{	i++;
+				logger.log(Arrays.asList(
+					"Result "+i+"/"+result.size(),
+					res.getHtmlTitle(),
+					res.getFormattedUrl(),
+					"----------------------------------------")
+				);
+				msgs.add(res.getLink());
+			}
+		logger.decreaseOffset();
+		
+		logger.log(msgs);
+		
+		logger.decreaseOffset();
+		logger.log("Test terminated");
+	}
+
+	/**
 	 * Initializes the object used to search
 	 * the Web with the Google Custom Search (GCS) API.
+	 * 
+	 * @param website
+	 * 		Target site, or {@code null} to search the whole Web.
+	 * @param startDate
+	 * 		Start of the period we want to consider, 
+	 * 		or {@code null} for no constraint.
+	 * @param endDate
+	 * 		End of the period we want to consider,
+	 * 		or {@code null} for no constraint.
 	 */
-	public GoogleEngine()
-	{	// Set up the HTTP transport and JSON factory
+	public GoogleEngine(String website, Date startDate, Date endDate)
+	{	super(website,startDate,endDate);
+		
+		// Set up the HTTP transport and JSON factory
 		HttpTransport httpTransport = new NetHttpTransport();
 		//JsonFactory jsonFactory = new GsonFactory();
 		JsonFactory jsonFactory = GsonFactory.getDefaultInstance();
@@ -122,7 +179,7 @@ public class GoogleEngine extends AbstractWebEngine
 	// SEARCH		/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
 	@Override
-	public Map<String,URL> search(String keywords, String website, Date startDate, Date endDate)  throws IOException
+	protected Map<String,URL> search(String keywords)  throws IOException
 	{	logger.log("Applying Google Custom Search");
 		logger.increaseOffset();
 		
@@ -203,7 +260,7 @@ public class GoogleEngine extends AbstractWebEngine
 	 * @throws IOException
 	 * 		Problem while searching Google.
 	 */
-	public List<Result> searchGoogle(String keywords, String website, String sortCriterion)  throws IOException
+	private List<Result> searchGoogle(String keywords, String website, String sortCriterion)  throws IOException
 	{	// init the other variables
 		List<Result> result = new ArrayList<Result>();
 		long start = 1;

@@ -25,15 +25,12 @@ import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.net.URLEncoder;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Scanner;
 
 import org.xml.sax.SAXException;
 
@@ -84,9 +81,7 @@ public class Extractor
 	 * 		Problem while initializing the NER tool. 
 	 */
 	public Extractor() throws ProcessorException
-	{	initDefaultSearchEngines();
-		initDefaultSocialEngines();
-		initDefaultRecognizer();
+	{	initDefaultRecognizer();
 	}
 	
 	/////////////////////////////////////////////////////////////////
@@ -105,7 +100,7 @@ public class Extractor
 	 * 		Person we want to look up.
 	 * @param websites
 	 * 		List of targeted sites, including {@ode null} to search the whole Web.
-	 * @param additionalPages 
+	 * @param additionalSeeds
 	 * 		List of secondary pages to process during the search on social media. 
 	 * @param startDate
 	 * 		Start of the period we want to consider, 
@@ -139,7 +134,7 @@ public class Extractor
 	 * @throws ProcessorException 
 	 * 		Problem while detecting the entity mentions.
 	 */
-	public void performExtraction(String keywords, List<String> websites, List<String> additionalPages, Date startDate, Date endDate, boolean searchDate, String compulsoryExpression, boolean extendedSocialSearch, ArticleLanguage language) throws IOException, ReaderException, ParseException, SAXException, ProcessorException
+	public void performExtraction(String keywords, List<String> websites, List<String> additionalSeeds, Date startDate, Date endDate, boolean searchDate, String compulsoryExpression, boolean extendedSocialSearch, ArticleLanguage language) throws IOException, ReaderException, ParseException, SAXException, ProcessorException
 	{	logger.log("Starting the information extraction");
 		logger.increaseOffset();
 		
@@ -161,7 +156,7 @@ public class Extractor
 		
 		// perform the social search
 		logger.log("Performing the social media search");
-		SocialSearchResults socialRes = performSocialExtraction(keywords, additionalPages, startDate, endDate, compulsoryExpression, extendedSocialSearch, language);
+		SocialSearchResults socialRes = performSocialExtraction(keywords, additionalSeeds, startDate, endDate, compulsoryExpression, extendedSocialSearch, language);
 		
 		// merge both results in a single file
 		exportCombinedResultsAsCsv(webRes, socialRes);
@@ -179,34 +174,9 @@ public class Extractor
 	/**
 	 * Initializes the default search engines.
 	 * Currently: Google, Bing, Qwant, Yandex.
-	 */
-	private void initDefaultSearchEngines()
-	{	// set up the google custom search
-		GoogleEngine googleEngine = new GoogleEngine();
-		webEngines.add(googleEngine);
-		
-		// set up Bing
-		BingEngine bingEngine = new BingEngine();
-		webEngines.add(bingEngine);
-		
-		// set up Qwant
-		QwantEngine qwantEngine = new QwantEngine();
-		webEngines.add(qwantEngine);
-		
-		// set up Yandex
-		YandexEngine yandexEngine = new YandexEngine();
-		webEngines.add(yandexEngine);
-	}
-	
-	/**
-	 * Performs the Web search using the specified parameters and
-	 * each one of the engines registered in the {@link #webEngines}
-	 * list.
 	 * 
-	 * @param keywords
-	 * 		Person we want to look for.
 	 * @param websites
-	 * 		List of targeted sites, including {@ode null} to search the whole Web.
+	 * 		List of target websites, can contain {@code null} to search the whole Web.
 	 * @param startDate
 	 * 		Start of the period we want to consider, 
 	 * 		or {@code null} for no constraint.
@@ -217,29 +187,10 @@ public class Extractor
 	 * 		If {@code true}, both dates will be used directly in the Web search.
 	 * 		Otherwise, they will be used <i>a posteriori</i> to filter the detected events.
 	 * 		If one of the dates is {@code null}, this parameter has no effect.
-	 * @return
-	 * 		List of web search results.
-	 * 
-	 * @throws IOException
-	 * 		Problem accessing the Web.
 	 */
-	private WebSearchResults performWebSearch(String keywords, List<String> websites, Date startDate, Date endDate, boolean searchDate) throws IOException
-	{	WebSearchResults result = new WebSearchResults();
-		boolean cachedSearch = true; //TODO for debug
-		
-		// log search parameters
-		logger.log("Parameters:");
+	private void initWebSearchEngines(List<String> websites, Date startDate, Date endDate, boolean searchDate)
+	{	logger.log("Initializing the Web search engines");
 		logger.increaseOffset();
-			logger.log("keywords="+keywords);
-			logger.log("startDate="+startDate);
-			logger.log("endDate="+endDate);
-			String txt = "searchDate="+searchDate;
-			if(!searchDate)
-				txt = txt + "(dates are ignored here, because the search is not strict)";
-			logger.log(txt);
-			logger.log("websites=");
-			logger.log(websites);
-		logger.decreaseOffset();
 		
 		// nullify dates if the search is not strict
 		if(!searchDate)
@@ -247,81 +198,68 @@ public class Extractor
 			endDate = null;
 		}
 		
+		// iterate over each website
+		int i = 1;
+		for(String website: websites)
+		{	logger.log("Website "+website+" ("+i+"/"+websites.size()+")");
+			i++;
+			
+			// set up the Google
+			GoogleEngine googleEngine = new GoogleEngine(website,startDate,endDate);
+			webEngines.add(googleEngine);
+			
+			// set up Bing
+			BingEngine bingEngine = new BingEngine(website,startDate,endDate);
+			webEngines.add(bingEngine);
+			
+			// set up Qwant
+			QwantEngine qwantEngine = new QwantEngine(website,startDate,endDate);
+			webEngines.add(qwantEngine);
+			
+			// set up Yandex
+			YandexEngine yandexEngine = new YandexEngine(website,startDate,endDate);
+			webEngines.add(yandexEngine);
+		}
+		
+		logger.decreaseOffset();
+	}
+	
+	/**
+	 * Performs the Web search using the specified parameters and
+	 * each one of the engines registered in the {@link #webEngines}
+	 * list.
+	 * 
+	 * @param keywords
+	 * 		Person we want to look for.
+	 * @return
+	 * 		List of web search results.
+	 * 
+	 * @throws IOException
+	 * 		Problem accessing the Web.
+	 */
+	private WebSearchResults performWebSearch(String keywords) throws IOException
+	{	WebSearchResults result = new WebSearchResults();
+		
 		// apply each search engine
 		logger.log("Applying iteratively each search engine");
 		logger.increaseOffset();
 		for(AbstractWebEngine engine: webEngines)
 		{	logger.log("Processing search engine "+engine);
 			logger.increaseOffset();
-			// deal with each website in the specified list
-			for(String website: websites)
-			{	if(website==null)
-					logger.log("Searching the whose Web");
-				else
-					logger.log("Searching specifically Website "+website);
-				logger.increaseOffset();
-				Map<String,URL> urls;
-				
-				// setup cache file path
-				String cacheFilePath = FileNames.FO_WEB_SEARCH_RESULTS + File.separator + engine.getName();
-				File cacheFolder = new File(cacheFilePath);
-				cacheFolder.mkdirs();
-				cacheFilePath = cacheFilePath + File.separator;
-				if(website!=null)
-					cacheFilePath = cacheFilePath + URLEncoder.encode(website,"UTF-8");
-				cacheFilePath = cacheFilePath + FileNames.FI_SEARCH_RESULTS;
-				
-				// possibly use cached results
-				File cacheFile = new File(cacheFilePath);
-				if(cachedSearch && cacheFile.exists())
-				{	logger.log("Loading the previous search results from file "+cacheFilePath);
-					urls = new HashMap<String,URL>();	
-					Scanner sc = FileTools.openTextFileRead(cacheFile,"UTF-8");
-					while(sc.hasNextLine())
-					{	String line = sc.nextLine();
-						String tmp[] = line.split("\t");
-						String key = tmp[0].trim();
-						String urlStr = tmp[1].trim();
-						URL url = new URL(urlStr);
-						urls.put(key,url);
-					}
-					logger.log("Number of URLs loaded: "+urls.size());
-				}
-				
-				// otherwise, perform the search and possibly cache results
-				else
-				{	logger.log("Applying search engine "+engine.getName());
-					logger.increaseOffset();
-						// apply the engine
-						urls = engine.search(keywords,website,startDate,endDate);
-						
-						// possibly record its results
-						if(cachedSearch)
-						{	logger.log("Recording all URLs in text file \""+cacheFilePath+"\"");
-							PrintWriter pw = FileTools.openTextFileWrite(cacheFile,"UTF-8");
-							for(Entry<String, URL> entry: urls.entrySet())
-							{	String key = entry.getKey();
-								URL url = entry.getValue();
-								pw.println(key+"\t"+url.toString());
-							}
-							pw.close();
-						}
-					logger.decreaseOffset();
-				}
+				Map<String,URL> urls = engine.retrieveResults(keywords);
 			
 //				// sort the URL keys
 //				TreeSet<String> keys = new TreeSet<String>(KEY_COMPARATOR);
 //				keys.addAll(urls.keySet());
 				
 				// add to the overall map of URLs
-				String engineName = engine.getName();
+				String engineStr = engine.toString();
 				for(Entry<String,URL> entry: urls.entrySet())
 				{	String rank = entry.getKey();
 					URL url = entry.getValue();
 					String urlStr = url.toString();
-					result.addResult(urlStr, engineName, rank);
+					result.addResult(urlStr, engineStr, rank);
 				}
-			}
 			logger.decreaseOffset();
 		}
 		logger.decreaseOffset();
@@ -374,8 +312,25 @@ public class Extractor
 	{	logger.log("Starting the web extraction");
 		logger.increaseOffset();
 		
+		// log search parameters
+		logger.log("Parameters:");
+		logger.increaseOffset();
+			logger.log("keywords="+keywords);
+			logger.log("startDate="+startDate);
+			logger.log("endDate="+endDate);
+			String txt = "searchDate="+searchDate;
+			if(!searchDate)
+				txt = txt + "(dates are ignored here, because the search is not strict)";
+			logger.log(txt);
+			logger.log("websites=");
+			logger.log(websites);
+		logger.decreaseOffset();
+		
+		// initializes the Web search engines
+		initWebSearchEngines(websites, startDate, endDate, searchDate);
+		
 		// perform the Web search
-		WebSearchResults results = performWebSearch(keywords, websites, startDate, endDate, searchDate);
+		WebSearchResults results = performWebSearch(keywords);
 
 		// filter Web pages (remove PDFs, and so on)
 		results.filterByUrl();
@@ -396,7 +351,7 @@ public class Extractor
 		results.exportAsCsv(FileNames.FI_SEARCH_RESULTS_ENTITY);
 		
 		// displays the remaining articles with their mentions	//TODO maybe get the entities instead of the mentions, eventually?
-		results.displayRemainingMentions(); //TODO for debug only
+		results.displayRemainingMentions(); // for debug only
 		
 		// cluster the article by content
 		results.clusterArticles(language);
@@ -429,16 +384,39 @@ public class Extractor
 	/**
 	 * Initializes the default search engines for social medias.
 	 * Currently: only Facebook.
+	 * 
+	 * @param seeds 
+	 * 		List of pages to process during the search on social media. 
+	 * @param startDate
+	 * 		Start of the period we want to consider, or {@code null} for no constraint.
+	 * @param endDate
+	 * 		End of the period we want to consider, or {@code null} for no constraint.
+	 * @param extendedSearch
+	 * 		Whether the social media search should retrieve the posts published by the
+	 * 		users commenting the posts of interest, for the considered period. If 
+	 * 		{@code false}, only the posts on the targeted page and their direct comments
+	 * 		are returned. 
 	 */
-	private void initDefaultSocialEngines()
-	{	// set up Facebook
-		try
-		{	FacebookEngine facebookEngine = new FacebookEngine();
-			socialEngines.add(facebookEngine);
-		} 
-		catch (FailingHttpStatusCodeException | IOException | URISyntaxException e) 
-		{	e.printStackTrace();
+	private void initSocialMediaEngines(List<String> seeds, Date startDate, Date endDate, boolean extendedSearch)
+	{	logger.log("Initializing the social media search engines");
+		logger.increaseOffset();
+		
+		// iterate over each seed
+		int i = 1;
+		for(String seed: seeds)
+		{	logger.log("Seed "+seed+" ("+i+"/"+seeds.size()+")");
+			i++;
+			
+			// set up Facebook
+			try
+			{	FacebookEngine facebookEngine = new FacebookEngine(seed, startDate, endDate, extendedSearch);
+				socialEngines.add(facebookEngine);
+			} 
+			catch (FailingHttpStatusCodeException | IOException | URISyntaxException e) 
+			{	e.printStackTrace();
+			}
 		}
+		logger.decreaseOffset();
 	}
 	
 	/**
@@ -448,16 +426,6 @@ public class Extractor
 	 * 
 	 * @param keywords
 	 * 		Person we want to look for.
-	 * @param additionalPages 
-	 * 		List of secondary pages to process during the search on social media. 
-	 * @param startDate
-	 * 		Start of the period we want to consider, 
-	 * 		or {@code null} for no constraint.
-	 * @param endDate
-	 * 		End of the period we want to consider,
-	 * 		or {@code null} for no constraint.
-	 * @param extendedSearch
-	 * 		Whether or not to look for the posts of the commenting users. 
 	 * @param includeComments 
 	 * 		Whether ({@code true}) or not ({@code false}) to include comments 
 	 * 		in the proper article (or just the main post).
@@ -467,76 +435,33 @@ public class Extractor
 	 * @throws IOException
 	 * 		Problem accessing the Web.
 	 */
-	private SocialSearchResults performSocialSearch(String keywords, List<String> additionalPages, Date startDate, Date endDate, boolean extendedSearch, boolean includeComments) throws IOException
-	{	boolean cachedSearch = true; //TODO for debug
-		SocialSearchResults result = new SocialSearchResults();
-		
-		// log search parameters
-		logger.log("Parameters:");
-		logger.increaseOffset();
-			logger.log("keywords="+keywords);
-			logger.log("startDate="+startDate);
-			logger.log("endDate="+endDate);
-			logger.log("extendedSearch="+extendedSearch);
-			logger.log("additionalPages=");
-			if(!additionalPages.isEmpty())
-				logger.log(additionalPages);
-		logger.decreaseOffset();
+	private SocialSearchResults performSocialSearch(String keywords, boolean includeComments) throws IOException
+	{	SocialSearchResults result = new SocialSearchResults();
 		
 		// apply each search engine
 		logger.log("Applying iteratively each social engine");
 		logger.increaseOffset();
 		for(AbstractSocialEngine engine: socialEngines)
-		{	List<SocialSearchResult> posts = new ArrayList<SocialSearchResult>();
+		{	logger.log("Processing search engine "+engine);
+			logger.increaseOffset();
+				List<SocialSearchResult> posts = engine.retrieveResults(keywords);
 			
-			// lookup the main string as well as the secondary ones
-			//TODO 
-			
-			// possibly use cached results
-			String cacheFilePath = FileNames.FO_SOCIAL_SEARCH_RESULTS + File.separator + engine.getName();
-			File cacheFolder = new File(cacheFilePath);
-			cacheFolder.mkdirs();
-			cacheFilePath = cacheFilePath + File.separator + FileNames.FI_SEARCH_RESULTS;
-			File cacheFile = new File(cacheFilePath);
-			if(cachedSearch && cacheFile.exists())
-			{	logger.log("Loading the previous search results from file "+cacheFilePath);
-				Scanner sc = FileTools.openTextFileRead(cacheFile,"UTF-8");
-				while(sc.hasNextLine())
-				{	SocialSearchResult post = SocialSearchResult.readFromText(sc);
-					posts.add(post);
+				// add to the overall result object
+				String engineStr = engine.toString();
+				int rank = 1;
+				for(SocialSearchResult post: posts)
+				{	post.rank = rank;
+					post.buildArticle(includeComments);
+					result.addResult(post, engineStr);
+					rank++;
 				}
-				logger.log("Number of posts loaded (not counting the comments): "+posts.size());
-			}
-			
-			// search the results
-			else
-			{	logger.log("Applying search engine "+engine.getName());
-				logger.increaseOffset();
-					// apply the engine
-					posts = engine.search(keywords,startDate,endDate, extendedSearch);
-					
-					// possibly record its results
-					if(cachedSearch)
-					{	logger.log("Recording all posts in text file \""+cacheFilePath+"\"");
-						PrintWriter pw = FileTools.openTextFileWrite(cacheFile,"UTF-8");
-						for(SocialSearchResult post: posts)
-							post.writeAsText(pw);
-						pw.close();
-					}
-				logger.decreaseOffset();
-			}
-			
-			// add to the overall result object
-			int rank = 1;
-			for(SocialSearchResult post: posts)
-			{	post.rank = rank;
-				post.buildArticle(includeComments);
-				result.addResult(post);
-				rank++;
-			}
+			logger.decreaseOffset();
 		}
 		logger.decreaseOffset();
 		logger.log("Total number of posts found: "+result.size());
+		
+		// record the complete list of URLs (not for cache, just as a result)
+		result.exportAsCsv(FileNames.FI_SEARCH_RESULTS_ALL);
 		
 		return result;
 	}
@@ -546,7 +471,7 @@ public class Extractor
 	 * 
 	 * @param keywords
 	 * 		Person we want to look up.
-	 * @param additionalPages 
+	 * @param additionalSeeds 
 	 * 		List of secondary pages to process during the search on social media. 
 	 * @param startDate
 	 * 		Start of the period we want to consider, 
@@ -554,7 +479,7 @@ public class Extractor
 	 * @param endDate
 	 * 		End of the period we want to consider,
 	 * 		or {@code null} for no constraint.
-	 * @param extendedSocialSearch
+	 * @param extendedSearch
 	 * 		Whether the social media search should retrieve the posts published by the
 	 * 		users commenting the posts of interest, for the considered period. If 
 	 * 		{@code false}, only the posts on the targeted page and their direct comments
@@ -579,13 +504,31 @@ public class Extractor
 	 * @throws ProcessorException 
 	 * 		Problem while detecting the entity mentions.
 	 */
-	private SocialSearchResults performSocialExtraction(String keywords, List<String> additionalPages, Date startDate, Date endDate, String compulsoryExpression, boolean extendedSocialSearch, ArticleLanguage language) throws IOException, ReaderException, ParseException, SAXException, ProcessorException
+	private SocialSearchResults performSocialExtraction(String keywords, List<String> additionalSeeds, Date startDate, Date endDate, String compulsoryExpression, boolean extendedSearch, ArticleLanguage language) throws IOException, ReaderException, ParseException, SAXException, ProcessorException
 	{	logger.log("Starting the social media extraction");
 		logger.increaseOffset();
 		
+		// log search parameters
+		logger.log("Parameters:");
+		logger.increaseOffset();
+			logger.log("keywords="+keywords);
+			logger.log("startDate="+startDate);
+			logger.log("endDate="+endDate);
+			logger.log("extendedSearch="+extendedSearch);
+			logger.log("additionalPages=");
+			if(!additionalSeeds.isEmpty())
+				logger.log(additionalSeeds);
+		logger.decreaseOffset();
+		
+		// initializes the social media search engines
+		List<String> seeds = new ArrayList<String>();
+		seeds.add(null);
+		seeds.addAll(additionalSeeds);
+		initSocialMediaEngines(additionalSeeds, startDate, endDate, extendedSearch);
+		
 		// perform the social search
 		boolean includeComments = false;
-		SocialSearchResults results = performSocialSearch(keywords, additionalPages, startDate, endDate, extendedSocialSearch, includeComments);
+		SocialSearchResults results = performSocialSearch(keywords, includeComments);
 		
 		// convert the posts to proper articles
 		results.buildArticles(includeComments);
@@ -603,7 +546,7 @@ public class Extractor
 //		results.exportAsCsv(FileNames.FI_SEARCH_RESULTS_ENTITY);
 		
 		// displays the remaining articles with their mentions	//TODO maybe get the entities instead of the mention, eventually?
-		results.displayRemainingMentions(); //TODO for debug only
+		results.displayRemainingMentions(); // for debug only
 		
 		// cluster the article by content
 		results.clusterArticles(language);

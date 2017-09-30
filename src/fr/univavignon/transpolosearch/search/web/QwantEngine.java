@@ -60,9 +60,18 @@ public class QwantEngine extends AbstractWebEngine
 	/**
 	 * Initializes the object used to search
 	 * the Web with the Qwant API.
+	 * 
+	 * @param website
+	 * 		Target site, or {@code null} to search the whole Web.
+	 * @param startDate
+	 * 		Start of the period we want to consider, 
+	 * 		or {@code null} for no constraint.
+	 * @param endDate
+	 * 		End of the period we want to consider,
+	 * 		or {@code null} for no constraint.
 	 */
-	public QwantEngine()
-	{	// nothing to do here
+	public QwantEngine(String website, Date startDate, Date endDate)
+	{	super(website,startDate,endDate);
 	}
 
 	/////////////////////////////////////////////////////////////////
@@ -110,7 +119,7 @@ public class QwantEngine extends AbstractWebEngine
 	// SEARCH		/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
 	@Override
-	public Map<String,URL> search(String keywords, String website, Date startDate, Date endDate)  throws IOException
+	protected Map<String,URL> search(String keywords)  throws IOException
 	{	logger.log("Applying Qwant Search");
 		logger.increaseOffset();
 		Map<String,URL> result = new HashMap<String,URL>();
@@ -294,14 +303,14 @@ public class QwantEngine extends AbstractWebEngine
 	 */
 	public static void main(String[] args) throws Exception
 	{	
-		QwantEngine engine = new QwantEngine();
-		
 		String keywords = "François Hollande";
 		String website = null;//"http://lemonde.fr";
 		Date startDate = null;//new GregorianCalendar(2016,3,1).getTime();
 		Date endDate = null;//new GregorianCalendar(2016,3,2).getTime();
 		
-		Map<String,URL> result = engine.search(keywords, website, startDate, endDate);
+		QwantEngine engine = new QwantEngine(website, startDate, endDate);
+		
+		Map<String,URL> result = engine.search(keywords);
 		
 		System.out.println(result);
 	}

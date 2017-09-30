@@ -59,11 +59,20 @@ public class BingEngine extends AbstractWebEngine
 	/**
 	 * Initializes the object used to search
 	 * the Web with the Bing Search API.
+	 * 
+	 * @param website
+	 * 		Target site, or {@code null} to search the whole Web.
+	 * @param startDate
+	 * 		Start of the period we want to consider, 
+	 * 		or {@code null} for no constraint.
+	 * @param endDate
+	 * 		End of the period we want to consider,
+	 * 		or {@code null} for no constraint.
 	 */
-	public BingEngine()
-	{	// nothing to do here
+	public BingEngine(String website, Date startDate, Date endDate)
+	{	super(website,startDate,endDate);
 	}
-
+	
 	/////////////////////////////////////////////////////////////////
 	// SERVICE		/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
@@ -119,7 +128,7 @@ public class BingEngine extends AbstractWebEngine
 	// SEARCH		/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
 	@Override
-	public Map<String,URL> search(String keywords, String website, Date startDate, Date endDate)  throws IOException
+	protected Map<String,URL> search(String keywords)  throws IOException
 	{	logger.log("Applying Bing Search");
 		logger.increaseOffset();
 		Map<String,URL> result = new HashMap<String,URL>();

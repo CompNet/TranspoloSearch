@@ -60,9 +60,18 @@ public class YandexEngine extends AbstractWebEngine
 	/**
 	 * Initializes the object used to search
 	 * the Web with the Yandex API.
+	 * 
+	 * @param website
+	 * 		Target site, or {@code null} to search the whole Web.
+	 * @param startDate
+	 * 		Start of the period we want to consider, 
+	 * 		or {@code null} for no constraint.
+	 * @param endDate
+	 * 		End of the period we want to consider,
+	 * 		or {@code null} for no constraint.
 	 */
-	public YandexEngine()
-	{	// nothing to do here
+	public YandexEngine(String website, Date startDate, Date endDate)
+	{	super(website,startDate,endDate);
 	}
 
 	/////////////////////////////////////////////////////////////////
@@ -116,7 +125,7 @@ public class YandexEngine extends AbstractWebEngine
 	// SEARCH		/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
 	@Override
-	public Map<String,URL> search(String keywords, String website, Date startDate, Date endDate)  throws IOException
+	protected Map<String,URL> search(String keywords)  throws IOException
 	{	logger.log("Applying Yandex Search");
 		logger.increaseOffset();
 		Map<String,URL> result = new HashMap<String,URL>();
@@ -264,14 +273,14 @@ public class YandexEngine extends AbstractWebEngine
 	 */
 	public static void main(String[] args) throws Exception
 	{	
-		YandexEngine engine = new YandexEngine();
-		
 		String keywords = "François Hollande";
 		String website = null;//"http://lemonde.fr";
 		Date startDate = null;//new GregorianCalendar(2016,3,1).getTime();
 		Date endDate = null;//new GregorianCalendar(2016,3,2).getTime();
 		
-		Map<String,URL> result = engine.search(keywords, website, startDate, endDate);
+		YandexEngine engine = new YandexEngine(website, startDate, endDate);
+		
+		Map<String,URL> result = engine.search(keywords);
 		
 		System.out.println(result);
 	}

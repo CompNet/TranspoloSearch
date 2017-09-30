@@ -56,7 +56,6 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
-import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicNameValuePair;
 import org.jdom2.Document;
 import org.jdom2.Element;
@@ -351,7 +350,7 @@ if(line.contains("marseillan"))
 			AbstractSearchResults.COL_STATUS,
 			AbstractSearchResults.COL_LENGTH
 		));
-		for(String engineName: AbstractWebEngine.ENGINE_NAMES)
+		for(String engineName: AbstractWebEngine.ENGINE_NAMES)//TODO cannot use that >> must infer the exact union of engine names
 			colNames.add(engineName);
 		
 		// read both files
@@ -563,52 +562,6 @@ if(line.contains("marseillan"))
 	}
 	
 	/////////////////////////////////////////////////////////////////
-	// SEARCH		/////////////////////////////////////////////////
-	/////////////////////////////////////////////////////////////////
-	/**
-	 * Tests specifically Google's custom search wrapper.
-	 * 
-	 * @throws Exception
-	 * 		Something went wrong during the search. 
-	 */
-	private static void testGoogleSearch() throws Exception
-	{	logger.setName("Test-GoogleEngine");
-		logger.log("Start testing Google Custom Search");
-		logger.increaseOffset();
-		
-		GoogleEngine gs = new GoogleEngine();
-	
-		// parameters
-		String keywords = "Cécile Helle";
-		String website = null;
-		String sortCriterion = "date:r:20150101:20150131";
-		
-		// launch search
-		List<Result> result = gs.searchGoogle(keywords, website, sortCriterion);
-		
-		List<String> msgs = new ArrayList<String>();
-		logger.log("Displaying results: "+result.size()+"/"+GoogleEngine.MAX_RES_NBR);
-		logger.increaseOffset();
-			int i = 0;
-			for(Result res: result)
-			{	i++;
-				logger.log(Arrays.asList(
-					"Result "+i+"/"+result.size(),
-					res.getHtmlTitle(),
-					res.getFormattedUrl(),
-					"----------------------------------------")
-				);
-				msgs.add(res.getLink());
-			}
-		logger.decreaseOffset();
-		
-		logger.log(msgs);
-		
-		logger.decreaseOffset();
-		logger.log("Test terminated");
-	}
-
-	/////////////////////////////////////////////////////////////////
 	// WHOLE PROCESS	/////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
 	/**
@@ -663,11 +616,7 @@ if(line.contains("marseillan"))
 	}
 }
 
-// TODO intégrer recherche agnostique et dans des sites web 
-//      >> manque encore l'intégration des différents rangs dans les 2 exportations 
-//      >> à faire après instanciation
-// TODO instancier carrément les moteurs de recherche, ce qui permettra d'avoir des paramétrages différents
-//		- et aussi d'effectuer le caching dans le moteur lui même, plutot que l'extracteur
+// TODO tester l'instanciation des moteurs
 // TODO Garder les entités apparaissant dans tous les articles de leur cluster
 // TODO Faire un clustering global FB+web
 // TODO Filtrer par date quand c'est possible, pour voir si ça améliore le beans

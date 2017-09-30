@@ -81,6 +81,18 @@ public class FacebookEngine extends AbstractSocialEngine
 	/**
 	 * Initializes the object used to search Facebook.
 	 * 
+	 * @param seed
+	 * 		Name of the page/user/account used to start the search.
+	 * @param startDate
+	 * 		Start of the period we want to consider, 
+	 * 		or {@code null} for no constraint.
+	 * @param endDate
+	 * 		End of the period we want to consider,
+	 * 		or {@code null} for no constraint.
+	 * @param extendedSearch
+	 * 		If {@code true}, the search returns the posts by the commenting
+	 * 		users, for the specified period. 
+	 * 
 	 * @throws IOException
 	 * 		Problem while logging in Facebook. 
 	 * @throws MalformedURLException 
@@ -90,8 +102,10 @@ public class FacebookEngine extends AbstractSocialEngine
 	 * @throws URISyntaxException 
 	 * 		Problem while logging in Facebook. 
 	 */
-	public FacebookEngine() throws FailingHttpStatusCodeException, MalformedURLException, IOException, URISyntaxException
-	{	// logging in and getting the access token
+	public FacebookEngine(String seed, Date startDate, Date endDate, boolean extendedSearch) throws FailingHttpStatusCodeException, MalformedURLException, IOException, URISyntaxException
+	{	super(seed,startDate,endDate,extendedSearch);
+		
+		// logging in and getting the access token
 		String login = KeyHandler.KEYS.get(USER_LOGIN);
 		String pwd = KeyHandler.KEYS.get(USER_PASSWORD);	
 		String accessToken = getAccessToken(login,pwd);
@@ -277,11 +291,24 @@ public class FacebookEngine extends AbstractSocialEngine
 	// SEARCH		/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
 	@Override
-	public List<SocialSearchResult> search(String keywords, Date startDate, Date endDate, boolean extendedSearch)  throws IOException
+	protected List<SocialSearchResult> search(String keywords)  throws IOException
 	{	logger.log("Searching Facebook");
 		logger.increaseOffset();
 		List<SocialSearchResult> result = new ArrayList<SocialSearchResult>();
 		
+		// search parameters
+		logger.log("Keywords: "+keywords);
+		String name;
+		if(seed==null)
+		{	logger.log("No seed specified >> using the kewords to get the initial page");
+			name = keywords;
+		}
+		else
+		{	logger.log("Search starting from the page of "+seed);
+			name = seed;
+		}
+		
+		// setup API parameters
 		Reading reading = null;
 		if(startDate!=null && endDate!=null)
 		{	reading = new Reading();
@@ -296,11 +323,11 @@ public class FacebookEngine extends AbstractSocialEngine
 			// look for the name in the predefined ids
 			logger.log("Look up the name to find a predefined FB id:");
 			logger.increaseOffset();
-			{	String pageId = PAGE_IDS.get(keywords);
+			{	String pageId = PAGE_IDS.get(name);
 				if(pageId!=null)
 					ids.add(pageId);
 				logger.log("Page id: "+pageId);
-				String userId = USER_IDS.get(keywords);
+				String userId = USER_IDS.get(name);
 				if(userId!=null)
 					ids.add(userId);
 				logger.log("User id: "+userId);
@@ -309,8 +336,8 @@ public class FacebookEngine extends AbstractSocialEngine
 			
 			// if there is no predefined id for this name, we look it up on facebook
 			if(ids.isEmpty())
-			{	logger.log("No predefined id found for \""+keywords+"\" >> we look it up through FB");
-				String id = getPageOrUserId(keywords,facebook);
+			{	logger.log("No predefined id found for \""+name+"\" >> we look it up through FB");
+				String id = getPageOrUserId(name,facebook);
 				if(id==null)
 					logger.log("We could not find any id for the targeted person");
 				else
@@ -319,7 +346,7 @@ public class FacebookEngine extends AbstractSocialEngine
 			
 			// process all remaining pages or user ids
 			for(String id: ids)
-			{	List<SocialSearchResult> res = retrieveContent(keywords, id, facebook, reading);
+			{	List<SocialSearchResult> res = retrieveContent(name, id, facebook, reading);
 				result.addAll(res);
 			}
 		} 
@@ -430,10 +457,10 @@ public class FacebookEngine extends AbstractSocialEngine
 	 * The direct comments are also retrieved, as well as the posts published by their commenters on
 	 * the same period.
 	 *  
-	 * @param keywords
-	 * 		Name of the targeted person.
+	 * @param name
+	 * 		Name of the seed person.
 	 * @param id
-	 * 		Id of the targeted person.
+	 * 		Id of the seed person.
 	 * @param facebook
 	 * 		Current instance of the FB search engine.
 	 * @param reading
@@ -445,7 +472,7 @@ public class FacebookEngine extends AbstractSocialEngine
 	 * @throws FacebookException
 	 * 		Problem while accessing the FB API.
 	 */
-	private List<SocialSearchResult> retrieveContent(String keywords, String id, Facebook facebook, Reading reading) throws FacebookException
+	private List<SocialSearchResult> retrieveContent(String name, String id, Facebook facebook, Reading reading) throws FacebookException
 	{	logger.log("Retrieving the content for id "+id);
 		logger.increaseOffset();
 		List<SocialSearchResult> result = new ArrayList<SocialSearchResult>();
@@ -469,7 +496,7 @@ public class FacebookEngine extends AbstractSocialEngine
 			Category auth = post.getFrom();
 			String authName;
 			if(auth==null)
-				authName = keywords;
+				authName = name;	//TODO should remove this parameter name, we shouldn't need it
 			else
 				authName = auth.getName();
 			// create the post object
@@ -742,7 +769,7 @@ public class FacebookEngine extends AbstractSocialEngine
 	public static void main(String[] args) throws Exception
 	{	Date startDate = new GregorianCalendar(2017,4,7).getTime();//new GregorianCalendar(2017,3,6).getTime();//null;
 		Date endDate = new GregorianCalendar(2017,4,8).getTime();//new GregorianCalendar(2017,3,10).getTime();//null;
-		FacebookEngine fe = new FacebookEngine();
-		fe.search("François Hollande", startDate, endDate, true);
+		FacebookEngine fe = new FacebookEngine(null, startDate, endDate, true);
+		fe.search("François Hollande");
 	}
 }
