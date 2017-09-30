@@ -617,34 +617,39 @@ if(line.contains("marseillan"))
 	 * @throws Exception
 	 * 		Something went wrong during the search. 
 	 */
+	@SuppressWarnings("unchecked")
 	private static void testExtractor() throws Exception
 	{	logger.setName("Extraction");
 		Extractor extractor = new Extractor();
 		
 		DateFormat df = new SimpleDateFormat("yyyyMMdd");
 		
-		String params[][] = {
-			{"Anne Hidalgo", "Hidalgo", null},
-//			{"Anne Hidalgo", "Hidalgo", "http://www.leparisien.fr/"},
-//			{"Cécile Helle", "Helle", null},
-//			{"Cécile Helle", "Helle", "http://www.laprovence.com/"},
-//			{"Martine Aubry", "Aubry", null},
-//			{"Martine Aubry", "Aubry", "http://www.lavoixdunord.fr/"}
-//			{"Roland Ries", "Ries", null}
+		List<List<Object>> params = Arrays.asList
+		(	Arrays.asList("Anne Hidalgo", "Hidalgo", Arrays.asList(null, "http://www.leparisien.fr/")),
+			Arrays.asList("Cécile Helle", "Helle", Arrays.asList("http://www.laprovence.com/")),
+			Arrays.asList("Martine Aubry", "Aubry", Arrays.asList("http://www.lavoixdunord.fr/")),
+			Arrays.asList("Roland Ries", "Ries", null),
 			
-//			{"Bruno Julliard", "Julliard", null},
-//			{"Jean-Louis Missika", "Missika", null},
-//			{"Ian Brossat", "Brossat", null},
-//			{"Christophe Najdovski", "Najdovski", null},
-//			{"Nathalie Kosciusko-Morizet", "Kosciusko-Morizet", null},
-//			{"Claude Goasguen", "Goasguen", null},
-//			{"Brigitte Kuster", "Kuster", null}
-		};
+			Arrays.asList("Bruno Julliard", "Julliard", null),
+			Arrays.asList("Jean-Louis Missika", "Missika", null),
+			Arrays.asList("Ian Brossat", "Brossat", null),
+			Arrays.asList("Christophe Najdovski", "Najdovski", null),
+			Arrays.asList("Nathalie Kosciusko-Morizet", "Kosciusko-Morizet", null),
+			Arrays.asList("Claude Goasguen", "Goasguen", null),
+			Arrays.asList("Brigitte Kuster", "Kuster", null)
+		);
 		
-		for(String[] param: params)
-		{	String keywords = param[0];
-			String compulsoryExpression = param[1];
-			String website = param[2];
+		for(List<Object> param: params)
+		{	String keywords = (String)param.get(0);
+			String compulsoryExpression = (String)param.get(1);
+			
+			List<String> websites;
+			if(param.get(2)==null)
+			{	websites = new ArrayList<String>();
+				websites.add(null);
+			}
+			else
+				websites = (List<String>)param.get(2);
 			
 			Date startDate = df.parse("20170306");
 			Date endDate = df.parse("20170312");
@@ -654,13 +659,16 @@ if(line.contains("marseillan"))
 			
 			logger.log("Processing "+keywords);
 			logger.increaseOffset();
-				extractor.performExtraction(keywords, website, startDate, endDate, searchDate, compulsoryExpression, extendedSocialSearch, language);
+				extractor.performExtraction(keywords, websites, startDate, endDate, searchDate, compulsoryExpression, extendedSocialSearch, language);
 			logger.decreaseOffset();
 		}
 	}
 }
 
-// TODO intégrer recherche agnostique et dans des sites web
+// TODO intégrer recherche agnostique et dans des sites web 
+//      >> manque encore l'intégration des différents rangs dans les 2 exportations 
+//      >> à faire après instanciation
+// TODO instancier carrément les moteurs de recherche, ce qui permettra d'avoir des paramétrages différents
 // TODO Garder les entités apparaissant dans tous les articles de leur cluster
 // TODO Faire un clustering global FB+web
 // TODO Filtrer par date quand c'est possible, pour voir si ça améliore le beans

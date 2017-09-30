@@ -25,6 +25,7 @@ import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Date;
@@ -102,8 +103,8 @@ public class Extractor
 	 * 
 	 * @param keywords
 	 * 		Person we want to look up.
-	 * @param website
-	 * 		Target site, or {@ode null} to search the whole Web.
+	 * @param websites
+	 * 		List of targeted sites, including {@ode null} to search the whole Web.
 	 * @param startDate
 	 * 		Start of the period we want to consider, 
 	 * 		or {@code null} for no constraint.
@@ -136,34 +137,32 @@ public class Extractor
 	 * @throws ProcessorException 
 	 * 		Problem while detecting the entity mentions.
 	 */
-	public void performExtraction(String keywords, String website, Date startDate, Date endDate, boolean searchDate, String compulsoryExpression, boolean extendedSocialSearch, ArticleLanguage language) throws IOException, ReaderException, ParseException, SAXException, ProcessorException
+	public void performExtraction(String keywords, List<String> websites, Date startDate, Date endDate, boolean searchDate, String compulsoryExpression, boolean extendedSocialSearch, ArticleLanguage language) throws IOException, ReaderException, ParseException, SAXException, ProcessorException
 	{	logger.log("Starting the information extraction");
 		logger.increaseOffset();
 		
 		// setup the output folder
 		String outFolder = keywords.replace(' ','_');
-		if(website!=null)
-		{	URL url = new URL(website);
-			String host = url.getHost();
-			outFolder = outFolder + "_" + host;
+		if(websites.size()==1)
+		{	String website = websites.get(0);
+			if(websites.get(0)!=null)
+			{	URL url = new URL(website);
+				String host = url.getHost();
+				outFolder = outFolder + "_" + host;
+			}
 		}
 		FileNames.setOutputFolder(outFolder);
 		
-//		// perform the Web search
-//		logger.log("Performing the Web search");
-//		WebSearchResults webRes = performWebExtraction(keywords, website, startDate, endDate, searchDate, compulsoryExpression, language);
+		// perform the Web search
+		logger.log("Performing the Web search");
+		WebSearchResults webRes = performWebExtraction(keywords, websites, startDate, endDate, searchDate, compulsoryExpression, language);
 		
 		// perform the social search
-		SocialSearchResults socialRes = null;
-		if(website==null)
-		{	logger.log("Performing the social media search");
-			socialRes = performSocialExtraction(keywords, startDate, endDate, compulsoryExpression, extendedSocialSearch, language);
-		}
-		else
-			logger.log("Skipping the social search, since the focus is on a specific website ("+website+")");
+		logger.log("Performing the social media search");
+		SocialSearchResults socialRes = performSocialExtraction(keywords, startDate, endDate, compulsoryExpression, extendedSocialSearch, language);
 		
-//		// merge both results in a single file
-//		exportCombinedResultsAsCsv(webRes, socialRes);
+		// merge both results in a single file
+		exportCombinedResultsAsCsv(webRes, socialRes);
 		
 		logger.decreaseOffset();
 		logger.log("Information extraction over");
@@ -204,8 +203,8 @@ public class Extractor
 	 * 
 	 * @param keywords
 	 * 		Person we want to look for.
-	 * @param website
-	 * 		Target site, or {@ode null} to search the whole Web.
+	 * @param websites
+	 * 		List of targeted sites, including {@ode null} to search the whole Web.
 	 * @param startDate
 	 * 		Start of the period we want to consider, 
 	 * 		or {@code null} for no constraint.
@@ -222,8 +221,9 @@ public class Extractor
 	 * @throws IOException
 	 * 		Problem accessing the Web.
 	 */
-	private WebSearchResults performWebSearch(String keywords, String website, Date startDate, Date endDate, boolean searchDate) throws IOException
-	{	boolean cachedSearch = true; //TODO for debug
+	private WebSearchResults performWebSearch(String keywords, List<String> websites, Date startDate, Date endDate, boolean searchDate) throws IOException
+	{	WebSearchResults result = new WebSearchResults();
+		boolean cachedSearch = true; //TODO for debug
 		
 		// log search parameters
 		logger.log("Parameters:");
@@ -235,6 +235,8 @@ public class Extractor
 			if(!searchDate)
 				txt = txt + "(dates are ignored here, because the search is not strict)";
 			logger.log(txt);
+			logger.log("websites=");
+			logger.log(websites);
 		logger.decreaseOffset();
 		
 		// nullify dates if the search is not strict
@@ -246,16 +248,28 @@ public class Extractor
 		// apply each search engine
 		logger.log("Applying iteratively each search engine");
 		logger.increaseOffset();
-			WebSearchResults result = new WebSearchResults();
-			
-			for(AbstractWebEngine engine: webEngines)
-			{	Map<String,URL> urls;
+		for(AbstractWebEngine engine: webEngines)
+		{	logger.log("Processing search engine "+engine);
+			logger.increaseOffset();
+			// deal with each website in the specified list
+			for(String website: websites)
+			{	if(website==null)
+					logger.log("Searching the whose Web");
+				else
+					logger.log("Searching specifically Website "+website);
+				logger.increaseOffset();
+				Map<String,URL> urls;
 				
-				// possibly use cached results
+				// setup cache file path
 				String cacheFilePath = FileNames.FO_WEB_SEARCH_RESULTS + File.separator + engine.getName();
 				File cacheFolder = new File(cacheFilePath);
 				cacheFolder.mkdirs();
-				cacheFilePath = cacheFilePath + File.separator + FileNames.FI_SEARCH_RESULTS;
+				cacheFilePath = cacheFilePath + File.separator;
+				if(website!=null)
+					cacheFilePath = cacheFilePath + URLEncoder.encode(website,"UTF-8");
+				cacheFilePath = cacheFilePath + FileNames.FI_SEARCH_RESULTS;
+				
+				// possibly use cached results
 				File cacheFile = new File(cacheFilePath);
 				if(cachedSearch && cacheFile.exists())
 				{	logger.log("Loading the previous search results from file "+cacheFilePath);
@@ -272,7 +286,7 @@ public class Extractor
 					logger.log("Number of URLs loaded: "+urls.size());
 				}
 				
-				// perform the search
+				// otherwise, perform the search and possibly cache results
 				else
 				{	logger.log("Applying search engine "+engine.getName());
 					logger.increaseOffset();
@@ -292,7 +306,7 @@ public class Extractor
 						}
 					logger.decreaseOffset();
 				}
-				
+			
 //				// sort the URL keys
 //				TreeSet<String> keys = new TreeSet<String>(KEY_COMPARATOR);
 //				keys.addAll(urls.keySet());
@@ -306,6 +320,8 @@ public class Extractor
 					result.addResult(urlStr, engineName, rank);
 				}
 			}
+			logger.decreaseOffset();
+		}
 		logger.decreaseOffset();
 		logger.log("Total number of pages found: "+result.size());
 		
@@ -320,8 +336,8 @@ public class Extractor
 	 * 
 	 * @param keywords
 	 * 		Person we want to look up.
-	 * @param website
-	 * 		Target site, or {@ode null} to search the whole Web.
+	 * @param websites
+	 * 		List of targeted sites, including {@ode null} to search the whole Web.
 	 * @param startDate
 	 * 		Start of the period we want to consider, 
 	 * 		or {@code null} for no constraint.
@@ -352,12 +368,12 @@ public class Extractor
 	 * @throws ProcessorException 
 	 * 		Problem while detecting the entity mentions.
 	 */
-	private WebSearchResults performWebExtraction(String keywords, String website, Date startDate, Date endDate, boolean searchDate, String compulsoryExpression, ArticleLanguage language) throws IOException, ReaderException, ParseException, SAXException, ProcessorException
+	private WebSearchResults performWebExtraction(String keywords, List<String> websites, Date startDate, Date endDate, boolean searchDate, String compulsoryExpression, ArticleLanguage language) throws IOException, ReaderException, ParseException, SAXException, ProcessorException
 	{	logger.log("Starting the web extraction");
 		logger.increaseOffset();
 		
 		// perform the Web search
-		WebSearchResults results = performWebSearch(keywords, website, startDate, endDate, searchDate);
+		WebSearchResults results = performWebSearch(keywords, websites, startDate, endDate, searchDate);
 
 		// filter Web pages (remove PDFs, and so on)
 		results.filterByUrl();
@@ -566,32 +582,32 @@ public class Extractor
 		results.filterByContent(compulsoryExpression,language);
 		results.exportAsCsv(FileNames.FI_SEARCH_RESULTS_CONTENT);
 		
-//		// detect the entity mentions
-//		results.detectMentions(recognizer);
-//		
-//		// possibly filter the articles depending on the entities
-//// unnecessary, unless we add other entity-based constraints than dates		
-////		results.filterByEntity(null,null,true);
-////		results.exportAsCsv(FileNames.FI_SEARCH_RESULTS_ENTITY);
-//		
-//		// displays the remaining articles with their mentions	//TODO maybe get the entities instead of the mention, eventually?
-//		results.displayRemainingMentions(); //TODO for debug only
-//		
-//		// cluster the article by content
-//		results.clusterArticles(language);
-//		results.exportAsCsv(FileNames.FI_SEARCH_RESULTS_CLUSTERS);
-//		
-//		// extract events from the remaining articles and mentions
-//		boolean bySentence[] = {false,true};
-//		for(boolean bs: bySentence)
-//		{	results.extractEvents(bs);
-//			// export the events as a table
-//			results.exportEvents(bs, false);
-//			// try to group similar events together
-//			results.clusterEvents();
-//			// export the resulting groups as a table
-//			results.exportEvents(bs, true);
-//		}
+		// detect the entity mentions
+		results.detectMentions(recognizer);
+		
+		// possibly filter the articles depending on the entities
+// unnecessary, unless we add other entity-based constraints than dates		
+//		results.filterByEntity(null,null,true);
+//		results.exportAsCsv(FileNames.FI_SEARCH_RESULTS_ENTITY);
+		
+		// displays the remaining articles with their mentions	//TODO maybe get the entities instead of the mention, eventually?
+		results.displayRemainingMentions(); //TODO for debug only
+		
+		// cluster the article by content
+		results.clusterArticles(language);
+		results.exportAsCsv(FileNames.FI_SEARCH_RESULTS_CLUSTERS);
+		
+		// extract events from the remaining articles and mentions
+		boolean bySentence[] = {false,true};
+		for(boolean bs: bySentence)
+		{	results.extractEvents(bs);
+			// export the events as a table
+			results.exportEvents(bs, false);
+			// try to group similar events together
+			results.clusterEvents();
+			// export the resulting groups as a table
+			results.exportEvents(bs, true);
+		}
 		
 		logger.decreaseOffset();
 		logger.log("Social media extraction over");
