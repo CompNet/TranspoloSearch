@@ -111,11 +111,22 @@ public class SocialSearchResults extends AbstractSearchResults<SocialSearchResul
 		String cacheFilePath = folder + File.separator + fileName;
 		logger.log("Recording in CSV file \""+cacheFilePath+"\"");
 		
+		// setup colon names
+		List<String> cols = Arrays.asList(COL_TITLE, COL_STATUS, COL_PUB_DATE, 
+				COL_LIKES, COL_SHARES, COL_COMMENTS,
+				COL_AUTHORS, COL_ORIGINAL, COL_ENGINE, COL_LENGTH, COL_ARTICLE_CLUSTER
+			);
+
 		// open file and write header
 		PrintWriter pw = FileTools.openTextFileWrite(cacheFilePath,"UTF-8");
-		{	String line = "\""+COL_TITLE+"\",\""+COL_STATUS+"\",\""+COL_PUB_DATE+"\",\""+COL_AUTHORS+"\",\""+COL_ORIGINAL+"\",\""+COL_ENGINE+"\",\""+COL_LENGTH+"\",\""+COL_ARTICLE_CLUSTER+"\"";
-			pw.println(line);
+		Iterator<String> it = cols.iterator();
+		while(it.hasNext())
+		{	String col = it.next();
+			pw.print("\""+col+"\"");
+			if(it.hasNext())
+				pw.print(",");
 		}
+		pw.println();
 		
 		// write data and close file
 		for(SocialSearchResult result: results.values())
@@ -139,6 +150,20 @@ public class SocialSearchResults extends AbstractSearchResults<SocialSearchResul
 			{	String dateStr = df.format(result.date);
 				line = line + "\"" + dateStr + "\"";
 			}
+
+			// likes
+			line = line + ",";
+			if(result.likes!=null)
+				line = line + "\"" + result.likes + "\"";
+			
+			// shares
+			line = line + ",";
+			if(result.shares!=null)
+				line = line + "\"" + result.shares + "\"";
+			
+			// comments
+			line = line + ",";
+			line = line + "\"" + result.comments.size() + "\"";
 			
 			// author
 			line = line + ",";
@@ -224,8 +249,8 @@ public class SocialSearchResults extends AbstractSearchResults<SocialSearchResul
 			PrintWriter pw = FileTools.openTextFileWrite(filePath, "UTF-8");
 			
 			// write header
-			List<String> startCols = Arrays.asList(COL_COMMENTS);
-			List<String> endCols = Arrays.asList(COL_TITLE, COL_URL, COL_LENGTH, COL_PUB_DATE, 
+			List<String> startCols = Arrays.asList(COL_NOTES);
+			List<String> endCols = Arrays.asList(COL_TITLE, COL_URL, COL_LENGTH, COL_PUB_DATE, COL_LIKES, COL_SHARES, COL_COMMENTS, 
 					COL_AUTHORS, COL_SOCIAL_ENGINE, COL_STATUS, COL_ARTICLE_CLUSTER, COL_EVENT_RANK, COL_EVENT_DATES,
 					COL_EVENT_LOCATIONS, COL_EVENT_PERSONS, COL_EVENT_ORGANIZATIONS, COL_EVENT_FUNCTIONS,
 					COL_EVENT_PRODUCTIONS, COL_EVENT_MEETINGS
@@ -238,7 +263,7 @@ public class SocialSearchResults extends AbstractSearchResults<SocialSearchResul
 			Iterator<String> it = cols.iterator();
 			while(it.hasNext())
 			{	String col = it.next();
-				pw.print(col);
+				pw.print("\""+col+"\"");
 				if(it.hasNext())
 					pw.print(",");
 			}

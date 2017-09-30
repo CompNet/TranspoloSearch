@@ -90,31 +90,43 @@ public class SocialSearchResult extends AbstractSearchResult
 	// ORIGINAL		/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
 	/** Whether the post was written by the targeted author, or by one of the commenters */
-	public boolean original;
+	public boolean original = false;
 	
 	/////////////////////////////////////////////////////////////////
 	// CONTENT		/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
 	/** Textual content of this post */
-	public String content;
+	public String content = null;
 	
 	/////////////////////////////////////////////////////////////////
 	// AUTHOR		/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
 	/** Name of the author of this post */
-	public String author;
+	public String author = null;
 	
 	/////////////////////////////////////////////////////////////////
 	// DATE			/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
 	/** Publication date of this post */
-	public Date date;
+	public Date date = null;
 	
 	/////////////////////////////////////////////////////////////////
 	// SOURCE		/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
 	/** Name of the social media on which this post has been published */
-	public String source;
+	public String source = null;
+	
+	/////////////////////////////////////////////////////////////////
+	// LIKES		/////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////
+	/** Number of likes for this post */
+	public Integer likes = null;
+	
+	/////////////////////////////////////////////////////////////////
+	// SHARES		/////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////
+	/** Number of shares for this post */
+	public Integer shares = null;
 	
 	/////////////////////////////////////////////////////////////////
 	// RANK			/////////////////////////////////////////////////
@@ -138,8 +150,9 @@ public class SocialSearchResult extends AbstractSearchResult
 	// ARTICLE		/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
 	/**
-	 * Convert this post under the form of a proper {@code Article}. 
-	 * The comments are added as paragraphs after the actual post content.
+	 * Converts this post under the form of a proper {@code Article}. 
+	 * The comments can be added as paragraphs after the actual post content
+	 * depending on the {@code includeComments} parameter.
 	 * 
 	 * @param includeComments 
 	 * 		Whether ({@code true}) or not ({@code false}) to include comments 
@@ -224,6 +237,14 @@ public class SocialSearchResult extends AbstractSearchResult
 		writer.println(DATE_FORMAT.format(date));
 		writer.println(source);
 		writer.println(original);
+		if(likes!=null)
+			writer.println(likes);
+		else
+			writer.println();
+		if(shares!=null)
+			writer.println(shares);
+		else
+			writer.println();
 		writer.println(content);
 		if(url==null)
 			writer.println("N/A");
@@ -255,6 +276,14 @@ public class SocialSearchResult extends AbstractSearchResult
 			String source = scanner.nextLine().trim();
 			String originalStr = scanner.nextLine().trim();
 			boolean original = Boolean.parseBoolean(originalStr);
+			String likesStr = scanner.nextLine().trim();
+			Integer likes = null;
+			if(!likesStr.isEmpty())
+				likes = new Integer(likesStr);
+			String sharesStr = scanner.nextLine().trim();
+			Integer shares = null;
+			if(!sharesStr.isEmpty())
+				shares = new Integer(sharesStr);
 			String content = scanner.nextLine().trim();
 			result = new SocialSearchResult(id, author, date, source, content, original);
 			String urlStr = scanner.nextLine().trim();
@@ -270,6 +299,10 @@ public class SocialSearchResult extends AbstractSearchResult
 			{	SocialSearchResult comment = readFromText(scanner);
 				result.comments.add(comment);
 			}
+			
+			// add its share/like counts
+			result.likes = likes;
+			result.shares = shares;
 		}
 		catch(ParseException e)
 		{	e.printStackTrace();
@@ -316,7 +349,7 @@ public class SocialSearchResult extends AbstractSearchResult
 			map.put(AbstractSearchResults.COL_AUTHORS,"\""+article.getAuthors().get(0)+"\"");
 			map.put(AbstractSearchResults.COL_ORIGINAL,"\""+original+"\"");
 			map.put(AbstractSearchResults.COL_STATUS,"\""+status+"\"");
-			map.put(AbstractSearchResults.COL_COMMENTS,"");
+			map.put(AbstractSearchResults.COL_NOTES,"");
 			
 			// publication date
 			java.util.Date pubDate = article.getPublishingDate();
@@ -329,10 +362,19 @@ public class SocialSearchResult extends AbstractSearchResult
 			if(source!=null)
 				map.put(AbstractSearchResults.COL_SOCIAL_ENGINE,source);
 			
+			// likes, shares, and so on
+			int commentNbr = comments.size();
+			map.put(WebSearchResults.COL_COMMENTS,Integer.toString(commentNbr));
+			if(likes!=null)
+				map.put(WebSearchResults.COL_LIKES,Integer.toString(likes));
+			if(shares!=null)
+				map.put(WebSearchResults.COL_SHARES,Integer.toString(shares));
+			
 			// possibly the article cluster
 			if(cluster!=null)
 				map.put(WebSearchResults.COL_ARTICLE_CLUSTER,cluster);
 			
+			// event
 			if(event!=null)
 			{	map.put(AbstractSearchResults.COL_EVENT_RANK,Integer.toString(rank));
 				

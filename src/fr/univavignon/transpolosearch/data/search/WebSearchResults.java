@@ -184,13 +184,23 @@ if(url.contains("cookies"))
 		String cacheFilePath = folder + File.separator + fileName;
 		logger.log("Recording in CSV file \""+cacheFilePath+"\"");
 		
+		// setup colon names
+		List<String> startCols = Arrays.asList(COL_TITLE, COL_URL, COL_STATUS, COL_LENGTH, COL_ARTICLE_CLUSTER);
+		List<String> cols = new ArrayList<String>();
+		cols.addAll(startCols);
+		for(String engineName: engineNames)
+			cols.add(engineName);
+		
 		// open file and write header
 		PrintWriter pw = FileTools.openTextFileWrite(cacheFilePath,"UTF-8");
-		{	String line = "\""+COL_TITLE+"\",\""+COL_URL+"\",\""+COL_STATUS+"\",\""+COL_LENGTH+"\",\""+COL_ARTICLE_CLUSTER+"\"";
-			for(String engineName: engineNames)
-				line = line + "," + engineName;
-			pw.println(line);
+		Iterator<String> it = cols.iterator();
+		while(it.hasNext())
+		{	String col = it.next();
+			pw.print("\""+col+"\"");
+			if(it.hasNext())
+				pw.print(",");
 		}
+		pw.println();
 		
 		// write data and close file
 		for(WebSearchResult result: results.values())
@@ -289,7 +299,7 @@ if(url.contains("cookies"))
 			PrintWriter pw = FileTools.openTextFileWrite(filePath, "UTF-8");
 			
 			// write header
-			List<String> startCols = Arrays.asList(COL_COMMENTS);
+			List<String> startCols = Arrays.asList(COL_NOTES);
 			List<String> midCols = Arrays.asList(COL_TITLE, COL_URL, COL_LENGTH, COL_PUB_DATE, COL_AUTHORS);
 			List<String> endCols = Arrays.asList(COL_STATUS, COL_ARTICLE_CLUSTER, COL_EVENT_RANK, COL_EVENT_DATES,
 					COL_EVENT_LOCATIONS, COL_EVENT_PERSONS, COL_EVENT_ORGANIZATIONS, COL_EVENT_FUNCTIONS,
@@ -306,7 +316,7 @@ if(url.contains("cookies"))
 			Iterator<String> it = cols.iterator();
 			while(it.hasNext())
 			{	String col = it.next();
-				pw.print(col);
+				pw.print("\""+col+"\"");
 				if(it.hasNext())
 					pw.print(",");
 			}

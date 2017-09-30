@@ -676,10 +676,16 @@ if(result instanceof WebSearchResult && ((WebSearchResult)result).url.equalsIgno
 	public static final String COL_EVENT_PRODUCTIONS = "Production";
 	/** Meetings associated to the event */
 	public static final String COL_EVENT_MEETINGS = "Meetings";
-	/** Misc comments */
-	public static final String COL_COMMENTS = "Comments";
+	/** Misc comments and notes */
+	public static final String COL_NOTES = "Notes";
 	/** Whether a social post was written by the targeted person, or not */
 	public static final String COL_ORIGINAL = "Original post";
+	/** Column name for the number of likes of a social search result */
+	public static final String COL_LIKES = "Likes";
+	/** Column name for the number of shares of a social search result */
+	public static final String COL_SHARES = "Shares";
+	/** Column name for the number of comments of a result */
+	public static final String COL_COMMENTS = "Comments";
 	/** ID of the cluster of events */
 	public static final String COL_EVENT_CLUSTER = "Event Cluster";
 	/** ID of the cluster of articles */

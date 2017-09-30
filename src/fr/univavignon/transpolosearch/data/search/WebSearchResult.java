@@ -211,7 +211,7 @@ public class WebSearchResult extends AbstractSearchResult
 			map.put(WebSearchResults.COL_URL,"\""+article.getUrl().toString()+"\"");
 			map.put(WebSearchResults.COL_LENGTH,"\""+article.getRawText().length()+"\"");
 			map.put(WebSearchResults.COL_STATUS,status);
-			map.put(WebSearchResults.COL_COMMENTS,"");
+			map.put(WebSearchResults.COL_NOTES,"");
 			
 			// publication date
 			java.util.Date pubDate = article.getPublishingDate();

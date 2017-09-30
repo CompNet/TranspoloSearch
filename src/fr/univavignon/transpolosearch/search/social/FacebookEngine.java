@@ -34,6 +34,7 @@ import facebook4j.PagableList;
 import facebook4j.Page;
 import facebook4j.Paging;
 import facebook4j.Post;
+import facebook4j.Reaction;
 import facebook4j.Reading;
 import facebook4j.ResponseList;
 import facebook4j.User;
@@ -316,7 +317,7 @@ public class FacebookEngine extends AbstractSocialEngine
 					ids.add(id);
 			}
 			
-			// process all remaining page or user id
+			// process all remaining pages or user ids
 			for(String id: ids)
 			{	List<SocialSearchResult> res = retrieveContent(keywords, id, facebook, reading);
 				result.addAll(res);
@@ -476,6 +477,20 @@ public class FacebookEngine extends AbstractSocialEngine
 			p.url = post.getLink();
 			result.add(p);
 			
+			// get the number of likes
+			Reading rdg = new Reading();
+		    rdg.limit(0);
+			rdg.summary();
+			ResponseList<Reaction> listL = facebook.getPostReactions(ctntId, rdg);
+			int likes = listL.getSummary().getTotalCount();
+			p.likes = likes;
+			// get the number of shares
+			rdg.fields("shares");
+			Post tempPost = facebook.getPost(ctntId, rdg);
+			int shares = tempPost.getSharesCount();
+			p.shares = shares;
+			logger.log("Found "+likes+" likes (and variants) and "+shares+" shares");
+			
 			// retrieve the comments associated to the message
 			List<Comment> comments = getComments(post, facebook, reading);
 			// add them to the current post
@@ -491,7 +506,7 @@ public class FacebookEngine extends AbstractSocialEngine
 				// create the post object
 				SocialSearchResult com = new SocialSearchResult(ctntId, authName, date, getName(), msg, false);
 				p.comments.add(com);
-				// add to the comment author to the list
+				// add the comment author to the list
 				String authId = auth.getId();
 				authorIds.add(authId);
 				authorNames.put(authId, authName);
@@ -511,21 +526,37 @@ public class FacebookEngine extends AbstractSocialEngine
 				String msg = post.getMessage();
 				msg = msg.replaceAll("\\s+", " ");
 				logger.log("Message: \""+msg+"\"");
+				
 				// get the meta-data
 				String ctntId = post.getId();
 				Date date = post.getCreatedTime();
 				Category auth = post.getFrom();
 				String authName;
 				if(auth==null)
-					authName = authorNames.get(authId);
-				if(auth==null)
-					authName = "N/A";
+				{	authName = authorNames.get(authId);
+					if(authName==null)
+						authName = "N/A";
+				}
 				else
 					authName = auth.getName();
 				// create the post object
 				SocialSearchResult p = new SocialSearchResult(ctntId, authName, date, getName(), msg, false);
 				p.url = post.getLink();
 				result.add(p);
+				
+				// get the number of likes
+				Reading rdg = new Reading();
+			    rdg.limit(0);
+				rdg.summary();
+				ResponseList<Reaction> listL = facebook.getPostReactions(ctntId, rdg);
+				int likes = listL.getSummary().getTotalCount();
+				p.likes = likes;
+				// get the number of shares
+				rdg.fields("shares");
+				Post tempPost = facebook.getPost(ctntId, rdg);
+				Integer shares = tempPost.getSharesCount();
+				p.shares = shares;
+				logger.log("Found "+likes+" likes (and variants) and "+shares+" shares");
 				
 				// TODO we do not get the comments, this time (we could if needed)
 			}
@@ -610,7 +641,7 @@ public class FacebookEngine extends AbstractSocialEngine
 		List<Comment> result = new ArrayList<Comment>();
 		Paging<Comment> paging;
 		
-		// get the first page of comments
+		// iteratively get each page of comments
         int i = 1;
 //        PagableList<Comment> commentPage = post.getComments();
         String postId = post.getId();
@@ -645,6 +676,57 @@ public class FacebookEngine extends AbstractSocialEngine
 		logger.decreaseOffset();
 	    return result;
 	}
+	
+//	/**
+//	 * Gets the total number of likes for the specified post.
+//	 *  
+//	 * @param id
+//	 * 		Id of the page or user of of interest.
+//	 * @param facebook
+//	 * 		Current Facebook instance.
+//	 * @param reading
+//	 * 		Graph API reading options (in our case: dates).
+//	 * @return
+//	 * 		The list of all posts associated to the page or user.
+//	 * 
+//	 * @throws FacebookException
+//	 * 		Problem while accessing the comments.
+//	 */
+//	private List<Post> getPosts(String id, Facebook facebook, Reading reading) throws FacebookException
+//	{	logger.log("Retrieving the posts of the FB page/user of id "+id);
+//		logger.increaseOffset();
+//		
+//		List<Post> result = new ArrayList<Post>();
+//		Paging<Post> paging;
+//		
+//		int i = 1;
+//		ResponseList<Post> postPage = facebook.getPosts(id,reading);
+//        do 
+//        {	logger.log("Processing post page #"+i);
+//			logger.increaseOffset();
+//        	i++;
+//        	
+//        	// add the post of the current page to the overall list
+//        	logger.log("Found "+postPage.size()+" posts in the current page");
+//        	for(Post post: postPage)
+//        		logger.log(post.getCreatedTime()+": "+post.getMessage());
+//        	result.addAll(postPage);
+//        	
+//        	// try to get the next page of posts
+//			paging = postPage.getPaging();
+//            postPage = null;
+//            if(paging!=null)
+//            {	logger.log("Getting the next page of posts");
+//            	postPage = facebook.fetchNext(paging);
+//            }
+//			logger.decreaseOffset();
+//        } 
+//        while(postPage!= null);
+//        
+//		logger.log("Total posts found for the targeted page/user: "+result.size());
+//		logger.decreaseOffset();
+//		return result;
+//	}
 	
 	/////////////////////////////////////////////////////////////////
 	// TEST			/////////////////////////////////////////////////

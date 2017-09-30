@@ -626,11 +626,11 @@ if(line.contains("marseillan"))
 		String params[][] = {
 			{"Anne Hidalgo", "Hidalgo", null},
 //			{"Anne Hidalgo", "Hidalgo", "http://www.leparisien.fr/"},
-			{"Cécile Helle", "Helle", null},
+//			{"Cécile Helle", "Helle", null},
 //			{"Cécile Helle", "Helle", "http://www.laprovence.com/"},
-			{"Martine Aubry", "Aubry", null},
+//			{"Martine Aubry", "Aubry", null},
 //			{"Martine Aubry", "Aubry", "http://www.lavoixdunord.fr/"}
-			{"Roland Ries", "Ries", null}
+//			{"Roland Ries", "Ries", null}
 			
 //			{"Bruno Julliard", "Julliard", null},
 //			{"Jean-Louis Missika", "Missika", null},
@@ -660,7 +660,7 @@ if(line.contains("marseillan"))
 	}
 }
 
-// TODO médias sociaux: rajouter dans le csv le nombre de commentaires associés à chaque post + likes + shares
+// TODO intégrer recherche agnostique et dans des sites web
 // TODO Garder les entités apparaissant dans tous les articles de leur cluster
 // TODO Faire un clustering global FB+web
 // TODO Filtrer par date quand c'est possible, pour voir si ça améliore le beans
