@@ -222,10 +222,18 @@ public class YandexEngine extends AbstractWebEngine
 					for(Element docElt: docElts)
 					{	Element urlElt = docElt.getChild("url");
 						String urlStr = urlElt.getTextTrim();
-						logger.log("Adding URL: "+urlStr);
-						URL val = new URL(urlStr);
-						result.put(Integer.toString(resIdx),val);
-						resIdx++;
+						logger.log("Processing URL: "+urlStr);
+						logger.increaseOffset();
+							URL val = new URL(urlStr);
+							if(result.containsValue(val))
+								logger.log("URL already in the result list (was returned several times by the search engine)");
+							else
+							{	String rankStr = Integer.toString(resIdx);
+								logger.log("Adding with rank "+rankStr);
+								result.put(rankStr,val);
+								resIdx++;
+							}
+						logger.decreaseOffset();
 					}
 				}
 				

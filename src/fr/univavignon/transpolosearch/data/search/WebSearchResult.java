@@ -96,7 +96,9 @@ public class WebSearchResult extends AbstractSearchResult
 	public Map<String,String> ranks = new HashMap<String,String>();
 	
 	/**
-	 * Indicates the rank the specified engine gave to this result.
+	 * Changes the rank the specified engine gave to this result.
+	 * The new rank is kept only if it is better than the one
+	 * possibly already registered.
 	 * 
 	 * @param engineName
 	 * 		Name of the concerned search engine.
@@ -104,7 +106,32 @@ public class WebSearchResult extends AbstractSearchResult
 	 * 		Rank given by search engine.
 	 */
 	public void addEngine(String engineName, String rank)
-	{	ranks.put(engineName,rank);
+	{	String oldRank = ranks.get(engineName);
+	
+		// check if the result is already known for the specified engine
+		if(oldRank!=null)
+		{	// in which case we must compare the new and old ranks
+			int prevRank;
+			int newRank;
+			// case where the rank is composite (day-rank)
+			if(rank.contains("-"))
+			{	String[] oldTmp = oldRank.split("-");
+				String[] newTmp = rank.split("-");
+				prevRank = Integer.parseInt(oldTmp[2]);
+				newRank = Integer.parseInt(newTmp[2]);
+			}
+			// case where the rank is simple
+			else
+			{	prevRank = Integer.parseInt(oldRank);
+				newRank = Integer.parseInt(rank);
+			}
+			if(newRank<prevRank)
+				ranks.put(engineName, rank);
+		}
+		
+		// if the result is new for the engine, we just put it in the map
+		else
+			ranks.put(engineName,rank);
 	}
 	
 	/////////////////////////////////////////////////////////////////

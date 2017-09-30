@@ -163,10 +163,18 @@ public class GoogleEngine extends AbstractWebEngine
 		for(Result res: resList)
 		{	String title = res.getHtmlTitle();
 			String urlStr = res.getLink();
-			logger.log(title+" - "+urlStr);
-			URL url = new URL(urlStr);
-			result.put(Integer.toString(resIdx),url);
-			resIdx++;
+			logger.log("Processing URL \""+title+"\" - "+urlStr);
+			logger.increaseOffset();
+				URL url = new URL(urlStr);
+				if(result.containsValue(url))
+					logger.log("URL already in the result list (was returned several times by the search engine)");
+				else
+				{	String rankStr = Integer.toString(resIdx);
+					logger.log("Adding with rank "+rankStr);
+					result.put(rankStr,url);
+					resIdx++;
+				}
+			logger.decreaseOffset();
 		}
 		logger.decreaseOffset();
 		
@@ -236,7 +244,7 @@ public class GoogleEngine extends AbstractWebEngine
 					{	logger.log("Retrieved "+response.size()+"/"+PAGE_SIZE+" items (total: "+result.size()+"/"+MAX_RES_NBR+")");
 						result.addAll(response);
 					
-						// udpate parameter
+						// update parameter
 						start = start + PAGE_SIZE;
 					}
 				}

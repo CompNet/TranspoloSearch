@@ -89,9 +89,6 @@ public class WebSearchResults extends AbstractSearchResults<WebSearchResult>
 	{	logger.increaseOffset();
 		String result = url;
 		
-if(url.contains("cookies"))
-	System.out.print("");
-		
 		String sep = "check_cookies?url=%2F";
 		int idx = result.indexOf(sep);
 		if(idx!=-1)
