@@ -515,7 +515,7 @@ public class FacebookEngine extends AbstractSocialEngine
 			// get the number of shares
 			rdg.fields("shares");
 			Post tempPost = facebook.getPost(ctntId, rdg);
-			int shares = tempPost.getSharesCount();
+			Integer shares = tempPost.getSharesCount();
 			p.shares = shares;
 			logger.log("Found "+likes+" likes (and variants) and "+shares+" shares");
 			

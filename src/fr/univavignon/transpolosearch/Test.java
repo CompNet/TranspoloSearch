@@ -614,10 +614,10 @@ public class Test
 		
 		List<List<Object>> params = Arrays.asList
 		(	Arrays.asList("Anne Hidalgo", "Hidalgo", Arrays.asList(null, "http://www.leparisien.fr/"),
-				Arrays.asList("Bruno Julliard", "Jean-Louis Missika", "Ian Brossat", "Christophe Najdovski", "Nathalie Kosciusko-Morizet", "Claude Goasguen", "Brigitte Kuster")),
-			Arrays.asList("Cécile Helle", "Helle", Arrays.asList("http://www.laprovence.com/"), null),
-			Arrays.asList("Martine Aubry", "Aubry", Arrays.asList("http://www.lavoixdunord.fr/"), null),
-			Arrays.asList("Roland Ries", "Ries", null, null)
+				Arrays.asList("Bruno Julliard", "Jean-Louis Missika", "Ian Brossat", "Christophe Najdovski", "Nathalie Kosciusko-Morizet", "Claude Goasguen", "Brigitte Kuster"))
+//			Arrays.asList("Cécile Helle", "Helle", Arrays.asList("http://www.laprovence.com/"), null),
+//			Arrays.asList("Martine Aubry", "Aubry", Arrays.asList("http://www.lavoixdunord.fr/"), null),
+//			Arrays.asList("Roland Ries", "Ries", null, null)
 		);
 		
 		for(List<Object> param: params)
