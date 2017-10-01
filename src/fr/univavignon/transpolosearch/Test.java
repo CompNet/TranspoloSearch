@@ -646,8 +646,8 @@ public class Test
 	}
 }
 
-// TODO Garder seulement les entités apparaissant dans tous les articles de leur cluster
 // TODO Faire un clustering global FB+web
+// TODO Garder seulement les entités apparaissant dans tous les articles de leur cluster
 // TODO Filtrer par date quand c'est possible, pour voir si ça améliore le beans
 // TODO annoter les dernières recherches
 // TODO pour tester les faux négatifs: rechercher manuellement chaque évènement officiel d'Hidalgo (agenda)
