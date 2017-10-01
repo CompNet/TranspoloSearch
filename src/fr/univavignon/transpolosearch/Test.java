@@ -33,10 +33,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.Scanner;
 import java.util.TreeSet;
@@ -80,6 +82,7 @@ import fr.univavignon.transpolosearch.data.search.AbstractSearchResults;
 import fr.univavignon.transpolosearch.extraction.Extractor;
 import fr.univavignon.transpolosearch.retrieval.ArticleRetriever;
 import fr.univavignon.transpolosearch.retrieval.reader.ArticleReader;
+import fr.univavignon.transpolosearch.search.social.AbstractSocialEngine;
 import fr.univavignon.transpolosearch.search.web.AbstractWebEngine;
 import fr.univavignon.transpolosearch.search.web.GoogleEngine;
 import fr.univavignon.transpolosearch.tools.file.FileNames;
@@ -284,15 +287,17 @@ public class Test
 	 * 
 	 * @param path
 	 * 		Path of the CSV file corresponding to the search.
-	 * @return
-	 * 		A map representing the collection of URLs.
+	 * @param data
+	 * 		An empty map representing the collection of URLs.
+	 * @param engineNames
+	 * 		A list meant to contain all search engine names mentioned in the file.
 	 * 
 	 * @throws FileNotFoundException
 	 * 		Problem while reading the CSV file.
 	 * @throws UnsupportedEncodingException
 	 * 		Problem while reading the CSV file.
 	 */
-	private static Map<String,Map<String,String>> loadCSV(String path) throws FileNotFoundException, UnsupportedEncodingException
+	private static void loadCSV(String path, Map<String,Map<String,String>> data, Set<String> engineNames) throws FileNotFoundException, UnsupportedEncodingException
 	{	// open file
 		Scanner scanner = FileTools.openTextFileRead(path,"UTF-8");
 		
@@ -303,24 +308,45 @@ public class Test
 			colNames[i] = colNames[i].replace('"',' ').trim();
 		
 		// get content
-		Map<String,Map<String,String>> result = new HashMap<String,Map<String,String>>();
 		while(scanner.hasNextLine())
 		{	String line = scanner.nextLine();
-if(line.contains("marseillan"))
-	System.out.print("");
 			String tmp[] = line.split(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)", -1);
 			Map<String,String> map = new HashMap<String,String>();
 			for(int i=0;i<tmp.length;i++)
-			{	String key = colNames[i];
+			{	// add entry to the map
+				String key = colNames[i];
 				String value = tmp[i].replace('"',' ').trim();
 				map.put(key,value);
+				// possibly complete list of search engines
+				if(startsLikeEngineName(key))
+					engineNames.add(key);
 			}
 			String key = map.get(AbstractSearchResults.COL_URL);
 			if(key==null)
 				key = map.get(AbstractSearchResults.COL_URL_ID);
-			result.put(key,map);
+			data.put(key,map);
 		}
-		
+	}
+	
+	/**
+	 * Checks if the specified string starts like one of the search engine
+	 * names (including both web search and social medias).
+	 * 
+	 * @param name
+	 * 		The string to check.
+	 * @return
+	 * 		{@code true} iff it starts like a search engine name.
+	 */
+	private static boolean startsLikeEngineName(String name)
+	{	List<String> engineNames = new ArrayList<String>();
+		engineNames.addAll(Arrays.asList(AbstractWebEngine.ENGINE_NAMES));
+		engineNames.addAll(Arrays.asList(AbstractSocialEngine.ENGINE_NAMES));
+		boolean result = false;
+		Iterator<String> it = engineNames.iterator();
+		while(it.hasNext() && !result)
+		{	String engineName = it.next();
+			result = name.startsWith(engineName);
+		}
 		return result;
 	}
 	
@@ -342,6 +368,19 @@ if(line.contains("marseillan"))
 		logger.log("Compare "+folder1+" vs. "+folder2);
 		logger.increaseOffset();
 		
+		// read both files
+		logger.log("Load the files");
+		Set<String> engineNames = new TreeSet<String>();
+		FileNames.setOutputFolder(folder1);
+		String filePath1 = FileNames.FO_WEB_SEARCH_RESULTS + File.separator + FileNames.FI_SEARCH_RESULTS_ENTITY;
+		Map<String,Map<String,String>> map1 = new HashMap<String,Map<String,String>>();
+		loadCSV(filePath1, map1, engineNames);
+		FileNames.setOutputFolder(folder2);
+		String filePath2 = FileNames.FO_WEB_SEARCH_RESULTS + File.separator + FileNames.FI_SEARCH_RESULTS_ENTITY;
+		Map<String,Map<String,String>> map2 = new HashMap<String,Map<String,String>>();
+		loadCSV(filePath2, map2, engineNames);
+		FileNames.setOutputFolder(null);
+
 		// set up column names for the output file
 		List<String> colNames = new ArrayList<String>(Arrays.asList(
 			AbstractSearchResults.COL_TITLE,
@@ -350,20 +389,9 @@ if(line.contains("marseillan"))
 			AbstractSearchResults.COL_STATUS,
 			AbstractSearchResults.COL_LENGTH
 		));
-		for(String engineName: AbstractWebEngine.ENGINE_NAMES)//TODO cannot use that >> must infer the exact union of engine names
-			colNames.add(engineName);
+		colNames.addAll(engineNames);
 		
-		// read both files
-		logger.log("Load the files");
-		FileNames.setOutputFolder(folder1);
-		String filePath1 = FileNames.FO_WEB_SEARCH_RESULTS + File.separator + FileNames.FI_SEARCH_RESULTS_ENTITY;
-		Map<String,Map<String,String>> map1 = loadCSV(filePath1);
-		FileNames.setOutputFolder(folder2);
-		String filePath2 = FileNames.FO_WEB_SEARCH_RESULTS + File.separator + FileNames.FI_SEARCH_RESULTS_ENTITY;
-		Map<String,Map<String,String>> map2 = loadCSV(filePath2);
-		FileNames.setOutputFolder(null);
-
-		// compare them
+		// compare the two files
 		logger.log("Compare them");
 		List<Map<String,String>> only1 = new ArrayList<Map<String,String>>();
 		List<Map<String,String>> only2 = new ArrayList<Map<String,String>>();
@@ -465,6 +493,19 @@ if(line.contains("marseillan"))
 		logger.log(folders); 
 		logger.increaseOffset();
 		
+		// read all files
+		logger.log("Load the files");
+		List<Map<String,Map<String,String>>> maps = new ArrayList<Map<String,Map<String,String>>>();
+		Set<String> engineNames = new TreeSet<String>();
+		for(String folder: folders)
+		{	FileNames.setOutputFolder(folder);
+			String filePath = FileNames.FO_OUTPUT + File.separator + FileNames.FI_SEARCH_COMBINED_RESULTS;
+			Map<String,Map<String,String>> map = new HashMap<String,Map<String,String>>();
+			loadCSV(filePath, map, engineNames);
+			maps.add(map);
+			FileNames.setOutputFolder(null);
+		}
+		
 		// set up column names for the output file
 		List<String> colNames = new ArrayList<String>(Arrays.asList(
 			AbstractSearchResults.COL_URL_ID,
@@ -475,18 +516,7 @@ if(line.contains("marseillan"))
 			colNames.add(colName);
 		}
 		
-		// read all files
-		logger.log("Load the files");
-		List<Map<String,Map<String,String>>> maps = new ArrayList<Map<String,Map<String,String>>>();
-		for(String folder: folders)
-		{	FileNames.setOutputFolder(folder);
-			String filePath = FileNames.FO_OUTPUT + File.separator + FileNames.FI_SEARCH_COMBINED_RESULTS;
-			Map<String,Map<String,String>> map = loadCSV(filePath);
-			FileNames.setOutputFolder(null);
-			maps.add(map);
-		}
-		
-		// merge them
+		// merge both files
 		logger.log("Combine them");
 		Map<String,Map<String,String>> urlMap = new HashMap<String,Map<String,String>>();
 		Map<String,Map<String,String>> idMap = new HashMap<String,Map<String,String>>();
