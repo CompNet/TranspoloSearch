@@ -117,8 +117,8 @@ public class WebSearchResult extends AbstractSearchResult
 			if(rank.contains("-"))
 			{	String[] oldTmp = oldRank.split("-");
 				String[] newTmp = rank.split("-");
-				prevRank = Integer.parseInt(oldTmp[2]);
-				newRank = Integer.parseInt(newTmp[2]);
+				prevRank = Integer.parseInt(oldTmp[1]);
+				newRank = Integer.parseInt(newTmp[1]);
 			}
 			// case where the rank is simple
 			else

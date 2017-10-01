@@ -268,22 +268,22 @@ public class BingEngine extends AbstractWebEngine
 					for(Object val: valueArray)
 					{	logger.log("Processing web result "+i+"/"+valueArray.size());
 						logger.increaseOffset();
-						JSONObject value = (JSONObject)val;
-						String urlStr = (String)value.get("url");
-						logger.log("url: "+urlStr);
-						URL resUrl = convertUrl(urlStr);
-						logger.log("converted to: "+resUrl);
-						String key;
-						if(dayIdx==0)
-							key = Integer.toString(resIdx);
-						else
-							key = dayIdx+"-"+resIdx;
-						result.put(key,resUrl);
-						resIdx++;
+							JSONObject value = (JSONObject)val;
+							String urlStr = (String)value.get("url");
+							logger.log("url: "+urlStr);
+							URL resUrl = convertUrl(urlStr);
+							logger.log("converted to: "+resUrl);
+							String key;
+							if(dayIdx==0)
+								key = Integer.toString(resIdx);
+							else
+								key = dayIdx+"-"+resIdx;
+							result.put(key,resUrl);
+							resIdx++;
 						logger.decreaseOffset();
 						i++;
 					}
-					logger.increaseOffset();
+					logger.decreaseOffset();
 				}
 			}
 
@@ -295,37 +295,37 @@ public class BingEngine extends AbstractWebEngine
 				{	JSONArray valueArray = (JSONArray)newsRes.get("value");
 					logger.log("Found "+valueArray.size()+" news results for this query");
 					logger.increaseOffset();
-					int i = 1;
-					for(Object val: valueArray)
-					{	logger.log("Processing news result "+i+"/"+valueArray.size());
-						logger.increaseOffset();
-						JSONObject value = (JSONObject)val;
-						String urlStr = (String)value.get("url");
-						logger.log("url: "+urlStr);
-						String dateStr = (String)value.get("datePublished");
-						dateStr = dateStr.substring(0,10); // yyyy-mm-dd = 10 chars
-						logger.log("date: "+dateStr);
-						boolean keepArticle = true;
-						if(dateStr!=null && targetedDate!=null)
-						{	LocalDate artDate = LocalDate.parse(dateStr, DATE_FORMATTER);
-							keepArticle = artDate.equals(targetedDate);
+						int i = 1;
+						for(Object val: valueArray)
+						{	logger.log("Processing news result "+i+"/"+valueArray.size());
+							logger.increaseOffset();
+								JSONObject value = (JSONObject)val;
+								String urlStr = (String)value.get("url");
+								logger.log("url: "+urlStr);
+								String dateStr = (String)value.get("datePublished");
+								dateStr = dateStr.substring(0,10); // yyyy-mm-dd = 10 chars
+								logger.log("date: "+dateStr);
+								boolean keepArticle = true;
+								if(dateStr!=null && targetedDate!=null)
+								{	LocalDate artDate = LocalDate.parse(dateStr, DATE_FORMATTER);
+									keepArticle = artDate.equals(targetedDate);
+								}
+								if(keepArticle)
+								{	URL resUrl = convertUrl(urlStr);
+									String key;
+									if(dayIdx==0)
+										key = Integer.toString(resIdx);
+									else
+										key = dayIdx+"-"+resIdx;
+									result.put(key,resUrl);
+									resIdx++;
+									logger.log("No publication date, or equal to the targeted date >> keeping the article");
+								}
+								else
+									logger.log("The article publication date is not compatible with the targeted date >> article ignored");
+							logger.decreaseOffset();
+							i++;
 						}
-						if(keepArticle)
-						{	URL resUrl = convertUrl(urlStr);
-							String key;
-							if(dayIdx==0)
-								key = Integer.toString(resIdx);
-							else
-								key = dayIdx+"-"+resIdx;
-							result.put(key,resUrl);
-							resIdx++;
-							logger.log("No publication date, or equal to the targeted date >> keeping the article");
-						}
-						else
-							logger.log("The article publication date is not compatible with the targeted date >> article ignored");
-						logger.decreaseOffset();
-						i++;
-					}
 					logger.decreaseOffset();
 				}
 			}

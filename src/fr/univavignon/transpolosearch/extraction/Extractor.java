@@ -312,63 +312,63 @@ public class Extractor
 	{	logger.log("Starting the web extraction");
 		logger.increaseOffset();
 		
-		// log search parameters
-		logger.log("Parameters:");
-		logger.increaseOffset();
-			logger.log("keywords="+keywords);
-			logger.log("startDate="+startDate);
-			logger.log("endDate="+endDate);
-			String txt = "searchDate="+searchDate;
-			if(!searchDate)
-				txt = txt + "(dates are ignored here, because the search is not strict)";
-			logger.log(txt);
-			logger.log("websites=");
-			logger.log(websites);
-		logger.decreaseOffset();
-		
-		// initializes the Web search engines
-		initWebSearchEngines(websites, startDate, endDate, searchDate);
-		
-		// perform the Web search
-		WebSearchResults results = performWebSearch(keywords);
-
-		// filter Web pages (remove PDFs, and so on)
-		results.filterByUrl();
-		
-		// retrieve the corresponding articles
-		results.retrieveArticles();
-		results.exportAsCsv(FileNames.FI_SEARCH_RESULTS_URL);
-
-		// possibly filter the articles depending on the content
-		results.filterByContent(compulsoryExpression, language);
-		results.exportAsCsv(FileNames.FI_SEARCH_RESULTS_CONTENT);
-		
-		// detect the entity mentions
-		results.detectMentions(recognizer);
-		
-		// possibly filter the articles depending on the entities
-		results.filterByEntity(startDate, endDate, searchDate);
-		results.exportAsCsv(FileNames.FI_SEARCH_RESULTS_ENTITY);
-		
-		// displays the remaining articles with their mentions	//TODO maybe get the entities instead of the mentions, eventually?
-		results.displayRemainingMentions(); // for debug only
-		
-		// cluster the article by content
-		results.clusterArticles(language);
-		results.exportAsCsv(FileNames.FI_SEARCH_RESULTS_CLUSTERS);
-		
-		// extract events from the remaining articles and mentions
-		boolean bySentence[] = {false,true};
-		for(boolean bs: bySentence)
-		{	// identify the events
-			results.extractEvents(bs);
-			// export the events as a table
-			results.exportEvents(bs, false);
-			// try to group similar events together
-			results.clusterEvents();
-			// export the resulting groups as a table
-			results.exportEvents(bs, true);
-		}
+			// log search parameters
+			logger.log("Parameters:");
+			logger.increaseOffset();
+				logger.log("keywords="+keywords);
+				logger.log("startDate="+startDate);
+				logger.log("endDate="+endDate);
+				String txt = "searchDate="+searchDate;
+				if(!searchDate)
+					txt = txt + "(dates are ignored here, because the search is not strict)";
+				logger.log(txt);
+				logger.log("websites=");
+				logger.log(websites);
+			logger.decreaseOffset();
+			
+			// initializes the Web search engines
+			initWebSearchEngines(websites, startDate, endDate, searchDate);
+			
+			// perform the Web search
+			WebSearchResults results = performWebSearch(keywords);
+	
+			// filter Web pages (remove PDFs, and so on)
+			results.filterByUrl();
+			
+			// retrieve the corresponding articles
+			results.retrieveArticles();
+			results.exportAsCsv(FileNames.FI_SEARCH_RESULTS_URL);
+	
+			// possibly filter the articles depending on the content
+			results.filterByContent(compulsoryExpression, language);
+			results.exportAsCsv(FileNames.FI_SEARCH_RESULTS_CONTENT);
+			
+			// detect the entity mentions
+			results.detectMentions(recognizer);
+			
+			// possibly filter the articles depending on the entities
+			results.filterByEntity(startDate, endDate, searchDate);
+			results.exportAsCsv(FileNames.FI_SEARCH_RESULTS_ENTITY);
+			
+			// displays the remaining articles with their mentions	//TODO maybe get the entities instead of the mentions, eventually?
+			results.displayRemainingMentions(); // for debug only
+			
+			// cluster the article by content
+			results.clusterArticles(language);
+			results.exportAsCsv(FileNames.FI_SEARCH_RESULTS_CLUSTERS);
+			
+			// extract events from the remaining articles and mentions
+			boolean bySentence[] = {false,true};
+			for(boolean bs: bySentence)
+			{	// identify the events
+				results.extractEvents(bs);
+				// export the events as a table
+				results.exportEvents(bs, false);
+				// try to group similar events together
+				results.clusterEvents();
+				// export the resulting groups as a table
+				results.exportEvents(bs, true);
+			}
 		
 		logger.decreaseOffset();
 		logger.log("Web extraction over");
@@ -508,61 +508,61 @@ public class Extractor
 	{	logger.log("Starting the social media extraction");
 		logger.increaseOffset();
 		
-		// log search parameters
-		logger.log("Parameters:");
-		logger.increaseOffset();
-			logger.log("keywords="+keywords);
-			logger.log("startDate="+startDate);
-			logger.log("endDate="+endDate);
-			logger.log("extendedSearch="+extendedSearch);
-			logger.log("additionalPages=");
-			if(!additionalSeeds.isEmpty())
-				logger.log(additionalSeeds);
-		logger.decreaseOffset();
-		
-		// initializes the social media search engines
-		List<String> seeds = new ArrayList<String>();
-		seeds.add(null);
-		seeds.addAll(additionalSeeds);
-		initSocialMediaEngines(additionalSeeds, startDate, endDate, extendedSearch);
-		
-		// perform the social search
-		boolean includeComments = false;
-		SocialSearchResults results = performSocialSearch(keywords, includeComments);
-		
-		// convert the posts to proper articles
-		results.buildArticles(includeComments);
-		
-		// possibly filter the articles depending on the content
-		results.filterByContent(compulsoryExpression,language);
-		results.exportAsCsv(FileNames.FI_SEARCH_RESULTS_CONTENT);
-		
-		// detect the entity mentions
-		results.detectMentions(recognizer);
-		
-		// possibly filter the articles depending on the entities
+			// log search parameters
+			logger.log("Parameters:");
+			logger.increaseOffset();
+				logger.log("keywords="+keywords);
+				logger.log("startDate="+startDate);
+				logger.log("endDate="+endDate);
+				logger.log("extendedSearch="+extendedSearch);
+				logger.log("additionalPages=");
+				if(!additionalSeeds.isEmpty())
+					logger.log(additionalSeeds);
+			logger.decreaseOffset();
+			
+			// initializes the social media search engines
+			List<String> seeds = new ArrayList<String>();
+			seeds.add(null);
+			seeds.addAll(additionalSeeds);
+			initSocialMediaEngines(additionalSeeds, startDate, endDate, extendedSearch);
+			
+			// perform the social search
+			boolean includeComments = false;
+			SocialSearchResults results = performSocialSearch(keywords, includeComments);
+			
+			// convert the posts to proper articles
+			results.buildArticles(includeComments);
+			
+			// possibly filter the articles depending on the content
+			results.filterByContent(compulsoryExpression,language);
+			results.exportAsCsv(FileNames.FI_SEARCH_RESULTS_CONTENT);
+			
+			// detect the entity mentions
+			results.detectMentions(recognizer);
+			
+			// possibly filter the articles depending on the entities
 // unnecessary, unless we add other entity-based constraints than dates		
-//		results.filterByEntity(null,null,true);
-//		results.exportAsCsv(FileNames.FI_SEARCH_RESULTS_ENTITY);
-		
-		// displays the remaining articles with their mentions	//TODO maybe get the entities instead of the mention, eventually?
-		results.displayRemainingMentions(); // for debug only
-		
-		// cluster the article by content
-		results.clusterArticles(language);
-		results.exportAsCsv(FileNames.FI_SEARCH_RESULTS_CLUSTERS);
-		
-		// extract events from the remaining articles and mentions
-		boolean bySentence[] = {false,true};
-		for(boolean bs: bySentence)
-		{	results.extractEvents(bs);
-			// export the events as a table
-			results.exportEvents(bs, false);
-			// try to group similar events together
-			results.clusterEvents();
-			// export the resulting groups as a table
-			results.exportEvents(bs, true);
-		}
+//			results.filterByEntity(null,null,true);
+//			results.exportAsCsv(FileNames.FI_SEARCH_RESULTS_ENTITY);
+			
+			// displays the remaining articles with their mentions	//TODO maybe get the entities instead of the mention, eventually?
+			results.displayRemainingMentions(); // for debug only
+			
+			// cluster the article by content
+			results.clusterArticles(language);
+			results.exportAsCsv(FileNames.FI_SEARCH_RESULTS_CLUSTERS);
+			
+			// extract events from the remaining articles and mentions
+			boolean bySentence[] = {false,true};
+			for(boolean bs: bySentence)
+			{	results.extractEvents(bs);
+				// export the events as a table
+				results.exportEvents(bs, false);
+				// try to group similar events together
+				results.clusterEvents();
+				// export the resulting groups as a table
+				results.exportEvents(bs, true);
+			}
 		
 		logger.decreaseOffset();
 		logger.log("Social media extraction over");

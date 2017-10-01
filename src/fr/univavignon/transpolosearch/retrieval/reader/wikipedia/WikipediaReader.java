@@ -111,6 +111,27 @@ public class WikipediaReader extends ArticleReader
 	/////////////////////////////////////////////////////////////////
 	/** Language of the page currently processed */
 	private ArticleLanguage language;
+
+	/**
+	 * Sets up the language depending on the URL.
+	 * 
+	 * @param url
+	 * 		URL to process.
+	 */
+	private void setLanguageFromUrl(URL url)
+	{	String urlStr = url.toString();
+		
+		// French
+		if(urlStr.contains("fr.wikipedia.org"))
+			language = ArticleLanguage.FR;
+		// English
+		else if(urlStr.contains("en.wikipedia.org"))
+			language = ArticleLanguage.EN;
+		
+		// unknown
+		else
+			logger.log("WARNING: unknown language, based on URL "+url);
+	}
 	
 	/////////////////////////////////////////////////////////////////
 	// RETRIEVE			/////////////////////////////////////////////
@@ -935,7 +956,10 @@ public class WikipediaReader extends ArticleReader
 	@Override
 	public Article processUrl(URL url, ArticleLanguage language) throws ReaderException
 	{	Article result = null;
-		this.language = language;
+		if(language==null)
+			setLanguageFromUrl(url);
+		else
+			this.language = language;
 		String name = getName(url);
 		
 		try
@@ -977,7 +1001,7 @@ public class WikipediaReader extends ArticleReader
 					String str = fakeRaw.toString().trim().toLowerCase(Locale.ENGLISH);
 					// check section name
 					int level = HtmlNames.ELT_HS.indexOf(eltName);
-					if(IGNORED_SECTIONS.get(language.ordinal()).contains(str))
+					if(IGNORED_SECTIONS.get(this.language.ordinal()).contains(str))
 						ignoringSectionLevel = Math.min(ignoringSectionLevel,level);
 					else
 					{	if(level<=ignoringSectionLevel)
@@ -1050,7 +1074,7 @@ public class WikipediaReader extends ArticleReader
 			result.setTitle(title);
 			result.setUrl(url);
 			result.initRetrievalDate();
-			result.setLanguage(language);
+			result.setLanguage(this.language);
 			
 			// clean text
 			String rawText = rawStr.toString();
