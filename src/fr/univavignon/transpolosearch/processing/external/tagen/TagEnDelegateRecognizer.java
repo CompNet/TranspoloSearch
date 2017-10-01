@@ -28,6 +28,8 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.jdom2.Content;
 import org.jdom2.Document;
@@ -284,6 +286,18 @@ class TagEnDelegateRecognizer extends AbstractExternalDelegateRecognizer
 	{	logger.increaseOffset();
 		ArticleLanguage language = article.getLanguage();
 		Mentions result = new Mentions(recognizer.getName());
+		
+//		Pattern p = Pattern.compile("<timex><date>([\\s\\S]*?)<!\\sdate>([\\s\\S]*?)</date></timex>");
+//		Matcher m = p.matcher("réduit <timex><date>en\n2016<! date>1</date></timex>5-03-2017");
+//		boolean res = m.find();
+//		res = m.find();
+//		String tyy = m.group();
+//		String fsfd = data.substring(m.start(),m.end());
+		
+		// sometimes, the above correction is needed to avoid cases of the type 
+		// 1) "xxxx<timex><date>en 2016<!\ndate>2</date></timex>xxxxx"
+		// 2) "xxxx<timex><date>en\n2016<! date>1</date></timex>xxxxx"
+		data = data.replaceAll("<timex><date>([\\s\\S]*?)<!\\sdate>([\\s\\S]*?)</date></timex>", "<timex><date>$1</date></timex>$2");
 		
 		// the result file is basically an XML file, only the header is missing
 		// so add a fake header and parse it like an xml file
