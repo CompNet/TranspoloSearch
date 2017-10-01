@@ -499,8 +499,9 @@ public class FacebookEngine extends AbstractSocialEngine
 				authName = name;	//TODO should remove this parameter name, we shouldn't need it
 			else
 				authName = auth.getName();
+			boolean original = seed==null;
 			// create the post object
-			SocialSearchResult p = new SocialSearchResult(ctntId, authName, date, getName(), msg, true);
+			SocialSearchResult p = new SocialSearchResult(ctntId, authName, date, getName(), msg, original);
 			p.url = post.getLink();
 			result.add(p);
 			
