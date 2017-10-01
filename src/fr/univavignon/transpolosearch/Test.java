@@ -646,11 +646,10 @@ public class Test
 	}
 }
 
-// TODO tester l'instanciation des moteurs
-// TODO Garder les entités apparaissant dans tous les articles de leur cluster
+// TODO Garder seulement les entités apparaissant dans tous les articles de leur cluster
 // TODO Faire un clustering global FB+web
 // TODO Filtrer par date quand c'est possible, pour voir si ça améliore le beans
 // TODO annoter les dernières recherches
-// TODO pour tester les faux négatifs: rechercher manuelle chaque évènement officiel d'Hidalgo (agenda)
-// TODO rajouter d'autres journaux locaux parisiens
+// TODO pour tester les faux négatifs: rechercher manuellement chaque évènement officiel d'Hidalgo (agenda)
+// TODO rajouter d'autres journaux locaux parisiens à la recherche hidalgo
 // TODO le langage devrait être un paramètre général. chercher toutes les occurrences de FR et article.FR

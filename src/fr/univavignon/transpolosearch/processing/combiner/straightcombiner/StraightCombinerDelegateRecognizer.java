@@ -170,15 +170,15 @@ class StraightCombinerDelegateRecognizer extends AbstractCombinerDelegateRecogni
 			recognizers.add(nero);
 		}
 		
-		// OpenCalais
-		{	logger.log("Init OpenCalais");
-			OpenCalaisLanguage lang = OpenCalaisLanguage.FR;
-			boolean ignorePronouns = false;
-			boolean exclusionOn = false;
-			OpenCalais openCalais = new OpenCalais(lang, ignorePronouns, exclusionOn);
-//			openCalais.setCacheEnabled(false);
-			recognizers.add(openCalais);
-		}
+//		// OpenCalais
+//		{	logger.log("Init OpenCalais");
+//			OpenCalaisLanguage lang = OpenCalaisLanguage.FR;
+//			boolean ignorePronouns = false;
+//			boolean exclusionOn = false;
+//			OpenCalais openCalais = new OpenCalais(lang, ignorePronouns, exclusionOn);
+////			openCalais.setCacheEnabled(false);
+//			recognizers.add(openCalais);
+//		}
 		
 		// OpeNer
 		  {	logger.log("Init OpeNer");
