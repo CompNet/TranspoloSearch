@@ -646,10 +646,19 @@ public class Test
 	}
 }
 
-// TODO Faire un clustering global FB+web
+// TODO export en cours. 
+//	- CSV+event fini pour Web+Social (pas combined, qui reste à faire)
+//	- voir aussi le combinedwritting ou truc
+
+// TODO reprendre complètement l'exportation
+//		- CSV: chaque article = une ligne, mettre un maximum de champs
+//		- Events: une ligne = un event (pouvant correspondre à plusieurs articles...)
+// TODO rajouter hierarchical clustering pr events
 // TODO Garder seulement les entités apparaissant dans tous les articles de leur cluster
-// TODO Filtrer par date quand c'est possible, pour voir si ça améliore le beans
-// TODO annoter les dernières recherches
-// TODO pour tester les faux négatifs: rechercher manuellement chaque évènement officiel d'Hidalgo (agenda)
-// TODO rajouter d'autres journaux locaux parisiens à la recherche hidalgo
 // TODO le langage devrait être un paramètre général. chercher toutes les occurrences de FR et article.FR
+
+// TODO manips:
+// 		- Filtrer par date quand c'est possible, pour voir si ça améliore le beans
+// 		- annoter les dernières recherches
+// 		- pour tester les faux négatifs: rechercher manuellement chaque évènement officiel d'Hidalgo (agenda)
+// 		- rajouter d'autres journaux locaux parisiens à la recherche hidalgo

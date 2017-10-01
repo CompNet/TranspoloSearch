@@ -18,8 +18,11 @@ package fr.univavignon.transpolosearch.data.search;
  * along with TranspoloSearch. If not, see <http://www.gnu.org/licenses/>.
  */
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -89,17 +92,105 @@ public abstract class AbstractSearchResult
 	/** Problematic status: the document could not be retrieved */
 	public final static String STATUS_UNAVAILABLE = "URL unvailable";
 	
+	/**
+	 * Adds the status value to the specified map.
+	 * 
+	 * @param result
+	 * 		Map to fill with the required field.
+	 */
+	protected void exportStatus(Map<String,String> result)
+	{	if(status!=null)
+			result.put(AbstractSearchResults.COL_STATUS, status);
+	}
+	
 	/////////////////////////////////////////////////////////////////
 	// CLUSTER		/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
 	/** Id of the cluster containing this result (when clustering the results...) */
 	public String cluster = null;
 	
+	/**
+	 * Adds the article cluster to the specified map.
+	 * 
+	 * @param result
+	 * 		Map to fill with the required field.
+	 */
+	protected void exportCluster(Map<String,String> result)
+	{	if(cluster!=null)
+			result.put(WebSearchResults.COL_ARTICLE_CLUSTER,cluster);
+	}
+	
 	/////////////////////////////////////////////////////////////////
 	// ARTICLE		/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
 	/** Article associated to this result */
 	public Article article = null;
+	/** Format used to export dates */
+	private static final DateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd");
+
+	/**
+	 * Adds the article title to the specified map.
+	 * 
+	 * @param result
+	 * 		Map to fill with the required field.
+	 */
+	protected void exportTitle(Map<String,String> result)
+	{	if(article!=null)
+		{	String title = article.getTitle();
+			result.put(WebSearchResults.COL_TITLE,title);
+		}
+	}
+	
+	/**
+	 * Adds the article length to the specified map.
+	 * 
+	 * @param result
+	 * 		Map to fill with the required field.
+	 */
+	protected void exportLength(Map<String,String> result)
+	{	if(article!=null)
+		{	int length = article.getRawText().length();
+			result.put(AbstractSearchResults.COL_LENGTH, Integer.toString(length));
+		}
+	}
+	
+	/**
+	 * Adds the article publication date to the specified map.
+	 * 
+	 * @param result
+	 * 		Map to fill with the required field.
+	 */
+	protected void exportPublicationDate(Map<String,String> result)
+	{	if(article!=null)
+		{	java.util.Date pubDate = article.getPublishingDate();
+			if(pubDate!=null)
+			{	String pubDateStr = DATE_FORMAT.format(pubDate);
+				result.put(WebSearchResults.COL_PUB_DATE ,pubDateStr);
+			}
+		}
+	}
+	
+	/**
+	 * Adds the article authors to the specified map.
+	 * 
+	 * @param result
+	 * 		Map to fill with the required field.
+	 */
+	protected void exportAuthors(Map<String,String> result)
+	{	if(article!=null)
+		{	List<String> authors = article.getAuthors();
+			if(!authors.isEmpty())
+			{	Iterator<String> it = authors.iterator();
+				String authorStr = it.next();
+				String authorsStr = authorStr;
+				while(it.hasNext())
+				{	authorStr = it.next();
+					authorsStr = authorsStr + ", " + authorStr;
+				}
+				result.put(WebSearchResults.COL_AUTHORS,authorsStr);
+			}
+		}
+	}
 	
 	/**
 	 * Discards results not matching the targeted language.
@@ -189,10 +280,78 @@ public abstract class AbstractSearchResult
 	protected abstract boolean filterByKeyword(String compulsoryExpression, int nbr);
 	
 	/////////////////////////////////////////////////////////////////
+	// CSV			/////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////
+	/**
+	 * Export the article as a line in a CSV file.
+	 * 
+	 * @return
+	 * 		A map representing the line.
+	 */
+	protected abstract Map<String,String> exportResult();
+	
+	/////////////////////////////////////////////////////////////////
 	// MENTIONS		/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
 	/** Mentions detected in the article associated to this search result */
 	public Mentions mentions = null;
+	
+	/**
+	 * Adds the article entity mentions to the specified map.
+	 * 
+	 * @param result
+	 * 		Map to fill with the required field.
+	 * @param type 
+	 * 		Type of mentions we want to export.
+	 */
+	protected void exportMentions(Map<String,String> result, EntityType type)
+	{	if(mentions!=null)
+		{	// get key
+			String col = null;
+			switch(type)
+			{	case DATE:
+					col = AbstractSearchResults.COL_ENT_DATES;
+					break;
+				case FUNCTION:
+					col = AbstractSearchResults.COL_ENT_FUNCTIONS;
+					break;
+				case LOCATION:
+					col = AbstractSearchResults.COL_ENT_LOCATIONS;
+					break;
+				case MEETING:
+					col = AbstractSearchResults.COL_ENT_MEETINGS;
+					break;
+				case ORGANIZATION:
+					col = AbstractSearchResults.COL_ENT_ORGANIZATIONS;
+					break;
+				case PERSON:
+					col = AbstractSearchResults.COL_ENT_PERSONS;
+					break;
+				case PRODUCTION:
+					col = AbstractSearchResults.COL_ENT_PRODUCTIONS;
+					break;
+			}
+			
+			String str = "";
+			List<AbstractMention<?>> fm = mentions.getMentionsByType(type);
+			Iterator<AbstractMention<?>> it = fm.iterator();
+			while(it.hasNext())
+			{	AbstractMention<?> m = it.next();
+				String form;
+				Object tmp = m.getValue();
+				if(tmp!=null)
+					form = tmp.toString();
+				else
+					form = m.getStringValue();
+				form = form.replaceAll("[\\n\\r]", " ");
+				form = form.replaceAll("\"", "'");
+				str = str + form;
+				if(it.hasNext())
+					str = str + ", ";
+			}
+			result.put(col,str);
+		}
+	}
 	
 	/**
 	 * Detects the entity mentions in the article retrieved for this result.
@@ -435,6 +594,75 @@ public abstract class AbstractSearchResult
 				status = STATUS_NO_EVENT;
 		logger.decreaseOffset();
 		return result;
+	}
+	
+	/**
+	 * Adds the event dates to the specified map.
+	 * 
+	 * @param event
+	 * 		The event to consider.
+	 * @param result
+	 * 		The map to complete.
+	 */
+	protected void exportEventDates(Event event, Map<String,String> result)
+	{	Period period = event.getPeriod();
+		String periodStr = period.toString();
+		periodStr = periodStr.replaceAll("[\\n\\r]", " ");
+		periodStr = periodStr.replaceAll("\"", "'");
+		result.put(WebSearchResults.COL_ENT_DATES,periodStr);
+	}
+	
+	/**
+	 * Adds the event mentions to the specified map.
+	 * 
+	 * @param event
+	 * 		The event to consider.
+	 * @param type
+	 * 		The entity type to consider.
+	 * @param result
+	 * 		The map to complete.
+	 */
+	protected void exportEventDates(Event event, EntityType type, Map<String,String> result)
+	{	Collection<String> collec = null;
+		String col = null;
+		switch(type)
+		{	case FUNCTION:
+				collec = event.getFunctions();
+				col = AbstractSearchResults.COL_ENT_FUNCTIONS;
+				break;
+			case LOCATION:
+				collec = event.getLocations();
+				col = AbstractSearchResults.COL_ENT_LOCATIONS;
+				break;
+			case MEETING:
+				collec = event.getMeetings();
+				col = AbstractSearchResults.COL_ENT_MEETINGS;
+				break;
+			case ORGANIZATION:
+				collec = event.getOrganizations();
+				col = AbstractSearchResults.COL_ENT_ORGANIZATIONS;
+				break;
+			case PERSON:
+				collec = event.getPersons();
+				col = AbstractSearchResults.COL_ENT_PERSONS;
+				break;
+			case PRODUCTION:
+				collec = event.getProductions();
+				col = AbstractSearchResults.COL_ENT_PRODUCTIONS;
+				break;
+		}
+		
+		String str = "";
+		Iterator<String> it = collec.iterator();
+		while(it.hasNext())
+		{	String mention = it.next();
+			mention = mention.replaceAll("[\\n\\r]", " ");
+			mention = mention.replaceAll("\"", "'");
+			str = str + mention;
+			if(it.hasNext())
+				str = str + ", ";
+		}
+		result.put(col,str);
 	}
 	
 	/**

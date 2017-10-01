@@ -38,6 +38,7 @@ import com.gargoylesoftware.htmlunit.FailingHttpStatusCodeException;
 
 import fr.univavignon.transpolosearch.data.article.ArticleLanguage;
 import fr.univavignon.transpolosearch.data.search.AbstractSearchResults;
+import fr.univavignon.transpolosearch.data.search.CombinedSearchResults;
 import fr.univavignon.transpolosearch.data.search.SocialSearchResult;
 import fr.univavignon.transpolosearch.data.search.SocialSearchResults;
 import fr.univavignon.transpolosearch.data.search.WebSearchResults;
@@ -158,8 +159,9 @@ public class Extractor
 		logger.log("Performing the social media search");
 		SocialSearchResults socialRes = performSocialExtraction(keywords, additionalSeeds, startDate, endDate, compulsoryExpression, extendedSocialSearch, language);
 		
-		// merge both results in a single file
-		exportCombinedResultsAsCsv(webRes, socialRes);
+		// merge results and continue processing
+		logger.log("Merging web and social media results");
+		combineResults(webRes, socialRes, language);
 		
 		logger.decreaseOffset();
 		logger.log("Information extraction over");
@@ -266,7 +268,7 @@ public class Extractor
 		logger.log("Total number of pages found: "+result.size());
 		
 		// record the complete list of URLs (not for cache, just as a result)
-		result.exportAsCsv(FileNames.FI_SEARCH_RESULTS_ALL);
+		result.exportResults(FileNames.FI_SEARCH_RESULTS_ALL);
 		
 		return result;
 	}
@@ -337,25 +339,25 @@ public class Extractor
 			
 			// retrieve the corresponding articles
 			results.retrieveArticles();
-			results.exportAsCsv(FileNames.FI_SEARCH_RESULTS_URL);
+			results.exportResults(FileNames.FI_SEARCH_RESULTS_URL);
 	
 			// possibly filter the articles depending on the content
 			results.filterByContent(compulsoryExpression, language);
-			results.exportAsCsv(FileNames.FI_SEARCH_RESULTS_CONTENT);
+			results.exportResults(FileNames.FI_SEARCH_RESULTS_CONTENT);
 			
 			// detect the entity mentions
 			results.detectMentions(recognizer);
 			
 			// possibly filter the articles depending on the entities
 			results.filterByEntity(startDate, endDate, searchDate);
-			results.exportAsCsv(FileNames.FI_SEARCH_RESULTS_ENTITY);
+			results.exportResults(FileNames.FI_SEARCH_RESULTS_ENTITY);
 			
 			// displays the remaining articles with their mentions	//TODO maybe get the entities instead of the mentions, eventually?
 			results.displayRemainingMentions(); // for debug only
 			
 			// cluster the article by content
 			results.clusterArticles(language);
-			results.exportAsCsv(FileNames.FI_SEARCH_RESULTS_CLUSTERS);
+			results.exportResults(FileNames.FI_SEARCH_RESULTS_CLUSTERS);
 			
 			// extract events from the remaining articles and mentions
 			boolean bySentence[] = {false,true};
@@ -461,7 +463,7 @@ public class Extractor
 		logger.log("Total number of posts found: "+result.size());
 		
 		// record the complete list of URLs (not for cache, just as a result)
-		result.exportAsCsv(FileNames.FI_SEARCH_RESULTS_ALL);
+		result.exportResults(FileNames.FI_SEARCH_RESULTS_ALL);
 		
 		return result;
 	}
@@ -535,7 +537,7 @@ public class Extractor
 			
 			// possibly filter the articles depending on the content
 			results.filterByContent(compulsoryExpression,language);
-			results.exportAsCsv(FileNames.FI_SEARCH_RESULTS_CONTENT);
+			results.exportResults(FileNames.FI_SEARCH_RESULTS_CONTENT);
 			
 			// detect the entity mentions
 			results.detectMentions(recognizer);
@@ -548,9 +550,9 @@ public class Extractor
 			// displays the remaining articles with their mentions	//TODO maybe get the entities instead of the mention, eventually?
 			results.displayRemainingMentions(); // for debug only
 			
-			// cluster the article by content
+			// cluster the articles by content
 			results.clusterArticles(language);
-			results.exportAsCsv(FileNames.FI_SEARCH_RESULTS_CLUSTERS);
+			results.exportResults(FileNames.FI_SEARCH_RESULTS_CLUSTERS);
 			
 			// extract events from the remaining articles and mentions
 			boolean bySentence[] = {false,true};
@@ -591,44 +593,35 @@ public class Extractor
 	/////////////////////////////////////////////////////////////////
 	// MERGE		/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
-	/**
-	 * Takes the search results coming from both the web and social
-	 * searches, and combines them in a single file for easier assessment.
-	 * 
-	 * @param webRes
-	 * 		Web search results.
-	 * @param socialRes
-	 * 		Social search results.
-	 * 
-	 * @throws FileNotFoundException
-	 * 		Problem while accessing the output file. 
-	 * @throws UnsupportedEncodingException 
-	 * 		Problem while accessing the output file. 
-	 */
-	private void exportCombinedResultsAsCsv(WebSearchResults webRes, SocialSearchResults socialRes) throws UnsupportedEncodingException, FileNotFoundException
-	{	logger.log("Merging the results in a single file.");
+	private void combineResults(WebSearchResults webRes, SocialSearchResults socRes, ArticleLanguage language) throws UnsupportedEncodingException, FileNotFoundException
+	{	logger.log("Combining all results in a single file.");
 		logger.increaseOffset();
 		
-		// open file and write header
-		String filePath = FileNames.FO_OUTPUT + File.separator + FileNames.FI_SEARCH_COMBINED_RESULTS;
-		PrintWriter pw = FileTools.openTextFileWrite(filePath, "UTF-8");
-		pw.println("\""+AbstractSearchResults.COL_URL_ID+"\",\""+AbstractSearchResults.COL_TITLE_CONTENT+"\",\""+AbstractSearchResults.COL_STATUS+"\"");
-		
-		// web search results
-		if(webRes==null)
-			logger.log("No Web search results to process.");
-		else
-			webRes.writeCombinedResults(pw);
-		
-		// social search results
-		if(socialRes==null)
-			logger.log("No social search results to process.");
-		else
-			socialRes.writeCombinedResults(pw);
-		
-		// close the output file
-		pw.close();
-		
+			// merging the results and record
+			CombinedSearchResults combRes = new CombinedSearchResults(webRes, socRes);
+			combRes.resetClusters();
+			combRes.exportResults(FileNames.FI_SEARCH_RESULTS_ENTITY);
+			
+			// cluster the combined articles by content
+			//TODO
+			combRes.clusterArticles(language);
+			combRes.exportResults(FileNames.FI_SEARCH_RESULTS_CLUSTERS);
+			
+			// filter mentions to keep only those present in all the articles of the same cluster
+			// TODO
+			
+//			// extract events from the remaining articles and mentions
+//			boolean bySentence[] = {false,true};
+//			for(boolean bs: bySentence)
+//			{	results.extractEvents(bs);
+//				// export the events as a table
+//				results.exportEvents(bs, false);
+//				// try to group similar events together
+//				results.clusterEvents();
+//				// export the resulting groups as a table
+//				results.exportEvents(bs, true);
+//			}
+			
 		logger.decreaseOffset();
 	}
 }

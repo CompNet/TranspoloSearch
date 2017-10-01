@@ -23,7 +23,6 @@ import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -45,8 +44,6 @@ import fr.univavignon.transpolosearch.data.event.Event;
 import fr.univavignon.transpolosearch.data.event.MyPam;
 import fr.univavignon.transpolosearch.data.event.DummyDistanceMetric;
 import fr.univavignon.transpolosearch.data.event.Silhouette;
-import fr.univavignon.transpolosearch.processing.InterfaceRecognizer;
-import fr.univavignon.transpolosearch.processing.ProcessorException;
 import fr.univavignon.transpolosearch.tools.log.HierarchicalLogger;
 import fr.univavignon.transpolosearch.tools.log.HierarchicalLoggerManager;
 import fr.univavignon.transpolosearch.tools.string.StopWordsManager;
@@ -117,6 +114,14 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 		
 	}
     
+	/**
+	 * Resets the existing clusters for all results (not events ! just articles).
+	 */
+	public void resetClusters()
+	{	for(T res: results.values())
+			res.cluster = null;
+	}
+	
 	/**
 	 * Identifies clusters of similar results (independently from
 	 * the mentions detected later). 
@@ -394,216 +399,6 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 	}
 	
 	/////////////////////////////////////////////////////////////////
-	// FILTERING	/////////////////////////////////////////////////
-	/////////////////////////////////////////////////////////////////
-	/**
-	 * Discards results whose language does not matche the targeted one.
-	 *
-	 * @param language
-	 * 		targeted language of the articles.
-	 */
-	private void filterByLanguage(ArticleLanguage language)
-	{	logger.log("Removing articles not matching the language constraint: "+language);
-		logger.increaseOffset();
-			int count = 0;
-			int total = 0;
-			for(T result: results.values())
-			{	if(result.status==null)
-				{	total++;
-					if(!result.filterByLanguage(language,total))
-						count++;
-				}
-			}
-		logger.decreaseOffset();
-		logger.log("Language-based filtering complete: "+count+"/"+total);
-	}
-	
-	/**
-	 * Discards results describing only events not contained 
-	 * in the specified date range.
-	 *  
-	 * @param startDate
-	 * 		Start of the time period.
-	 * @param endDate
-	 * 		End of the time period.
-	 */
-	private void filterByDate(Date startDate, Date endDate)
-	{	logger.log("Removing articles not fitting the date constraints: "+startDate+"->"+endDate);
-		logger.increaseOffset();
-			fr.univavignon.transpolosearch.tools.time.Date start = new fr.univavignon.transpolosearch.tools.time.Date(startDate);
-			fr.univavignon.transpolosearch.tools.time.Date end = new fr.univavignon.transpolosearch.tools.time.Date(endDate);
-			int count = 0;
-			int total = 0;
-			for(T result: results.values())
-			{	if(result.status==null)
-				{	total++;
-					if(!result.filterByDate(start,end,total))
-						count++;
-				}
-			}
-		logger.decreaseOffset();
-		logger.log("Date-based filtering complete: "+count+"/"+total);
-	}
-	
-	/**
-	 * Discards results corresponding only to articles not containing 
-	 * the compulsory expression.
-	 *  
-	 * @param compulsoryExpression
-	 * 		String expression which must be present in the article.
-	 */
-	private void filterByKeyword(String compulsoryExpression)
-	{	logger.log("Discarding articles not containing the compulsory expression \""+compulsoryExpression+"\"");
-		logger.increaseOffset();
-			int count = 0;
-			int total = 0;
-			for(T result: results.values())
-			{	
-if(result instanceof WebSearchResult && ((WebSearchResult)result).url.equalsIgnoreCase
-		("http://www.lamarseillaise.fr/vaucluse/developpement-durable/58144-avignon-ca-bouge-autour-du-technopole-de-l-agroparc"))				
-	System.out.print("");
-				
-				if(result.status==null)
-				{	total++;
-					if(!result.filterByKeyword(compulsoryExpression,total))
-						count++;
-				}
-			}
-		logger.decreaseOffset();
-		logger.log("Keyword-based filtering complete: "+count+"/"+total);
-	}
-
-	/**
-	 * Discards results describing only events not contained 
-	 * in the specified date range, or not containing the 
-	 * compulsory expression.
-	 *  
-	 * @param compulsoryExpression
-	 * 		String expression which must be present in the article,
-	 * 		or {@code null} if there is no such constraint.
-	 * @param language
-	 * 		targeted language of the articles.
-	 */
-	public void filterByContent(String compulsoryExpression, ArticleLanguage language)
-	{	logger.log("Starting filtering the articles by content");
-		logger.increaseOffset();
-		
-		// log stuff
-		logger.log("Parameters:");
-		logger.increaseOffset();
-			logger.log("compulsoryExpression="+compulsoryExpression);
-			logger.log("language="+language);
-		logger.decreaseOffset();
-		
-		// filter depending on the language
-		if(language!=null)
-			filterByLanguage(language);
-		else
-			logger.log("No targeted language to process");
-		
-		// possibly filter the resulting texts depending on the compulsory expression
-		if(compulsoryExpression!=null)
-			filterByKeyword(compulsoryExpression);
-		else
-			logger.log("No compulsory expression to process");
-		
-		logger.decreaseOffset();
-		logger.log("Content-based filtering complete");
-	}
-	
-	/**
-	 * Discards results describing only events not contained
-	 * in the specified time period.
-	 * 
-	 * @param startDate
-	 * 		Start of the time period.
-	 * @param endDate
-	 * 		End of the time period.
-	 * @param searchDate
-	 * 		Whether the date constraint was applied before ({@code true}) at search time,
-	 * 		or should be applied <i>a posteriori</i> here ({@code false}).
-	 */
-	public void filterByEntity(Date startDate, Date endDate, boolean searchDate)
-	{	logger.log("Starting filtering the articles by entity");
-		logger.increaseOffset();
-		
-		// log stuff
-		logger.log("Parameters:");
-		logger.increaseOffset();
-			logger.log("startDate="+startDate);
-			logger.log("endDate="+endDate);
-			String txt = "searchDate="+searchDate;
-			if(searchDate)
-				txt = txt + "(dates are ignored here, because they were already used during the search)";
-			logger.log(txt);
-		logger.decreaseOffset();
-		
-		// possibly filter the texts depending on the dates they contain
-		if(!searchDate)
-		{	if(startDate==null || endDate==null)
-				logger.log("WARNING: one date is null, so both of them are ignored");
-			else
-				filterByDate(startDate, endDate);
-		}
-		
-		logger.decreaseOffset();
-		logger.log("Entity-based filtering complete");
-	}
-	
-	/////////////////////////////////////////////////////////////////
-	// MENTIONS		/////////////////////////////////////////////////
-	/////////////////////////////////////////////////////////////////
-	/**
-	 * Detects the entity mentions present in each specified article.
-	 * 
-	 * @param recognizer
-	 * 		The recognizer used to detect the mentions.
-	 * @throws ProcessorException
-	 * 		Problem while applying the NER tool.
-	 */
-	public void detectMentions(InterfaceRecognizer recognizer) throws ProcessorException
-	{	logger.log("Detecting entity mentions in all the articles");
-		logger.increaseOffset();
-		
-			int count = 0;
-			int total = 0;
-			for(T result: results.values())
-			{	
-if(result instanceof WebSearchResult && ((WebSearchResult)result).url.equalsIgnoreCase
-		("http://www.lamarseillaise.fr/vaucluse/developpement-durable/58144-avignon-ca-bouge-autour-du-technopole-de-l-agroparc"))				
-	System.out.print("");
-				
-				if(result.status==null)
-				{	total++;
-					if(result.detectMentions(recognizer,total)>0)
-						count++;
-				}
-			}
-		
-		logger.decreaseOffset();
-		logger.log("Mention detection complete: ("+count+" for "+total+" articles)");
-	}
-
-	/**
-	 * Displays the entity mentions associated to each remaining article.
-	 */
-	public void displayRemainingMentions()
-	{	logger.log("Displaying remaining articles and entity mentions");
-		logger.increaseOffset();
-		
-		int total = 0;
-		for(T result: results.values())
-		{	if(result.status==null)
-			{	total++;
-				result.displayRemainingMentions(total);
-			}
-		}
-		
-		logger.decreaseOffset();
-		logger.log("Display complete");
-	}
-	
-	/////////////////////////////////////////////////////////////////
 	// EVENTS		/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
 	/** Results corresponding to the events constituting the clusters */
@@ -626,12 +421,7 @@ if(result instanceof WebSearchResult && ((WebSearchResult)result).url.equalsIgno
 			int count = 0;
 			int total = 0;
 			for(T result: results.values())
-			{	
-if(result instanceof WebSearchResult && ((WebSearchResult)result).url.equalsIgnoreCase
-		("http://www.lamarseillaise.fr/vaucluse/developpement-durable/58144-avignon-ca-bouge-autour-du-technopole-de-l-agroparc"))				
-	System.out.print("");
-				
-				if(result.status==null)
+			{	if(result.status==null)
 				{	total++;
 					if(result.extractEvents(bySentence,total)>0)
 						count++;
@@ -662,20 +452,20 @@ if(result instanceof WebSearchResult && ((WebSearchResult)result).url.equalsIgno
 	public static final String COL_ENGINE = "Engine";
 	/** Rank of the event in the article */
 	public static final String COL_EVENT_RANK = "Event rank";
-	/** Dates associated to the event */
-	public static final String COL_EVENT_DATES = "Dates";
-	/** Locations associated to the event */
-	public static final String COL_EVENT_LOCATIONS = "Locations";
-	/** Persons associated to the event */
-	public static final String COL_EVENT_PERSONS = "Persons";
-	/** Organizations associated to the event */
-	public static final String COL_EVENT_ORGANIZATIONS = "Organizations";
-	/** Personal roles associated to the event */
-	public static final String COL_EVENT_FUNCTIONS = "Functions";
-	/** Intellectual productions associated to the event */
-	public static final String COL_EVENT_PRODUCTIONS = "Production";
-	/** Meetings associated to the event */
-	public static final String COL_EVENT_MEETINGS = "Meetings";
+	/** Dates associated to the event/article */
+	public static final String COL_ENT_DATES = "Dates";
+	/** Locations associated to the event/article */
+	public static final String COL_ENT_LOCATIONS = "Locations";
+	/** Persons associated to the event/article */
+	public static final String COL_ENT_PERSONS = "Persons";
+	/** Organizations associated to the event/article */
+	public static final String COL_ENT_ORGANIZATIONS = "Organizations";
+	/** Personal roles associated to the event/article */
+	public static final String COL_ENT_FUNCTIONS = "Functions";
+	/** Intellectual productions associated to the event/article */
+	public static final String COL_ENT_PRODUCTIONS = "Production";
+	/** Meetings associated to the event/article */
+	public static final String COL_ENT_MEETINGS = "Meetings";
 	/** Misc comments and notes */
 	public static final String COL_NOTES = "Notes";
 	/** Whether a social post was written by the targeted person, or not */
@@ -798,10 +588,23 @@ if(result instanceof WebSearchResult && ((WebSearchResult)result).url.equalsIgno
 		logger.decreaseOffset();
 		logger.log("Event clustering complete: "+mapClustRes.size()+" clusters detected for "+allEvents.size()+" events");
 	}
-
+	
 	/////////////////////////////////////////////////////////////////
 	// CSV			/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
+	/**
+	 * Records all results in a single CSV file.
+	 * 
+	 * @param fileName
+	 * 		Name of the created file.  
+	 * 
+	 * @throws UnsupportedEncodingException
+	 * 		Problem while opening the CSV file.
+	 * @throws FileNotFoundException
+	 * 		Problem while opening the CSV file.
+	 */
+	public abstract void exportResults(String fileName) throws UnsupportedEncodingException, FileNotFoundException;
+	
 	/**
 	 * Receives a print writer and writes a summary of these results.
 	 * This method is meant to be used when exporting a combined file

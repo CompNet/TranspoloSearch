@@ -27,10 +27,8 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -40,11 +38,10 @@ import java.util.regex.Pattern;
 
 import fr.univavignon.transpolosearch.data.article.Article;
 import fr.univavignon.transpolosearch.data.article.ArticleLanguage;
+import fr.univavignon.transpolosearch.data.entity.EntityType;
 import fr.univavignon.transpolosearch.data.event.Event;
 import fr.univavignon.transpolosearch.tools.file.FileNames;
 import fr.univavignon.transpolosearch.tools.string.StringTools;
-import fr.univavignon.transpolosearch.tools.time.Period;
-import fr.univavignon.transpolosearch.tools.time.TimeFormatting;
 
 /**
  * Represents one result of a social search engine and some info 
@@ -92,6 +89,16 @@ public class SocialSearchResult extends AbstractSearchResult
 	/** Whether the post was written by the targeted author, or by one of the commenters */
 	public boolean original = false;
 	
+	/**
+	 * Adds the original flag of this post to the specified map.
+	 * 
+	 * @param result
+	 * 		Map to fill with the required field.
+	 */
+	private void exportOriginal(Map<String,String> result)
+	{	result.put(AbstractSearchResults.COL_ORIGINAL,Boolean.toString(original));
+	}
+	
 	/////////////////////////////////////////////////////////////////
 	// CONTENT		/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
@@ -116,17 +123,50 @@ public class SocialSearchResult extends AbstractSearchResult
 	/** Name of the social media on which this post has been published */
 	public String source = null;
 	
+	/**
+	 * Adds the social media of this post to the specified map.
+	 * 
+	 * @param result
+	 * 		Map to fill with the required field.
+	 */
+	private void exportSource(Map<String,String> result)
+	{	if(source!=null)
+			result.put(AbstractSearchResults.COL_SOCIAL_ENGINE,source);
+	}
+	
 	/////////////////////////////////////////////////////////////////
 	// LIKES		/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
 	/** Number of likes for this post */
 	public Integer likes = null;
 	
+	/**
+	 * Adds the number of likes of this post to the specified map.
+	 * 
+	 * @param result
+	 * 		Map to fill with the required field.
+	 */
+	private void exportLikeNumber(Map<String,String> result)
+	{	if(likes!=null)
+		result.put(WebSearchResults.COL_LIKES,Integer.toString(likes));
+	}
+	
 	/////////////////////////////////////////////////////////////////
 	// SHARES		/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
 	/** Number of shares for this post */
 	public Integer shares = null;
+	
+	/**
+	 * Adds the number of shares of this post to the specified map.
+	 * 
+	 * @param result
+	 * 		Map to fill with the required field.
+	 */
+	private void exportShareNumber(Map<String,String> result)
+	{	if(shares!=null)
+			result.put(WebSearchResults.COL_SHARES,Integer.toString(shares));
+	}
 	
 	/////////////////////////////////////////////////////////////////
 	// RANK			/////////////////////////////////////////////////
@@ -139,12 +179,42 @@ public class SocialSearchResult extends AbstractSearchResult
 	/////////////////////////////////////////////////////////////////
 	/** Posts commenting this post */ 
 	public List<SocialSearchResult> comments = new ArrayList<SocialSearchResult>();
+	
+	/**
+	 * Adds the number of comments of this post to the specified map.
+	 * 
+	 * @param result
+	 * 		Map to fill with the required field.
+	 */
+	private void exportCommentNumber(Map<String,String> result)
+	{	int commentNbr = comments.size();
+		result.put(WebSearchResults.COL_COMMENTS,Integer.toString(commentNbr));
+	}
 
 	/////////////////////////////////////////////////////////////////
 	// URL			/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
 	/** Direct URL of the post */ 
 	public URL url;
+	
+	/**
+	 * Adds the url of this post to the specified map.
+	 * 
+	 * @param result
+	 * 		Map to fill with the required field.
+	 */
+	private void exportUrl(Map<String,String> result)
+	{	String urlStr = null;
+		if(url!=null)
+			urlStr = url.toString();
+		else if(article!=null)
+		{	URL url = article.getUrl();
+			urlStr = url.toString();
+		}
+		
+		if(urlStr!=null)
+			result.put(AbstractSearchResults.COL_URL,url.toString());
+	}
 
 	/////////////////////////////////////////////////////////////////
 	// ARTICLE		/////////////////////////////////////////////////
@@ -315,6 +385,48 @@ public class SocialSearchResult extends AbstractSearchResult
 	}
 	
 	/////////////////////////////////////////////////////////////////
+	// CSV			/////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////
+	@Override
+	protected Map<String, String> exportResult() 
+	{	Map<String,String> result = new HashMap<String,String>();
+	
+		// title 
+		exportTitle(result);
+		// status
+		exportStatus(result);
+		// publication date
+		exportPublicationDate(result);
+		// likes
+		exportLikeNumber(result);
+		// shares
+		exportShareNumber(result);
+		// comments
+		exportCommentNumber(result);
+		// author(s)
+		exportAuthors(result);
+		// original flag
+		exportOriginal(result);
+		// social media engine
+		exportSource(result);
+		// length
+		exportLength(result);
+		// article cluster
+		exportCluster(result);
+		
+		// mentions
+		exportMentions(result, EntityType.DATE);
+		exportMentions(result, EntityType.FUNCTION);
+		exportMentions(result, EntityType.LOCATION);
+		exportMentions(result, EntityType.MEETING);
+		exportMentions(result, EntityType.ORGANIZATION);
+		exportMentions(result, EntityType.PERSON);
+		exportMentions(result, EntityType.PRODUCTION);
+		
+		return result;
+	}
+
+	/////////////////////////////////////////////////////////////////
 	// EVENTS		/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
 	@Override
@@ -341,145 +453,49 @@ public class SocialSearchResult extends AbstractSearchResult
 			result.add(map);
 			rank++;
 
-			// general stuff
-			map.put(AbstractSearchResults.COL_TITLE,"\""+article.getTitle()+"\"");
-			if(article.getUrl()!=null)
-				map.put(AbstractSearchResults.COL_URL,"\""+article.getUrl().toString()+"\"");
-			map.put(AbstractSearchResults.COL_LENGTH,"\""+article.getRawText().length()+"\"");
-			map.put(AbstractSearchResults.COL_AUTHORS,"\""+article.getAuthors().get(0)+"\"");
-			map.put(AbstractSearchResults.COL_ORIGINAL,"\""+original+"\"");
-			map.put(AbstractSearchResults.COL_STATUS,"\""+status+"\"");
-			map.put(AbstractSearchResults.COL_NOTES,"");
-			
-			// publication date
-			java.util.Date pubDate = article.getPublishingDate();
-			if(pubDate!=null)
-			{	String pubDateStr = TimeFormatting.formatDate(pubDate);
-				map.put(AbstractSearchResults.COL_PUB_DATE,pubDateStr);
-			}
-			
+			// title
+			exportTitle(map);
+			// url
+			exportUrl(map);
+			// length
+			exportLength(map);
+			// author(s)
+			exportAuthors(map);
+			// original or not
+			exportOriginal(map);
+			// status
+			exportStatus(map);
+			// date
+			exportPublicationDate(map);
+			// article cluster
+			exportCluster(map);
 			// search engine
-			if(source!=null)
-				map.put(AbstractSearchResults.COL_SOCIAL_ENGINE,source);
+			exportSource(map);
+			// number of likes
+			exportLikeNumber(map);
+			// number of shares
+			exportShareNumber(map);
+			// number of comments
+			exportCommentNumber(map);
 			
-			// likes, shares, and so on
-			int commentNbr = comments.size();
-			map.put(WebSearchResults.COL_COMMENTS,Integer.toString(commentNbr));
-			if(likes!=null)
-				map.put(WebSearchResults.COL_LIKES,Integer.toString(likes));
-			if(shares!=null)
-				map.put(WebSearchResults.COL_SHARES,Integer.toString(shares));
-			
-			// possibly the article cluster
-			if(cluster!=null)
-				map.put(WebSearchResults.COL_ARTICLE_CLUSTER,cluster);
-			
-			// event
+			// event and its mentions
 			if(event!=null)
-			{	map.put(AbstractSearchResults.COL_EVENT_RANK,Integer.toString(rank));
-				
+			{	// rank
+				map.put(WebSearchResults.COL_EVENT_RANK,Integer.toString(rank));
 				// dates
-				Period period = event.getPeriod();
-				String periodStr = period.toString();
-				periodStr = periodStr.replaceAll("[\\n\\r]", " ");
-				periodStr = periodStr.replaceAll("\"", "'");
-				map.put(AbstractSearchResults.COL_EVENT_DATES,periodStr);
-				
+				exportEventDates(event, map);
 				// locations
-				{	String locations = "\"";
-					Collection<String> locs = event.getLocations();
-					Iterator<String> itLoc = locs.iterator();
-					while(itLoc.hasNext())
-					{	String loc = itLoc.next();
-						loc = loc.replaceAll("[\\n\\r]", " ");
-						loc = loc.replaceAll("\"", "'");
-						locations = locations + loc;
-						if(itLoc.hasNext())
-							locations = locations + ", ";
-					}
-					locations = locations + "\"";
-					map.put(AbstractSearchResults.COL_EVENT_LOCATIONS,locations);
-				}
-				
+				exportEventDates(event, EntityType.LOCATION, map);
 				// persons
-				{	String persons = "\"";
-					Collection<String> perss = event.getPersons();
-					Iterator<String> itPers = perss.iterator();
-					while(itPers.hasNext())
-					{	String pers = itPers.next();
-						pers = pers.replaceAll("[\\n\\r]", " ");
-						pers = pers.replaceAll("\"", "'");
-						persons = persons + pers;
-						if(itPers.hasNext())
-							persons = persons + ", ";
-					}
-					persons = persons + "\"";
-					map.put(AbstractSearchResults.COL_EVENT_PERSONS,persons);
-				}
-				
+				exportEventDates(event, EntityType.PERSON, map);
 				// organizations
-				{	String organizations = "\"";
-					Collection<String> orgs = event.getOrganizations();
-					Iterator<String> itOrg = orgs.iterator();
-					while(itOrg.hasNext())
-					{	String org = itOrg.next();
-						org = org.replaceAll("[\\n\\r]", " ");
-						org = org.replaceAll("\"", "'");
-						organizations = organizations + org;
-						if(itOrg.hasNext())
-							organizations = organizations + ", ";
-					}
-					organizations = organizations + "\"";
-					map.put(AbstractSearchResults.COL_EVENT_ORGANIZATIONS,organizations);
-				}
-				
+				exportEventDates(event, EntityType.ORGANIZATION, map);
 				// functions
-				{	String functions = "\"";
-					Collection<String> funs = event.getFunctions();
-					Iterator<String> itFun = funs.iterator();
-					while(itFun.hasNext())
-					{	String fun = itFun.next();
-						fun = fun.replaceAll("[\\n\\r]", " ");
-						fun = fun.replaceAll("\"", "'");
-						functions = functions + fun;
-						if(itFun.hasNext())
-							functions = functions + ", ";
-					}
-					functions = functions + "\"";
-					map.put(AbstractSearchResults.COL_EVENT_FUNCTIONS,functions);
-				}
-				
+				exportEventDates(event, EntityType.FUNCTION, map);
 				// productions
-				{	String productions = "\"";
-					Collection<String> prods = event.getProductions();
-					Iterator<String> itProd = prods.iterator();
-					while(itProd.hasNext())
-					{	String prod = itProd.next();
-						prod = prod.replaceAll("[\\n\\r]", " ");
-						prod = prod.replaceAll("\"", "'");
-						productions = productions + prod;
-						if(itProd.hasNext())
-							productions = productions + ", ";
-					}
-					productions = productions + "\"";
-					map.put(AbstractSearchResults.COL_EVENT_PRODUCTIONS,productions);
-				}
-				
+				exportEventDates(event, EntityType.PRODUCTION, map);
 				// meetings
-				{	String meetings = "\"";
-					Collection<String> meets = event.getMeetings();
-					Iterator<String> itMeet = meets.iterator();
-					while(itMeet.hasNext())
-					{	String meet = itMeet.next();
-						meet = meet.replaceAll("[\\n\\r]", " ");
-						meet = meet.replaceAll("\"", "'");
-						meetings = meetings + meet;
-						if(itMeet.hasNext())
-							meetings = meetings + ", ";
-					}
-					meetings = meetings + "\"";
-					map.put(AbstractSearchResults.COL_EVENT_MEETINGS,meetings);
-				}
+				exportEventDates(event, EntityType.MEETING, map);
 			}
 		}
 		

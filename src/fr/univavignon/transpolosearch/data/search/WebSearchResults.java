@@ -43,7 +43,7 @@ import fr.univavignon.transpolosearch.tools.file.FileTools;
  * 
  * @author Vincent Labatut
  */
-public class WebSearchResults extends AbstractSearchResults<WebSearchResult>
+public class WebSearchResults extends AbstractSpecificSearchResults<WebSearchResult>
 {	
 	/////////////////////////////////////////////////////////////////
 	// RESULTS		/////////////////////////////////////////////////
@@ -160,88 +160,50 @@ public class WebSearchResults extends AbstractSearchResults<WebSearchResult>
 	/////////////////////////////////////////////////////////////////
 	// CSV			/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
-	/**
-	 * Records all result URLs in a single CSV file.
-	 * 
-	 * @param fileName
-	 * 		Name of the created file.  
-	 * 
-	 * @throws UnsupportedEncodingException
-	 * 		Problem while opening the CSV file.
-	 * @throws FileNotFoundException
-	 * 		Problem while opening the CSV file.
-	 */
-	public void exportAsCsv(String fileName) throws UnsupportedEncodingException, FileNotFoundException
+	@Override
+	public void exportResults(String fileName) throws UnsupportedEncodingException, FileNotFoundException
 	{	logger.log("Recording all the Web search results in file "+fileName);
 		logger.increaseOffset();
 		
 		// create folder
 		File folder = new File(FileNames.FO_WEB_SEARCH_RESULTS);
 		folder.mkdirs();
-		String cacheFilePath = folder + File.separator + fileName;
-		logger.log("Recording in CSV file \""+cacheFilePath+"\"");
+		String filePath = folder + File.separator + fileName;
+		logger.log("Recording in CSV file \""+filePath+"\"");
 		
 		// setup colon names
-		List<String> startCols = Arrays.asList(COL_TITLE, COL_URL, COL_STATUS, COL_LENGTH, COL_ARTICLE_CLUSTER);
+		List<String> startCols = Arrays.asList(COL_NOTES, COL_TITLE, COL_URL, COL_STATUS, COL_LENGTH, COL_PUB_DATE, COL_AUTHORS, COL_ARTICLE_CLUSTER);
+		List<String> endCols = Arrays.asList(COL_ENT_DATES, COL_ENT_LOCATIONS, COL_ENT_PERSONS, COL_ENT_ORGANIZATIONS, COL_ENT_FUNCTIONS, COL_ENT_PRODUCTIONS, COL_ENT_MEETINGS);
 		List<String> cols = new ArrayList<String>();
 		cols.addAll(startCols);
 		for(String engineName: engineNames)
-			cols.add(engineName);
+			cols.add(COL_RANK+engineName); 
+		cols.addAll(endCols);
 		
 		// open file and write header
-		PrintWriter pw = FileTools.openTextFileWrite(cacheFilePath,"UTF-8");
-		Iterator<String> it = cols.iterator();
-		while(it.hasNext())
-		{	String col = it.next();
-			pw.print("\""+col+"\"");
-			if(it.hasNext())
-				pw.print(",");
+		PrintWriter pw = FileTools.openTextFileWrite(filePath,"UTF-8");
+		{	Iterator<String> it = cols.iterator();
+			while(it.hasNext())
+			{	String col = it.next();
+				pw.print("\""+col+"\"");
+				if(it.hasNext())
+					pw.print(",");
+			}
 		}
 		pw.println();
 		
 		// write data and close file
 		for(WebSearchResult result: results.values())
-		{	String line = "";
-		
-			// title
-			String title = null;
-			if(result.article!=null)
-				title = result.article.getTitle();
-			if(title!=null)
-				line = line + "\"" + title + "\"";
-			
-			// url
-			line = line + ",";
-			line = line + "\"" + result.url + "\"";
-			
-			// status
-			line = line + ",";
-			if(result.status!=null)
-				line = line + "\"" + result.status + "\"";
-			
-			// length
-			line = line + ",";
-			Integer length = null;
-			if(result.article!=null)
-				length = result.article.getRawText().length();
-			if(length!=null)
-				line = line + length;
-			
-			// cluster
-			line = line + ",";
-			if(result.cluster!=null)
-				line = line + result.cluster;
-			
-			// ranks
-			Map<String,String> ranks = result.ranks;
-			for(String engineName: engineNames)
-			{	line = line + ",";
-				String rank = ranks.get(engineName);
-				if(rank!=null)
-					line = line + "\"" + rank + "\"";
+		{	Map<String,String> map = result.exportResult();
+			Iterator<String> it = cols.iterator();
+			while(it.hasNext())
+			{	String col = it.next();
+				String val = map.get(col);
+				if(val!=null)
+					pw.print("\""+val+"\"");
+				if(it.hasNext())
+					pw.print(",");
 			}
-			
-			pw.println(line);
 		}
 		pw.close();
 
@@ -293,14 +255,13 @@ public class WebSearchResults extends AbstractSearchResults<WebSearchResult>
 		String filePath = FileNames.FO_WEB_SEARCH_RESULTS + File.separator + fileName;
 		logger.log("Recording the events as a CVS file: "+filePath);
 		logger.decreaseOffset();
-			PrintWriter pw = FileTools.openTextFileWrite(filePath, "UTF-8");
 			
-			// write header
+			// setup colon names
 			List<String> startCols = Arrays.asList(COL_NOTES);
 			List<String> midCols = Arrays.asList(COL_TITLE, COL_URL, COL_LENGTH, COL_PUB_DATE, COL_AUTHORS);
-			List<String> endCols = Arrays.asList(COL_STATUS, COL_ARTICLE_CLUSTER, COL_EVENT_RANK, COL_EVENT_DATES,
-					COL_EVENT_LOCATIONS, COL_EVENT_PERSONS, COL_EVENT_ORGANIZATIONS, COL_EVENT_FUNCTIONS,
-					COL_EVENT_PRODUCTIONS, COL_EVENT_MEETINGS
+			List<String> endCols = Arrays.asList(COL_STATUS, COL_ARTICLE_CLUSTER, COL_EVENT_RANK, COL_ENT_DATES,
+					COL_ENT_LOCATIONS, COL_ENT_PERSONS, COL_ENT_ORGANIZATIONS, COL_ENT_FUNCTIONS,
+					COL_ENT_PRODUCTIONS, COL_ENT_MEETINGS
 			);
 			List<String> cols = new ArrayList<String>();
 			cols.addAll(startCols);
@@ -310,6 +271,9 @@ public class WebSearchResults extends AbstractSearchResults<WebSearchResult>
 			for(String engineName: engineNames)
 				cols.add(COL_RANK+engineName); 
 			cols.addAll(endCols);
+			
+			// open file and write header
+			PrintWriter pw = FileTools.openTextFileWrite(filePath, "UTF-8");
 			Iterator<String> it = cols.iterator();
 			while(it.hasNext())
 			{	String col = it.next();
@@ -339,7 +303,7 @@ public class WebSearchResults extends AbstractSearchResults<WebSearchResult>
 						{	String col = it.next();
 							String val = line.get(col);
 							if(val!=null)
-								pw.print(val);
+								pw.print("\""+val+"\"");
 							if(it.hasNext())
 								pw.print(",");
 						}
@@ -358,7 +322,7 @@ public class WebSearchResults extends AbstractSearchResults<WebSearchResult>
 						{	String col = it.next();
 							String val = line.get(col);
 							if(val!=null)
-								pw.print(val);
+								pw.print("\""+val+"\"");
 							if(it.hasNext())
 								pw.print(",");
 						}

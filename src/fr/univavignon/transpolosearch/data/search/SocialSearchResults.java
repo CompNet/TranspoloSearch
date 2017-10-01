@@ -23,8 +23,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -41,8 +39,8 @@ import fr.univavignon.transpolosearch.tools.file.FileTools;
  * 
  * @author Vincent Labatut
  */
-public class SocialSearchResults extends AbstractSearchResults<SocialSearchResult>
-{
+public class SocialSearchResults extends AbstractSpecificSearchResults<SocialSearchResult>
+{	
 	/////////////////////////////////////////////////////////////////
 	// RESULTS		/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
@@ -93,109 +91,48 @@ public class SocialSearchResults extends AbstractSearchResults<SocialSearchResul
 	/////////////////////////////////////////////////////////////////
 	// CSV			/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
-	/**
-	 * Records all result URLs in a single CSV file.
-	 * 
-	 * @param fileName
-	 * 		Name of the created file.  
-	 * 
-	 * @throws UnsupportedEncodingException
-	 * 		Problem while opening the CSV file.
-	 * @throws FileNotFoundException
-	 * 		Problem while opening the CSV file.
-	 */
-	public void exportAsCsv(String fileName) throws UnsupportedEncodingException, FileNotFoundException
+	@Override
+	public void exportResults(String fileName) throws UnsupportedEncodingException, FileNotFoundException
 	{	logger.log("Recording all the social search results in a file"+fileName);
 		logger.increaseOffset();
-		DateFormat df = new SimpleDateFormat("yyyy-MM-dd");
 		
 		// create folder
 		File folder = new File(FileNames.FO_SOCIAL_SEARCH_RESULTS);
 		folder.mkdirs();
-		String cacheFilePath = folder + File.separator + fileName;
-		logger.log("Recording in CSV file \""+cacheFilePath+"\"");
+		String filePath = folder + File.separator + fileName;
+		logger.log("Recording in CSV file \""+filePath+"\"");
 		
 		// setup colon names
-		List<String> cols = Arrays.asList(COL_TITLE, COL_STATUS, COL_PUB_DATE, 
+		List<String> cols = Arrays.asList(COL_NOTES, COL_TITLE, COL_STATUS, COL_PUB_DATE, 
 				COL_LIKES, COL_SHARES, COL_COMMENTS,
-				COL_AUTHORS, COL_ORIGINAL, COL_ENGINE, COL_LENGTH, COL_ARTICLE_CLUSTER
+				COL_AUTHORS, COL_ORIGINAL, COL_ENGINE, COL_LENGTH, COL_ARTICLE_CLUSTER,
+				COL_ENT_DATES, COL_ENT_LOCATIONS, COL_ENT_PERSONS, COL_ENT_ORGANIZATIONS, COL_ENT_FUNCTIONS, COL_ENT_PRODUCTIONS, COL_ENT_MEETINGS
 			);
 
 		// open file and write header
-		PrintWriter pw = FileTools.openTextFileWrite(cacheFilePath,"UTF-8");
-		Iterator<String> it = cols.iterator();
-		while(it.hasNext())
-		{	String col = it.next();
-			pw.print("\""+col+"\"");
-			if(it.hasNext())
-				pw.print(",");
+		PrintWriter pw = FileTools.openTextFileWrite(filePath,"UTF-8");
+		{	Iterator<String> it = cols.iterator();
+			while(it.hasNext())
+			{	String col = it.next();
+				pw.print("\""+col+"\"");
+				if(it.hasNext())
+					pw.print(",");
+			}
+			pw.println();
 		}
-		pw.println();
 		
 		// write data and close file
 		for(SocialSearchResult result: results.values())
-		{	String line = "";
-		
-			// title
-			String title = null;
-			if(result.article!=null)
-				title = result.article.getTitle();
-			if(title!=null)
-				line = line + "\"" + title + "\"";
-			
-			// status
-			line = line + ",";
-			if(result.status!=null)
-				line = line + "\"" + result.status + "\"";
-			
-			// date
-			line = line + ",";
-			if(result.date!=null)
-			{	String dateStr = df.format(result.date);
-				line = line + "\"" + dateStr + "\"";
+		{	Map<String,String> map = result.exportResult();
+			Iterator<String> it = cols.iterator();
+			while(it.hasNext())
+			{	String col = it.next();
+				String val = map.get(col);
+				if(val!=null)
+					pw.print("\""+val+"\"");
+				if(it.hasNext())
+					pw.print(",");
 			}
-
-			// likes
-			line = line + ",";
-			if(result.likes!=null)
-				line = line + "\"" + result.likes + "\"";
-			
-			// shares
-			line = line + ",";
-			if(result.shares!=null)
-				line = line + "\"" + result.shares + "\"";
-			
-			// comments
-			line = line + ",";
-			line = line + "\"" + result.comments.size() + "\"";
-			
-			// author
-			line = line + ",";
-			if(result.author!=null)
-				line = line + "\"" + result.author + "\"";
-			
-			// original
-			line = line + ",";
-			line = line + "\"" + result.original + "\"";
-			
-			// engine
-			line = line + ",";
-			line = line + "\"" + result.source + "\"";
-			
-			// length
-			line = line + ",";
-			Integer length = null;
-			if(result.article!=null)
-				length = result.article.getRawText().length();
-			if(length!=null)
-				line = line + length;
-			
-			// cluster
-			line = line + ",";
-			if(result.cluster!=null)
-				line = line + result.cluster;
-			
-			pw.println(line);
 		}
 		pw.close();
 
@@ -250,20 +187,22 @@ public class SocialSearchResults extends AbstractSearchResults<SocialSearchResul
 		String filePath = FileNames.FO_SOCIAL_SEARCH_RESULTS + File.separator + fileName;
 		logger.log("Recording the events as a CVS file: "+filePath);
 		logger.decreaseOffset();
-			PrintWriter pw = FileTools.openTextFileWrite(filePath, "UTF-8");
 			
-			// write header
+			// setup colon names
 			List<String> startCols = Arrays.asList(COL_NOTES);
 			List<String> endCols = Arrays.asList(COL_TITLE, COL_URL, COL_LENGTH, COL_PUB_DATE, COL_LIKES, COL_SHARES, COL_COMMENTS, 
-					COL_AUTHORS, COL_SOCIAL_ENGINE, COL_STATUS, COL_ARTICLE_CLUSTER, COL_EVENT_RANK, COL_EVENT_DATES,
-					COL_EVENT_LOCATIONS, COL_EVENT_PERSONS, COL_EVENT_ORGANIZATIONS, COL_EVENT_FUNCTIONS,
-					COL_EVENT_PRODUCTIONS, COL_EVENT_MEETINGS
+					COL_AUTHORS, COL_SOCIAL_ENGINE, COL_STATUS, COL_ARTICLE_CLUSTER, COL_EVENT_RANK, COL_ENT_DATES,
+					COL_ENT_LOCATIONS, COL_ENT_PERSONS, COL_ENT_ORGANIZATIONS, COL_ENT_FUNCTIONS,
+					COL_ENT_PRODUCTIONS, COL_ENT_MEETINGS
 			);
 			List<String> cols = new ArrayList<String>();
 			cols.addAll(startCols);
 			if(byCluster)
 				cols.add(COL_EVENT_CLUSTER);
 			cols.addAll(endCols);
+			
+			// open file and write header
+			PrintWriter pw = FileTools.openTextFileWrite(filePath, "UTF-8");
 			Iterator<String> it = cols.iterator();
 			while(it.hasNext())
 			{	String col = it.next();
@@ -293,7 +232,7 @@ public class SocialSearchResults extends AbstractSearchResults<SocialSearchResul
 						{	String col = it.next();
 							String val = line.get(col);
 							if(val!=null)
-								pw.print(val);
+								pw.print("\""+val+"\"");
 							if(it.hasNext())
 								pw.print(",");
 						}
@@ -312,7 +251,7 @@ public class SocialSearchResults extends AbstractSearchResults<SocialSearchResul
 						{	String col = it.next();
 							String val = line.get(col);
 							if(val!=null)
-								pw.print(val);
+								pw.print("\""+val+"\"");
 							if(it.hasNext())
 								pw.print(",");
 						}
