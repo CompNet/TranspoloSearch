@@ -483,7 +483,7 @@ public class Article implements Comparable<Article>
 		// clean title
 		logger.log("Possibly setup title (if none), and clean it");
 		if(title==null || title.isEmpty())
-		{	int length = Math.min(50,rawText.length());
+		{	int length = Math.min(20,rawText.length());
 			if(length>0)
 				title = rawText.substring(0,length);
 			else
