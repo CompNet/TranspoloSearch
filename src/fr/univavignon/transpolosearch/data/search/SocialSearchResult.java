@@ -211,11 +211,12 @@ public class SocialSearchResult extends AbstractSearchResult
 			urlStr = url.toString();
 		else if(article!=null)
 		{	URL url = article.getUrl();
-			urlStr = url.toString();
+			if(url!=null)
+				urlStr = url.toString();
 		}
 		
 		if(urlStr!=null)
-			result.put(AbstractSearchResults.COL_URL,url.toString());
+			result.put(AbstractSearchResults.COL_URL,urlStr);
 
 		result.put(AbstractSearchResults.COL_URL_ID, id);
 	}

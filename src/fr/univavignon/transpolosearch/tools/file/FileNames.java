@@ -192,23 +192,23 @@ public class FileNames
 	/** File containing cached search results */
 	public final static String FI_SEARCH_RESULTS = "search" + FileNames.EX_TEXT;
 	/** File containing overall search results */
-	public final static String FI_SEARCH_RESULTS_ALL = "search_1_all" + FileNames.EX_CSV;
+	public final static String FI_SEARCH_RESULTS_ALL = "1_search_all" + FileNames.EX_CSV;
 	/** File containing the search results after URL filtering */
-	public final static String FI_SEARCH_RESULTS_URL = "search_2_url_filtered" + FileNames.EX_CSV;
+	public final static String FI_SEARCH_RESULTS_URL = "2_search_url_filtered" + FileNames.EX_CSV;
 	/** File containing the search results after content filtering */
-	public final static String FI_SEARCH_RESULTS_CONTENT = "search_3_content_filtered" + FileNames.EX_CSV;
+	public final static String FI_SEARCH_RESULTS_CONTENT = "3_search_content_filtered" + FileNames.EX_CSV;
 	/** File containing the search results after entity filtering */
-	public final static String FI_SEARCH_RESULTS_ENTITY = "search_4_entity_filtered" + FileNames.EX_CSV;
+	public final static String FI_SEARCH_RESULTS_ENTITY = "4_search_entity_filtered" + FileNames.EX_CSV;
 	/** File containing the search results after article clustering */
-	public final static String FI_SEARCH_RESULTS_CLUSTERS = "search_5_article_clusters" + FileNames.EX_CSV;
+	public final static String FI_SEARCH_RESULTS_CLUSTERS = "5_search_article_clusters" + FileNames.EX_CSV;
 	/** Events file, by article */
 	public final static String FI_EVENT_TABLE_ARTICLE = "event_table_byarticle" + FileNames.EX_CSV;
 	/** Events file, by sentence */
 	public final static String FI_EVENT_TABLE_SENTENCE = "event_table_bysentence" + FileNames.EX_CSV;
 	/** Event clusters file, by article */
-	public final static String FI_CLUSTER_TABLE_ARTICLE = "cluster_table_byarticle" + FileNames.EX_CSV;
+	public final static String FI_CLUSTER_TABLE_ARTICLE = "event_clusters_byarticle" + FileNames.EX_CSV;
 	/** Event clusters file, by sentence */
-	public final static String FI_CLUSTER_TABLE_SENTENCE = "cluster_table_bysentence" + FileNames.EX_CSV;
+	public final static String FI_CLUSTER_TABLE_SENTENCE = "event_clusters_bysentence" + FileNames.EX_CSV;
 	/** List of Facebook ids */
 	public final static String FI_FACEBOOK_IDS = "fb_ids" + FileNames.EX_TEXT;
 	

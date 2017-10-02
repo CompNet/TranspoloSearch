@@ -143,18 +143,18 @@ public class SocialSearchResults extends AbstractSpecificSearchResults<SocialSea
 	// EVENTS		/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
 	@Override
-	public void exportEvents(boolean bySentence, boolean byCluster) throws UnsupportedEncodingException, FileNotFoundException
-	{	String fileName;
+	public void exportEvents(boolean bySentence, boolean byCluster, String filePrefix) throws UnsupportedEncodingException, FileNotFoundException
+	{	String fileName = filePrefix;
 		if(bySentence)
 			if(byCluster)
-				fileName = FileNames.FI_CLUSTER_TABLE_SENTENCE;
+				fileName = fileName + FileNames.FI_CLUSTER_TABLE_SENTENCE;
 			else
-				fileName = FileNames.FI_EVENT_TABLE_SENTENCE;
+				fileName = fileName + FileNames.FI_EVENT_TABLE_SENTENCE;
 		else
 			if(byCluster)
-				fileName = FileNames.FI_CLUSTER_TABLE_ARTICLE;
+				fileName = fileName + FileNames.FI_CLUSTER_TABLE_ARTICLE;
 			else
-				fileName = FileNames.FI_EVENT_TABLE_ARTICLE;
+				fileName = fileName + FileNames.FI_EVENT_TABLE_ARTICLE;
 		String filePath = FileNames.FO_SOCIAL_SEARCH_RESULTS + File.separator + fileName;
 		logger.log("Recording the events as a CVS file: "+filePath);
 		logger.decreaseOffset();

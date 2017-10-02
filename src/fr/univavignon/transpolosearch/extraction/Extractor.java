@@ -35,6 +35,7 @@ import org.xml.sax.SAXException;
 import com.gargoylesoftware.htmlunit.FailingHttpStatusCodeException;
 
 import fr.univavignon.transpolosearch.data.article.ArticleLanguage;
+import fr.univavignon.transpolosearch.data.search.AbstractSearchResults;
 import fr.univavignon.transpolosearch.data.search.CombinedSearchResults;
 import fr.univavignon.transpolosearch.data.search.SocialSearchResult;
 import fr.univavignon.transpolosearch.data.search.SocialSearchResults;
@@ -78,7 +79,7 @@ public class Extractor
 	 * 		Problem while initializing the NER tool. 
 	 */
 	public Extractor() throws ProcessorException
-	{	initDefaultRecognizer();
+	{	initRecognizer();
 	}
 	
 	/////////////////////////////////////////////////////////////////
@@ -351,23 +352,13 @@ public class Extractor
 			// displays the remaining articles with their mentions	//TODO maybe get the entities instead of the mentions, eventually?
 			results.displayRemainingMentions(); // for debug only
 			
+			// extract events from the remaining articles and mentions
+			extractEvents(results, "4_");
+			
 			// cluster the article by content
 			results.clusterArticles(language);
 			results.exportResults(FileNames.FI_SEARCH_RESULTS_CLUSTERS);
 			
-			// extract events from the remaining articles and mentions
-			boolean bySentence[] = {false,true};
-			for(boolean bs: bySentence)
-			{	// identify the events
-				results.extractEvents(bs);
-				// export the events as a table
-				results.exportEvents(bs, false);
-				// try to group similar events together
-				results.clusterEvents();
-				// export the resulting groups as a table
-				results.exportEvents(bs, true);
-			}
-		
 		logger.decreaseOffset();
 		logger.log("Web extraction over");
 		return results;
@@ -546,22 +537,13 @@ public class Extractor
 			// displays the remaining articles with their mentions	//TODO maybe get the entities instead of the mention, eventually?
 			results.displayRemainingMentions(); // for debug only
 			
+			// extract events from the remaining articles and mentions
+			extractEvents(results, "4_");
+		
 			// cluster the articles by content
 			results.clusterArticles(language);
 			results.exportResults(FileNames.FI_SEARCH_RESULTS_CLUSTERS);
 			
-			// extract events from the remaining articles and mentions
-			boolean bySentence[] = {false,true};
-			for(boolean bs: bySentence)
-			{	results.extractEvents(bs);
-				// export the events as a table
-				results.exportEvents(bs, false);
-				// try to group similar events together
-				results.clusterEvents();
-				// export the resulting groups as a table
-				results.exportEvents(bs, true);
-			}
-		
 		logger.decreaseOffset();
 		logger.log("Social media extraction over");
 		return results;
@@ -581,7 +563,7 @@ public class Extractor
 	 * @throws ProcessorException
 	 * 		Problem while initializing the recognizer. 
 	 */
-	private void initDefaultRecognizer() throws ProcessorException
+	private void initRecognizer() throws ProcessorException
 	{	recognizer = new StraightCombiner();
 		recognizer.setCacheEnabled(true);//TODO set to false for debugging
 	}
@@ -589,6 +571,35 @@ public class Extractor
 	/////////////////////////////////////////////////////////////////
 	// MERGE		/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
+	/**
+	 * Extract the events by article and by sentence, for the specified results.
+	 * Then export the events, cluster them, and export the resulting clusters 
+	 * of events.
+	 * 
+	 * @param results
+	 * 		Search results used for event extraction.
+	 * @param filePrefix 
+	 * 		String used to name the file to create.
+	 * 
+	 * @throws UnsupportedEncodingException
+	 * 		Problem while exporting the events.
+	 * @throws FileNotFoundException
+	 * 		Problem while exporting the events.
+	 */
+	private void extractEvents(AbstractSearchResults<?> results, String filePrefix) throws UnsupportedEncodingException, FileNotFoundException
+	{	boolean bySentence[] = {false,true};
+		for(boolean bs: bySentence)
+		{	// identify the events
+			results.extractEvents(bs);
+			// export the events as a table
+			results.exportEvents(bs, false, filePrefix);
+			// try to group similar events together
+			results.clusterEvents();
+			// export the resulting groups as a table
+			results.exportEvents(bs, true, filePrefix);
+		}
+	}
+	
 	/**
 	 * Combines the Web and social media results, and repeat the analysis
 	 * steps on these combined results.
@@ -614,10 +625,18 @@ public class Extractor
 			combRes.resetClusters();
 			combRes.exportResults(FileNames.FI_SEARCH_RESULTS_ENTITY);
 			
+			// extract events from the remaining articles and mentions
+			extractEvents(combRes, "4_");
+
 			// cluster the combined articles by content
-			//TODO
 			combRes.clusterArticles(language);
 			combRes.exportResults(FileNames.FI_SEARCH_RESULTS_CLUSTERS);
+			
+			//TODO keep only entities present in the same cluster
+			// redo the events
+			// TODO pb: this changes the data, and affects the post merge operations
+
+			
 			
 			// filter mentions to keep only those present in all the articles of the same cluster
 			// TODO

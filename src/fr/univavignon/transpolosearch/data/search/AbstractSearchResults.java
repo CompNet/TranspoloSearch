@@ -495,13 +495,15 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 	 * @param byCluster
 	 * 		Whether the individual instances of events should be recorded,
 	 * 		or the clusters of events detected later.
+	 * @param filePrefix 
+	 * 		String used to name the file to create.
 	 * 
 	 * @throws UnsupportedEncodingException
 	 * 		Problem while accessing to the result file.
 	 * @throws FileNotFoundException
 	 * 		Problem while accessing to the result file.
 	 */
-	public abstract void exportEvents(boolean bySentence, boolean byCluster) throws UnsupportedEncodingException, FileNotFoundException;
+	public abstract void exportEvents(boolean bySentence, boolean byCluster, String filePrefix) throws UnsupportedEncodingException, FileNotFoundException;
 
 	/**
 	 * Identify groups of similar events among the previously identified events.
