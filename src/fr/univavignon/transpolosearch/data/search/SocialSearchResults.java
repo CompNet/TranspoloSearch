@@ -133,6 +133,7 @@ public class SocialSearchResults extends AbstractSpecificSearchResults<SocialSea
 				if(it.hasNext())
 					pw.print(",");
 			}
+			pw.println();
 		}
 		pw.close();
 

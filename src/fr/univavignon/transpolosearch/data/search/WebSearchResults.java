@@ -204,6 +204,7 @@ public class WebSearchResults extends AbstractSpecificSearchResults<WebSearchRes
 				if(it.hasNext())
 					pw.print(",");
 			}
+			pw.println();
 		}
 		pw.close();
 

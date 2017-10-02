@@ -101,6 +101,7 @@ public class CombinedSearchResults extends AbstractSearchResults<AbstractSearchR
 				if(it.hasNext())
 					pw.print(",");
 			}
+			pw.println();
 		}
 		pw.close();
 	}
