@@ -131,7 +131,9 @@ public class SocialSearchResult extends AbstractSearchResult
 	 */
 	private void exportSource(Map<String,String> result)
 	{	if(source!=null)
-			result.put(AbstractSearchResults.COL_SOCIAL_ENGINE,source);
+		{	result.put(AbstractSearchResults.COL_SOCIAL_ENGINE,source);
+			result.put(AbstractSearchResults.COL_SOURCE,source);
+		}
 	}
 	
 	/////////////////////////////////////////////////////////////////
@@ -214,6 +216,8 @@ public class SocialSearchResult extends AbstractSearchResult
 		
 		if(urlStr!=null)
 			result.put(AbstractSearchResults.COL_URL,url.toString());
+
+		result.put(AbstractSearchResults.COL_URL_ID, id);
 	}
 
 	/////////////////////////////////////////////////////////////////

@@ -210,32 +210,6 @@ public class WebSearchResults extends AbstractSpecificSearchResults<WebSearchRes
 		logger.decreaseOffset();
 	}
 	
-	@Override
-	public void writeCombinedResults(PrintWriter pw)
-	{	for(WebSearchResult result: results.values())
-		{	String line = "";
-		
-			// url
-			line = line + "\"" + result.url + "\"";
-
-			// title
-			line = line + ",";
-			String title = null;
-			if(result.article!=null)
-				title = result.article.getTitle();
-			if(title!=null)
-				line = line + "\"" + title + "\"";
-			
-			// status
-			line = line + ",";
-			if(result.status!=null)
-				line = line + "\"" + result.status + "\"";
-			
-			pw.println(line);
-		}
-
-	}
-	
 	/////////////////////////////////////////////////////////////////
 	// EVENTS		/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////

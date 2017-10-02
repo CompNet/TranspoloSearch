@@ -138,6 +138,16 @@ public abstract class AbstractSearchResult
 	{	if(article!=null)
 		{	String title = article.getTitle();
 			result.put(WebSearchResults.COL_TITLE,title);
+			
+			if(this instanceof WebSearchResult)
+				result.put(WebSearchResults.COL_TITLE_CONTENT,title);
+			else if(this instanceof SocialSearchResult)
+			{	String rawText = article.getRawText();
+				String beginning = rawText.replace('\n',' ');
+				beginning = beginning.replace('"','\'');
+				beginning = beginning.substring(0,Math.min(25,beginning.length()));
+				result.put(WebSearchResults.COL_TITLE_CONTENT,beginning);
+			}
 		}
 	}
 	

@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -70,6 +71,7 @@ public class WebSearchResult extends AbstractSearchResult
 	 */
 	private void exportUrl(Map<String,String> result)
 	{	result.put(AbstractSearchResults.COL_URL, url);
+		result.put(AbstractSearchResults.COL_URL_ID, url);
 	}
 	
 	/**
@@ -148,11 +150,18 @@ public class WebSearchResult extends AbstractSearchResult
 	 * 		Map to fill with the required field.
 	 */
 	private void exportRanks(Map<String,String> result)
-	{	for(Entry<String,String> entry: ranks.entrySet())
-		{	String engineName = entry.getKey();
+	{	String str = "";
+		Iterator<Entry<String,String>> it = ranks.entrySet().iterator();
+		while(it.hasNext())
+		{	Entry<String,String> entry = it.next();
+			String engineName = entry.getKey();
 			String rk = entry.getValue();
 			result.put(WebSearchResults.COL_RANK+engineName,rk);
+			str = str + engineName + "[" + rk + "]";
+			if(it.hasNext())
+				str = str + ", ";
 		}
+		result.put(AbstractSearchResults.COL_SOURCE,str);
 	}
 	
 	/////////////////////////////////////////////////////////////////

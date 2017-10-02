@@ -19,7 +19,6 @@ package fr.univavignon.transpolosearch.data.search;
  */
 
 import java.io.FileNotFoundException;
-import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -466,7 +465,7 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 	public static final String COL_ENT_PRODUCTIONS = "Production";
 	/** Meetings associated to the event/article */
 	public static final String COL_ENT_MEETINGS = "Meetings";
-	/** Misc comments and notes */
+	/** Misc. comments and notes */
 	public static final String COL_NOTES = "Notes";
 	/** Whether a social post was written by the targeted person, or not */
 	public static final String COL_ORIGINAL = "Original post";
@@ -484,6 +483,8 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 	public static final String COL_URL_ID = "URL/ID";
 	/** Column name for the title of the web search or content of the social search */
 	public static final String COL_TITLE_CONTENT = "Title/Content";
+	/** Column name for the engine which returned the result (web or a social media) */
+	public static final String COL_SOURCE = "Source";
 	
 	/**
 	 * Records the results of the search as a CSV file.
@@ -604,15 +605,4 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 	 * 		Problem while opening the CSV file.
 	 */
 	public abstract void exportResults(String fileName) throws UnsupportedEncodingException, FileNotFoundException;
-	
-	/**
-	 * Receives a print writer and writes a summary of these results.
-	 * This method is meant to be used when exporting a combined file
-	 * of both web and social results.
-	 * 
-	 * @param pw
-	 * 		Print write pointing at a file which was previously opened
-	 * 		in write mode.
-	 */
-	public abstract void writeCombinedResults(PrintWriter pw);
 }

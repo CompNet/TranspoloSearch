@@ -135,18 +135,6 @@ public class Test
 //			compareSearches("Martine_Aubry_1", "Martine_Aubry_2");
 //			compareSearches("Martine_Aubry_1", "Martine_Aubry_www.lavoixdunord.fr");
 		
-		// merge results
-//			// hidalgo
-//			combineSearches(Arrays.asList("Anne_Hidalgo_1","Anne_Hidalgo_2","Anne_Hidalgo_2ext","Anne_Hidalgo_www.leparisien.fr"));
-//			combineSearches(Arrays.asList("Anne_Hidalgo_2","Anne_Hidalgo_2ext","Anne_Hidalgo_www.leparisien.fr"));
-//			combineSearches(Arrays.asList("Anne_Hidalgo_2ext","Anne_Hidalgo_www.leparisien.fr"));
-//			// helle
-//			combineSearches(Arrays.asList("Cécile_Helle_1","Cécile_Helle_2","Cécile_Helle_www.laprovence.com"));
-//			combineSearches(Arrays.asList("Cécile_Helle_2","Cécile_Helle_www.laprovence.com"));
-//			// aubry
-//			combineSearches(Arrays.asList("Martine_Aubry_1","Martine_Aubry_2","Martine_Aubry_www.lavoixdunord.fr"));
-//			combineSearches(Arrays.asList("Martine_Aubry_2","Martine_Aubry_www.lavoixdunord.fr"));
-		
 		// clustering
 //		testClustering();
 		
@@ -476,121 +464,6 @@ public class Test
 		logger.decreaseOffset();
 	}
 	
-	/**
-	 * Combines the results from several distinct searches into a single file,
-	 * to ease their comparison and assessment.
-	 * @param folders
-	 * 		Folders of the searches to combine.
-	 * 
-	 * @throws FileNotFoundException
-	 * 		Problem while accessing the output file.
-	 * @throws UnsupportedEncodingException
-	 * 		Problem while accessing the output file.
-	 */
-	private static void combineSearches(List<String> folders) throws FileNotFoundException, UnsupportedEncodingException
-	{	logger.setName("Combine-Searches");
-		logger.log("Combine folders: ");
-		logger.log(folders); 
-		logger.increaseOffset();
-		
-		// read all files
-		logger.log("Load the files");
-		List<Map<String,Map<String,String>>> maps = new ArrayList<Map<String,Map<String,String>>>();
-		Set<String> engineNames = new TreeSet<String>();
-		for(String folder: folders)
-		{	FileNames.setOutputFolder(folder);
-			String filePath = FileNames.FO_OUTPUT + File.separator + FileNames.FI_SEARCH_COMBINED_RESULTS;
-			Map<String,Map<String,String>> map = new HashMap<String,Map<String,String>>();
-			loadCSV(filePath, map, engineNames);
-			maps.add(map);
-			FileNames.setOutputFolder(null);
-		}
-		
-		// set up column names for the output file
-		List<String> colNames = new ArrayList<String>(Arrays.asList(
-			AbstractSearchResults.COL_URL_ID,
-			AbstractSearchResults.COL_TITLE_CONTENT
-		));
-		for(String folder: folders)
-		{	String colName = AbstractSearchResults.COL_STATUS + " " + folder;
-			colNames.add(colName);
-		}
-		
-		// merge both files
-		logger.log("Combine them");
-		Map<String,Map<String,String>> urlMap = new HashMap<String,Map<String,String>>();
-		Map<String,Map<String,String>> idMap = new HashMap<String,Map<String,String>>();
-		for(int i=0;i<folders.size();i++)
-		{	String folder = folders.get(i);
-			String colName = AbstractSearchResults.COL_STATUS + " " + folder;
-			
-			Map<String,Map<String,String>> map = maps.get(i);
-			for(Entry<String, Map<String,String>> entry: map.entrySet())
-			{	// get the map of values
-				Map<String,String> value = entry.getValue();
-				String status = value.get(AbstractSearchResults.COL_STATUS);
-				// get the key
-				String key = entry.getKey();
-				Map<String, Map<String, String>> mainMap;
-				if(key.startsWith("http"))
-					mainMap = urlMap;
-				else
-					mainMap = idMap;
-				// insert or complete (if it already exists)
-				Map<String,String> temp = mainMap.get(key);
-				if(temp==null)
-				{	temp = value;
-					temp.remove(AbstractSearchResults.COL_STATUS);
-					for(String fold: folders)
-					{	String cn = AbstractSearchResults.COL_STATUS + " " + fold;
-						temp.put(cn, "<Absent>");
-					}
-					mainMap.put(key, temp);
-				}
-				temp.put(colName, status);
-			}
-		}
-		
-		// open the output file
-		String filePath = FileNames.FO_OUTPUT + File.separator + "combined";
-		for(String folder: folders)
-			filePath = filePath + "_" + folder;
-		filePath = filePath + FileNames.EX_CSV;
-		logger.log("Record the combined results in file "+filePath);
-		PrintWriter pw = FileTools.openTextFileWrite(filePath, "UTF-8");
-		// write header
-		{	String header = "";
-			for(String colName: colNames)
-			{	if(!header.isEmpty())
-					header = header + ",";
-				header = header + "\"" + colName + "\"";
-			}
-			pw.println(header);
-		}
-		// write data
-		List<Map<String,Map<String,String>>> allMaps = Arrays.asList(urlMap, idMap);
-		for(Map<String,Map<String,String>> amap: allMaps)
-		{	TreeSet<String> keys = new TreeSet<String>(amap.keySet());
-			for(String key: keys)
-			{	Map<String,String> map = amap.get(key);
-				String line = "";
-				for(String colName: colNames)
-				{	if(!line.isEmpty())
-						line = line + ",";
-					String val = map.get(colName);
-					if(val==null)
-						val = "";
-					line = line + "\"" + val + "\"";
-				}
-				pw.println(line);
-			}
-		}
-		// close file
-		pw.close();
-		
-		logger.decreaseOffset();
-	}
-	
 	/////////////////////////////////////////////////////////////////
 	// WHOLE PROCESS	/////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
@@ -645,10 +518,6 @@ public class Test
 		}
 	}
 }
-
-// TODO export en cours. 
-//	- CSV+event fini pour Web+Social (pas combined, qui reste à faire)
-//	- voir aussi le combinedwritting ou truc
 
 // TODO reprendre complètement l'exportation
 //		- CSV: chaque article = une ligne, mettre un maximum de champs

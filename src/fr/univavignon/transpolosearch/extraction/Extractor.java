@@ -18,10 +18,8 @@ package fr.univavignon.transpolosearch.extraction;
  * along with TranspoloSearch. If not, see <http://www.gnu.org/licenses/>.
  */
 
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -37,7 +35,6 @@ import org.xml.sax.SAXException;
 import com.gargoylesoftware.htmlunit.FailingHttpStatusCodeException;
 
 import fr.univavignon.transpolosearch.data.article.ArticleLanguage;
-import fr.univavignon.transpolosearch.data.search.AbstractSearchResults;
 import fr.univavignon.transpolosearch.data.search.CombinedSearchResults;
 import fr.univavignon.transpolosearch.data.search.SocialSearchResult;
 import fr.univavignon.transpolosearch.data.search.SocialSearchResults;
@@ -54,7 +51,6 @@ import fr.univavignon.transpolosearch.search.web.GoogleEngine;
 import fr.univavignon.transpolosearch.search.web.QwantEngine;
 import fr.univavignon.transpolosearch.search.web.YandexEngine;
 import fr.univavignon.transpolosearch.tools.file.FileNames;
-import fr.univavignon.transpolosearch.tools.file.FileTools;
 import fr.univavignon.transpolosearch.tools.log.HierarchicalLogger;
 import fr.univavignon.transpolosearch.tools.log.HierarchicalLoggerManager;
 
@@ -593,6 +589,22 @@ public class Extractor
 	/////////////////////////////////////////////////////////////////
 	// MERGE		/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
+	/**
+	 * Combines the Web and social media results, and repeat the analysis
+	 * steps on these combined results.
+	 *  
+	 * @param webRes
+	 * 		Web search results.
+	 * @param socRes
+	 * 		Social media search results.
+	 * @param language
+	 * 		Targeted language.
+	 * 
+	 * @throws UnsupportedEncodingException
+	 * 		Problem while exporting the results.
+	 * @throws FileNotFoundException
+	 * 		Problem while exporting the results.
+	 */
 	private void combineResults(WebSearchResults webRes, SocialSearchResults socRes, ArticleLanguage language) throws UnsupportedEncodingException, FileNotFoundException
 	{	logger.log("Combining all results in a single file.");
 		logger.increaseOffset();

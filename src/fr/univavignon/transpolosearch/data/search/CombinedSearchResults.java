@@ -22,15 +22,11 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
-import fr.univavignon.transpolosearch.data.article.ArticleLanguage;
-import fr.univavignon.transpolosearch.processing.InterfaceRecognizer;
-import fr.univavignon.transpolosearch.processing.ProcessorException;
 import fr.univavignon.transpolosearch.tools.file.FileNames;
 import fr.univavignon.transpolosearch.tools.file.FileTools;
 
@@ -65,17 +61,7 @@ public class CombinedSearchResults extends AbstractSearchResults<AbstractSearchR
 	/////////////////////////////////////////////////////////////////
 	// CSV			/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
-	/**
-	 * Records all result URLs in a single CSV file.
-	 * 
-	 * @param fileName
-	 * 		Name of the created file.  
-	 * 
-	 * @throws UnsupportedEncodingException
-	 * 		Problem while opening the CSV file.
-	 * @throws FileNotFoundException
-	 * 		Problem while opening the CSV file.
-	 */
+	@Override
 	public void exportResults(String fileName) throws UnsupportedEncodingException, FileNotFoundException
 	{	logger.log("Recording all the combined search results in file "+fileName);
 		logger.increaseOffset();
@@ -85,44 +71,37 @@ public class CombinedSearchResults extends AbstractSearchResults<AbstractSearchR
 		logger.log("Recording in CSV file \""+filePath+"\"");
 		
 		// setup colon names
-		List<String> startCols = Arrays.asList(COL_URL_ID, COL_TITLE_CONTENT, COL_STATUS, COL_LENGTH, COL_ARTICLE_CLUSTER);
-		List<String> cols = new ArrayList<String>();
-		cols.addAll(startCols);
-//		for(String engineName: engineNames)
-//			cols.add(engineName);
-// TODO remplacer par une simple source ?
-// TODO renommer export CSV en export results/articles
+		List<String> cols = Arrays.asList(
+			COL_NOTES, COL_URL_ID, COL_TITLE_CONTENT, COL_SOURCE, COL_STATUS, COL_LENGTH, COL_PUB_DATE, COL_AUTHORS, COL_ARTICLE_CLUSTER,
+			COL_ENT_DATES, COL_ENT_LOCATIONS, COL_ENT_PERSONS, COL_ENT_ORGANIZATIONS, COL_ENT_FUNCTIONS, COL_ENT_PRODUCTIONS, COL_ENT_MEETINGS
+		);
 		
 		// open file and write header
 		PrintWriter pw = FileTools.openTextFileWrite(filePath,"UTF-8");
-		Iterator<String> it = cols.iterator();
-		while(it.hasNext())
-		{	String col = it.next();
-			pw.print("\""+col+"\"");
-			if(it.hasNext())
-				pw.print(",");
+		{	Iterator<String> it = cols.iterator();
+			while(it.hasNext())
+			{	String col = it.next();
+				pw.print("\""+col+"\"");
+				if(it.hasNext())
+					pw.print(",");
+			}
 		}
 		pw.println();
 		
-		
-		
-		
-		
-		// web search results
-		if(webRes==null)
-			logger.log("No Web search results to process.");
-		else
-			webRes.writeCombinedResults(pw);
-		
-		// social search results
-		if(socialRes==null)
-			logger.log("No social search results to process.");
-		else
-			socialRes.writeCombinedResults(pw);
-		
-		// close the output file
+		// write data and close file
+		for(AbstractSearchResult result: results.values())
+		{	Map<String,String> map = result.exportResult();
+			Iterator<String> it = cols.iterator();
+			while(it.hasNext())
+			{	String col = it.next();
+				String val = map.get(col);
+				if(val!=null)
+					pw.print("\""+val+"\"");
+				if(it.hasNext())
+					pw.print(",");
+			}
+		}
 		pw.close();
-
 	}
 	
 	/////////////////////////////////////////////////////////////////
@@ -131,11 +110,5 @@ public class CombinedSearchResults extends AbstractSearchResults<AbstractSearchR
 	@Override
 	public void exportEvents(boolean bySentence, boolean byCluster) throws UnsupportedEncodingException, FileNotFoundException 
 	{	// TODO Auto-generated method stub
-	}
-
-	@Override
-	public void writeCombinedResults(PrintWriter pw) {
-		// TODO Auto-generated method stub
-		
 	}
 }
