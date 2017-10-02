@@ -519,9 +519,6 @@ public class Test
 	}
 }
 
-// TODO reprendre complètement l'exportation
-//		- CSV: chaque article = une ligne, mettre un maximum de champs
-//		- Events: une ligne = un event (pouvant correspondre à plusieurs articles...)
 // TODO rajouter hierarchical clustering pr events
 // TODO Garder seulement les entités apparaissant dans tous les articles de leur cluster
 // TODO le langage devrait être un paramètre général. chercher toutes les occurrences de FR et article.FR
