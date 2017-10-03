@@ -597,11 +597,12 @@ public class Extractor
 		for(boolean bs: bySentence)
 		{	// identify the events
 			results.extractEvents(bs);
-			// export the events as a table
-			results.exportEvents(bs, false, filePrefix);
 			// try to group similar events together
 			results.clusterEvents();
-			// export the resulting groups as a table
+			
+			// export the detailed list of events
+			results.exportEvents(bs, false, filePrefix);
+			// export the event clusters
 			results.exportEvents(bs, true, filePrefix);
 		}
 	}

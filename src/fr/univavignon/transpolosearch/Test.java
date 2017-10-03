@@ -520,16 +520,14 @@ public class Test
 }
 
 // TODO revoir l'enregistrement des evts
-//		- list evt par article: pareil qu'article, en fait. nécessaire ? substituer à search_xxx ? rajouter dans search_xxx les infos suppl de events?
-//		- list evt par sentence: 1 ligne = 1 sentence
 //		- list clust par art/sent: 1 ligne = 1 cluster  >>> résumé des clusters.
 //			- id cluster
 //			- titre d'un article
 //			- entités retenues
 //			- nombre d'articles concernés
 //		>> faut faire la même chose pour les clusters d'articles (fichier résumé)
+//TODO Garder seulement les entités apparaissant dans tous les articles de leur cluster
 // TODO rajouter hierarchical clustering pr events
-// TODO Garder seulement les entités apparaissant dans tous les articles de leur cluster
 // TODO le langage devrait être un paramètre général. chercher toutes les occurrences de FR et article.FR
 
 // TODO manips:

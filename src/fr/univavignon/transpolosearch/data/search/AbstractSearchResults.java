@@ -500,14 +500,11 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 	public static final String COL_SOURCE = "Source";
 	
 	/**
-	 * Records the results of the search as a CSV file.
+	 * Records the detailed list of previously identified events as a CSV file.
 	 * 
 	 * @param bySentence 
-	 * 		Whether the events are searched in the whole article or in
+	 * 		Whether the events are considered in the whole article or in
 	 * 		individual sentences.
-	 * @param byCluster
-	 * 		Whether the individual instances of events should be recorded,
-	 * 		or the clusters of events detected later.
 	 * @param filePrefix 
 	 * 		String used to name the file to create.
 	 * 
@@ -516,7 +513,23 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 	 * @throws FileNotFoundException
 	 * 		Problem while accessing to the result file.
 	 */
-	public abstract void exportEvents(boolean bySentence, boolean byCluster, String filePrefix) throws UnsupportedEncodingException, FileNotFoundException;
+	public abstract void exportEvents(boolean bySentence, String filePrefix) throws UnsupportedEncodingException, FileNotFoundException;
+
+	/**
+	 * Records the previously identified event clusters as a CSV file.
+	 * 
+	 * @param bySentence 
+	 * 		Whether the events are considered in the whole article or in
+	 * 		individual sentences.
+	 * @param filePrefix 
+	 * 		String used to name the file to create.
+	 * 
+	 * @throws UnsupportedEncodingException
+	 * 		Problem while accessing to the result file.
+	 * @throws FileNotFoundException
+	 * 		Problem while accessing to the result file.
+	 */
+	public abstract void exportEventClusters(boolean bySentence, String filePrefix) throws UnsupportedEncodingException, FileNotFoundException;
 
 	/**
 	 * Identify groups of similar events among the previously identified events.
