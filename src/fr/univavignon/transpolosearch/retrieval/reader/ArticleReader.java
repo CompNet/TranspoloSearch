@@ -41,6 +41,7 @@ import java.util.zip.InflaterInputStream;
 import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLHandshakeException;
 
+import org.jsoup.Connection.Response;
 import org.jsoup.HttpStatusException;
 import org.jsoup.Jsoup;
 import org.jsoup.UnsupportedMimeTypeException;
@@ -282,12 +283,21 @@ public abstract class ArticleReader
 			{	again = false;
 				try
 				{	logger.log("Trying to download the Web page");
-					result = Jsoup.parse(url,timeOut);
+//					result = Jsoup.parse(url,timeOut);
+					// taken from https://stackoverflow.com/a/20284953/1254730
+					Response response = Jsoup.connect(url.toString())
+				           .ignoreContentType(true)
+				           .userAgent("Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:25.0) Gecko/20100101 Firefox/25.0")  
+				           .referrer("http://www.google.com")   
+				           .timeout(timeOut) 
+				           .followRedirects(true)
+				           .execute();
+					result = response.parse();
 				}
 				catch(SocketTimeoutException e)
 				{	logger.log("Could not download the page (timeout="+timeOut+" ms) >> trying again");
 					timeOut = timeOut + 5000;
-					again = timeOut<1*10*1000;	//TODO 2*60*1000;
+					again = timeOut<2*60*1000;	//TODO 2*60*1000;
 				}
 				catch(NoRouteToHostException e)
 				{	logger.log(Arrays.asList(
