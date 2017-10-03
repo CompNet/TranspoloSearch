@@ -156,7 +156,7 @@ public class WebSearchResult extends AbstractSearchResult
 		{	Entry<String,String> entry = it.next();
 			String engineName = entry.getKey();
 			String rk = entry.getValue();
-			result.put(WebSearchResults.COL_RANK+engineName,rk);
+			result.put(AbstractSearchResults.COL_RANK+engineName,rk);
 			str = str + engineName + "[" + rk + "]";
 			if(it.hasNext())
 				str = str + ", ";
@@ -308,26 +308,8 @@ public class WebSearchResult extends AbstractSearchResult
 			exportCluster(map);
 			// search engine ranks
 			exportRanks(map);
-			
-			// event and its mentions
-			if(event!=null)
-			{	// rank
-				map.put(WebSearchResults.COL_EVENT_RANK,Integer.toString(rank));
-				// dates
-				exportEventDates(event, map);
-				// locations
-				exportEventDates(event, EntityType.LOCATION, map);
-				// persons
-				exportEventDates(event, EntityType.PERSON, map);
-				// organizations
-				exportEventDates(event, EntityType.ORGANIZATION, map);
-				// functions
-				exportEventDates(event, EntityType.FUNCTION, map);
-				// productions
-				exportEventDates(event, EntityType.PRODUCTION, map);
-				// meetings
-				exportEventDates(event, EntityType.MEETING, map);
-			}
+			// event and its stuff
+			exportEvent(event, rank, map);
 		}
 		
 		return result;

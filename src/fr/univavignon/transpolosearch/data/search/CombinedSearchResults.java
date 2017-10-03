@@ -28,6 +28,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import fr.univavignon.transpolosearch.data.article.ArticleLanguage;
 import fr.univavignon.transpolosearch.tools.file.FileNames;
 import fr.univavignon.transpolosearch.tools.file.FileTools;
 
@@ -134,7 +135,9 @@ public class CombinedSearchResults extends AbstractSearchResults<AbstractSearchR
 			List<String> cols = new ArrayList<String>();
 			cols.addAll(startCols);
 			if(bySentence)
-				cols.add(COL_EVENT_RANK);
+			{	cols.add(COL_EVENT_RANK);
+				cols.add(COL_EVENT_SENTENCE);
+			}
 			cols.addAll(endCols);
 			
 			// open file and write header
@@ -174,72 +177,14 @@ public class CombinedSearchResults extends AbstractSearchResults<AbstractSearchR
 	}
 
 	@Override
-	public void exportEventClusters(boolean bySentence, String filePrefix) throws UnsupportedEncodingException, FileNotFoundException 
+	public void exportEventClusters(boolean bySentence, String filePrefix, ArticleLanguage language) throws UnsupportedEncodingException, FileNotFoundException 
 	{	String fileName = filePrefix;
 		if(bySentence)
 			fileName = fileName + FileNames.FI_EVENT_CLUSTERS_BYSENTENCE;
 		else
 			fileName = fileName + FileNames.FI_EVENT_CLUSTERS_BYARTICLE;
 		String filePath = FileNames.FO_OUTPUT + File.separator + fileName;
-		logger.log("Recording the event clusters as a CVS file: "+filePath);
-		logger.decreaseOffset();
-			
-			// setup colon names
-			List<String> startCols = Arrays.asList(
-					COL_NOTES, COL_EVENT_CLUSTER, COL_TITLE_CONTENT, COL_URL_ID, COL_LENGTH, 
-					COL_PUB_DATE, COL_AUTHORS, COL_STATUS, COL_ARTICLE_CLUSTER, COL_SOURCE
-			);
-			List<String> endCols = Arrays.asList(
-					COL_ENT_DATES, COL_ENT_LOCATIONS, COL_ENT_PERSONS, COL_ENT_ORGANIZATIONS, 
-					COL_ENT_FUNCTIONS, COL_ENT_PRODUCTIONS, COL_ENT_MEETINGS
-			);
-			List<String> cols = new ArrayList<String>();
-			cols.addAll(startCols);
-			if(bySentence)
-				cols.add(COL_EVENT_RANK);
-			cols.addAll(endCols);
-			
-			// open file and write header
-			PrintWriter pw = FileTools.openTextFileWrite(filePath, "UTF-8");
-			Iterator<String> it = cols.iterator();
-			while(it.hasNext())
-			{	String col = it.next();
-				pw.print("\""+col+"\"");
-				if(it.hasNext())
-					pw.print(",");
-			}
-			pw.println();
-			
-			// write data
-			int total = 0;
-			logger.log("Treat each cluster separately");
-			for(int i=0;i<mapClustRes.size();i++)
-			{	List<AbstractSearchResult> res = mapClustRes.get(i);
-				List<Integer> evt = mapClustEvt.get(i);
-				for(int j=0;j<res.size();j++)
-				{	// setup the line
-					AbstractSearchResult r = res.get(j);
-					List<Map<String,String>> lines = r.exportEvents();
-					int idx = evt.get(j);
-					Map<String,String> line = lines.get(idx);
-					line.put(COL_EVENT_CLUSTER, Integer.toString(i+1));
-					// write the line
-					it = cols.iterator();
-					while(it.hasNext())
-					{	String col = it.next();
-						String val = line.get(col);
-						if(val!=null)
-							pw.print("\""+val+"\"");
-						if(it.hasNext())
-							pw.print(",");
-					}
-					pw.println();
-				}
-			total = i;
-			}
-			
-			pw.close();
-		logger.decreaseOffset();
-		logger.log("Wrote "+total+" event clusters");
+		
+		exportEventClusters(filePath, language);
 	}
 }

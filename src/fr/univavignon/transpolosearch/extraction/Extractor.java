@@ -361,7 +361,7 @@ public class Extractor
 			currentStep++;
 			
 			// extract events from the remaining articles and mentions
-			extractEvents(results, currentStep + "_");
+			extractEvents(results, currentStep + "_", language);
 			
 		logger.decreaseOffset();
 		logger.log("Web extraction over");
@@ -548,7 +548,7 @@ public class Extractor
 			currentStep++;
 			
 			// extract events from the remaining articles and mentions
-			extractEvents(results, currentStep + "_");
+			extractEvents(results, currentStep + "_", language);
 			
 		logger.decreaseOffset();
 		logger.log("Social media extraction over");
@@ -586,13 +586,15 @@ public class Extractor
 	 * 		Search results used for event extraction.
 	 * @param filePrefix 
 	 * 		String used to name the file to create.
+	 * @param language
+	 * 		Language of the articles.
 	 * 
 	 * @throws UnsupportedEncodingException
 	 * 		Problem while exporting the events.
 	 * @throws FileNotFoundException
 	 * 		Problem while exporting the events.
 	 */
-	private void extractEvents(AbstractSearchResults<?> results, String filePrefix) throws UnsupportedEncodingException, FileNotFoundException
+	private void extractEvents(AbstractSearchResults<?> results, String filePrefix, ArticleLanguage language) throws UnsupportedEncodingException, FileNotFoundException
 	{	boolean bySentence[] = {false,true};
 		for(boolean bs: bySentence)
 		{	// identify the events
@@ -601,9 +603,9 @@ public class Extractor
 			results.clusterEvents();
 			
 			// export the detailed list of events
-			results.exportEvents(bs, false, filePrefix);
+			results.exportEvents(bs, filePrefix);
 			// export the event clusters
-			results.exportEvents(bs, true, filePrefix);
+			results.exportEventClusters(bs, filePrefix, language);
 		}
 	}
 	
@@ -640,7 +642,7 @@ public class Extractor
 			currentStep++;
 			
 			// extract events from the articles and mentions
-			extractEvents(combRes, currentStep + "_");
+			extractEvents(combRes, currentStep + "_", language);
 			currentStep++;
 			
 			// filter mentions based on article clusters
@@ -649,7 +651,7 @@ public class Extractor
 			currentStep++;
 			
 			// extract events based on the filtered mentions
-			extractEvents(combRes, currentStep + "_");
+			extractEvents(combRes, currentStep + "_", language);
 			currentStep++;
 			
 		logger.decreaseOffset();

@@ -19,10 +19,14 @@ package fr.univavignon.transpolosearch.data.search;
  */
 
 import java.io.FileNotFoundException;
+import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -39,14 +43,17 @@ import com.aliasi.tokenizer.TokenizerFactory;
 import com.aliasi.util.Distance;
 
 import fr.univavignon.transpolosearch.data.article.ArticleLanguage;
+import fr.univavignon.transpolosearch.data.entity.EntityType;
 import fr.univavignon.transpolosearch.data.event.Event;
 import fr.univavignon.transpolosearch.data.event.MyPam;
 import fr.univavignon.transpolosearch.data.event.DummyDistanceMetric;
 import fr.univavignon.transpolosearch.data.event.Silhouette;
+import fr.univavignon.transpolosearch.tools.file.FileTools;
 import fr.univavignon.transpolosearch.tools.log.HierarchicalLogger;
 import fr.univavignon.transpolosearch.tools.log.HierarchicalLoggerManager;
 import fr.univavignon.transpolosearch.tools.string.StopWordsManager;
 import fr.univavignon.transpolosearch.tools.string.StringTools;
+import fr.univavignon.transpolosearch.tools.time.Period;
 import jsat.SimpleDataSet;
 import jsat.classifiers.DataPoint;
 import jsat.clustering.Clusterer;
@@ -417,6 +424,7 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 	protected List<List<T>> mapClustRes = new ArrayList<List<T>>();
 	/** Position in the result corresponding to the events constituting the clusters */
 	protected List<List<Integer>> mapClustEvt = new ArrayList<List<Integer>>();
+	protected List<List<Event>> eventClusters = new ArrayList<List<Event>>();
 	
 	/**
 	 * Identifies the events described in the articles associated to
@@ -488,16 +496,22 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 	public static final String COL_SHARES = "Shares";
 	/** Column name for the number of comments of a result */
 	public static final String COL_COMMENTS = "Comments";
-	/** ID of the cluster of events */
-	public static final String COL_EVENT_CLUSTER = "Event Cluster";
-	/** ID of the cluster of articles */
-	public static final String COL_ARTICLE_CLUSTER = "Article Cluster";
+	/** Column name for the id of the cluster containing an event */
+	public static final String COL_EVENT_CLUSTER = "Event cluster";
+	/** Column name for the sentence corresponding to an event */
+	public static final String COL_EVENT_SENTENCE = "Event sentence";
+	/** Column name for the id of the cluster of an article */
+	public static final String COL_ARTICLE_CLUSTER = "Article cluster";
 	/** Column name for the URL of the web search or id of the social search */
 	public static final String COL_URL_ID = "URL/ID";
 	/** Column name for the title of the web search or content of the social search */
 	public static final String COL_TITLE_CONTENT = "Title/Content";
 	/** Column name for the engine which returned the result (web or a social media) */
 	public static final String COL_SOURCE = "Source";
+	/** Column name for the keywords in a group of articles */
+	public static final String COL_KEYWORDS = "Keywords";
+	/** Column name for the number of events in a cluster */
+	public static final String COL_FREQUENCY = "Frequency";
 	
 	/**
 	 * Records the detailed list of previously identified events as a CSV file.
@@ -514,7 +528,126 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 	 * 		Problem while accessing to the result file.
 	 */
 	public abstract void exportEvents(boolean bySentence, String filePrefix) throws UnsupportedEncodingException, FileNotFoundException;
-
+	
+	/**
+	 * Adds the event cluster information to the specified map.
+	 * 
+	 * @param cluster
+	 * 		Event cluster to process.
+	 * @param id
+	 * 		Id of the cluster in the partition.
+	 * @param language
+	 * 		Language of the articles.
+	 * @return
+	 * 		Map to fill with the required data.
+	 */
+	private Map<String,String> exportEventCluster(List<Event> cluster, int id, ArticleLanguage language)
+	{	Map<String,String> result = new HashMap<String,String>();
+		
+		// cluster id
+		result.put(COL_EVENT_CLUSTER, Integer.toString(id));
+		
+		// cluster frequency
+		int freq = cluster.size();
+		result.put(COL_FREQUENCY, Integer.toString(freq));
+		
+		// union of the mentions (by type)
+//TODO this is actually for when we want to select the most frequent mentions among events, at the mention filtering step
+//		Map<EntityType,List<String>> map = new HashMap<EntityType, List<String>>();
+//		Period period = null;
+//		for(Event event: cluster)
+//		{	for(EntityType type: EntityType.values())
+//			{	if(type!=EntityType.DATE)
+//				{	List<String> list = map.get(type);
+//					if(list==null)
+//					{	list = new ArrayList<String>();
+//						map.put(type, list);
+//					}
+//					Set<String> set = event.getNamedMentionsByType(type);
+//					list.addAll(set);
+//				}
+//				else
+//				{	Period evtPeriod = event.getPeriod();
+//					if(period==null)
+//						period = evtPeriod;
+//					else
+//						period.mergePeriod(evtPeriod);
+//				}
+//			}
+//		}
+		TreeSet<String> texts = new TreeSet<String>();	
+		Map<EntityType,Set<String>> mentionSets = new HashMap<EntityType, Set<String>>();
+		for(Event event: cluster)
+		{	// deal with the text
+			String text = event.getText();
+			texts.add(text);
+			// process the entities
+			for(EntityType type: EntityType.values())
+			{	Set<String> set = mentionSets.get(type);
+				if(set==null)
+				{	set = new TreeSet<String>();
+					mentionSets.put(type, set);
+				}
+				if(type==EntityType.DATE)
+				{	Period evtPeriod = event.getPeriod();
+					String periodStr = evtPeriod.toString();
+					set.add(periodStr);
+				}
+				else
+				{	Set<String> evSet = event.getNamedMentionsByType(type);
+					set.addAll(evSet);
+				}
+			}
+		}
+		Map<EntityType,String> mentionStr = new HashMap<EntityType,String>();
+		for(EntityType type: EntityType.values())
+		{	Set<String> set = mentionSets.get(type);
+			String str = "";
+			Iterator<String> it = set.iterator();
+			while(it.hasNext())
+			{	String val = it.next();
+				str = str + val;
+				if(it.hasNext())
+					str = str + ", ";
+			}
+			mentionStr.put(type, str);
+		}
+		result.put(COL_ENT_DATES, mentionStr.get(EntityType.DATE));
+		result.put(COL_ENT_LOCATIONS, mentionStr.get(EntityType.LOCATION));
+		result.put(COL_ENT_PERSONS, mentionStr.get(EntityType.PERSON));
+		result.put(COL_ENT_ORGANIZATIONS, mentionStr.get(EntityType.ORGANIZATION));
+		result.put(COL_ENT_FUNCTIONS, mentionStr.get(EntityType.FUNCTION));
+		result.put(COL_ENT_PRODUCTIONS, mentionStr.get(EntityType.PRODUCTION));
+		result.put(COL_ENT_MEETINGS, mentionStr.get(EntityType.MEETING));
+		
+		// get the keywords
+		final Map<String,Integer> wordFreq = StringTools.computeWordFrequencies(texts, language);
+		List<String> sortedKeys = new ArrayList<String>(wordFreq.size());
+		Collections.sort(sortedKeys, new Comparator<String>()
+		{	@Override
+			public int compare(String word1, String word2) 
+			{	int f1 = wordFreq.get(word1);
+				int f2 = wordFreq.get(word2);
+				int result = f2 - f1;
+				return result;
+			}	
+		});
+		String keywords = "";
+		int KEYWORD_MAX_NBR = 12;
+		Iterator<String> it = sortedKeys.iterator();
+		int i = 0;
+		while(it.hasNext() && i<KEYWORD_MAX_NBR)
+		{	String keyword = it.next();
+			keywords = keywords + keyword;
+			if(i<KEYWORD_MAX_NBR-1 && it.hasNext())
+				keywords = keywords + ", ";
+			i++;
+		}
+		result.put(COL_KEYWORDS, keywords);
+		
+		return result;
+	}
+	
 	/**
 	 * Records the previously identified event clusters as a CSV file.
 	 * 
@@ -523,14 +656,79 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 	 * 		individual sentences.
 	 * @param filePrefix 
 	 * 		String used to name the file to create.
+	 * @param language
+	 * 		Language of the articles.
 	 * 
 	 * @throws UnsupportedEncodingException
 	 * 		Problem while accessing to the result file.
 	 * @throws FileNotFoundException
 	 * 		Problem while accessing to the result file.
 	 */
-	public abstract void exportEventClusters(boolean bySentence, String filePrefix) throws UnsupportedEncodingException, FileNotFoundException;
-
+	public abstract void exportEventClusters(boolean bySentence, String filePrefix, ArticleLanguage language) throws UnsupportedEncodingException, FileNotFoundException;
+	
+	/**
+	 * Records the previously identified event clusters as a CSV file
+	 * (used by {@link #exportEventClusters(boolean, String, ArticleLanguage)}).
+	 * 
+	 * @param filePath
+	 * 		Path and name of the output file.
+	 * @param language
+	 * 		Language of the articles.
+	 * 
+	 * @throws UnsupportedEncodingException
+	 * 		Problem while accessing to the result file.
+	 * @throws FileNotFoundException
+	 * 		Problem while accessing to the result file.
+	 */
+	protected void exportEventClusters(String filePath, ArticleLanguage language) throws UnsupportedEncodingException, FileNotFoundException
+	{	logger.log("Recording the event clusters as a CVS file: "+filePath);
+		logger.decreaseOffset();
+			
+			// setup colon names
+			List<String> cols = Arrays.asList(
+					COL_NOTES, COL_EVENT_CLUSTER, COL_KEYWORDS, COL_FREQUENCY, 
+					COL_ENT_DATES, COL_ENT_LOCATIONS, COL_ENT_PERSONS, COL_ENT_ORGANIZATIONS, 
+					COL_ENT_FUNCTIONS, COL_ENT_PRODUCTIONS, COL_ENT_MEETINGS
+			);
+			
+			// open file and write header
+			PrintWriter pw = FileTools.openTextFileWrite(filePath, "UTF-8");
+			Iterator<String> it = cols.iterator();
+			while(it.hasNext())
+			{	String col = it.next();
+				pw.print("\""+col+"\"");
+				if(it.hasNext())
+					pw.print(",");
+			}
+			pw.println();
+			
+			// write data
+			logger.log("Treat each cluster separately");
+			int i = 0;
+			Iterator<List<Event>> itClust =  eventClusters.iterator();
+			while(itClust.hasNext())
+			{	List<Event> cluster = itClust.next();
+				i++;
+				// get the line
+				Map<String,String> line = exportEventCluster(cluster,i,language);
+				// write the line
+				it = cols.iterator();
+				while(it.hasNext())
+				{	String col = it.next();
+					String val = line.get(col);
+					if(val!=null)
+						pw.print("\""+val+"\"");
+					if(it.hasNext())
+						pw.print(",");
+				}
+				pw.println();
+			}
+			
+			pw.close();
+		logger.decreaseOffset();
+		logger.log("Wrote "+eventClusters.size()+" event clusters");
+	}
+	
 	/**
 	 * Identify groups of similar events among the previously identified events.
 	 */

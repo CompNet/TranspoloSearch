@@ -25,6 +25,7 @@ import java.util.TreeSet;
 
 import org.jdom2.Element;
 
+import fr.univavignon.transpolosearch.data.entity.EntityType;
 import fr.univavignon.transpolosearch.data.entity.mention.MentionDate;
 import fr.univavignon.transpolosearch.data.entity.mention.MentionFunction;
 import fr.univavignon.transpolosearch.data.entity.mention.MentionLocation;
@@ -71,6 +72,12 @@ public class Event
 	public Event(MentionDate date)
 	{	period = date.getValue();
 	}
+	
+	/////////////////////////////////////////////////////////////////
+	// CLUSTER		/////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////
+	/** Id of the cluster containing this event (provided the events have been clustered...) */
+	public Integer cluster = null;
 	
 	/////////////////////////////////////////////////////////////////
 	// TEXT				/////////////////////////////////////////////
@@ -181,6 +188,7 @@ public class Event
 	{	String normalizedName = location.getValue();
 		if(normalizedName==null)
 			normalizedName = location.getStringValue();
+		normalizedName = cleanMention(normalizedName);
 		locations.add(normalizedName);
 	}
 	
@@ -224,6 +232,7 @@ public class Event
 	{	String normalizedName = organization.getValue();
 		if(normalizedName==null)
 			normalizedName = organization.getStringValue();
+		normalizedName = cleanMention(normalizedName);
 		organizations.add(normalizedName);
 	}
 	
@@ -267,6 +276,7 @@ public class Event
 	{	String normalizedName = person.getValue();
 		if(normalizedName==null)
 			normalizedName = person.getStringValue();
+		normalizedName = cleanMention(normalizedName);
 		persons.add(normalizedName);
 	}
 	
@@ -310,6 +320,7 @@ public class Event
 	{	String normalizedName = function.getValue();
 		if(normalizedName==null)
 			normalizedName = function.getStringValue();
+		normalizedName = cleanMention(normalizedName);
 		functions.add(normalizedName);
 	}
 	
@@ -353,6 +364,7 @@ public class Event
 	{	String normalizedName = production.getValue();
 		if(normalizedName==null)
 			normalizedName = production.getStringValue();
+		normalizedName = cleanMention(normalizedName);
 		productions.add(normalizedName);
 	}
 	
@@ -396,6 +408,7 @@ public class Event
 	{	String normalizedName = meeting.getValue();
 		if(normalizedName==null)
 			normalizedName = meeting.getStringValue();
+		normalizedName = cleanMention(normalizedName);
 		meetings.add(normalizedName);
 	}
 	
@@ -539,7 +552,62 @@ public class Event
 	// SIMILARITY		/////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
 	/**
-	 * Process a similarity measure characterizing this event and
+	 * Normalizes the string representing a mention. This consists in
+	 * using lowercase only, removing newlines and punctuation, and 
+	 * trimming.
+	 * 
+	 * @param mention
+	 * 		String to normalize.
+	 * @return
+	 * 		String after normalization.
+	 */
+	private String cleanMention(String mention)
+	{	String result = null;
+		if(mention!=null)
+		{	result = mention.toLowerCase();
+			result = result.replaceAll("\n"," ");
+			result = StringTools.removePunctuation(result);
+//			result = StringTools.removeDiacritics(result);
+			result = result.trim();
+		}
+		return result;
+	}
+	
+	/**
+	 * Returns the set of mentions corresponding to the specified type.
+	 * 
+	 * @param type
+	 * 		Type of the desired mentions.
+	 * @return
+	 * 		Set of mentions of the specified type.
+	 */
+	public Set<String> getNamedMentionsByType(EntityType type)
+	{	Set<String> result = null;
+		switch(type)
+		{	case FUNCTION:
+				result = functions;
+				break;
+			case LOCATION:
+				result = locations;
+				break;
+			case MEETING:
+				result = meetings;
+				break;
+			case ORGANIZATION:
+				result = organizations;
+				break;
+			case PERSON:
+				result = persons;
+				break;
+			case PRODUCTION:
+				result = productions;
+				break;
+		}
+		return result;
+	}
+	
+	/**
+	 * Processes a similarity measure characterizing this event and
 	 * the specified one. In this very basic approach, we use Jaccard's
 	 * coefficient applied to the events constituting mentions.
 	 * 

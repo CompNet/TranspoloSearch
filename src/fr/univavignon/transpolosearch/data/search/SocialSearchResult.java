@@ -482,26 +482,8 @@ public class SocialSearchResult extends AbstractSearchResult
 			exportShareNumber(map);
 			// number of comments
 			exportCommentNumber(map);
-			
-			// event and its mentions
-			if(event!=null)
-			{	// rank
-				map.put(WebSearchResults.COL_EVENT_RANK,Integer.toString(rank));
-				// dates
-				exportEventDates(event, map);
-				// locations
-				exportEventDates(event, EntityType.LOCATION, map);
-				// persons
-				exportEventDates(event, EntityType.PERSON, map);
-				// organizations
-				exportEventDates(event, EntityType.ORGANIZATION, map);
-				// functions
-				exportEventDates(event, EntityType.FUNCTION, map);
-				// productions
-				exportEventDates(event, EntityType.PRODUCTION, map);
-				// meetings
-				exportEventDates(event, EntityType.MEETING, map);
-			}
+			// event and its stuff
+			exportEvent(event, rank, map);
 		}
 		
 		return result;

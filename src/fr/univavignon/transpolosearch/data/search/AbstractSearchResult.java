@@ -488,7 +488,8 @@ public abstract class AbstractSearchResult
 				// for each sentence, we get the detected entity mentions
 				for(int ep: sentencePos)
 				{	if(sp>=0)
-					{	List<AbstractMention<?>> le = mentions.getMentionsIn(sp, ep);
+					{	String sentenceStr = rawText.substring(ep, sp);
+						List<AbstractMention<?>> le = mentions.getMentionsIn(sp, ep);
 						List<AbstractMention<?>> dates = Mentions.filterByType(le,EntityType.DATE);
 						// only go on if there is at least one date
 						if(!dates.isEmpty() || (usePubDate && pubDate!=null))
@@ -507,6 +508,7 @@ public abstract class AbstractSearchResult
 								logger.log("WARNING: there is no person in sentence \""+rawText.substring(sp,ep)+"\"");
 							else
 							{	Event event = new Event(ed);
+								event.setText(sentenceStr);
 								events.add(event);
 								for(AbstractMention<?> mention: persons)
 								{	MentionPerson person = (MentionPerson)mention;
@@ -572,6 +574,7 @@ public abstract class AbstractSearchResult
 						event = new Event(ed);
 						logger.log("WARNING: no explicit date in the post, using the publication date instead ("+pubDate+")");
 					}
+					event.setText(rawText);
 					
 					List<AbstractMention<?>> persons = mentions.getMentionsByType(EntityType.PERSON);
 					if(persons.isEmpty())
@@ -614,7 +617,7 @@ public abstract class AbstractSearchResult
 	 * @param result
 	 * 		The map to complete.
 	 */
-	protected void exportEventDates(Event event, Map<String,String> result)
+	private void exportEventDateMentions(Event event, Map<String,String> result)
 	{	Period period = event.getPeriod();
 		String periodStr = period.toString();
 		periodStr = periodStr.replaceAll("[\\n\\r]", " ");
@@ -632,7 +635,7 @@ public abstract class AbstractSearchResult
 	 * @param result
 	 * 		The map to complete.
 	 */
-	protected void exportEventDates(Event event, EntityType type, Map<String,String> result)
+	private void exportEventNamedMentions(Event event, EntityType type, Map<String,String> result)
 	{	Collection<String> collec = null;
 		String col = null;
 		switch(type)
@@ -673,6 +676,68 @@ public abstract class AbstractSearchResult
 				str = str + ", ";
 		}
 		result.put(col,str);
+	}
+	
+	/**
+	 * Adds the event cluster to the specified map.
+	 * 
+	 * @param event
+	 * 		The event to consider.
+	 * @param result
+	 * 		The map to complete.
+	 */
+	private void exportEventCluster(Event event, Map<String,String> result)
+	{	Integer evtCluster = event.cluster;
+		if(evtCluster!=null)
+		{	String clusterStr = Integer.toString(evtCluster);
+			result.put(AbstractSearchResults.COL_EVENT_CLUSTER, clusterStr);
+		}
+	}
+	
+	/**
+	 * Adds the event text to the specified map.
+	 * 
+	 * @param event
+	 * 		The event to consider.
+	 * @param result
+	 * 		The map to complete.
+	 */
+	private void exportEventText(Event event, Map<String,String> result)
+	{	String text = event.getText();
+		if(text!=null)
+			result.put(AbstractSearchResults.COL_EVENT_SENTENCE, text);
+	}
+	
+	/**
+	 * Adds the event information to the specified map.
+	 * 
+	 * @param event
+	 * 		The event to consider.
+	 * @param rank
+	 * 		Event rank.
+	 * @param result
+	 * 		The map to complete.
+	 */
+	protected void exportEvent(Event event, int rank, Map<String,String> result)
+	{	if(event!=null)
+		{	// cluster
+			exportEventCluster(event, result);
+			
+			// rank
+			result.put(AbstractSearchResults.COL_EVENT_RANK,Integer.toString(rank));
+			
+			// sentence
+			exportEventText(event, result);
+			
+			// mentions
+			exportEventDateMentions(event, result);
+			exportEventNamedMentions(event, EntityType.LOCATION, result);
+			exportEventNamedMentions(event, EntityType.PERSON, result);
+			exportEventNamedMentions(event, EntityType.ORGANIZATION, result);
+			exportEventNamedMentions(event, EntityType.FUNCTION, result);
+			exportEventNamedMentions(event, EntityType.PRODUCTION, result);
+			exportEventNamedMentions(event, EntityType.MEETING, result);
+		}
 	}
 	
 	/**

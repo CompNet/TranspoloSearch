@@ -519,14 +519,10 @@ public class Test
 	}
 }
 
-// TODO revoir l'enregistrement des evts
-//		- list clust par art/sent: 1 ligne = 1 cluster  >>> résumé des clusters.
-//			- id cluster
-//			- titre d'un article
-//			- entités retenues
-//			- nombre d'articles concernés
-//		>> faut faire la même chose pour les clusters d'articles (fichier résumé)
-//TODO Garder seulement les entités apparaissant dans tous les articles de leur cluster
+// TODO
+// - structure de stockage des clusters d'evts pas très propre >> adapter la méthode de clustering
+
+// TODO Garder seulement les entités apparaissant dans tous les articles de leur cluster
 // TODO rajouter hierarchical clustering pr events
 // TODO le langage devrait être un paramètre général. chercher toutes les occurrences de FR et article.FR
 
