@@ -264,9 +264,6 @@ public class Extractor
 		logger.decreaseOffset();
 		logger.log("Total number of pages found: "+result.size());
 		
-		// record the complete list of URLs (not for cache, just as a result)
-		result.exportResults(FileNames.FI_SEARCH_RESULTS_ALL);
-		
 		return result;
 	}
 	
@@ -310,7 +307,8 @@ public class Extractor
 	private WebSearchResults performWebExtraction(String keywords, List<String> websites, Date startDate, Date endDate, boolean searchDate, String compulsoryExpression, ArticleLanguage language) throws IOException, ReaderException, ParseException, SAXException, ProcessorException
 	{	logger.log("Starting the web extraction");
 		logger.increaseOffset();
-		
+			int currentStep = 1;
+			
 			// log search parameters
 			logger.log("Parameters:");
 			logger.increaseOffset();
@@ -330,34 +328,40 @@ public class Extractor
 			
 			// perform the Web search
 			WebSearchResults results = performWebSearch(keywords);
+			results.exportResults(currentStep + "_" + FileNames.FI_ARTICLES_RAW);
+			currentStep++;
 	
 			// filter Web pages (remove PDFs, and so on)
 			results.filterByUrl();
 			
 			// retrieve the corresponding articles
 			results.retrieveArticles();
-			results.exportResults(FileNames.FI_SEARCH_RESULTS_URL);
-	
+			results.exportResults(currentStep + "_" + FileNames.FI_ARTICLES_URL_FILTER);
+			currentStep++;
+			
 			// possibly filter the articles depending on the content
 			results.filterByContent(compulsoryExpression, language);
-			results.exportResults(FileNames.FI_SEARCH_RESULTS_CONTENT);
+			results.exportResults(currentStep + "_" + FileNames.FI_ARTICLES_CONTENT_FILTER);
+			currentStep++;
 			
 			// detect the entity mentions
 			results.detectMentions(recognizer);
 			
 			// possibly filter the articles depending on the entities
 			results.filterByEntity(startDate, endDate, searchDate);
-			results.exportResults(FileNames.FI_SEARCH_RESULTS_ENTITY);
+			results.exportResults(currentStep + "_" + FileNames.FI_ARTICLES_ENTITY_FILTER);
+			currentStep++;
 			
 			// displays the remaining articles with their mentions	//TODO maybe get the entities instead of the mentions, eventually?
 			results.displayRemainingMentions(); // for debug only
 			
-			// extract events from the remaining articles and mentions
-			extractEvents(results, "4_");
-			
 			// cluster the article by content
 			results.clusterArticles(language);
-			results.exportResults(FileNames.FI_SEARCH_RESULTS_CLUSTERS);
+			results.exportResults(currentStep + "_" + FileNames.FI_ARTICLES_CLUSTERING);
+			currentStep++;
+			
+			// extract events from the remaining articles and mentions
+			extractEvents(results, currentStep + "_");
 			
 		logger.decreaseOffset();
 		logger.log("Web extraction over");
@@ -449,9 +453,6 @@ public class Extractor
 		logger.decreaseOffset();
 		logger.log("Total number of posts found: "+result.size());
 		
-		// record the complete list of URLs (not for cache, just as a result)
-		result.exportResults(FileNames.FI_SEARCH_RESULTS_ALL);
-		
 		return result;
 	}
 	
@@ -496,6 +497,7 @@ public class Extractor
 	private SocialSearchResults performSocialExtraction(String keywords, List<String> additionalSeeds, Date startDate, Date endDate, String compulsoryExpression, boolean extendedSearch, ArticleLanguage language) throws IOException, ReaderException, ParseException, SAXException, ProcessorException
 	{	logger.log("Starting the social media extraction");
 		logger.increaseOffset();
+			int currentStep = 1;
 		
 			// log search parameters
 			logger.log("Parameters:");
@@ -518,31 +520,35 @@ public class Extractor
 			// perform the social search
 			boolean includeComments = false;
 			SocialSearchResults results = performSocialSearch(keywords, includeComments);
+			results.exportResults(currentStep + "_" + FileNames.FI_ARTICLES_RAW);
+			currentStep++;
 			
 			// convert the posts to proper articles
 			results.buildArticles(includeComments);
 			
 			// possibly filter the articles depending on the content
 			results.filterByContent(compulsoryExpression,language);
-			results.exportResults(FileNames.FI_SEARCH_RESULTS_CONTENT);
+			results.exportResults(currentStep + "_" + FileNames.FI_ARTICLES_CONTENT_FILTER);
+			currentStep++;
 			
 			// detect the entity mentions
 			results.detectMentions(recognizer);
 			
 			// possibly filter the articles depending on the entities
-// unnecessary, unless we add other entity-based constraints than dates		
-//			results.filterByEntity(null,null,true);
-//			results.exportAsCsv(FileNames.FI_SEARCH_RESULTS_ENTITY);
+			results.filterByEntity(null,null,true); // unnecessary, unless we add other entity-based constraints than dates
+			results.exportResults(currentStep + "_" + FileNames.FI_ARTICLES_ENTITY_FILTER);
+			currentStep++;
 			
 			// displays the remaining articles with their mentions	//TODO maybe get the entities instead of the mention, eventually?
 			results.displayRemainingMentions(); // for debug only
 			
-			// extract events from the remaining articles and mentions
-			extractEvents(results, "4_");
-		
 			// cluster the articles by content
 			results.clusterArticles(language);
-			results.exportResults(FileNames.FI_SEARCH_RESULTS_CLUSTERS);
+			results.exportResults(currentStep + "_" + FileNames.FI_ARTICLES_CLUSTERING);
+			currentStep++;
+			
+			// extract events from the remaining articles and mentions
+			extractEvents(results, currentStep + "_");
 			
 		logger.decreaseOffset();
 		logger.log("Social media extraction over");
@@ -565,7 +571,7 @@ public class Extractor
 	 */
 	private void initRecognizer() throws ProcessorException
 	{	recognizer = new StraightCombiner();
-		recognizer.setCacheEnabled(true);//TODO set to false for debugging
+		recognizer.setCacheEnabled(false);//TODO set to false for debugging
 	}
 
 	/////////////////////////////////////////////////////////////////
@@ -619,39 +625,31 @@ public class Extractor
 	private void combineResults(WebSearchResults webRes, SocialSearchResults socRes, ArticleLanguage language) throws UnsupportedEncodingException, FileNotFoundException
 	{	logger.log("Combining all results in a single file.");
 		logger.increaseOffset();
+			int currentStep = 1;
 		
-			// merging the results and record
+			// merge the results and record
 			CombinedSearchResults combRes = new CombinedSearchResults(webRes, socRes);
 			combRes.resetClusters();
-			combRes.exportResults(FileNames.FI_SEARCH_RESULTS_ENTITY);
+			combRes.exportResults(currentStep + "_" + FileNames.FI_ARTICLES_MERGE);
+			currentStep++;
 			
-			// extract events from the remaining articles and mentions
-			extractEvents(combRes, "4_");
-
 			// cluster the combined articles by content
 			combRes.clusterArticles(language);
-			combRes.exportResults(FileNames.FI_SEARCH_RESULTS_CLUSTERS);
+			combRes.exportResults(currentStep + "_" + FileNames.FI_ARTICLES_CLUSTERING);
+			currentStep++;
 			
-			//TODO keep only entities present in the same cluster
-			// redo the events
-			// TODO pb: this changes the data, and affects the post merge operations
-
+			// extract events from the articles and mentions
+			extractEvents(combRes, currentStep + "_");
+			currentStep++;
 			
+			// filter mentions based on article clusters
+			combRes.filterByCluster(1);
+			combRes.exportResults(currentStep + "_" + FileNames.FI_ARTICLES_CLUSTER_FILTER);
+			currentStep++;
 			
-			// filter mentions to keep only those present in all the articles of the same cluster
-			// TODO
-			
-//			// extract events from the remaining articles and mentions
-//			boolean bySentence[] = {false,true};
-//			for(boolean bs: bySentence)
-//			{	results.extractEvents(bs);
-//				// export the events as a table
-//				results.exportEvents(bs, false);
-//				// try to group similar events together
-//				results.clusterEvents();
-//				// export the resulting groups as a table
-//				results.exportEvents(bs, true);
-//			}
+			// extract events based on the filtered mentions
+			extractEvents(combRes, currentStep + "_");
+			currentStep++;
 			
 		logger.decreaseOffset();
 	}

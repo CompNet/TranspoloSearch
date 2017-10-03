@@ -114,14 +114,14 @@ public class CombinedSearchResults extends AbstractSearchResults<AbstractSearchR
 	{	String fileName = filePrefix;
 		if(bySentence)
 			if(byCluster)
-				fileName = fileName + FileNames.FI_CLUSTER_TABLE_SENTENCE;
+				fileName = fileName + FileNames.FI_EVENT_CLUSTERS_BYSENTENCE;
 			else
-				fileName = fileName + FileNames.FI_EVENT_TABLE_SENTENCE;
+				fileName = fileName + FileNames.FI_EVENT_LIST_BYSENTENCE;
 		else
 			if(byCluster)
-				fileName = fileName + FileNames.FI_CLUSTER_TABLE_ARTICLE;
+				fileName = fileName + FileNames.FI_EVENT_CLUSTERS_BYARTICLE;
 			else
-				fileName = fileName + FileNames.FI_EVENT_TABLE_ARTICLE;
+				fileName = fileName + FileNames.FI_EVENT_LIST_BYARTICLE;
 		String filePath = FileNames.FO_OUTPUT + File.separator + fileName;
 		logger.log("Recording the events as a CVS file: "+filePath);
 		logger.decreaseOffset();

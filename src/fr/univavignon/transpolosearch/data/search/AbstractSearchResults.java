@@ -397,6 +397,19 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 		logger.log("Best partition: k="+bestK+" (Silhouette="+bestSil);
 	}
 	
+	/**
+	 * Filters the previously detected mentions, based on the previously detected
+	 * clusters of articles. For a given article, we keep only the mentions present
+	 * in a certain proportion of the articles of the same cluster.
+	 * 
+	 * @param threshold
+	 * 		Proportion of articles that must have the mention in order to keep it.
+	 */
+	public void filterByCluster(float threshold)
+	{	
+		// TODO
+	}
+	
 	/////////////////////////////////////////////////////////////////
 	// EVENTS		/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////

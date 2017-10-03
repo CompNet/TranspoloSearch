@@ -360,11 +360,11 @@ public class Test
 		logger.log("Load the files");
 		Set<String> engineNames = new TreeSet<String>();
 		FileNames.setOutputFolder(folder1);
-		String filePath1 = FileNames.FO_WEB_SEARCH_RESULTS + File.separator + FileNames.FI_SEARCH_RESULTS_ENTITY;
+		String filePath1 = FileNames.FO_WEB_SEARCH_RESULTS + File.separator + FileNames.FI_ARTICLES_ENTITY_FILTER;
 		Map<String,Map<String,String>> map1 = new HashMap<String,Map<String,String>>();
 		loadCSV(filePath1, map1, engineNames);
 		FileNames.setOutputFolder(folder2);
-		String filePath2 = FileNames.FO_WEB_SEARCH_RESULTS + File.separator + FileNames.FI_SEARCH_RESULTS_ENTITY;
+		String filePath2 = FileNames.FO_WEB_SEARCH_RESULTS + File.separator + FileNames.FI_ARTICLES_ENTITY_FILTER;
 		Map<String,Map<String,String>> map2 = new HashMap<String,Map<String,String>>();
 		loadCSV(filePath2, map2, engineNames);
 		FileNames.setOutputFolder(null);

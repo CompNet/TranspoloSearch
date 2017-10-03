@@ -154,7 +154,7 @@ public class LeParisienReader extends AbstractJournalReader
 				Element fullElt = articleElt.getElementsByAttributeValueContaining(HtmlNames.ATT_CLASS, CLASS_ARTICLE_MAIN).first();
 				if(fullElt==null)
 				{	logger.log("WARNING: Could not find the \"article-full\" element >> probably a list of articles (by opposition to a single specific article)");
-					throw new ReaderException("Could not access the article content");
+					throw new ReaderException("The document is not an article, but a list of articles (URL "+url+")",true);
 				}
 				else
 				{	Element infoElt = fullElt.getElementsByAttributeValueContaining(HtmlNames.ATT_CLASS, CLASS_INFO).first();

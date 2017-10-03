@@ -90,7 +90,7 @@ public abstract class AbstractSearchResult
 	/** Problematic status: the page is not an article, but a list of articles */
 	public final static String STATUS_LIST = "List of articles";
 	/** Problematic status: the document could not be retrieved */
-	public final static String STATUS_UNAVAILABLE = "URL unvailable";
+	public final static String STATUS_UNAVAILABLE = "Server unvailable";
 	
 	/**
 	 * Adds the status value to the specified map.

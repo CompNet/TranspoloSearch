@@ -287,17 +287,18 @@ public abstract class ArticleReader
 					// taken from https://stackoverflow.com/a/20284953/1254730
 					Response response = Jsoup.connect(url.toString())
 				           .ignoreContentType(true)
-				           .userAgent("Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:25.0) Gecko/20100101 Firefox/25.0")  
-				           .referrer("http://www.google.com")   
+//				           .userAgent("Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:25.0) Gecko/20100101 Firefox/25.0")
+				           .userAgent("Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:54.0) Gecko/20100101 Firefox/54.0")
+				           .referrer("http://www.google.fr")   
 				           .timeout(timeOut) 
 				           .followRedirects(true)
 				           .execute();
 					result = response.parse();
 				}
 				catch(SocketTimeoutException e)
-				{	logger.log("Could not download the page (timeout="+timeOut+" ms) >> trying again");
+				{	logger.log("WARNING: Could not download the page (timeout="+timeOut+" ms) >> trying again");
 					timeOut = timeOut + 5000;
-					again = timeOut<2*60*1000;	//TODO 2*60*1000;
+					again = timeOut<1*10*1000;	//TODO 2*60*1000;
 				}
 				catch(NoRouteToHostException e)
 				{	logger.log(Arrays.asList(
@@ -328,6 +329,8 @@ public abstract class ArticleReader
 						"WARNING: Could not download the page, the server returned an error "+e.getStatusCode()+".",
 						"Error message: "+e.getMessage()
 					));
+if(e.getStatusCode()==401)
+	System.out.print("");
 				}
 				catch(UnknownHostException e)
 				{	logger.log(Arrays.asList(
@@ -337,19 +340,19 @@ public abstract class ArticleReader
 				}
 				catch(SSLHandshakeException e)
 				{	logger.log(Arrays.asList(
-						"WARNING: Security error when connecting to the URL.",
+						"WARNING: Could not download the page, security error when connecting to the URL.",
 						"Error message: "+e.getMessage()
 					));
 				}
 				catch(SSLException e)
 				{	logger.log(Arrays.asList(
-						"WARNING: Security error when connecting to the URL.",
+						"WARNING: Could not download the page, security error when connecting to the URL.",
 						"Error message: "+e.getMessage()
 					));
 				}
 				catch(IOException e)
 				{	logger.log(Arrays.asList(
-						"WARNING: Problem while accessing the webpage.",
+						"WARNING: Could not download the page, general problem while accessing the webpage.",
 						"Error message: "+e.getMessage()
 					));
 				}
