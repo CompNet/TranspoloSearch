@@ -676,22 +676,22 @@ public class Event
 		return result;
 	}
 	
-	/**
-	 * Builds an entity from the specified
-	 * XML element.
-	 * 
-	 * @param element
-	 * 		XML element representing the entity.
-	 * @return
-	 * 		The entity corresponding to the specified element.
-	 */
-	public static Event importFromElement(Element element)
-	{	Event result = null;
-		
-		// TODO	
-		
-		return result;
-	}
+//	/**
+//	 * Builds an entity from the specified
+//	 * XML element.
+//	 * 
+//	 * @param element
+//	 * 		XML element representing the entity.
+//	 * @return
+//	 * 		The entity corresponding to the specified element.
+//	 */
+//	public static Event importFromElement(Element element)
+//	{	Event result = null;
+//		
+//		// TODO	
+//		
+//		return result;
+//	}
 
 	/////////////////////////////////////////////////////////////////
 	// STRING			/////////////////////////////////////////////

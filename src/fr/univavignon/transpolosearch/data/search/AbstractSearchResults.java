@@ -875,7 +875,7 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 		}
 		for(Event event: events)
 		{	String cStr = event.cluster;
-			int c = Integer.parseInt(cStr) - 1;
+			int c = Integer.parseInt(cStr);
 			List<Event> cluster = eventClusters.get(c);
 			cluster.add(event);
 		}

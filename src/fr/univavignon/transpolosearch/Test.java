@@ -519,11 +519,7 @@ public class Test
 	}
 }
 
-// TODO
-// - structure de stockage des clusters d'evts pas très propre >> adapter la méthode de clustering
-
-// TODO Garder seulement les entités apparaissant dans tous les articles de leur cluster
-// TODO rajouter hierarchical clustering pr events
+// TODO rajouter chargement référence + calcul de performance
 // TODO le langage devrait être un paramètre général. chercher toutes les occurrences de FR et article.FR
 
 // TODO manips:

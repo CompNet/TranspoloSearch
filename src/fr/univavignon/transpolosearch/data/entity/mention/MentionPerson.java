@@ -67,7 +67,7 @@ public class MentionPerson extends AbstractMention<String>
 	 * 		String representation in the text.
 	 */
 	public MentionPerson(int startPos, int endPos, ProcessorName source, String valueStr)
-	{	super(startPos, endPos, source, valueStr, null);
+	{	super(startPos, endPos, source, valueStr, valueStr);
 	}
 	
 	/////////////////////////////////////////////////////////////////

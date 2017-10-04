@@ -26,6 +26,8 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 
 import fr.univavignon.transpolosearch.data.article.Article;
 import fr.univavignon.transpolosearch.data.article.ArticleLanguage;
@@ -344,17 +346,20 @@ public abstract class AbstractSearchResult
 			
 			String str = "";
 			List<AbstractMention<?>> fm = mentions.getMentionsByType(type);
-			Iterator<AbstractMention<?>> it = fm.iterator();
+			Set<String> uniqueStr = new TreeSet<String>();
+			Set<String> displayedStr = new TreeSet<String>();
+			for(AbstractMention<?> mention: fm)
+			{	Object value = mention.getValue();
+				String normalizedStr = value.toString();
+				if(!uniqueStr.contains(normalizedStr))
+				{	uniqueStr.add(normalizedStr);
+					String valueStr = mention.getStringValue();
+					displayedStr.add(valueStr);
+				}
+			}
+			Iterator<String> it = displayedStr.iterator();
 			while(it.hasNext())
-			{	AbstractMention<?> m = it.next();
-				String form;
-				Object tmp = m.getValue();
-				if(tmp!=null)
-					form = tmp.toString();
-				else
-					form = m.getStringValue();
-				form = form.replaceAll("[\\n\\r]", " ");
-				form = form.replaceAll("\"", "'");
+			{	String form = it.next();
 				str = str + form;
 				if(it.hasNext())
 					str = str + ", ";
@@ -488,7 +493,7 @@ public abstract class AbstractSearchResult
 				// for each sentence, we get the detected entity mentions
 				for(int ep: sentencePos)
 				{	if(sp>=0)
-					{	String sentenceStr = rawText.substring(ep, sp);
+					{	String sentenceStr = rawText.substring(sp, ep);
 						List<AbstractMention<?>> le = mentions.getMentionsIn(sp, ep);
 						List<AbstractMention<?>> dates = Mentions.filterByType(le,EntityType.DATE);
 						// only go on if there is at least one date
@@ -496,16 +501,16 @@ public abstract class AbstractSearchResult
 						{	MentionDate ed;
 							if(dates.isEmpty())
 							{	ed = new MentionDate(-1, -1, ProcessorName.REFERENCE, pubDate.toString(), pubDate);
-								logger.log("WARNING: no explicit date in the post, using the publication date instead (\""+rawText.substring(sp,ep)+"\")");
+								logger.log("WARNING: no explicit date in the post, using the publication date instead (\""+sentenceStr+"\")");
 							}
 							else
 							{	ed = (MentionDate)dates.get(0);
 								if(dates.size()>1)
-									logger.log("WARNING: there are several dates in the sentence >> using the first one (\""+rawText.substring(sp,ep)+"\")");
+									logger.log("WARNING: there are several dates in the sentence >> using the first one (\""+sentenceStr+"\")");
 							} 
 							List<AbstractMention<?>> persons = Mentions.filterByType(le,EntityType.PERSON);
 							if(persons.isEmpty())
-								logger.log("WARNING: there is no person in sentence \""+rawText.substring(sp,ep)+"\"");
+								logger.log("WARNING: there is no person in sentence \""+sentenceStr+"\"");
 							else
 							{	Event event = new Event(ed);
 								event.setText(sentenceStr);
@@ -539,7 +544,7 @@ public abstract class AbstractSearchResult
 								{	MentionProduction production = (MentionProduction)mention;
 									event.addProduction(production);
 								}
-								logger.log(Arrays.asList("Event found for sentence \""+rawText.substring(sp,ep)+"\"",event.toString()));
+								logger.log(Arrays.asList("Event found for sentence \""+sentenceStr+"\"",event.toString()));
 							}
 						}
 						else

@@ -210,13 +210,15 @@ if(result instanceof WebSearchResult && ((WebSearchResult)result).url.equalsIgno
 		
 			int count = 0;
 			int total = 0;
+boolean doit = false;
 			for(T result: results.values())
 			{	
 if(result instanceof WebSearchResult && ((WebSearchResult)result).url.equalsIgnoreCase
-		("http://www.lamarseillaise.fr/vaucluse/developpement-durable/58144-avignon-ca-bouge-autour-du-technopole-de-l-agroparc"))				
-	System.out.print("");
+		("http://www.republicain-lorrain.fr/actualite/2017/03/11/routes-treize-stars-s-engagent"))				
+//	System.out.print("");
+	doit = true;
 				
-				if(result.status==null)
+				if(result.status==null && doit)
 				{	total++;
 					if(result.detectMentions(recognizer,total)>0)
 						count++;

@@ -68,7 +68,7 @@ public class MentionFunction extends AbstractMention<String>
 	 * 		String representation in the text.
 	 */
 	public MentionFunction(int startPos, int endPos, ProcessorName source, String valueStr)
-	{	super(startPos, endPos, source, valueStr, null);
+	{	super(startPos, endPos, source, valueStr, valueStr);
 	}
 	
 	/////////////////////////////////////////////////////////////////

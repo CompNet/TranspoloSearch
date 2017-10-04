@@ -1,5 +1,7 @@
 package fr.univavignon.transpolosearch.extraction;
 
+import java.io.File;
+
 /*
  * TranspoloSearch
  * Copyright 2015-17 Vincent Labatut
@@ -26,9 +28,11 @@ import java.net.URL;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Scanner;
 
 import org.xml.sax.SAXException;
 
@@ -52,6 +56,7 @@ import fr.univavignon.transpolosearch.search.web.GoogleEngine;
 import fr.univavignon.transpolosearch.search.web.QwantEngine;
 import fr.univavignon.transpolosearch.search.web.YandexEngine;
 import fr.univavignon.transpolosearch.tools.file.FileNames;
+import fr.univavignon.transpolosearch.tools.file.FileTools;
 import fr.univavignon.transpolosearch.tools.log.HierarchicalLogger;
 import fr.univavignon.transpolosearch.tools.log.HierarchicalLoggerManager;
 
@@ -645,6 +650,9 @@ public class Extractor
 			extractEvents(combRes, currentStep + "_", language);
 			currentStep++;
 			
+			// assess the performances
+			assessPerformances(combRes);
+			
 			// filter mentions based on article clusters
 			combRes.filterByCluster(1);
 			combRes.exportResults(currentStep + "_" + FileNames.FI_ARTICLES_CLUSTER_FILTER);
@@ -653,6 +661,44 @@ public class Extractor
 			// extract events based on the filtered mentions
 			extractEvents(combRes, currentStep + "_", language);
 			currentStep++;
+			
+		logger.decreaseOffset();
+	}
+	
+	/**
+	 * Assesses the quality of the specified results.
+	 * 
+	 * @param combRes
+	 * 		Results of the information retrieval.
+	 * 
+	 * @throws UnsupportedEncodingException
+	 * 		Problem when loading the reference file. 
+	 * @throws FileNotFoundException 
+	 * 		Problem when loading the reference file. 
+	 */
+	private void assessPerformances(CombinedSearchResults combRes) throws FileNotFoundException, UnsupportedEncodingException
+	{	logger.log("Evaluating the results");
+		logger.increaseOffset();
+			
+			// load the reference file, in which each URL is associated to a class (cluster)
+			String filePath = FileNames.FO_OUTPUT + File.separator + FileNames.FI_ANNOTATED_RESULTS;
+			Scanner scanner = FileTools.openTextFileRead(filePath, "UTF-8");
+			Map<String,String> reference = new HashMap<String,String>();
+			while(scanner.hasNextLine())
+			{	String line = scanner.nextLine();
+				line = line.trim();
+				String[] tmp = line.split("\t");
+				String urlStr = tmp[0].trim();
+				String clust = tmp[1].trim();
+				if(clust.isEmpty())
+					clust = null;	// null means the URL is irrelevant
+				reference.put(urlStr, clust);
+			}
+			
+			// process Precision, Recall, F-score for pertinent vs. non-pertinent docs
+//			combRes.computeClassifPerf(reference);
+			
+			// process NMI for manual vs. automatic classes of documents/events
 			
 		logger.decreaseOffset();
 	}

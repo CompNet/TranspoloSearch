@@ -90,7 +90,7 @@ class StraightCombinerDelegateRecognizer extends AbstractCombinerDelegateRecogni
 	{	super(straightCombiner);
 		
 		initRecognizers();
-		setSubCacheEnabled(recognizer.doesCache());
+//		setSubCacheEnabled(recognizer.doesCache());
 	}
 	
 	/////////////////////////////////////////////////////////////////
@@ -155,7 +155,7 @@ class StraightCombinerDelegateRecognizer extends AbstractCombinerDelegateRecogni
 			boolean loadModelOnDemand = true;
 			boolean doIntervalTagging = false;
 			HeidelTime heidelTime = new HeidelTime(modelName, loadModelOnDemand, doIntervalTagging);
-//			heidelTime.setCacheEnabled(false);
+			heidelTime.setCacheEnabled(false);
 			recognizers.add(heidelTime);
 		}
 		
@@ -166,19 +166,19 @@ class StraightCombinerDelegateRecognizer extends AbstractCombinerDelegateRecogni
 			boolean ignorePronouns = false;
 			boolean exclusionOn = false;
 			Nero nero = new Nero(neroTagger, flat, ignorePronouns, exclusionOn);
-//			nero.setCacheEnabled(false);
+			nero.setCacheEnabled(false);
 			recognizers.add(nero);
 		}
 		
-		// OpenCalais
-		{	logger.log("Init OpenCalais");
-			OpenCalaisLanguage lang = OpenCalaisLanguage.FR;
-			boolean ignorePronouns = false;
-			boolean exclusionOn = false;
-			OpenCalais openCalais = new OpenCalais(lang, ignorePronouns, exclusionOn);
+//		// OpenCalais
+//		{	logger.log("Init OpenCalais");
+//			OpenCalaisLanguage lang = OpenCalaisLanguage.FR;
+//			boolean ignorePronouns = false;
+//			boolean exclusionOn = false;
+//			OpenCalais openCalais = new OpenCalais(lang, ignorePronouns, exclusionOn);
 //			openCalais.setCacheEnabled(false);
-			recognizers.add(openCalais);
-		}
+//			recognizers.add(openCalais);
+//		}
 		
 		// OpeNer
 		  {	logger.log("Init OpeNer");
@@ -186,7 +186,7 @@ class StraightCombinerDelegateRecognizer extends AbstractCombinerDelegateRecogni
 			boolean ignorePronouns = false;
 			boolean exclusionOn = false;
 			OpeNer opeNer = new OpeNer(parenSplit, ignorePronouns, exclusionOn);
-//			opeNer.setCacheEnabled(false);
+			opeNer.setCacheEnabled(false);
 			recognizers.add(opeNer);
 		}
 		
@@ -196,7 +196,7 @@ class StraightCombinerDelegateRecognizer extends AbstractCombinerDelegateRecogni
 			boolean ignorePronouns = false;
 			boolean exclusionOn = false;
 			TagEn tagEn = new TagEn(model, ignorePronouns, exclusionOn);
-//			tagEn.setCacheEnabled(false);
+			tagEn.setCacheEnabled(false);
 			recognizers.add(tagEn);
 		}
 		

@@ -67,7 +67,7 @@ public class MentionMeeting extends AbstractMention<String>
 	 * 		String representation in the text.
 	 */
 	public MentionMeeting(int startPos, int endPos, ProcessorName source, String valueStr)
-	{	super(startPos, endPos, source, valueStr, null);
+	{	super(startPos, endPos, source, valueStr, valueStr);
 	}
 	
 	/////////////////////////////////////////////////////////////////
