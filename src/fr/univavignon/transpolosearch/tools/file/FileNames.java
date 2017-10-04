@@ -215,6 +215,8 @@ public class FileNames
 	public final static String FI_EVENT_CLUSTERS_BYSENTENCE = "event_clusters_bysentence" + FileNames.EX_CSV;
 	/** Reference file for the information retrieval task */
 	public final static String FI_ANNOTATED_RESULTS = "annotated_results" + FileNames.EX_TEXT;
+	/** Performance reached for the information retrieval task */
+	public final static String FI_PERFORMANCE = "performance" + FileNames.EX_CSV;
 	/** List of Facebook ids */
 	public final static String FI_FACEBOOK_IDS = "fb_ids" + FileNames.EX_TEXT;
 	

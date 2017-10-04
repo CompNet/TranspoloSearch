@@ -55,6 +55,7 @@ import fr.univavignon.transpolosearch.tools.log.HierarchicalLoggerManager;
 import fr.univavignon.transpolosearch.tools.string.StopWordsManager;
 import fr.univavignon.transpolosearch.tools.string.StringTools;
 import fr.univavignon.transpolosearch.tools.time.Period;
+
 import jsat.SimpleDataSet;
 import jsat.classifiers.DataPoint;
 import jsat.clustering.Clusterer;
@@ -326,14 +327,14 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 		
 		// proceed with the cluster analysis
 		Clusterer clusterer = new MyPam(dm);
-		int[] membership = new int[remainingRes.size()];
+		int[] membership = new int[remainingRes.size()];	// NOTE: jstat clusters numbered starting from zero
 		clusterer.cluster(ds, membership);
 		
 		// set up the clusters in the results themselves
 		int maxClust = 0;
 		int i = 0;
 		for(T result: remainingRes)
-		{	result.cluster = Integer.toString(membership[i]);
+		{	result.cluster = Integer.toString(membership[i]+1);
 			if(membership[i] > maxClust)
 				maxClust = membership[i];
 			i++;
@@ -855,28 +856,28 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 		
 		// proceed with the cluster analysis
 		Clusterer clusterer = new MyPam(dm);
-		int[] membership = new int[events.size()];
+		int[] membership = new int[events.size()];	// NOTE: jstat clusters numbered starting from zero
 		clusterer.cluster(ds, membership);
 		
 		// set up the clusters in the results themselves
 		int maxClust = 0;
 		int i = 0;
 		for(Event event: events)
-		{	event.cluster = Integer.toString(membership[i]);
+		{	event.cluster = Integer.toString(membership[i]+1);
 			if(membership[i] > maxClust)
 				maxClust = membership[i];
 			i++;
 		}
 		
 		// setup the list representing the partition
-		for(i=0;i<maxClust;i++)
+		for(i=0;i<=maxClust;i++)
 		{	List<Event> cluster = new ArrayList<Event>();
 			eventClusters.add(cluster);
 		}
 		for(Event event: events)
 		{	String cStr = event.cluster;
 			int c = Integer.parseInt(cStr);
-			List<Event> cluster = eventClusters.get(c);
+			List<Event> cluster = eventClusters.get(c-1);
 			cluster.add(event);
 		}
 		
@@ -956,6 +957,190 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 		}
     	
 		logger.log("Best event partition: k="+bestK+" (Silhouette="+bestSil+")");
+	}
+	
+	/////////////////////////////////////////////////////////////////
+	// PERFORMANCE		/////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////
+	/**
+	 * Computes the performance of the classification task: distinguishing
+	 * relevant from irrelevant search results.
+	 * 
+	 * @param reference
+	 * 		Manually annotated reference.
+	 * @param result
+	 * 		Result as a list of measures (Precision, Recall, F-measure).
+	 */
+	public void computeDiscriminationPerformance(Map<String,String> reference, List<List<String>> result)
+	{	// process counts
+		int tp = 0;
+//		int tn = 0;
+		int fp = 0;
+		int fn = 0;
+		for(Entry<String,T> entry: results.entrySet())
+		{	String key = entry.getKey();
+			T res = entry.getValue();
+			String ref = reference.get(key);
+			String est = res.status;
+			if(ref==null)
+			{	if(est==null)
+					fp++;
+//				else
+//					tn++;
+			}
+			else
+			{	if(est==null)
+					tp++;
+				else
+					fn++;
+			}
+		}
+		
+		// compute measures
+		float precision = tp / (float)(tp + fp);
+		result.add(Arrays.asList("Precision", Float.toString(precision)));
+		float recall = tp / (float)(tp + fn);
+		result.add(Arrays.asList("Recall", Float.toString(recall)));
+		float fmeasure = 2 * precision * recall / (precision + recall);
+		result.add(Arrays.asList("F-Measure", Float.toString(fmeasure)));
+	}
+
+	/**
+	 * Computes the performance of the clustering task: identifying groups
+	 * of articles or events corresponding to the same real-world event.
+	 * 
+	 * @param reference
+	 * 		Manually annotated reference.
+	 * @param result
+	 * 		Result as a list of measures (NMI, Rand index).
+	 */
+	public void computeClusteringPerformance(Map<String,String> reference, List<List<String>> result)
+	{	// get the number of elements
+//TODO erreur: le nombre d'élement s'obtient à partir de cluster dans result		
+		int n = 0;
+		for(List<String> list: result)
+			n = n + list.size();
+		
+		// convert partition formats 
+		int[] part1 = new int[n];
+		int clustCount = 1;
+		Map<String,Integer> clustMap = new HashMap<String,Integer>();
+		for(Entry<String,T> entry: results.entrySet())
+		{	String key = entry.getKey();
+			T value = entry.getValue();
+			String clusterName = reference.get(key);
+		}
+		
+		int[] part2 = new int[n];
+		
+// TODO que fait on avec les rés qui ne sont que dans une des deux partitions ?
+		
+		// compute measures
+		float randIndex = computeRandIndex(part1, part2);
+		result.add(Arrays.asList("Rand index", Float.toString(randIndex)));
+		float nmi = computeNormalizedMutualInformation(part1, part2);
+		result.add(Arrays.asList("NMI", Float.toString(nmi)));
+	}
+	
+	/**
+	 * Computes the Rand index to compare two partitions.
+	 * See <a href="https://en.wikipedia.org/wiki/Rand_index">Rand index</a>.
+	 * 
+	 * @param part1
+	 * 		First partition.
+	 * @param part2
+	 * 		Second partition.
+	 * @return
+	 * 		Real value representing how similar the partitions are. 
+	 */
+	private float computeRandIndex(int[] part1, int[] part2)
+	{	// count the 4 cases of pairs
+		int ss = 0;
+		int sd = 0;
+		int ds = 0;
+		int dd = 0;
+		for(int i=0;i<part1.length-1;i++)
+		{	for(int j=i+1;j<part2.length;j++)
+			{	if(part1[i]==part1[j])
+					if(part2[i]==part2[j])
+						ss++;
+					else
+						sd++;
+				else
+					if(part2[i]==part2[j])
+						ds++;
+					else
+						dd++;
+			}
+		}
+		
+		// process the index
+		float result = (ss+dd)/(float)(ss+sd+ds+dd);
+		return result;
+	}
+	
+	/**
+	 * Computes the Normalized Mutual Information to compare two partitions.
+	 * See <a href="https://en.wikipedia.org/wiki/Mutual_information#Normalized_variants">NMI</a>
+	 *  (the symmetric uncertainty variant, i.e. harmonic mean).
+	 * 
+	 * @param part1
+	 * 		First partition.
+	 * @param part2
+	 * 		Second partition.
+	 * @return
+	 * 		Real value representing how similar the partitions are. 
+	 */
+	private float computeNormalizedMutualInformation(int[] part1, int[] part2)
+	{	// get the numbers of clusters
+		int nclust1 = 0;
+		for(int i=0;i<part1.length;i++)
+			nclust1 = Math.max(nclust1,part1[i]);
+		nclust1++;
+		int nclust2 = 0;
+		for(int j=0;j<part2.length;j++)
+			nclust2 = Math.max(nclust2,part2[j]);
+		nclust2++;
+		
+		// init the (normalized) confusion matrix
+		float[][] confMat = new float[nclust1][nclust2];
+		for(int i=0;i<part1.length;i++)
+		{	for(int j=0;j<part2.length;j++)
+				confMat[part1[i]-1][part2[j]-1] = confMat[part1[i]-1][part2[j]-1] + 1f/part1.length;
+		}
+		
+		// compute the marginals
+		float[] rowMarg = new float[nclust1];
+		for(int i=0;i<part1.length;i++)
+		{	rowMarg[i] = 0;
+			for(int j=0;j<part2.length;j++)
+				rowMarg[i] = rowMarg[i] + confMat[i][j];
+		}
+		float[] colMarg = new float[nclust2];
+		for(int j=0;j<part2.length;j++)
+		{	colMarg[j] = 0;
+			for(int i=0;i<part1.length;i++)
+				colMarg[j] = colMarg[j] + confMat[i][j];
+		}
+		
+		// process the numerator of the NMI
+		double numerator = 0;
+		for(int i=0;i<part1.length;i++)
+		{	for(int j=0;j<part2.length;j++)
+				numerator = numerator + confMat[i][j] * Math.log10(confMat[i][j]/(rowMarg[i]*colMarg[j]));
+		}
+		numerator = -2 * numerator;
+		
+		// process the denominator of the NMI
+		double denominator = 0;
+		for(int i=0;i<part1.length;i++)
+			denominator = denominator + rowMarg[i] * Math.log10(rowMarg[i]);
+		for(int j=0;j<part2.length;j++)
+			denominator = denominator + colMarg[j] * Math.log10(colMarg[j]);
+
+		// process the NMI
+		float result = (float)(numerator / denominator);
+		return result;
 	}
 	
 	/////////////////////////////////////////////////////////////////

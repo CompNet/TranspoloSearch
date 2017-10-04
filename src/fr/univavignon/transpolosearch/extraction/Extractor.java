@@ -22,6 +22,7 @@ import java.io.File;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -29,6 +30,7 @@ import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -651,7 +653,8 @@ public class Extractor
 			currentStep++;
 			
 			// assess the performances
-			assessPerformances(combRes);
+			assessPerformances(combRes, currentStep);
+			currentStep++;
 			
 			// filter mentions based on article clusters
 			combRes.filterByCluster(1);
@@ -670,13 +673,15 @@ public class Extractor
 	 * 
 	 * @param combRes
 	 * 		Results of the information retrieval.
+	 * @param currentStep 
+	 * 		Current processing step.
 	 * 
 	 * @throws UnsupportedEncodingException
 	 * 		Problem when loading the reference file. 
 	 * @throws FileNotFoundException 
 	 * 		Problem when loading the reference file. 
 	 */
-	private void assessPerformances(CombinedSearchResults combRes) throws FileNotFoundException, UnsupportedEncodingException
+	private void assessPerformances(CombinedSearchResults combRes, int currentStep) throws FileNotFoundException, UnsupportedEncodingException
 	{	logger.log("Evaluating the results");
 		logger.increaseOffset();
 			
@@ -694,11 +699,26 @@ public class Extractor
 					clust = null;	// null means the URL is irrelevant
 				reference.put(urlStr, clust);
 			}
-			
+
+			List<List<String>> perfs = new ArrayList<List<String>>();
 			// process Precision, Recall, F-score for pertinent vs. non-pertinent docs
-//			combRes.computeClassifPerf(reference);
-			
+			combRes.computeDiscriminationPerformance(reference, perfs);
 			// process NMI for manual vs. automatic classes of documents/events
+			combRes.computeClusteringPerformance(reference, perfs);
+			
+			// record performance measures
+			filePath = FileNames.FO_OUTPUT + File.separator + currentStep+"_" + FileNames.FI_PERFORMANCE;
+			PrintWriter pw = FileTools.openTextFileWrite(filePath, "UTF-8");
+			for(List<String> line: perfs)
+			{	Iterator<String> it = line.iterator();
+				while(it.hasNext())
+				{	String val = it.next();
+					pw.print("\""+val+"\"");
+					if(it.hasNext())
+						pw.print(", ");
+				}
+				pw.println();
+			}
 			
 		logger.decreaseOffset();
 	}
