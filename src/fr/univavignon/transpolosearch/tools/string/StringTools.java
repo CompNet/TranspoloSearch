@@ -550,6 +550,30 @@ public class StringTools
 		return result;
 	}
 	
+	/**
+	 * Normalizes the string representing a mention. This consists in
+	 * using lowercase only, removing newlines and punctuation, and 
+	 * trimming.
+	 * <br/>
+	 * This method is meant for clean text.
+	 * 
+	 * @param name
+	 * 		String to normalize.
+	 * @return
+	 * 		String after normalization.
+	 */
+	public static String cleanMentionName(String name)
+	{	String result = null;
+		if(name!=null)
+		{	result = name.toLowerCase();
+			result = result.replaceAll("\n"," ");
+			result = StringTools.removePunctuation(result);
+//			result = StringTools.removeDiacritics(result);	//TODO maybe drop the accents?
+			result = result.trim();
+		}
+		return result;
+	}
+	
 	/////////////////////////////////////////////////////////////////
 	// SPACES			/////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////

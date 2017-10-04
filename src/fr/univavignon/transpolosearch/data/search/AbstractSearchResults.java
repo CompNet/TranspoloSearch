@@ -44,6 +44,7 @@ import com.aliasi.util.Distance;
 
 import fr.univavignon.transpolosearch.data.article.ArticleLanguage;
 import fr.univavignon.transpolosearch.data.entity.EntityType;
+import fr.univavignon.transpolosearch.data.entity.mention.AbstractMention;
 import fr.univavignon.transpolosearch.data.event.Event;
 import fr.univavignon.transpolosearch.data.event.MyPam;
 import fr.univavignon.transpolosearch.data.event.DummyDistanceMetric;
@@ -413,8 +414,79 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 	 * 		Proportion of articles that must have the mention in order to keep it.
 	 */
 	public void filterByCluster(float threshold)
-	{	
-		// TODO
+	{	// build the clusters of articles
+		Map<Integer,List<T>> artClust = new HashMap<Integer,List<T>>();
+		for(T res: results.values())
+		{	String cStr = res.cluster;
+			int c = Integer.parseInt(cStr);
+			List<T> cluster = artClust.get(c);
+			if(cluster==null)
+			{	cluster = new ArrayList<T>();
+				artClust.put(c, cluster);
+			}
+			cluster.add(res);
+		}
+		
+		// count mention occurrences in each cluster, remove the unfrequent ones
+		for(Entry<Integer,List<T>> entry: artClust.entrySet())
+		{	//int c = entry.getKey();
+			List<T> cluster = entry.getValue();
+			float tot = cluster.size();
+			// get the mentions for the current article cluster
+			Map<EntityType,List<AbstractMention<?>>> mapMentions = new HashMap<EntityType, List<AbstractMention<?>>>();
+			Map<EntityType,List<String>> mapStrings = new HashMap<EntityType, List<String>>();
+			Map<EntityType,List<T>> mapResults = new HashMap<EntityType, List<T>>();
+			for(T res: cluster)
+			{	for(EntityType type: EntityType.values())
+				{	List<String> listStrings = mapStrings.get(type);
+					List<AbstractMention<?>> listMentions = mapMentions.get(type);
+					List<T> listResults = mapResults.get(type);
+					if(listStrings==null)
+					{	listStrings = new ArrayList<String>();
+						mapStrings.put(type, listStrings);
+						listMentions = new ArrayList<AbstractMention<?>>();
+						mapMentions.put(type, listMentions);
+						listResults = new ArrayList<T>();
+						mapResults.put(type, listResults);
+					}
+					List<AbstractMention<?>> set = res.mentions.getMentionsByType(type);
+					for(AbstractMention<?> mention: set)
+					{	Object value = mention.getValue();
+						String valueStr = value.toString();
+						listStrings.add(valueStr);
+						listMentions.add(mention);
+						listResults.add(res);
+					}
+				}
+			}
+			// compute the mention frequencies and identify which mentions to remove
+			for(EntityType type: EntityType.values())
+			{	List<String> listStrings = mapStrings.get(type);
+				// get the frequencies
+				Map<String,Integer> freqs = StringTools.computeFrequenciesFromTokens(listStrings);
+				// list of words whose freq is below the threshold
+				List<String> removeList = new ArrayList<String>();
+				for(Entry<String,Integer> e: freqs.entrySet())
+				{	String word = e.getKey();
+					float freq = e.getValue() / tot;
+					if(freq<threshold)
+						removeList.add(word);
+				}
+				// remove the corresponding mentions
+				Iterator<String> itStrings = listStrings.iterator();
+				List<AbstractMention<?>> listMentions = mapMentions.get(type);
+				Iterator<AbstractMention<?>> itMentions = listMentions.iterator();
+				List<T> listResults = mapResults.get(type);
+				Iterator<T> itResults = listResults.iterator();
+				while(itStrings.hasNext())
+				{	String string = itStrings.next();
+					AbstractMention<?> mention = itMentions.next();
+					T result = itResults.next();
+					if(removeList.contains(string))
+						result.mentions.removeMention(mention);
+				}
+			}
+		}
 	}
 	
 	/////////////////////////////////////////////////////////////////
@@ -549,29 +621,6 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 		result.put(COL_FREQUENCY, Integer.toString(freq));
 		
 		// union of the mentions (by type)
-//TODO this is actually for when we want to select the most frequent mentions among events, at the mention filtering step
-//		Map<EntityType,List<String>> map = new HashMap<EntityType, List<String>>();
-//		Period period = null;
-//		for(Event event: cluster)
-//		{	for(EntityType type: EntityType.values())
-//			{	if(type!=EntityType.DATE)
-//				{	List<String> list = map.get(type);
-//					if(list==null)
-//					{	list = new ArrayList<String>();
-//						map.put(type, list);
-//					}
-//					Set<String> set = event.getNamedMentionsByType(type);
-//					list.addAll(set);
-//				}
-//				else
-//				{	Period evtPeriod = event.getPeriod();
-//					if(period==null)
-//						period = evtPeriod;
-//					else
-//						period.mergePeriod(evtPeriod);
-//				}
-//			}
-//		}
 		TreeSet<String> texts = new TreeSet<String>();	
 		Map<EntityType,Set<String>> mentionSets = new HashMap<EntityType, Set<String>>();
 		for(Event event: cluster)
@@ -896,20 +945,13 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
     	}
     	
 		// setup the list representing the partition
-		for(int i=0;i<bestK;i++)
-		{	List<Event> cluster = new ArrayList<Event>();
-			eventClusters.add(cluster);
-		}
 		Set<Set<Integer>> partition = dendro.partitionK(bestK);
-		Iterator<Set<Integer>> it = partition.iterator();
-		int c = 0;
-		for(;c<partition.size();c++)
-		{	Set<Integer> cluster = it.next();
-			c++;
+		for(Set<Integer> cluster: partition)
+		{	List<Event> evtCluster = new ArrayList<Event>();
+			eventClusters.add(evtCluster);
 			for(Integer e: cluster)
 			{	Event event = events.get(e);
-				List<Event> evtClust = eventClusters.get(c);
-				evtClust.add(event);
+				evtCluster.add(event);
 			}
 		}
     	

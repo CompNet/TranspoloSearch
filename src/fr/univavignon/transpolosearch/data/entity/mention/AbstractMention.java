@@ -65,7 +65,8 @@ public abstract class AbstractMention<T extends Comparable<T>> implements Compar
 		this.endPos = endPos;
 		this.source = source;
 		this.valueStr = valueStr;
-		this.value = value;
+		
+		setValue(value);
 	}
 	
 	/**
@@ -192,7 +193,7 @@ public abstract class AbstractMention<T extends Comparable<T>> implements Compar
 	 * For numeric mention, it should be the numerical value.
 	 * For named mentions, it should be a unique representation
 	 * of its semantics. For instance, an ontological concept,
-	 * or an id in Freebase.
+	 * or an id in Freebase, or just a normalized string.
 	 * 
 	 * @return
 	 * 		Actual value of this mention.
@@ -206,14 +207,27 @@ public abstract class AbstractMention<T extends Comparable<T>> implements Compar
 	 * For numeric mention, it should be the numerical value.
 	 * For named mentions, it should be a unique representation
 	 * of its semantics. For instance, an ontological concept,
-	 * or an id in Freebase.
+	 * or an id in Freebase, or even just a normalized string.
 	 * 
 	 * @param value
 	 * 		New value of this mention.
 	 */
 	public void setValue(T value)
-	{	this.value = value;
+	{	T normalizedValue = normalizeValue(value);
+		this.value = normalizedValue;
 	}
+	
+	/**
+	 * If required, process the specified value in order
+	 * to normalize it. For example, clean a String. The 
+	 * goal is to be able to use it later to compare mentions.
+	 * 
+	 * @param value
+	 * 		Original value.
+	 * @return
+	 * 		Normalized value.
+	 */
+	public abstract T normalizeValue(T value);
 	
 	/////////////////////////////////////////////////////////////////
 	// STRING			/////////////////////////////////////////////

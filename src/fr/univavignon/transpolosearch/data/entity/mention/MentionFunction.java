@@ -26,6 +26,7 @@ import fr.univavignon.transpolosearch.data.entity.Entities;
 import fr.univavignon.transpolosearch.data.entity.EntityFunction;
 import fr.univavignon.transpolosearch.data.entity.EntityType;
 import fr.univavignon.transpolosearch.processing.ProcessorName;
+import fr.univavignon.transpolosearch.tools.string.StringTools;
 import fr.univavignon.transpolosearch.tools.xml.XmlNames;
 
 /**
@@ -76,6 +77,15 @@ public class MentionFunction extends AbstractMention<String>
 	@Override
 	public EntityType getType()
 	{	return EntityType.FUNCTION;
+	}
+	
+	/////////////////////////////////////////////////////////////////
+	// VALUE			/////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////
+	@Override
+	public String normalizeValue(String value)
+	{	String result = StringTools.cleanMentionName(value);
+		return result;
 	}
 	
 	/////////////////////////////////////////////////////////////////

@@ -188,7 +188,7 @@ public class Event
 	{	String normalizedName = location.getValue();
 		if(normalizedName==null)
 			normalizedName = location.getStringValue();
-		normalizedName = cleanMention(normalizedName);
+		normalizedName = StringTools.cleanMentionName(normalizedName);
 		locations.add(normalizedName);
 	}
 	
@@ -232,7 +232,7 @@ public class Event
 	{	String normalizedName = organization.getValue();
 		if(normalizedName==null)
 			normalizedName = organization.getStringValue();
-		normalizedName = cleanMention(normalizedName);
+		normalizedName = StringTools.cleanMentionName(normalizedName);
 		organizations.add(normalizedName);
 	}
 	
@@ -276,7 +276,7 @@ public class Event
 	{	String normalizedName = person.getValue();
 		if(normalizedName==null)
 			normalizedName = person.getStringValue();
-		normalizedName = cleanMention(normalizedName);
+		normalizedName = StringTools.cleanMentionName(normalizedName);
 		persons.add(normalizedName);
 	}
 	
@@ -320,7 +320,7 @@ public class Event
 	{	String normalizedName = function.getValue();
 		if(normalizedName==null)
 			normalizedName = function.getStringValue();
-		normalizedName = cleanMention(normalizedName);
+		normalizedName = StringTools.cleanMentionName(normalizedName);
 		functions.add(normalizedName);
 	}
 	
@@ -364,7 +364,7 @@ public class Event
 	{	String normalizedName = production.getValue();
 		if(normalizedName==null)
 			normalizedName = production.getStringValue();
-		normalizedName = cleanMention(normalizedName);
+		normalizedName = StringTools.cleanMentionName(normalizedName);
 		productions.add(normalizedName);
 	}
 	
@@ -408,7 +408,7 @@ public class Event
 	{	String normalizedName = meeting.getValue();
 		if(normalizedName==null)
 			normalizedName = meeting.getStringValue();
-		normalizedName = cleanMention(normalizedName);
+		normalizedName = StringTools.cleanMentionName(normalizedName);
 		meetings.add(normalizedName);
 	}
 	
@@ -551,28 +551,6 @@ public class Event
 	/////////////////////////////////////////////////////////////////
 	// SIMILARITY		/////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
-	/**
-	 * Normalizes the string representing a mention. This consists in
-	 * using lowercase only, removing newlines and punctuation, and 
-	 * trimming.
-	 * 
-	 * @param mention
-	 * 		String to normalize.
-	 * @return
-	 * 		String after normalization.
-	 */
-	private String cleanMention(String mention)
-	{	String result = null;
-		if(mention!=null)
-		{	result = mention.toLowerCase();
-			result = result.replaceAll("\n"," ");
-			result = StringTools.removePunctuation(result);
-//			result = StringTools.removeDiacritics(result);
-			result = result.trim();
-		}
-		return result;
-	}
-	
 	/**
 	 * Returns the set of mentions corresponding to the specified type.
 	 * 
