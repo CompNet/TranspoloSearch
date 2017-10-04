@@ -289,11 +289,11 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 			
 				// perform the clustering using the Jstat library (PAM)
 				if(!lingpipe)
-					clusterArticlesPam(distanceMatrix,remainingRes);
+					clusterArticlesPam(distanceMatrix, remainingRes);
 				// or using the LingPipe library (hierarchical + Silhouette)
 				else
 				{	boolean outputHierarchy = false;
-					clusterArticlesHierSilh(distanceMatrix,remainingRes, outputHierarchy);
+					clusterArticlesHierSilh(distanceMatrix, remainingRes, outputHierarchy);
 				}
 			}
 			
@@ -302,7 +302,7 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 	}
 	
 	/**
-	 * Performs the clustering using the Jstat library and
+	 * Performs the article clustering using the Jstat library and
 	 * the PAM algorithm (partitioning around k-medoids).
 	 * 
 	 * @param distanceMatrix
@@ -342,7 +342,7 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 	}
 	
 	/**
-	 * Performs the clustering using the LingPipe library and
+	 * Performs the article clustering using the LingPipe library and
 	 * the hierarchical clustering algorithm, with the Silhouette
 	 * measure to select the best cut.
 	 * 
@@ -365,17 +365,17 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 		};
 		
 		// build a dummy dataset
-		Set<Integer> dd = new TreeSet<Integer>();						// lingpipe
+		Set<Integer> dd = new TreeSet<Integer>();
 		for(int i=0;i<remainingRes.size();i++)
 			dd.add(i);
 		
 		// proceed with the cluster analysis
-        HierarchicalClusterer<Integer> clusterer = 						// lingpipe
+        HierarchicalClusterer<Integer> clusterer =
         		new CompleteLinkClusterer<Integer>(dl);
     	Dendrogram<Integer> dendro = clusterer.hierarchicalCluster(dd);
 
 		// set up the clusters in the results themselves
-    	int bestK = 0;													// lingpipe
+    	int bestK = 0;
     	double bestSil = -1;
     	for(int k=2;k<=remainingRes.size();k++)
     	{	Set<Set<Integer>> partition = dendro.partitionK(k);
@@ -401,7 +401,7 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 	    		}
     		}
     	}
-		logger.log("Best partition: k="+bestK+" (Silhouette="+bestSil);
+		logger.log("Best event partition: k="+bestK+" (Silhouette="+bestSil+")");
 	}
 	
 	/**
@@ -420,10 +420,7 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 	/////////////////////////////////////////////////////////////////
 	// EVENTS		/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
-	/** Results corresponding to the events constituting the clusters */
-	protected List<List<T>> mapClustRes = new ArrayList<List<T>>();
-	/** Position in the result corresponding to the events constituting the clusters */
-	protected List<List<Integer>> mapClustEvt = new ArrayList<List<Integer>>();
+	/** Last detected clusters of events (1 sublist = 1 cluster) */
 	protected List<List<Event>> eventClusters = new ArrayList<List<Event>>();
 	
 	/**
@@ -733,11 +730,12 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 	 * Identify groups of similar events among the previously identified events.
 	 */
 	public void clusterEvents()
-	{	logger.log("Clustering events from all the articles");
-		logger.increaseOffset();
-			mapClustRes.clear();
-			mapClustEvt.clear();
+	{	boolean lingpipe = true;
 		
+		logger.log("Clustering events from all the articles");
+		logger.increaseOffset();
+			eventClusters.clear();
+			
 			// build a list of all events
 			List<Event> allEvents = new ArrayList<Event>();
 			Map<Integer,T> resMap = new HashMap<Integer,T>();
@@ -759,61 +757,163 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 				logger.log("Not enough events to process, so no event clustering");
 			else
 			{	// init the distances between events
-				double[][] dist = new double[allEvents.size()][allEvents.size()];
+				double[][] distanceMatrix = new double[allEvents.size()][allEvents.size()];
 				for(int i=0;i<allEvents.size()-1;i++)
 				{	Event event1 = allEvents.get(i);
 					for(int j=i+1;j<allEvents.size();j++)
 					{	Event event2 = allEvents.get(j);
 						float sim = event1.processJaccardSimilarity(event2);
-						dist[i][j] = 1 - sim;
-						dist[j][i] = 1 - sim;
+						distanceMatrix[i][j] = 1 - sim;
+						distanceMatrix[j][i] = 1 - sim;
 					}
 				}
-				DistanceMetric dm = new DummyDistanceMetric(dist);
 				
-				// build a dummy dataset
-				List<DataPoint> dp = new ArrayList<DataPoint>();
-				for(int i=0;i<allEvents.size();i++)
-				{	Vec v = new DenseVector(Arrays.asList((double)i));
-					DataPoint d = new DataPoint(v);
-					dp.add(d);
-				}
-				SimpleDataSet ds = new SimpleDataSet(dp);
-				
-				// apply partition around medoids (PAM)
-				MyPam pam = new MyPam(dm);
-				int[] membership = new int[allEvents.size()];
-				pam.cluster(ds, membership);
-				
-				// setup event clusters
-				for(int m=0;m<membership.length;m++)
-				{	// get group membership for the current event
-					int memb = membership[m];
-				
-					// build/get both group lists
-					List<T> clusterRes;
-					List<Integer> clusterEvt;
-					if(mapClustRes.size()<=memb)
-					{	clusterRes = new ArrayList<T>();
-						mapClustRes.add(clusterRes);
-						clusterEvt = new ArrayList<Integer>();
-						mapClustEvt.add(clusterEvt);
-					}
-					else
-					{	clusterRes = mapClustRes.get(memb);
-						clusterEvt = mapClustEvt.get(memb);
-					}
-					
-					// add the event to both lists
-					T res = resMap.get(m);
-					clusterRes.add(res);
-					int evt = evtMap.get(m);
-					clusterEvt.add(evt);
+				// perform the clustering using the Jstat library (PAM)
+				if(!lingpipe)
+					clusterEventsPam(distanceMatrix, allEvents);
+				// or using the LingPipe library (hierarchical + Silhouette)
+				else
+				{	boolean outputHierarchy = false;
+					clusterEventsHierSilh(distanceMatrix, allEvents, outputHierarchy);
 				}
 			}
 			
 		logger.decreaseOffset();
-		logger.log("Event clustering complete: "+mapClustRes.size()+" clusters detected for "+allEvents.size()+" events");
+		logger.log("Event clustering complete: "+eventClusters.size()+" clusters detected for "+allEvents.size()+" events");
+	}
+	
+	/**
+	 * Performs the event clustering using the Jstat library and
+	 * the PAM algorithm (partitioning around k-medoids).
+	 * 
+	 * @param distanceMatrix
+	 * 		Distance matrix between texts.
+	 * @param events
+	 * 		List of the processed events.
+	 */
+	private void clusterEventsPam(double[][] distanceMatrix, List<Event> events)
+	{	// build the distance object
+		DistanceMetric dm = new DummyDistanceMetric(distanceMatrix);
+		
+		// build a dummy dataset
+		List<DataPoint> dp = new ArrayList<DataPoint>();
+		for(int i=0;i<events.size();i++)
+		{	Vec v = new DenseVector(Arrays.asList((double)i));
+			DataPoint d = new DataPoint(v);
+			dp.add(d);
+		}
+		SimpleDataSet ds = new SimpleDataSet(dp);
+		
+		// proceed with the cluster analysis
+		Clusterer clusterer = new MyPam(dm);
+		int[] membership = new int[events.size()];
+		clusterer.cluster(ds, membership);
+		
+		// set up the clusters in the results themselves
+		int maxClust = 0;
+		int i = 0;
+		for(Event event: events)
+		{	event.cluster = Integer.toString(membership[i]);
+			if(membership[i] > maxClust)
+				maxClust = membership[i];
+			i++;
+		}
+		
+		// setup the list representing the partition
+		for(i=0;i<maxClust;i++)
+		{	List<Event> cluster = new ArrayList<Event>();
+			eventClusters.add(cluster);
+		}
+		for(Event event: events)
+		{	String cStr = event.cluster;
+			int c = Integer.parseInt(cStr) - 1;
+			List<Event> cluster = eventClusters.get(c);
+			cluster.add(event);
+		}
+		
+		logger.log("Result: "+(maxClust+1)+" clusters detected for "+events.size()+" events");
+	}
+	
+	/**
+	 * Performs the event clustering using the LingPipe library and
+	 * the hierarchical clustering algorithm, with the Silhouette
+	 * measure to select the best cut.
+	 * 
+	 * @param distanceMatrix
+	 * 		Distance matrix between texts.
+	 * @param events
+	 * 		List of the processed objects.
+	 * @param outputHierarchy
+	 * 		Whether or not output the whole hierarchy in the CSV
+	 * 		files generated later.
+	 */
+	private void clusterEventsHierSilh(double[][] distanceMatrix, List<Event> events, boolean outputHierarchy)
+	{	// process the dummy distances
+		Distance<Integer> dl = new Distance<Integer>()
+		{	@Override
+			public double distance(Integer e1, Integer e2)
+			{	double result = distanceMatrix[e1][e2];
+				return result;
+			}
+		};
+		
+		// build a dummy dataset
+		Set<Integer> dd = new TreeSet<Integer>();
+		for(int i=0;i<events.size();i++)
+			dd.add(i);
+		
+		// proceed with the cluster analysis
+        HierarchicalClusterer<Integer> clusterer =
+        		new CompleteLinkClusterer<Integer>(dl);
+    	Dendrogram<Integer> dendro = clusterer.hierarchicalCluster(dd);
+
+		// set up the clusters in the results themselves
+    	int bestK = 0;
+    	double bestSil = -1;
+    	for(int k=2;k<=events.size();k++)
+    	{	Set<Set<Integer>> partition = dendro.partitionK(k);
+    		// get the silhouette
+    		double sil = Silhouette.processSilhouette(distanceMatrix, partition);
+    		logger.log("k="+k+" >> Silhouete="+sil);
+    		if(sil>bestSil)
+			{	bestSil = sil;
+				bestK = k;
+			}
+    		// setup cluster in result
+    		if(outputHierarchy || bestK==k)
+    		{	int j = 1;
+	    		for(Set<Integer> part: partition)
+	    		{	for(int i: part)
+	        		{	Event event = events.get(i);
+	        			if(event.cluster==null || !outputHierarchy)
+	        				event.cluster = Integer.toString(j);
+	        			else
+	        				event.cluster = event.cluster + ":" + j;
+	        		}
+	    			j++;
+	    		}
+    		}
+    	}
+    	
+		// setup the list representing the partition
+		for(int i=0;i<bestK;i++)
+		{	List<Event> cluster = new ArrayList<Event>();
+			eventClusters.add(cluster);
+		}
+		Set<Set<Integer>> partition = dendro.partitionK(bestK);
+		Iterator<Set<Integer>> it = partition.iterator();
+		int c = 0;
+		for(;c<partition.size();c++)
+		{	Set<Integer> cluster = it.next();
+			c++;
+			for(Integer e: cluster)
+			{	Event event = events.get(e);
+				List<Event> evtClust = eventClusters.get(c);
+				evtClust.add(event);
+			}
+		}
+    	
+		logger.log("Best event partition: k="+bestK+" (Silhouette="+bestSil+")");
 	}
 	
 	/////////////////////////////////////////////////////////////////

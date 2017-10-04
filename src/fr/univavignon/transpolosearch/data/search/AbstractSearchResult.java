@@ -687,10 +687,9 @@ public abstract class AbstractSearchResult
 	 * 		The map to complete.
 	 */
 	private void exportEventCluster(Event event, Map<String,String> result)
-	{	Integer evtCluster = event.cluster;
+	{	String evtCluster = event.cluster;
 		if(evtCluster!=null)
-		{	String clusterStr = Integer.toString(evtCluster);
-			result.put(AbstractSearchResults.COL_EVENT_CLUSTER, clusterStr);
+		{	result.put(AbstractSearchResults.COL_EVENT_CLUSTER, evtCluster);
 		}
 	}
 	
