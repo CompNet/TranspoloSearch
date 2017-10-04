@@ -1016,24 +1016,37 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 	 */
 	public void computeClusteringPerformance(Map<String,String> reference, List<List<String>> result)
 	{	// get the number of elements
-//TODO erreur: le nombre d'élement s'obtient à partir de cluster dans result		
 		int n = 0;
-		for(List<String> list: result)
-			n = n + list.size();
-		
-		// convert partition formats 
-		int[] part1 = new int[n];
-		int clustCount = 1;
-		Map<String,Integer> clustMap = new HashMap<String,Integer>();
 		for(Entry<String,T> entry: results.entrySet())
 		{	String key = entry.getKey();
 			T value = entry.getValue();
 			String clusterName = reference.get(key);
+			if(clusterName!=null && value.status==null)
+				n++;
 		}
 		
+		// convert partition formats 
+		int[] part1 = new int[n];
 		int[] part2 = new int[n];
-		
-// TODO que fait on avec les rés qui ne sont que dans une des deux partitions ?
+		int clustCount = 1;
+		Map<String,Integer> clustMap = new HashMap<String,Integer>();
+		int i = 0;
+		for(Entry<String,T> entry: results.entrySet())
+		{	String key = entry.getKey();
+			T value = entry.getValue();
+			String clusterName = reference.get(key);
+			if(clusterName!=null && value.status==null)
+			{	int c1 = Integer.parseInt(value.cluster);
+				part1[i] = c1;
+				Integer c2 = clustMap.get(clusterName);
+				if(c2==null)
+				{	clustMap.put(clusterName,clustCount);
+					c2 = clustCount;
+					clustCount++;
+				}
+				part2[i] = c2;
+			}
+		}
 		
 		// compute measures
 		float randIndex = computeRandIndex(part1, part2);
