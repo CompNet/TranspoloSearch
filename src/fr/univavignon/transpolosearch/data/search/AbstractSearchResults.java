@@ -18,6 +18,7 @@ package fr.univavignon.transpolosearch.data.search;
  * along with TranspoloSearch. If not, see <http://www.gnu.org/licenses/>.
  */
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
@@ -49,13 +50,13 @@ import fr.univavignon.transpolosearch.data.event.Event;
 import fr.univavignon.transpolosearch.data.event.MyPam;
 import fr.univavignon.transpolosearch.data.event.DummyDistanceMetric;
 import fr.univavignon.transpolosearch.data.event.Silhouette;
+import fr.univavignon.transpolosearch.tools.file.FileNames;
 import fr.univavignon.transpolosearch.tools.file.FileTools;
 import fr.univavignon.transpolosearch.tools.log.HierarchicalLogger;
 import fr.univavignon.transpolosearch.tools.log.HierarchicalLoggerManager;
 import fr.univavignon.transpolosearch.tools.string.StopWordsManager;
 import fr.univavignon.transpolosearch.tools.string.StringTools;
 import fr.univavignon.transpolosearch.tools.time.Period;
-
 import jsat.SimpleDataSet;
 import jsat.classifiers.DataPoint;
 import jsat.clustering.Clusterer;
@@ -962,6 +963,99 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 	/////////////////////////////////////////////////////////////////
 	// PERFORMANCE		/////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
+	/** Performances, ready to be recorded in a CSV file */
+	private List<Map<String,String>> performances = new ArrayList<Map<String,String>>();
+	
+	/** Column name for the considered processing step */
+	public static final String PERF_STEP = "Step";
+	/** Column name for the Precision measure */
+	public static final String PERF_PRECISION = "Precision";
+	/** Column name for the Recall measure */
+	public static final String PERF_RECALL = "Recall";
+	/** Column name for the F-measure */
+	public static final String PERF_FMEASURE = "F-Measure";
+	/** Column name for the Rand index */
+	public static final String PERF_RAND_INDEX = "Rand index";
+	/** Column name for the Normalized Mutual Information */
+	public static final String PERF_NMI = "NMI";
+	
+	/**
+	 * Records the performances in a CSV file.
+	 * 
+	 * @param fileName
+	 * 		Name of the performance output file. 
+	 * 
+	 * @throws UnsupportedEncodingException
+	 * 		Problem while writing the output file.
+	 * @throws FileNotFoundException
+	 * 		Problem while writing the output file.
+	 */
+	public void recordPerformance(String fileName) throws UnsupportedEncodingException, FileNotFoundException
+	{	String filePath = FileNames.FO_OUTPUT + File.separator + fileName;
+		logger.log("Recording the results in file "+filePath);
+		logger.increaseOffset();
+			
+			// setup colon names
+			List<String> cols = Arrays.asList(
+					AbstractSearchResults.PERF_STEP,
+					AbstractSearchResults.PERF_PRECISION,
+					AbstractSearchResults.PERF_RECALL,
+					AbstractSearchResults.PERF_FMEASURE,
+					AbstractSearchResults.PERF_RAND_INDEX,
+					AbstractSearchResults.PERF_NMI
+			);
+			
+			// open file and write header
+			PrintWriter pw = FileTools.openTextFileWrite(filePath,"UTF-8");
+			{	Iterator<String> it = cols.iterator();
+				while(it.hasNext())
+				{	String col = it.next();
+					pw.print("\""+col+"\"");
+					if(it.hasNext())
+						pw.print(",");
+				}
+			}
+			pw.println();
+			
+			// write data and close file
+			for(Map<String,String> line: performances)
+			{	Iterator<String> it = cols.iterator();
+				while(it.hasNext())
+				{	String col = it.next();
+					String val = line.get(col);
+					if(val!=null)
+						pw.print("\""+val+"\"");
+					if(it.hasNext())
+						pw.print(",");
+				}
+				pw.println();
+			}
+			pw.close();
+			
+		logger.decreaseOffset();
+	}
+
+	/**
+	 * Computes the performance for the specified step.
+	 * 
+	 * @param reference
+	 * 		Manually annotated reference.
+	 * @param stepName
+	 * 		Name of the current step.
+	 */
+	public void computePerformance(Map<String,String> reference, String stepName)
+	{	logger.log("Evaluating the results");
+		logger.increaseOffset();
+	
+			Map<String,String> line = new HashMap<String,String>();
+			line.put(PERF_STEP, stepName);
+			computeDiscriminationPerformance(reference, line);
+			computeClusteringPerformance(reference, line);
+			performances.add(line);
+			
+		logger.decreaseOffset();
+	}
+	
 	/**
 	 * Computes the performance of the classification task: distinguishing
 	 * relevant from irrelevant search results.
@@ -971,7 +1065,7 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 	 * @param result
 	 * 		Result as a list of measures (Precision, Recall, F-measure).
 	 */
-	public void computeDiscriminationPerformance(Map<String,String> reference, List<List<String>> result)
+	private void computeDiscriminationPerformance(Map<String,String> reference, Map<String,String> result)
 	{	// process counts
 		int tp = 0;
 //		int tn = 0;
@@ -998,11 +1092,11 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 		
 		// compute measures
 		float precision = tp / (float)(tp + fp);
-		result.add(Arrays.asList("Precision", Float.toString(precision)));
+		result.put(PERF_PRECISION, Float.toString(precision));
 		float recall = tp / (float)(tp + fn);
-		result.add(Arrays.asList("Recall", Float.toString(recall)));
+		result.put(PERF_RECALL, Float.toString(recall));
 		float fmeasure = 2 * precision * recall / (precision + recall);
-		result.add(Arrays.asList("F-Measure", Float.toString(fmeasure)));
+		result.put(PERF_FMEASURE, Float.toString(fmeasure));
 	}
 
 	/**
@@ -1014,7 +1108,7 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 	 * @param result
 	 * 		Result as a list of measures (NMI, Rand index).
 	 */
-	public void computeClusteringPerformance(Map<String,String> reference, List<List<String>> result)
+	private void computeClusteringPerformance(Map<String,String> reference, Map<String,String> result)
 	{	// get the number of elements
 		int n = 0;
 		for(Entry<String,T> entry: results.entrySet())
@@ -1050,9 +1144,9 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 		
 		// compute measures
 		float randIndex = computeRandIndex(part1, part2);
-		result.add(Arrays.asList("Rand index", Float.toString(randIndex)));
+		result.put(PERF_RAND_INDEX, Float.toString(randIndex));
 		float nmi = computeNormalizedMutualInformation(part1, part2);
-		result.add(Arrays.asList("NMI", Float.toString(nmi)));
+		result.put(PERF_NMI, Float.toString(nmi));
 	}
 	
 	/**

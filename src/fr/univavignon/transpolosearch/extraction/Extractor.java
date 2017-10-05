@@ -28,6 +28,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -45,6 +46,7 @@ import fr.univavignon.transpolosearch.data.search.AbstractSearchResults;
 import fr.univavignon.transpolosearch.data.search.CombinedSearchResults;
 import fr.univavignon.transpolosearch.data.search.SocialSearchResult;
 import fr.univavignon.transpolosearch.data.search.SocialSearchResults;
+import fr.univavignon.transpolosearch.data.search.WebSearchResult;
 import fr.univavignon.transpolosearch.data.search.WebSearchResults;
 import fr.univavignon.transpolosearch.processing.InterfaceRecognizer;
 import fr.univavignon.transpolosearch.processing.ProcessorException;
@@ -154,6 +156,10 @@ public class Extractor
 			}
 		}
 		FileNames.setOutputFolder(outFolder);
+		
+		// load the reference file
+		logger.log("Checking the reference file (for later evaluation)");
+		loadReference();
 		
 		// perform the Web search
 		logger.log("Performing the Web search");
@@ -369,6 +375,11 @@ public class Extractor
 			
 			// extract events from the remaining articles and mentions
 			extractEvents(results, currentStep + "_", language);
+			currentStep++;
+			
+			// record performance
+			results.recordPerformance(currentStep + "_" + FileNames.FI_PERFORMANCE);
+			currentStep++;
 			
 		logger.decreaseOffset();
 		logger.log("Web extraction over");
@@ -556,6 +567,11 @@ public class Extractor
 			
 			// extract events from the remaining articles and mentions
 			extractEvents(results, currentStep + "_", language);
+			currentStep++;
+			
+			// record performance
+			results.recordPerformance(currentStep + "_" + FileNames.FI_PERFORMANCE);
+			currentStep++;
 			
 		logger.decreaseOffset();
 		logger.log("Social media extraction over");
@@ -652,7 +668,7 @@ public class Extractor
 			extractEvents(combRes, currentStep + "_", language);
 			currentStep++;
 			
-			// assess the performances
+			// compute the performances
 			assessPerformances(combRes, currentStep);
 			currentStep++;
 			
@@ -665,60 +681,50 @@ public class Extractor
 			extractEvents(combRes, currentStep + "_", language);
 			currentStep++;
 			
+			// record performance
+			combRes.recordPerformance(currentStep + "_" + FileNames.FI_PERFORMANCE);
+			currentStep++;
+			
 		logger.decreaseOffset();
 	}
 	
+	/////////////////////////////////////////////////////////////////
+	// PERFORMANCE	/////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////
+	/** Manually annotated reference (if available) */
+	private Map<String,String> reference = new HashMap<String,String>();
+	
 	/**
-	 * Assesses the quality of the specified results.
-	 * 
-	 * @param combRes
-	 * 		Results of the information retrieval.
-	 * @param currentStep 
-	 * 		Current processing step.
+	 * Tries to load the manually annotated reference, if the 
+	 * file exists. It is then used later to assess the system
+	 * performance.
 	 * 
 	 * @throws UnsupportedEncodingException
 	 * 		Problem when loading the reference file. 
 	 * @throws FileNotFoundException 
 	 * 		Problem when loading the reference file. 
 	 */
-	private void assessPerformances(CombinedSearchResults combRes, int currentStep) throws FileNotFoundException, UnsupportedEncodingException
-	{	logger.log("Evaluating the results");
-		logger.increaseOffset();
-			
-			// load the reference file, in which each URL is associated to a class (cluster)
+	private void loadReference() throws FileNotFoundException, UnsupportedEncodingException
+	{	logger.increaseOffset();
+		
 			String filePath = FileNames.FO_OUTPUT + File.separator + FileNames.FI_ANNOTATED_RESULTS;
-			Scanner scanner = FileTools.openTextFileRead(filePath, "UTF-8");
-			Map<String,String> reference = new HashMap<String,String>();
-			while(scanner.hasNextLine())
-			{	String line = scanner.nextLine();
-				line = line.trim();
-				String[] tmp = line.split("\t");
-				String urlStr = tmp[0].trim();
-				String clust = tmp[1].trim();
-				if(clust.isEmpty())
-					clust = null;	// null means the URL is irrelevant
-				reference.put(urlStr, clust);
-			}
-
-			List<List<String>> perfs = new ArrayList<List<String>>();
-			// process Precision, Recall, F-score for pertinent vs. non-pertinent docs
-			combRes.computeDiscriminationPerformance(reference, perfs);
-			// process NMI for manual vs. automatic classes of documents/events
-			combRes.computeClusteringPerformance(reference, perfs);
-			
-			// record performance measures
-			filePath = FileNames.FO_OUTPUT + File.separator + currentStep+"_" + FileNames.FI_PERFORMANCE;
-			PrintWriter pw = FileTools.openTextFileWrite(filePath, "UTF-8");
-			for(List<String> line: perfs)
-			{	Iterator<String> it = line.iterator();
-				while(it.hasNext())
-				{	String val = it.next();
-					pw.print("\""+val+"\"");
-					if(it.hasNext())
-						pw.print(", ");
+			File file = new File(filePath);
+			if(file.exists())
+			{	logger.log("Find a reference file ("+filePath+"): loading it");
+				Scanner scanner = FileTools.openTextFileRead(file, "UTF-8");
+				while(scanner.hasNextLine())
+				{	String line = scanner.nextLine();
+					line = line.trim();
+					String[] tmp = line.split("\t");
+					String urlStr = tmp[0].trim();
+					String clust = tmp[1].trim();
+					if(clust.isEmpty())
+						clust = null;	// null means the URL is irrelevant
+					reference.put(urlStr, clust);
 				}
-				pw.println();
 			}
+			else
+				logger.log("Found no reference file at "+filePath);
 			
 		logger.decreaseOffset();
 	}
