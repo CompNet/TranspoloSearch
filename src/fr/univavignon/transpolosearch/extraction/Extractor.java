@@ -1,7 +1,5 @@
 package fr.univavignon.transpolosearch.extraction;
 
-import java.io.File;
-
 /*
  * TranspoloSearch
  * Copyright 2015-17 Vincent Labatut
@@ -22,20 +20,15 @@ import java.io.File;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.text.ParseException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Scanner;
 
 import org.xml.sax.SAXException;
 
@@ -46,7 +39,6 @@ import fr.univavignon.transpolosearch.data.search.AbstractSearchResults;
 import fr.univavignon.transpolosearch.data.search.CombinedSearchResults;
 import fr.univavignon.transpolosearch.data.search.SocialSearchResult;
 import fr.univavignon.transpolosearch.data.search.SocialSearchResults;
-import fr.univavignon.transpolosearch.data.search.WebSearchResult;
 import fr.univavignon.transpolosearch.data.search.WebSearchResults;
 import fr.univavignon.transpolosearch.processing.InterfaceRecognizer;
 import fr.univavignon.transpolosearch.processing.ProcessorException;
@@ -60,7 +52,6 @@ import fr.univavignon.transpolosearch.search.web.GoogleEngine;
 import fr.univavignon.transpolosearch.search.web.QwantEngine;
 import fr.univavignon.transpolosearch.search.web.YandexEngine;
 import fr.univavignon.transpolosearch.tools.file.FileNames;
-import fr.univavignon.transpolosearch.tools.file.FileTools;
 import fr.univavignon.transpolosearch.tools.log.HierarchicalLogger;
 import fr.univavignon.transpolosearch.tools.log.HierarchicalLoggerManager;
 
@@ -156,10 +147,6 @@ public class Extractor
 			}
 		}
 		FileNames.setOutputFolder(outFolder);
-		
-		// load the reference file
-		logger.log("Checking the reference file (for later evaluation)");
-		loadReference();
 		
 		// perform the Web search
 		logger.log("Performing the Web search");
@@ -321,6 +308,7 @@ public class Extractor
 	{	logger.log("Starting the web extraction");
 		logger.increaseOffset();
 			int currentStep = 1;
+			String fileName;
 			
 			// log search parameters
 			logger.log("Parameters:");
@@ -341,7 +329,9 @@ public class Extractor
 			
 			// perform the Web search
 			WebSearchResults results = performWebSearch(keywords);
-			results.exportResults(currentStep + "_" + FileNames.FI_ARTICLES_RAW);
+			fileName = currentStep + "_" + FileNames.FI_ARTICLES_RAW;
+			results.exportResults(fileName);
+			results.computePerformance(fileName);
 			currentStep++;
 	
 			// filter Web pages (remove PDFs, and so on)
@@ -349,12 +339,16 @@ public class Extractor
 			
 			// retrieve the corresponding articles
 			results.retrieveArticles();
-			results.exportResults(currentStep + "_" + FileNames.FI_ARTICLES_URL_FILTER);
+			fileName = currentStep + "_" + FileNames.FI_ARTICLES_URL_FILTER;
+			results.exportResults(fileName);
+			results.computePerformance(fileName);
 			currentStep++;
 			
 			// possibly filter the articles depending on the content
 			results.filterByContent(compulsoryExpression, language);
-			results.exportResults(currentStep + "_" + FileNames.FI_ARTICLES_CONTENT_FILTER);
+			fileName = currentStep + "_" + FileNames.FI_ARTICLES_CONTENT_FILTER;
+			results.exportResults(fileName);
+			results.computePerformance(fileName);
 			currentStep++;
 			
 			// detect the entity mentions
@@ -362,7 +356,9 @@ public class Extractor
 			
 			// possibly filter the articles depending on the entities
 			results.filterByEntity(startDate, endDate, searchDate);
-			results.exportResults(currentStep + "_" + FileNames.FI_ARTICLES_ENTITY_FILTER);
+			fileName = currentStep + "_" + FileNames.FI_ARTICLES_ENTITY_FILTER;
+			results.exportResults(fileName);
+			results.computePerformance(fileName);
 			currentStep++;
 			
 			// displays the remaining articles with their mentions	//TODO maybe get the entities instead of the mentions, eventually?
@@ -370,7 +366,9 @@ public class Extractor
 			
 			// cluster the article by content
 			results.clusterArticles(language);
-			results.exportResults(currentStep + "_" + FileNames.FI_ARTICLES_CLUSTERING);
+			fileName = currentStep + "_" + FileNames.FI_ARTICLES_CLUSTERING;
+			results.exportResults(fileName);
+			results.computePerformance(fileName);
 			currentStep++;
 			
 			// extract events from the remaining articles and mentions
@@ -516,7 +514,8 @@ public class Extractor
 	{	logger.log("Starting the social media extraction");
 		logger.increaseOffset();
 			int currentStep = 1;
-		
+			String fileName;
+			
 			// log search parameters
 			logger.log("Parameters:");
 			logger.increaseOffset();
@@ -533,12 +532,14 @@ public class Extractor
 			List<String> seeds = new ArrayList<String>();
 			seeds.add(null);
 			seeds.addAll(additionalSeeds);
-			initSocialMediaEngines(additionalSeeds, startDate, endDate, extendedSearch);
+			initSocialMediaEngines(seeds, startDate, endDate, extendedSearch);
 			
 			// perform the social search
 			boolean includeComments = false;
 			SocialSearchResults results = performSocialSearch(keywords, includeComments);
-			results.exportResults(currentStep + "_" + FileNames.FI_ARTICLES_RAW);
+			fileName = currentStep + "_" + FileNames.FI_ARTICLES_RAW;
+			results.exportResults(fileName);
+			results.computePerformance(fileName);
 			currentStep++;
 			
 			// convert the posts to proper articles
@@ -546,7 +547,9 @@ public class Extractor
 			
 			// possibly filter the articles depending on the content
 			results.filterByContent(compulsoryExpression,language);
-			results.exportResults(currentStep + "_" + FileNames.FI_ARTICLES_CONTENT_FILTER);
+			fileName = currentStep + "_" + FileNames.FI_ARTICLES_CONTENT_FILTER;
+			results.exportResults(fileName);
+			results.computePerformance(fileName);
 			currentStep++;
 			
 			// detect the entity mentions
@@ -554,7 +557,9 @@ public class Extractor
 			
 			// possibly filter the articles depending on the entities
 			results.filterByEntity(null,null,true); // unnecessary, unless we add other entity-based constraints than dates
-			results.exportResults(currentStep + "_" + FileNames.FI_ARTICLES_ENTITY_FILTER);
+			fileName = currentStep + "_" + FileNames.FI_ARTICLES_ENTITY_FILTER;
+			results.exportResults(fileName);
+			results.computePerformance(fileName);
 			currentStep++;
 			
 			// displays the remaining articles with their mentions	//TODO maybe get the entities instead of the mention, eventually?
@@ -562,7 +567,9 @@ public class Extractor
 			
 			// cluster the articles by content
 			results.clusterArticles(language);
-			results.exportResults(currentStep + "_" + FileNames.FI_ARTICLES_CLUSTERING);
+			fileName = currentStep + "_" + FileNames.FI_ARTICLES_CLUSTERING;
+			results.exportResults(fileName);
+			results.computePerformance(fileName);
 			currentStep++;
 			
 			// extract events from the remaining articles and mentions
@@ -652,24 +659,25 @@ public class Extractor
 	{	logger.log("Combining all results in a single file.");
 		logger.increaseOffset();
 			int currentStep = 1;
-		
+			String fileName;
+			
 			// merge the results and record
 			CombinedSearchResults combRes = new CombinedSearchResults(webRes, socRes);
 			combRes.resetClusters();
-			combRes.exportResults(currentStep + "_" + FileNames.FI_ARTICLES_MERGE);
+			fileName = currentStep + "_" + FileNames.FI_ARTICLES_MERGE;
+			combRes.exportResults(fileName);
+			combRes.computePerformance(fileName);
 			currentStep++;
 			
 			// cluster the combined articles by content
 			combRes.clusterArticles(language);
-			combRes.exportResults(currentStep + "_" + FileNames.FI_ARTICLES_CLUSTERING);
+			fileName = currentStep + "_" + FileNames.FI_ARTICLES_CLUSTERING;
+			combRes.exportResults(fileName);
+			combRes.computePerformance(fileName);
 			currentStep++;
 			
 			// extract events from the articles and mentions
 			extractEvents(combRes, currentStep + "_", language);
-			currentStep++;
-			
-			// compute the performances
-			combRes.assessPerformances(combRes, currentStep);
 			currentStep++;
 			
 			// filter mentions based on article clusters
@@ -684,47 +692,6 @@ public class Extractor
 			// record performance
 			combRes.recordPerformance(currentStep + "_" + FileNames.FI_PERFORMANCE);
 			currentStep++;
-			
-		logger.decreaseOffset();
-	}
-	
-	/////////////////////////////////////////////////////////////////
-	// PERFORMANCE	/////////////////////////////////////////////////
-	/////////////////////////////////////////////////////////////////
-	/** Manually annotated reference (if available) */
-	private Map<String,String> reference = new HashMap<String,String>();
-	
-	/**
-	 * Tries to load the manually annotated reference, if the 
-	 * file exists. It is then used later to assess the system
-	 * performance.
-	 * 
-	 * @throws UnsupportedEncodingException
-	 * 		Problem when loading the reference file. 
-	 * @throws FileNotFoundException 
-	 * 		Problem when loading the reference file. 
-	 */
-	private void loadReference() throws FileNotFoundException, UnsupportedEncodingException
-	{	logger.increaseOffset();
-		
-			String filePath = FileNames.FO_OUTPUT + File.separator + FileNames.FI_ANNOTATED_RESULTS;
-			File file = new File(filePath);
-			if(file.exists())
-			{	logger.log("Find a reference file ("+filePath+"): loading it");
-				Scanner scanner = FileTools.openTextFileRead(file, "UTF-8");
-				while(scanner.hasNextLine())
-				{	String line = scanner.nextLine();
-					line = line.trim();
-					String[] tmp = line.split("\t");
-					String urlStr = tmp[0].trim();
-					String clust = tmp[1].trim();
-					if(clust.isEmpty())
-						clust = null;	// null means the URL is irrelevant
-					reference.put(urlStr, clust);
-				}
-			}
-			else
-				logger.log("Found no reference file at "+filePath);
 			
 		logger.decreaseOffset();
 	}

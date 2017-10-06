@@ -30,6 +30,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Scanner;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeSet;
@@ -963,6 +964,8 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 	/////////////////////////////////////////////////////////////////
 	// PERFORMANCE		/////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
+	/** Manually annotated reference (if available) */
+	protected Map<String,String> reference = new HashMap<String,String>();
 	/** Performances, ready to be recorded in a CSV file */
 	private List<Map<String,String>> performances = new ArrayList<Map<String,String>>();
 	
@@ -978,6 +981,40 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 	public static final String PERF_RAND_INDEX = "Rand index";
 	/** Column name for the Normalized Mutual Information */
 	public static final String PERF_NMI = "NMI";
+	
+	/**
+	 * Tries to load the manually annotated reference, if the 
+	 * file exists. It is then used later to assess the system
+	 * performance.
+	 * 
+	 * @param filePath 
+	 * 		Path of the reference file.
+	 * @throws UnsupportedEncodingException
+	 * 		Problem when loading the reference file. 
+	 */
+	protected void loadReference(String filePath) throws UnsupportedEncodingException
+	{	logger.increaseOffset();
+			
+			try
+			{	logger.log("Find a reference file ("+filePath+"): loading it");
+				Scanner scanner = FileTools.openTextFileRead(filePath, "UTF-8");
+				while(scanner.hasNextLine())
+				{	String line = scanner.nextLine();
+					line = line.trim();
+					String[] tmp = line.split("\t");
+					String urlStr = tmp[0].trim();
+					String clust = tmp[1].trim();
+					if(clust.isEmpty())
+						clust = null;	// null means the URL is irrelevant
+					reference.put(urlStr, clust);
+				}
+			}
+			catch (FileNotFoundException e) 
+			{	logger.log("Found no reference file at "+filePath);
+			}
+			
+		logger.decreaseOffset();
+	}
 	
 	/**
 	 * Records the performances in a CSV file.
@@ -997,12 +1034,12 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 			
 			// setup colon names
 			List<String> cols = Arrays.asList(
-					AbstractSearchResults.PERF_STEP,
-					AbstractSearchResults.PERF_PRECISION,
-					AbstractSearchResults.PERF_RECALL,
-					AbstractSearchResults.PERF_FMEASURE,
-					AbstractSearchResults.PERF_RAND_INDEX,
-					AbstractSearchResults.PERF_NMI
+					PERF_STEP,
+					PERF_PRECISION,
+					PERF_RECALL,
+					PERF_FMEASURE,
+					PERF_RAND_INDEX,
+					PERF_NMI
 			);
 			
 			// open file and write header
@@ -1038,19 +1075,17 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 	/**
 	 * Computes the performance for the specified step.
 	 * 
-	 * @param reference
-	 * 		Manually annotated reference.
 	 * @param stepName
 	 * 		Name of the current step.
 	 */
-	public void computePerformance(Map<String,String> reference, String stepName)
+	public void computePerformance(String stepName)
 	{	logger.log("Evaluating the results");
 		logger.increaseOffset();
 	
 			Map<String,String> line = new HashMap<String,String>();
 			line.put(PERF_STEP, stepName);
-			computeDiscriminationPerformance(reference, line);
-			computeClusteringPerformance(reference, line);
+			computeDiscriminationPerformance(line);
+			computeClusteringPerformance(line);
 			performances.add(line);
 			
 		logger.decreaseOffset();
@@ -1060,12 +1095,10 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 	 * Computes the performance of the classification task: distinguishing
 	 * relevant from irrelevant search results.
 	 * 
-	 * @param reference
-	 * 		Manually annotated reference.
 	 * @param result
 	 * 		Result as a list of measures (Precision, Recall, F-measure).
 	 */
-	private void computeDiscriminationPerformance(Map<String,String> reference, Map<String,String> result)
+	private void computeDiscriminationPerformance(Map<String,String> result)
 	{	// process counts
 		int tp = 0;
 //		int tn = 0;
@@ -1103,12 +1136,10 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 	 * Computes the performance of the clustering task: identifying groups
 	 * of articles or events corresponding to the same real-world event.
 	 * 
-	 * @param reference
-	 * 		Manually annotated reference.
 	 * @param result
 	 * 		Result as a list of measures (NMI, Rand index).
 	 */
-	private void computeClusteringPerformance(Map<String,String> reference, Map<String,String> result)
+	private void computeClusteringPerformance(Map<String,String> result)
 	{	// get the number of elements
 		int n = 0;
 		for(Entry<String,T> entry: results.entrySet())

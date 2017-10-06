@@ -58,6 +58,9 @@ public class CombinedSearchResults extends AbstractSearchResults<AbstractSearchR
 		// and search engines
 		engineNames.addAll(webRes.engineNames);
 		engineNames.addAll(socRes.engineNames);
+		// and references
+		reference.putAll(webRes.reference);
+		reference.putAll(socRes.reference);
 	}
 	
 	/////////////////////////////////////////////////////////////////

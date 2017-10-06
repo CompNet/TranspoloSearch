@@ -42,6 +42,19 @@ import fr.univavignon.transpolosearch.tools.file.FileTools;
  */
 public class SocialSearchResults extends AbstractSpecificSearchResults<SocialSearchResult>
 {	
+	/**
+	 * Initializes the search result.
+	 * 
+	 * @throws UnsupportedEncodingException 
+	 * 		Problem while loading the reference. 
+	 */
+	public SocialSearchResults() throws UnsupportedEncodingException
+	{	super();
+		
+		String filePath = FileNames.FO_SOCIAL_SEARCH_RESULTS + File.separator + FileNames.FI_ANNOTATED_RESULTS;
+		loadReference(filePath);
+	}
+	
 	/////////////////////////////////////////////////////////////////
 	// RESULTS		/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////

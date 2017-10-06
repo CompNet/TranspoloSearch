@@ -46,6 +46,19 @@ import fr.univavignon.transpolosearch.tools.file.FileTools;
  */
 public class WebSearchResults extends AbstractSpecificSearchResults<WebSearchResult>
 {	
+	/**
+	 * Initializes the search result.
+	 * 
+	 * @throws UnsupportedEncodingException 
+	 * 		Problem while loading the reference. 
+	 */
+	public WebSearchResults() throws UnsupportedEncodingException
+	{	super();
+		
+		String filePath = FileNames.FO_WEB_SEARCH_RESULTS + File.separator + FileNames.FI_ANNOTATED_RESULTS;
+		loadReference(filePath);
+	}
+	
 	/////////////////////////////////////////////////////////////////
 	// RESULTS		/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
