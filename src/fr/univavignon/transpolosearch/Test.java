@@ -519,7 +519,11 @@ public class Test
 	}
 }
 
-// TODO rajouter chargement référence + calcul de performance
+// TODO stocker toutes les perfs après chaque étape du traitement
+//	    n'enregistrer qu'à la toute fin, toutes les étapes dans le même tableur
+//	    mettre les mesures en colonnes et les étapes en lignes
+// TODO deux références web vs. médias sociaux, à stocker dans chaque sous dossier. 
+//	    puis combinées pour avoir la réf globale
 // TODO le langage devrait être un paramètre général. chercher toutes les occurrences de FR et article.FR
 
 // TODO manips:
