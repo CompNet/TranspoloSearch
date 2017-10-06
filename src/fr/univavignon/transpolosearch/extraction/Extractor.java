@@ -665,6 +665,10 @@ public class Extractor
 			extractEvents(combRes, currentStep + "_", language);
 			currentStep++;
 			
+			// assess the performances
+			assessPerformances(combRes, currentStep);
+			currentStep++;
+			
 		logger.decreaseOffset();
 	}
 	

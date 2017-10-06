@@ -213,8 +213,8 @@ if(result instanceof WebSearchResult && ((WebSearchResult)result).url.equalsIgno
 boolean doit = false;
 			for(T result: results.values())
 			{	
-if(result instanceof WebSearchResult && ((WebSearchResult)result).url.equalsIgnoreCase
-		("http://www.republicain-lorrain.fr/actualite/2017/03/11/routes-treize-stars-s-engagent"))				
+//if(result instanceof WebSearchResult && ((WebSearchResult)result).url.equalsIgnoreCase
+//		("http://www.republicain-lorrain.fr/actualite/2017/03/11/routes-treize-stars-s-engagent"))				
 //	System.out.print("");
 	doit = true;
 				

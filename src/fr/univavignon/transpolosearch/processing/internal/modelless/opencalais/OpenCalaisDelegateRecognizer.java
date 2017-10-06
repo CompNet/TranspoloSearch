@@ -134,6 +134,27 @@ class OpenCalaisDelegateRecognizer extends AbstractModellessInternalDelegateReco
 	/** Message returned when the limit of request is reached */
 	private static final String QUOTA_MESSAGE = "You exceeded the concurrent request limit for your license key. Please try again later or contact support to upgrade your license.";
 	
+	/**
+	 * OpenCalais is apparently sensitive to certain combinations
+	 * of special characters. This methods tries to remove them
+	 * from the original text before properly processing it. It
+	 * does not change the lenght of the text (number of characters).
+	 * 
+	 * @param text
+	 * 		Original text.
+	 * @return
+	 * 		Cleaned text.
+	 */
+	private String cleanText(String text)
+	{	String result = text;
+//		result = result.replace('"', ' ');
+//		result = result.replaceAll("(\\(|\\))-", "$1 ");
+//		result = result.replaceAll("-(\\(|\\))", " $1");
+//		result = result.replaceAll(" %", "% ");
+		// TODO not sure this cleaning is actually required...
+		return result;
+	}
+	
 	@Override
 	protected List<String> detectMentions(Article article) throws ProcessorException
 	{	logger.increaseOffset();
@@ -146,20 +167,13 @@ class OpenCalaisDelegateRecognizer extends AbstractModellessInternalDelegateReco
 			throw new NullPointerException("In order to use OpenCalais, you first need to set up your user key in file res/misc/keys.xml using the exact name \"OpenCalais\".");
 		
 		// we need to break down the text: OpenCalais can't handle more than 10000 chars at once
-//		List<String> parts = new ArrayList<String>();
-//		while(text.length()>95000)
-//		{	int index = text.indexOf("\n",90000) + 1;
-//			String part = text.substring(0, index);
-//			parts.add(part);
-//			text = text.substring(index);
-//		}
-//		parts.add(text);
 		List<String> parts = StringTools.splitText(text, MAX_SIZE);
 		
 		for(int i=0;i<parts.size();i++)
 		{	logger.log("Processing OpenCalais part #"+(i+1)+"/"+parts.size());
 			logger.increaseOffset();
 			String part = parts.get(i);
+			part = cleanText(part);
 			
 			try
 			{	// define HTTP message
