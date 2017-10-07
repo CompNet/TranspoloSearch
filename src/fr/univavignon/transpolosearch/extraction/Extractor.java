@@ -188,8 +188,10 @@ public class Extractor
 	 * 		If {@code true}, both dates will be used directly in the Web search.
 	 * 		Otherwise, they will be used <i>a posteriori</i> to filter the detected events.
 	 * 		If one of the dates is {@code null}, this parameter has no effect.
+	 * @param language
+	 * 		Targeted language. 
 	 */
-	private void initWebSearchEngines(List<String> websites, Date startDate, Date endDate, boolean searchDate)
+	private void initWebSearchEngines(List<String> websites, Date startDate, Date endDate, boolean searchDate, ArticleLanguage language)
 	{	logger.log("Initializing the Web search engines");
 		logger.increaseOffset();
 		
@@ -210,15 +212,15 @@ public class Extractor
 			webEngines.add(googleEngine);
 			
 			// set up Bing
-			BingEngine bingEngine = new BingEngine(website,startDate,endDate);
+			BingEngine bingEngine = new BingEngine(website,startDate,endDate,language);
 			webEngines.add(bingEngine);
 			
 			// set up Qwant
-			QwantEngine qwantEngine = new QwantEngine(website,startDate,endDate);
+			QwantEngine qwantEngine = new QwantEngine(website,startDate,endDate, language);
 			webEngines.add(qwantEngine);
 			
 			// set up Yandex
-			YandexEngine yandexEngine = new YandexEngine(website,startDate,endDate);
+			YandexEngine yandexEngine = new YandexEngine(website,startDate,endDate, language);
 			webEngines.add(yandexEngine);
 		}
 		
@@ -327,7 +329,7 @@ public class Extractor
 			logger.decreaseOffset();
 			
 			// initializes the Web search engines
-			initWebSearchEngines(websites, startDate, endDate, searchDate);
+			initWebSearchEngines(websites, startDate, endDate, searchDate, language);
 			
 			// perform the Web search
 			WebSearchResults results = performWebSearch(keywords);
@@ -407,8 +409,10 @@ public class Extractor
 	 * 		users commenting the posts of interest, for the considered period. If 
 	 * 		{@code false}, only the posts on the targeted page and their direct comments
 	 * 		are returned. 
+	 * @param language
+	 * 		Targeted language. 
 	 */
-	private void initSocialMediaEngines(List<String> seeds, Date startDate, Date endDate, boolean extendedSearch)
+	private void initSocialMediaEngines(List<String> seeds, Date startDate, Date endDate, boolean extendedSearch, ArticleLanguage language)
 	{	logger.log("Initializing the social media search engines");
 		logger.increaseOffset();
 		
@@ -420,7 +424,7 @@ public class Extractor
 			
 			// set up Facebook
 			try
-			{	FacebookEngine facebookEngine = new FacebookEngine(seed, startDate, endDate, extendedSearch);
+			{	FacebookEngine facebookEngine = new FacebookEngine(seed, startDate, endDate, extendedSearch, language);
 				socialEngines.add(facebookEngine);
 			} 
 			catch (FailingHttpStatusCodeException | IOException | URISyntaxException e) 
@@ -534,7 +538,7 @@ public class Extractor
 			List<String> seeds = new ArrayList<String>();
 			seeds.add(null);
 			seeds.addAll(additionalSeeds);
-			initSocialMediaEngines(seeds, startDate, endDate, extendedSearch);
+			initSocialMediaEngines(seeds, startDate, endDate, extendedSearch, language);
 			
 			// perform the social search
 			boolean includeComments = false;

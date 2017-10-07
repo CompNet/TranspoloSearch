@@ -18,6 +18,7 @@ package fr.univavignon.transpolosearch.search.web;
  * along with TranspoloSearch. If not, see <http://www.gnu.org/licenses/>.
  */
 
+import fr.univavignon.transpolosearch.data.article.ArticleLanguage;
 import fr.univavignon.transpolosearch.tools.keys.KeyHandler;
 import fr.univavignon.transpolosearch.tools.web.WebTools;
 
@@ -69,9 +70,21 @@ public class YandexEngine extends AbstractWebEngine
 	 * @param endDate
 	 * 		End of the period we want to consider,
 	 * 		or {@code null} for no constraint.
+	 * @param language
+	 * 		Targeted language. 
 	 */
-	public YandexEngine(String website, Date startDate, Date endDate)
+	public YandexEngine(String website, Date startDate, Date endDate, ArticleLanguage language)
 	{	super(website,startDate,endDate);
+		
+		switch(language)
+		{	case EN:
+				pageLanguage = "en";
+				break;
+			case FR:
+				pageLanguage = "fr";
+				break;
+			
+		}
 	}
 
 	/////////////////////////////////////////////////////////////////
@@ -98,7 +111,7 @@ public class YandexEngine extends AbstractWebEngine
 	/** Date range separator */
 	private static final String QUERY_PARAM_DATE_SEP = "..";
 	/** Query a specific language */
-	private static final String QUERY_PARAM_LANGUAGE = "lang:"+YandexEngine.PAGE_LANG;
+	private static final String QUERY_PARAM_LANGUAGE = "lang:";
 	/** Query a specific Website */
 	private static final String QUERY_PARAM_WEBSITE = "site:";
 	
@@ -117,7 +130,7 @@ public class YandexEngine extends AbstractWebEngine
 	// PARAMETERS	/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
 	/** Focus the search on pages in a certain language */
-	public static final String PAGE_LANG = "fr";
+	public String pageLanguage = null;
 	/** Maximal number of results (can be less if Yandex does not provide) */
 	public int MAX_RES_NBR = 200;
 	
@@ -135,7 +148,7 @@ public class YandexEngine extends AbstractWebEngine
 		String baseUrl = SERVICE_URL + SERVICE_PARAM_AUTH; 
 //				+ SERVICE_PARAM_PAGE + "1" 
 //				+ SERVICE_PARAM_QUERY + "query";
-		String query = QUERY_PARAM_LANGUAGE + " " + keywords;
+		String query = QUERY_PARAM_LANGUAGE + pageLanguage + " " + keywords;
 		if(website==null)
 			logger.log("No website specified");
 		else
@@ -278,7 +291,7 @@ public class YandexEngine extends AbstractWebEngine
 		Date startDate = null;//new GregorianCalendar(2016,3,1).getTime();
 		Date endDate = null;//new GregorianCalendar(2016,3,2).getTime();
 		
-		YandexEngine engine = new YandexEngine(website, startDate, endDate);
+		YandexEngine engine = new YandexEngine(website, startDate, endDate, ArticleLanguage.FR);
 		
 		Map<String,URL> result = engine.search(keywords);
 		

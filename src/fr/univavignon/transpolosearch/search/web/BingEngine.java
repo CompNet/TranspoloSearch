@@ -18,6 +18,7 @@ package fr.univavignon.transpolosearch.search.web;
  * along with TranspoloSearch. If not, see <http://www.gnu.org/licenses/>.
  */
 
+import fr.univavignon.transpolosearch.data.article.ArticleLanguage;
 import fr.univavignon.transpolosearch.tools.web.WebTools;
 import fr.univavignon.transpolosearch.tools.keys.KeyHandler;
 
@@ -68,9 +69,21 @@ public class BingEngine extends AbstractWebEngine
 	 * @param endDate
 	 * 		End of the period we want to consider,
 	 * 		or {@code null} for no constraint.
+	 * @param language
+	 * 		Targeted language. 
 	 */
-	public BingEngine(String website, Date startDate, Date endDate)
+	public BingEngine(String website, Date startDate, Date endDate, ArticleLanguage language)
 	{	super(website,startDate,endDate);
+		
+		switch(language)
+		{	case EN:
+				pageLanguage = "en";
+				break;
+			case FR:
+				pageCountry = "FR";
+				pageLanguage = "fr";
+				break;
+		}
 	}
 	
 	/////////////////////////////////////////////////////////////////
@@ -87,7 +100,7 @@ public class BingEngine extends AbstractWebEngine
 	/** Number of results to skip */
 	private static final String SERVICE_PARAM_OFFSET = "&offset=";
 	/** Country/language */
-	private static final String SERVICE_PARAM_LANGUAGE = "&mkt="+BingEngine.PAGE_LANG+"-"+BingEngine.PAGE_CNTRY;
+	private static final String SERVICE_PARAM_LANGUAGE = "&mkt=";
 	/** Response filter */
 	private static final String SERVICE_PARAM_FILTER = "&responseFilter=Webpages,News";
 	/** Query a specific Website */
@@ -118,9 +131,9 @@ public class BingEngine extends AbstractWebEngine
 	// PARAMETERS	/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
     /** Focus on pages hosted in a certain country */
-	public static final String PAGE_CNTRY = "FR";
+	public String pageCountry = null;
 	/** Focus on pages in a certain language */
-	public static final String PAGE_LANG = "fr";
+	public String pageLanguage = null;
 	/** Maximal number of results (can be less if Bing does not provide) */
 	public int MAX_RES_NBR = 200;
 	
@@ -137,8 +150,10 @@ public class BingEngine extends AbstractWebEngine
 		logger.log("Keywords: "+keywords);
 		String baseUrl = SERVICE_URL 
 				+ SERVICE_PARAM_COUNT 
-				+ SERVICE_PARAM_LANGUAGE
-				+ SERVICE_PARAM_FILTER;
+				+ SERVICE_PARAM_LANGUAGE + pageLanguage;
+		if(pageCountry!=null)
+			baseUrl = baseUrl + "-" + pageCountry;
+		baseUrl = baseUrl + SERVICE_PARAM_FILTER;
 		String baseQuery = "";
 		if(website==null)
 			logger.log("No website specified");
