@@ -254,9 +254,10 @@ public class SocialSearchResult extends AbstractSearchResult
 		article.setTitle(id);
 		if(author!=null)
 			article.addAuthor(author);
-		ArticleLanguage lang = StringTools.detectLanguage(text,true);
-		if(lang!=null)
-			article.setLanguage(ArticleLanguage.FR);
+		ArticleLanguage language = StringTools.detectLanguage(text,true);
+//		if(language==null)
+//			language = ArticleLanguage.FR;
+		article.setLanguage(language);
 		article.setPublishingDate(date);
 		Calendar cal = Calendar.getInstance();
 		Date currentDate = cal.getTime();

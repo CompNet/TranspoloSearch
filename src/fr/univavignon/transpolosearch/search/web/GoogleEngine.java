@@ -49,6 +49,10 @@ import java.util.Map;
  * <br/>
  * Dates are explicitly taken into account in the
  * Google API (unlike some other search engines).
+ * <br/>
+ * Also unlike other language, the targeted language
+ * is not specified at runtime, but when configuring
+ * the online Google Custom Search service. 
  * 
  * @author Vincent Labatut
  */

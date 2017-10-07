@@ -18,6 +18,7 @@ package fr.univavignon.transpolosearch.search.web;
  * along with TranspoloSearch. If not, see <http://www.gnu.org/licenses/>.
  */
 
+import fr.univavignon.transpolosearch.data.article.ArticleLanguage;
 import fr.univavignon.transpolosearch.tools.web.WebTools;
 
 import java.io.IOException;
@@ -69,9 +70,21 @@ public class QwantEngine extends AbstractWebEngine
 	 * @param endDate
 	 * 		End of the period we want to consider,
 	 * 		or {@code null} for no constraint.
+	 * @param language
+	 * 		Targeted language. 
 	 */
-	public QwantEngine(String website, Date startDate, Date endDate)
+	public QwantEngine(String website, Date startDate, Date endDate, ArticleLanguage language)
 	{	super(website,startDate,endDate);
+		
+		switch(language)
+		{	case EN:
+				pageLanguage = "en";
+				break;
+			case FR:
+				pageLanguage = "fr";
+				pageCountry = "fr";
+				break;
+		}
 	}
 
 	/////////////////////////////////////////////////////////////////
@@ -84,7 +97,7 @@ public class QwantEngine extends AbstractWebEngine
 	/** Response filter */
 	private static final String SERVICE_PARAM_FILTER = "web";
 	/** Country/language */
-	private static final String SERVICE_PARAM_LANGUAGE = "&locale="+QwantEngine.PAGE_LANG+"_"+QwantEngine.PAGE_CNTRY;
+	private static final String SERVICE_PARAM_LANGUAGE = "&locale=";
 	/** Query to send to the service */
 	private static final String SERVICE_PARAM_QUERY = "&q=";
 	/** Number of results to return */
@@ -109,9 +122,9 @@ public class QwantEngine extends AbstractWebEngine
 	// PARAMETERS	/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
     /** Focus on pages hosted in a certain country */
-	public static final String PAGE_CNTRY = "fr";
+	public String pageCountry = null;
 	/** Focus on pages in a certain language */
-	public static final String PAGE_LANG = "fr";
+	public String pageLanguage = null;
 	/** Maximal number of results (can be less if Qwant does not provide) */
 	public int MAX_RES_NBR = 200;
 	
@@ -128,8 +141,10 @@ public class QwantEngine extends AbstractWebEngine
 		logger.log("Keywords: "+keywords);
 		String baseUrl = SERVICE_URL 
 				+ SERVICE_PARAM_FILTER 
-				+ SERVICE_PARAM_COUNT
-				+ SERVICE_PARAM_LANGUAGE;
+				+ SERVICE_PARAM_COUNT+pageLanguage;
+		if(pageCountry!=null)
+			baseUrl = baseUrl + "_" + pageCountry;
+		baseUrl = baseUrl + SERVICE_PARAM_LANGUAGE;
 		String baseQuery = keywords;
 		if(website==null)
 			logger.log("No website specified");
@@ -308,7 +323,7 @@ public class QwantEngine extends AbstractWebEngine
 		Date startDate = null;//new GregorianCalendar(2016,3,1).getTime();
 		Date endDate = null;//new GregorianCalendar(2016,3,2).getTime();
 		
-		QwantEngine engine = new QwantEngine(website, startDate, endDate);
+		QwantEngine engine = new QwantEngine(website, startDate, endDate, ArticleLanguage.FR);
 		
 		Map<String,URL> result = engine.search(keywords);
 		

@@ -40,6 +40,7 @@ import facebook4j.ResponseList;
 import facebook4j.User;
 import facebook4j.conf.Configuration;
 import facebook4j.conf.ConfigurationBuilder;
+import fr.univavignon.transpolosearch.data.article.ArticleLanguage;
 import fr.univavignon.transpolosearch.data.search.SocialSearchResult;
 import fr.univavignon.transpolosearch.tools.file.FileNames;
 import fr.univavignon.transpolosearch.tools.file.FileTools;
@@ -92,6 +93,8 @@ public class FacebookEngine extends AbstractSocialEngine
 	 * @param extendedSearch
 	 * 		If {@code true}, the search returns the posts by the commenting
 	 * 		users, for the specified period. 
+	 * @param language
+	 * 		Targeted language. 
 	 * 
 	 * @throws IOException
 	 * 		Problem while logging in Facebook. 
@@ -102,8 +105,18 @@ public class FacebookEngine extends AbstractSocialEngine
 	 * @throws URISyntaxException 
 	 * 		Problem while logging in Facebook. 
 	 */
-	public FacebookEngine(String seed, Date startDate, Date endDate, boolean extendedSearch) throws FailingHttpStatusCodeException, MalformedURLException, IOException, URISyntaxException
+	public FacebookEngine(String seed, Date startDate, Date endDate, boolean extendedSearch, ArticleLanguage language) throws FailingHttpStatusCodeException, MalformedURLException, IOException, URISyntaxException
 	{	super(seed,startDate,endDate,extendedSearch);
+		
+		switch(language)
+		{	case EN:
+				pageLanguage = "lang_en";
+				break;
+			case FR:
+				pageCountry = "countryFR";
+				pageLanguage = "lang_fr";
+				break;
+		}
 		
 		// logging in and getting the access token
 		String login = KeyHandler.KEYS.get(USER_LOGIN);
@@ -271,9 +284,9 @@ public class FacebookEngine extends AbstractSocialEngine
 	// PARAMETERS	/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
     /** Focus on pages hosted in a certain country */
-	public static final String PAGE_CNTRY = "countryFR";
+	public String pageCountry = null;	// actually not used anymore
 	/** Focus on pages in a certain language */
-	public static final String PAGE_LANG = "lang_fr";
+	public String pageLanguage = null;	// actually not used anymore
 //	/** Whether the result should be sorted by date, or not (in this case: by relevance). If {@link #sortByDate} is not {@code null}, only the specified time range is treated. */
 //	public boolean sortByDate = false;
 //	/** Date range the search should focus on. It should take the form YYYYMMDD:YYYYMMDD, or {@code null} for no limit. If {@link #sortByDate} is set to {@code false}, this range is ignored. */
@@ -770,7 +783,7 @@ public class FacebookEngine extends AbstractSocialEngine
 	public static void main(String[] args) throws Exception
 	{	Date startDate = new GregorianCalendar(2017,4,7).getTime();//new GregorianCalendar(2017,3,6).getTime();//null;
 		Date endDate = new GregorianCalendar(2017,4,8).getTime();//new GregorianCalendar(2017,3,10).getTime();//null;
-		FacebookEngine fe = new FacebookEngine(null, startDate, endDate, true);
+		FacebookEngine fe = new FacebookEngine(null, startDate, endDate, true, ArticleLanguage.FR);
 		fe.search("François Hollande");
 	}
 }
