@@ -768,14 +768,14 @@ class SubeeDelegateRecognizer extends AbstractModellessInternalDelegateRecognize
 			{	// open the file in append mode
 				FileOutputStream fos = new FileOutputStream(file,true);
 				OutputStreamWriter osw = new OutputStreamWriter(fos,"UTF-8");
-				PrintWriter printWriter = new PrintWriter(osw);
+				PrintWriter pw = new PrintWriter(osw);
 
 				// write the new type
-				printWriter.println(fbType);
-				printWriter.flush(); // just a precaution
+				pw.println(fbType);
+				pw.flush(); // just a precaution
 				
 				// close the stream
-				printWriter.close();
+				pw.close();
 			}
 			catch (FileNotFoundException e)
 			{	e.printStackTrace();

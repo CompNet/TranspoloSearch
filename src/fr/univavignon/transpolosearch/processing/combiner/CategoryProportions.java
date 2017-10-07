@@ -226,12 +226,12 @@ public class CategoryProportions extends HashMap<ArticleCategory,Float>
 	 * 		Could not handle the encoding.
 	 */
 	public void recordCategoryProportion(String filePath) throws UnsupportedEncodingException, FileNotFoundException
-	{	PrintWriter writer = FileTools.openTextFileWrite(filePath, "UTF-8");
+	{	PrintWriter pw = FileTools.openTextFileWrite(filePath, "UTF-8");
 		TreeSet<ArticleCategory> categories = new TreeSet<ArticleCategory>(keySet());
 		for(ArticleCategory category: categories)
 		{	float proportion = get(category);
-			writer.println(category.toString()+"\t"+proportion);
+			pw.println(category.toString()+"\t"+proportion);
 		}
-		writer.close();
+		pw.close();
 	}
 }

@@ -309,7 +309,7 @@ public class VoteWeights<T extends InterfaceProcessor>
 	{	logger.log("Recording vote weights");
 		logger.increaseOffset();
 		
-		PrintWriter writer = FileTools.openTextFileWrite(filePath, "UTF-8");
+		PrintWriter pw = FileTools.openTextFileWrite(filePath, "UTF-8");
 
 		// get category list
 		TreeSet<ArticleCategory> categories = new TreeSet<ArticleCategory>();
@@ -327,10 +327,10 @@ public class VoteWeights<T extends InterfaceProcessor>
 			
 			// write categories
 			logger.log("Writing category names: "+categories.toString());
-			writer.print(recognizer.getName());
+			pw.print(recognizer.getName());
 			for(ArticleCategory category: categories)
-				writer.print("\t"+category.toString());
-			writer.println();
+				pw.print("\t"+category.toString());
+			pw.println();
 			
 			// write weights
 			TreeSet<String> names = new TreeSet<String>(recMap.keySet());
@@ -339,24 +339,24 @@ public class VoteWeights<T extends InterfaceProcessor>
 				logger.increaseOffset();
 				String msg = "Read values:";
 				
-				writer.print(name);
+				pw.print(name);
 				Map<ArticleCategory,Float> mesMap = recMap.get(name);
 				for(ArticleCategory category: categories)
 				{	float weight = mesMap.get(category);
-					writer.print("\t"+weight);
+					pw.print("\t"+weight);
 					msg = msg + " " + category + "=" + weight;
 				}
-				writer.println();
+				pw.println();
 
 				logger.log(msg);
 				logger.decreaseOffset();
 			}
 			
-			writer.println();
+			pw.println();
 			logger.decreaseOffset();
 		}
 		
-		writer.close();
+		pw.close();
 		logger.decreaseOffset();
 	}
 }

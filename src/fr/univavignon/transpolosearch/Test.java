@@ -120,7 +120,7 @@ public class Test
 //		testGoogleSearch();
 		
 		// whole process
-		testExtractor();
+//		testExtractor();
 		
 		// compare searches
 			// hidalgo
@@ -141,8 +141,9 @@ public class Test
 		// complete reference
 		FileNames.setOutputFolder("Anne_Hidalgo");
 		String oldFile = FileNames.FO_WEB_SEARCH_RESULTS+File.separator+"old_reference.txt";
-		String newFile = FileNames.FO_WEB_SEARCH_RESULTS+File.separator+FileNames.FI_REFERENCE_TEXT;
-		completeReference(oldFile,newFile);
+		String newFile = FileNames.FO_WEB_SEARCH_RESULTS+File.separator+FileNames.FI_ANNOTATED_RESULTS;
+		String outFile = FileNames.FO_WEB_SEARCH_RESULTS+File.separator+"merged_reference.txt";
+		completeReference(oldFile,newFile,outFile);
 		
 		logger.close();
 	}
@@ -160,13 +161,24 @@ public class Test
 	 * Completes an existing reference file with another, older annotated file,
 	 * which contains less entries.
 	 * 
+	 * @param oldFile
+	 * 		Old reference file (contains the classes). 
+	 * @param newFile 
+	 * 		Current reference file (contains more results).
+	 * @param outFile 
+	 * 		Result of the merge.
+	 * 
 	 * @throws UnsupportedEncodingException
 	 * 		Problem while accessing the files. 
 	 * @throws FileNotFoundException 
 	 * 		Problem while accessing the files. 
 	 */
-	private static void completeReference(String oldFile, String newFile) throws FileNotFoundException, UnsupportedEncodingException
-	{	// load the first file
+	private static void completeReference(String oldFile, String newFile, String outFile) throws FileNotFoundException, UnsupportedEncodingException
+	{	logger.log("Merging reference files");
+		logger.increaseOffset();
+		
+		// load the old file
+		logger.log("Load old file "+oldFile);
 		Map<String,List<String>> map = new HashMap<String,List<String>>();
 		int colNbr = 0;
 		{	Scanner scanner = FileTools.openTextFileRead(oldFile, "UTF-8");
@@ -181,9 +193,12 @@ public class Test
 					values.add(tmp[i]);
 				map.put(key,values);
 			}
+			scanner.close();
 		}
+		logger.log("Read "+map.size()+" lines");
 		
 		// load the new file
+		logger.log("Load new file "+newFile);
 		List<String> keys = new ArrayList<String>();
 		{	Scanner scanner = FileTools.openTextFileRead(newFile, "UTF-8");
 			while(scanner.hasNextLine())
@@ -192,30 +207,35 @@ public class Test
 				String key = tmp[0];
 				keys.add(key);
 			}
+			scanner.close();
 		}
+		logger.log("Read "+keys.size()+" lines");
 		
 		// combine the data
-		{	String outFile = FileNames.FO_OUTPUT + File.separator + "output_ref.txt";
-			PrintWriter pw = FileTools.openTextFileWrite(outFile, "UTF-8");
+		logger.log("Merge and record in output file"+outFile);
+		int count = 0;
+		{	PrintWriter pw = FileTools.openTextFileWrite(outFile, "UTF-8");
 			for(String key: keys)
-			{	List<String> values = map.get(key);
-				if(map==null)
+			{	count++;
+				List<String> values = map.get(key);
+				if(values==null)
 				{	pw.print(key);
 					for(int i=1;i<colNbr;i++)
 						pw.print("\t ");
 				}
 				else
-				{	Iterator<String> it = values.iterator();
-					while(it.hasNext())
-					{	String value = it.next();
-						pw.print(value);
-						if(it.hasNext())
-							pw.println("\t");
-					}
+				{	pw.print(key);
+					for(String value:values)
+						pw.print("\t"+value);
 				}
 				pw.println();
 			}
+			pw.close();
 		}
+		logger.log("Wrote "+count+" lines");
+		
+		logger.decreaseOffset();
+		logger.log("Merging done");
 	}
 	
 	/////////////////////////////////////////////////////////////////
