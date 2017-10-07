@@ -138,6 +138,12 @@ public class Test
 		// clustering
 //		testClustering();
 		
+		// complete reference
+		FileNames.setOutputFolder("Anne_Hidalgo");
+		String oldFile = FileNames.FO_WEB_SEARCH_RESULTS+File.separator+"old_reference.txt";
+		String newFile = FileNames.FO_WEB_SEARCH_RESULTS+File.separator+FileNames.FI_REFERENCE_TEXT;
+		completeReference(oldFile,newFile);
+		
 		logger.close();
 	}
 	
@@ -146,6 +152,71 @@ public class Test
 	/////////////////////////////////////////////////////////////////
 	/** Common object used for logging */
 	private static HierarchicalLogger logger = HierarchicalLoggerManager.getHierarchicalLogger();
+	
+	/////////////////////////////////////////////////////////////////
+	// COMPLETION		/////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////
+	/**
+	 * Completes an existing reference file with another, older annotated file,
+	 * which contains less entries.
+	 * 
+	 * @throws UnsupportedEncodingException
+	 * 		Problem while accessing the files. 
+	 * @throws FileNotFoundException 
+	 * 		Problem while accessing the files. 
+	 */
+	private static void completeReference(String oldFile, String newFile) throws FileNotFoundException, UnsupportedEncodingException
+	{	// load the first file
+		Map<String,List<String>> map = new HashMap<String,List<String>>();
+		int colNbr = 0;
+		{	Scanner scanner = FileTools.openTextFileRead(oldFile, "UTF-8");
+			while(scanner.hasNextLine())
+			{	String line = scanner.nextLine();
+				String[] tmp = line.split("\t");
+				if(tmp.length>colNbr)
+					colNbr = tmp.length;
+				String key = tmp[0];
+				List<String> values = new ArrayList<String>();
+				for(int i=1;i<tmp.length;i++)
+					values.add(tmp[i]);
+				map.put(key,values);
+			}
+		}
+		
+		// load the new file
+		List<String> keys = new ArrayList<String>();
+		{	Scanner scanner = FileTools.openTextFileRead(newFile, "UTF-8");
+			while(scanner.hasNextLine())
+			{	String line = scanner.nextLine();
+				String[] tmp = line.split("\t");
+				String key = tmp[0];
+				keys.add(key);
+			}
+		}
+		
+		// combine the data
+		{	String outFile = FileNames.FO_OUTPUT + File.separator + "output_ref.txt";
+			PrintWriter pw = FileTools.openTextFileWrite(outFile, "UTF-8");
+			for(String key: keys)
+			{	List<String> values = map.get(key);
+				if(map==null)
+				{	pw.print(key);
+					for(int i=1;i<colNbr;i++)
+						pw.print("\t ");
+				}
+				else
+				{	Iterator<String> it = values.iterator();
+					while(it.hasNext())
+					{	String value = it.next();
+						pw.print(value);
+						if(it.hasNext())
+							pw.println("\t");
+					}
+				}
+				pw.println();
+			}
+		}
+	}
 	
 	/////////////////////////////////////////////////////////////////
 	// RETRIEVAL	/////////////////////////////////////////////////
@@ -518,8 +589,6 @@ public class Test
 		}
 	}
 }
-
-// TODO le langage devrait être un paramètre général. chercher toutes les occurrences de FR et article.FR
 
 // TODO manips:
 // 		- Filtrer par date quand c'est possible, pour voir si ça améliore le beans
