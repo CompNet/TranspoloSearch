@@ -1,5 +1,7 @@
 package fr.univavignon.transpolosearch.extraction;
 
+import java.io.File;
+
 /*
  * TranspoloSearch
  * Copyright 2015-17 Vincent Labatut
@@ -376,7 +378,7 @@ public class Extractor
 			currentStep++;
 			
 			// record performance
-			results.recordPerformance(currentStep + "_" + FileNames.FI_PERFORMANCE);
+			results.recordPerformance(FileNames.FO_WEB_SEARCH_RESULTS + File.separator + currentStep + "_" + FileNames.FI_PERFORMANCE);
 			currentStep++;
 			
 		logger.decreaseOffset();
@@ -577,7 +579,7 @@ public class Extractor
 			currentStep++;
 			
 			// record performance
-			results.recordPerformance(currentStep + "_" + FileNames.FI_PERFORMANCE);
+			results.recordPerformance(FileNames.FO_SOCIAL_SEARCH_RESULTS + File.separator + currentStep + "_" + FileNames.FI_PERFORMANCE);
 			currentStep++;
 			
 		logger.decreaseOffset();
@@ -601,7 +603,7 @@ public class Extractor
 	 */
 	private void initRecognizer() throws ProcessorException
 	{	recognizer = new StraightCombiner();
-		recognizer.setCacheEnabled(false);//TODO set to false for debugging
+		recognizer.setCacheEnabled(true);//TODO set to false for debugging
 	}
 
 	/////////////////////////////////////////////////////////////////
@@ -690,7 +692,7 @@ public class Extractor
 			currentStep++;
 			
 			// record performance
-			combRes.recordPerformance(currentStep + "_" + FileNames.FI_PERFORMANCE);
+			combRes.recordPerformance(FileNames.FO_OUTPUT + File.separator + currentStep + "_" + FileNames.FI_PERFORMANCE);
 			currentStep++;
 			
 		logger.decreaseOffset();

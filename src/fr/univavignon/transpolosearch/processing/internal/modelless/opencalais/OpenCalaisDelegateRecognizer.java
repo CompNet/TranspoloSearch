@@ -199,6 +199,7 @@ class OpenCalaisDelegateRecognizer extends AbstractModellessInternalDelegateReco
 				// sleep a bit
 	            try
 	            {	Thread.sleep(DELAY);
+	            Thread.sleep(DELAY);	            
 				}
 	            catch (InterruptedException e)
 	            {	e.printStackTrace();

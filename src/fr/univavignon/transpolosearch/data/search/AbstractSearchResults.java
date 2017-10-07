@@ -18,7 +18,6 @@ package fr.univavignon.transpolosearch.data.search;
  * along with TranspoloSearch. If not, see <http://www.gnu.org/licenses/>.
  */
 
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
@@ -51,7 +50,6 @@ import fr.univavignon.transpolosearch.data.event.Event;
 import fr.univavignon.transpolosearch.data.event.MyPam;
 import fr.univavignon.transpolosearch.data.event.DummyDistanceMetric;
 import fr.univavignon.transpolosearch.data.event.Silhouette;
-import fr.univavignon.transpolosearch.tools.file.FileNames;
 import fr.univavignon.transpolosearch.tools.file.FileTools;
 import fr.univavignon.transpolosearch.tools.log.HierarchicalLogger;
 import fr.univavignon.transpolosearch.tools.log.HierarchicalLoggerManager;
@@ -420,14 +418,16 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 	{	// build the clusters of articles
 		Map<Integer,List<T>> artClust = new HashMap<Integer,List<T>>();
 		for(T res: results.values())
-		{	String cStr = res.cluster;
-			int c = Integer.parseInt(cStr);
-			List<T> cluster = artClust.get(c);
-			if(cluster==null)
-			{	cluster = new ArrayList<T>();
-				artClust.put(c, cluster);
+		{	if(res.status==null)
+			{	String cStr = res.cluster;
+				int c = Integer.parseInt(cStr);
+				List<T> cluster = artClust.get(c);
+				if(cluster==null)
+				{	cluster = new ArrayList<T>();
+					artClust.put(c, cluster);
+				}
+				cluster.add(res);
 			}
-			cluster.add(res);
 		}
 		
 		// count mention occurrences in each cluster, remove the unfrequent ones
@@ -1000,13 +1000,14 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 				Scanner scanner = FileTools.openTextFileRead(filePath, "UTF-8");
 				while(scanner.hasNextLine())
 				{	String line = scanner.nextLine();
-					line = line.trim();
 					String[] tmp = line.split("\t");
-					String urlStr = tmp[0].trim();
-					String clust = tmp[1].trim();
-					if(clust.isEmpty())
-						clust = null;	// null means the URL is irrelevant
-					reference.put(urlStr, clust);
+					String key = tmp[0].trim();
+					if(tmp.length>1)
+					{	String clust = tmp[1].trim();
+						if(clust.isEmpty())
+							clust = null;	// null means the URL is irrelevant
+						reference.put(key, clust);
+					}
 				}
 			}
 			catch (FileNotFoundException e) 
@@ -1019,17 +1020,16 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 	/**
 	 * Records the performances in a CSV file.
 	 * 
-	 * @param fileName
-	 * 		Name of the performance output file. 
+	 * @param filePath
+	 * 		Path of the performance output file. 
 	 * 
 	 * @throws UnsupportedEncodingException
 	 * 		Problem while writing the output file.
 	 * @throws FileNotFoundException
 	 * 		Problem while writing the output file.
 	 */
-	public void recordPerformance(String fileName) throws UnsupportedEncodingException, FileNotFoundException
-	{	String filePath = FileNames.FO_OUTPUT + File.separator + fileName;
-		logger.log("Recording the results in file "+filePath);
+	public void recordPerformance(String filePath) throws UnsupportedEncodingException, FileNotFoundException
+	{	logger.log("Recording the results in file "+filePath);
 		logger.increaseOffset();
 			
 			// setup colon names
@@ -1085,7 +1085,8 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 			Map<String,String> line = new HashMap<String,String>();
 			line.put(PERF_STEP, stepName);
 			computeDiscriminationPerformance(line);
-			computeClusteringPerformance(line);
+			if(!results.isEmpty() && results.values().iterator().next().cluster!=null)	// only if the clustering has already been performed 
+				computeClusteringPerformance(line);
 			performances.add(line);
 			
 		logger.decreaseOffset();
@@ -1170,6 +1171,7 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 					clustCount++;
 				}
 				part2[i] = c2;
+				i++;
 			}
 		}
 		
@@ -1249,31 +1251,31 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 		
 		// compute the marginals
 		float[] rowMarg = new float[nclust1];
-		for(int i=0;i<part1.length;i++)
+		for(int i=0;i<nclust1;i++)
 		{	rowMarg[i] = 0;
-			for(int j=0;j<part2.length;j++)
+			for(int j=0;j<nclust2;j++)
 				rowMarg[i] = rowMarg[i] + confMat[i][j];
 		}
 		float[] colMarg = new float[nclust2];
-		for(int j=0;j<part2.length;j++)
+		for(int j=0;j<nclust2;j++)
 		{	colMarg[j] = 0;
-			for(int i=0;i<part1.length;i++)
+			for(int i=0;i<nclust1;i++)
 				colMarg[j] = colMarg[j] + confMat[i][j];
 		}
 		
 		// process the numerator of the NMI
 		double numerator = 0;
-		for(int i=0;i<part1.length;i++)
-		{	for(int j=0;j<part2.length;j++)
+		for(int i=0;i<nclust1;i++)
+		{	for(int j=0;j<nclust2;j++)
 				numerator = numerator + confMat[i][j] * Math.log10(confMat[i][j]/(rowMarg[i]*colMarg[j]));
 		}
 		numerator = -2 * numerator;
 		
 		// process the denominator of the NMI
 		double denominator = 0;
-		for(int i=0;i<part1.length;i++)
+		for(int i=0;i<nclust1;i++)
 			denominator = denominator + rowMarg[i] * Math.log10(rowMarg[i]);
-		for(int j=0;j<part2.length;j++)
+		for(int j=0;j<nclust2;j++)
 			denominator = denominator + colMarg[j] * Math.log10(colMarg[j]);
 
 		// process the NMI
