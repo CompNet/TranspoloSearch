@@ -58,10 +58,10 @@ import fr.univavignon.transpolosearch.tools.log.HierarchicalLoggerManager;
  * <br/>
  * We consider a text to be clean if it contains only Latin letters
  * (possibly with diacritics), digits, punctuation as defined in
- * {@link #PUNCTUATION}, regular spaces and new lines {@code '\n'}.
- * This holds for an article body: in addition, an article title must
- * not contain new lines or double quotes {@code '"'}, so that
- * we can include it in CSV files.
+ * {@link #getPunctuation(boolean)}, regular spaces and new lines 
+ * {@code '\n'}. This holds for an article body: in addition, an 
+ * article title must not contain new lines or double quotes 
+ * {@code '"'}, so that we can include it in CSV files.
  *  
  * @author Vincent Labatut
  */
@@ -141,8 +141,13 @@ public class StringTools
 //		removeNonLatinLetters("Super Mario Bros. Anime Movie Restored (Best Quality!) . English subbed . スーパーマリオブラザーズ ピーチ姫救出大作戦!");
 		
 		// clean spaces
-		String res = cleanSpaces("fdssd\n dsfsdf\nsd dsf sdfsd fdsf    sdfsdf  sdfsd\n\n\nsdfsdf");
-		System.out.println(res);
+//		String res = cleanSpaces("fdssd\n dsfsdf\nsd dsf sdfsd fdsf    sdfsdf  sdfsd\n\n\nsdfsdf");
+//		System.out.println(res);
+		
+		// test clean text
+		String text = "zeriou fke ? R dfikalnfsd po ! SZ : dsqd 4485. Fio 89% dezidj, defsoui ; ezrofd 98% fdskds !!";
+		String cleaned = cleanText(text,ArticleLanguage.FR);
+		System.out.println(cleaned);
 	}
 	
 	/////////////////////////////////////////////////////////////////
@@ -209,8 +214,26 @@ public class StringTools
 	/////////////////////////////////////////////////////////////////
 	// PUNCTUATION		/////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
-	/** Accepted punctuation marks, in a clean text */
-	private final static String PUNCTUATION = "'():,\\-!.\";&@%+";
+//	/** Accepted punctuation marks, in a clean text (for regex methods) */
+//	private final static String PUNCTUATION = "'():,\\-!.\";&@%+?";
+	
+	/**
+	 * Returns a string containing all the accepted punctuation marks.
+	 * 
+	 * @param regex
+	 * 		{@code true} iff the result is meant to be used in a regex.
+	 * @return
+	 * 		A string containing all the accepted punctuation marks.
+	 */
+	public static String getPunctuation(boolean regex)
+	{	String result = "'():,";
+		if(regex)
+			result = result + "\\-";
+		else
+			result = result + "-";
+		result = result + "!.\";&@%+?";
+		return result;
+	}
 	
 	/**
 	 * Checks whether the specified character is a punctuation mark or not.
@@ -222,16 +245,17 @@ public class StringTools
 	 * 		{@code true} iff the character is a punctuation mark.
 	 */
 	public static boolean isPunctuation(int c)
-	{	int pos = PUNCTUATION.indexOf(c);
+	{	String punctuation = getPunctuation(false);
+		int pos = punctuation.indexOf(c);
 		boolean result = pos>=0;
 		
 		return result;
 	}
 	
 	/**
-	 * Removes the punctuation as defined in {@link #PUNCTUATION}. It also
-	 * removes multiple consecutive regular spaces. The goal is to get a string
-	 * that is easy to tokenize.
+	 * Removes the punctuation as defined in {@link #getPunctuation(boolean)}. 
+	 * It also removes multiple consecutive regular spaces. The goal is to get 
+	 * a string that is easy to tokenize.
 	 * <br/>
 	 * This method is meant to be applied on <i>clean</i> texts or titles 
 	 * (it does not handle fancy characters).
@@ -242,7 +266,8 @@ public class StringTools
 	 * 		The same text without any punctuation.
 	 */
 	public static String removePunctuation(String str)
-	{	String result = str.replaceAll("["+PUNCTUATION+"]"," ");
+	{	String punctuation = getPunctuation(true);
+		String result = str.replaceAll("["+punctuation+"]"," ");
 		result = result.replaceAll(" +", " ");
 		return result;
 	}
@@ -298,7 +323,8 @@ public class StringTools
 		// add digits
 		latinStr = latinStr + "0123456789";
 		// add (accepted) punctuation
-		latinStr = latinStr + PUNCTUATION;
+		String punctuation = getPunctuation(false);
+		latinStr = latinStr + punctuation;
 		// add all these chars to the list
 		for(int i=0;i<latinStr.length();i++)
 		{	char c = latinStr.charAt(i);
@@ -521,7 +547,8 @@ public class StringTools
 		
 		// remove characters which are neither punctuation, whitespaces, letters or digits
 //		output = output.replaceAll("[^"+PUNCTUATION+"\\s\\p{L}\\d]", "");
-		output = output.replaceAll("[^"+PUNCTUATION+"\\s\\p{L}0-9]", "");
+		String punctuation = getPunctuation(true);
+		output = output.replaceAll("[^"+punctuation+"\\s\\p{L}0-9]", "");
 		
 		// remove non-latin characters
 		output = removeNonLatinLetters(output);
