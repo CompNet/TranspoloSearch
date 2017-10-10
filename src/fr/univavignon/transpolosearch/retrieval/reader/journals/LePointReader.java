@@ -35,7 +35,7 @@ import org.jsoup.select.Elements;
 
 import fr.univavignon.transpolosearch.data.article.Article;
 import fr.univavignon.transpolosearch.data.article.ArticleLanguage;
-import fr.univavignon.transpolosearch.retrieval.reader.ArticleReader;
+import fr.univavignon.transpolosearch.retrieval.reader.AbstractArticleReader;
 import fr.univavignon.transpolosearch.retrieval.reader.ReaderException;
 import fr.univavignon.transpolosearch.tools.html.HtmlNames;
 import fr.univavignon.transpolosearch.tools.html.HtmlTools;
@@ -65,7 +65,7 @@ public class LePointReader extends AbstractJournalReader
 //		URL url = new URL("http://www.lepoint.fr/monde/attentat-de-barcelone-les-vehicules-lances-sur-la-foule-un-phenomene-devenu-habituel-en-europe-17-08-2017-2150646_24.php");
 		URL url = new URL("http://www.lepoint.fr/invites-du-point/laetitia-strauch-bonart/strauch-bonart-cet-etrange-m-corbyn-17-08-2017-2150595_3096.php");
 		
-		ArticleReader reader = new LePointReader();
+		AbstractArticleReader reader = new LePointReader();
 		Article article = reader.processUrl(url, ArticleLanguage.FR);
 		System.out.println(article);
 		article.write();
@@ -81,7 +81,21 @@ public class LePointReader extends AbstractJournalReader
 	public String getDomain()
 	{	return DOMAIN;
 	}
-
+	
+	/**
+	 * Checks whether the specified URL is compatible
+	 * with this reader.
+	 * 
+	 * @param url
+	 * 		URL to check.
+	 * @return
+	 * 		{@code true} iff this reader can handle the URL.
+	 */
+	public static boolean checkDomain(String url)
+	{	boolean result = url.contains(DOMAIN);
+		return result;
+	}
+	
 	/////////////////////////////////////////////////////////////////
 	// RETRIEVE			/////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////	

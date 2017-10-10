@@ -23,7 +23,9 @@ import java.net.URL;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 
@@ -35,7 +37,7 @@ import org.jsoup.select.Elements;
 
 import fr.univavignon.transpolosearch.data.article.Article;
 import fr.univavignon.transpolosearch.data.article.ArticleLanguage;
-import fr.univavignon.transpolosearch.retrieval.reader.ArticleReader;
+import fr.univavignon.transpolosearch.retrieval.reader.AbstractArticleReader;
 import fr.univavignon.transpolosearch.retrieval.reader.ReaderException;
 import fr.univavignon.transpolosearch.tools.html.HtmlNames;
 import fr.univavignon.transpolosearch.tools.html.HtmlTools;
@@ -63,9 +65,10 @@ public class LeMondeReader extends AbstractJournalReader
 	public static void main(String[] args) throws Exception
 	{	
 //		URL url = new URL("http://www.lemonde.fr/les-decodeurs/article/2017/08/09/navire-antimigrants-c-star-une-mission-inutile-voire-illegale_5170650_4355770.html");
-		URL url = new URL("http://www.lemonde.fr/sport/article/2017/08/12/sur-les-traces-des-jeux-olympiques-de-1900-et-1924_5171678_3242.html");
+//		URL url = new URL("http://www.lemonde.fr/sport/article/2017/08/12/sur-les-traces-des-jeux-olympiques-de-1900-et-1924_5171678_3242.html");
+		URL url = new URL("http://www.lemonde.fr/videos/2.html");
 		
-		ArticleReader reader = new LeMondeReader();
+		AbstractArticleReader reader = new LeMondeReader();
 		Article article = reader.processUrl(url, ArticleLanguage.FR);
 		System.out.println(article);
 		article.write();
@@ -76,10 +79,31 @@ public class LeMondeReader extends AbstractJournalReader
 	/////////////////////////////////////////////////////////////////
 	/** Text allowing to detect the domain */
 	public static final String DOMAIN = "www.lemonde.fr";
+	/** Subdomain with very different article structures */
+	public static final List<String> SUB_DOMAINS = Arrays.asList("/video/","/videos/");
 	
 	@Override
 	public String getDomain()
 	{	return DOMAIN;
+	}
+	
+	/**
+	 * Checks whether the specified URL is compatible
+	 * with this reader.
+	 * 
+	 * @param url
+	 * 		URL to check.
+	 * @return
+	 * 		{@code true} iff this reader can handle the URL.
+	 */
+	public static boolean checkDomain(String url)
+	{	boolean result = url.contains(DOMAIN);
+		Iterator<String> it = SUB_DOMAINS.iterator();
+		while(result && it.hasNext())
+		{	String subDomain = it.next();
+			result = !url.contains(subDomain);
+		}
+		return result;
 	}
 
 	/////////////////////////////////////////////////////////////////

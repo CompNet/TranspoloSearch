@@ -27,7 +27,7 @@ import org.xml.sax.SAXException;
 
 import fr.univavignon.transpolosearch.data.article.Article;
 import fr.univavignon.transpolosearch.data.article.ArticleLanguage;
-import fr.univavignon.transpolosearch.retrieval.reader.ArticleReader;
+import fr.univavignon.transpolosearch.retrieval.reader.AbstractArticleReader;
 import fr.univavignon.transpolosearch.retrieval.reader.ReaderException;
 import fr.univavignon.transpolosearch.tools.log.HierarchicalLogger;
 import fr.univavignon.transpolosearch.tools.log.HierarchicalLoggerManager;
@@ -156,7 +156,7 @@ public class ArticleRetriever
 		// choose the reader depending on the URL base
 		logger.log("Selecting reader: ");
 		logger.increaseOffset();
-			ArticleReader reader = ArticleReader.buildReader(address);
+			AbstractArticleReader reader = AbstractArticleReader.buildReader(address);
 			String name = reader.getName(url);
 		logger.log("Detected domain: "+reader.getDomain());
 		logger.decreaseOffset();

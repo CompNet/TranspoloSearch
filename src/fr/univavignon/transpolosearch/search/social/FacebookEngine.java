@@ -501,87 +501,23 @@ public class FacebookEngine extends AbstractSocialEngine
 		for(Post post: pagePosts)
 		{	// get the message text
 			String msg = post.getMessage();
-			msg = msg.replaceAll("\\s+", " ");
-			logger.log("Message: \""+msg+"\"");
-			// get the meta-data
-			String ctntId = post.getId();
-			Date date = post.getCreatedTime();
-			Category auth = post.getFrom();
-			String authName;
-			if(auth==null)
-				authName = name;	//TODO should remove this parameter name, we shouldn't need it
+			if(msg==null)
+				logger.log("No message in the current post");
 			else
-				authName = auth.getName();
-			boolean original = seed==null;
-			// create the post object
-			SocialSearchResult p = new SocialSearchResult(ctntId, authName, date, getName(), msg, original);
-			p.url = post.getLink();
-			result.add(p);
-			
-			// get the number of likes
-			Reading rdg = new Reading();
-		    rdg.limit(0);
-			rdg.summary();
-			ResponseList<Reaction> listL = facebook.getPostReactions(ctntId, rdg);
-			int likes = listL.getSummary().getTotalCount();
-			p.likes = likes;
-			// get the number of shares
-			rdg.fields("shares");
-			Post tempPost = facebook.getPost(ctntId, rdg);
-			Integer shares = tempPost.getSharesCount();
-			p.shares = shares;
-			logger.log("Found "+likes+" likes (and variants) and "+shares+" shares");
-			
-			// retrieve the comments associated to the message
-			List<Comment> comments = getComments(post, facebook, reading);
-			// add them to the current post
-			for(Comment comment: comments)
-			{	// get the message text
-				msg = comment.getMessage();
-				msg = msg.replaceAll("\\s+", " ");
-				// get the meta-data
-				ctntId = comment.getId();
-				date = comment.getCreatedTime();
-				auth = comment.getFrom();
-				authName = auth.getName();
-				// create the post object
-				SocialSearchResult com = new SocialSearchResult(ctntId, authName, date, getName(), msg, false);
-				p.comments.add(com);
-				// add the comment author to the list
-				String authId = auth.getId();
-				authorIds.add(authId);
-				authorNames.put(authId, authName);
-			}
-		}
-		logger.decreaseOffset();
-		
-		// get the authors posts for this period
-		logger.log("Retrieving the posts of the commenting authors (for the specified period, if any)");
-		logger.increaseOffset();
-		for(String authId: authorIds)
-		{	logger.log("Processing id"+authId);
-			logger.increaseOffset();
-			List<Post> authPosts = getPosts(authId, facebook, reading);
-			for(Post post: authPosts)
-			{	// get the message text
-				String msg = post.getMessage();
-				msg = msg.replaceAll("\\s+", " ");
+			{	msg = msg.replaceAll("\\s+", " ");
 				logger.log("Message: \""+msg+"\"");
-				
 				// get the meta-data
 				String ctntId = post.getId();
 				Date date = post.getCreatedTime();
 				Category auth = post.getFrom();
 				String authName;
 				if(auth==null)
-				{	authName = authorNames.get(authId);
-					if(authName==null)
-						authName = "N/A";
-				}
+					authName = name;	//TODO should remove this parameter name, we shouldn't need it
 				else
 					authName = auth.getName();
+				boolean original = seed==null;
 				// create the post object
-				SocialSearchResult p = new SocialSearchResult(ctntId, authName, date, getName(), msg, false);
+				SocialSearchResult p = new SocialSearchResult(ctntId, authName, date, getName(), msg, original);
 				p.url = post.getLink();
 				result.add(p);
 				
@@ -599,7 +535,79 @@ public class FacebookEngine extends AbstractSocialEngine
 				p.shares = shares;
 				logger.log("Found "+likes+" likes (and variants) and "+shares+" shares");
 				
-				// TODO we do not get the comments, this time (we could if needed)
+				// retrieve the comments associated to the message
+				List<Comment> comments = getComments(post, facebook, reading);
+				// add them to the current post
+				for(Comment comment: comments)
+				{	// get the message text
+					msg = comment.getMessage();
+					msg = msg.replaceAll("\\s+", " ");
+					// get the meta-data
+					ctntId = comment.getId();
+					date = comment.getCreatedTime();
+					auth = comment.getFrom();
+					authName = auth.getName();
+					// create the post object
+					SocialSearchResult com = new SocialSearchResult(ctntId, authName, date, getName(), msg, false);
+					p.comments.add(com);
+					// add the comment author to the list
+					String authId = auth.getId();
+					authorIds.add(authId);
+					authorNames.put(authId, authName);
+				}
+			}
+		}
+		logger.decreaseOffset();
+		
+		// get the authors posts for this period
+		logger.log("Retrieving the posts of the commenting authors (for the specified period, if any)");
+		logger.increaseOffset();
+		for(String authId: authorIds)
+		{	logger.log("Processing id "+authId);
+			logger.increaseOffset();
+			List<Post> authPosts = getPosts(authId, facebook, reading);
+			for(Post post: authPosts)
+			{	// get the message text
+				String msg = post.getMessage();
+				if(msg==null)
+					logger.log("The current post has no textual content");
+				else
+				{	msg = msg.replaceAll("\\s+", " ");
+					logger.log("Message: \""+msg+"\"");
+					
+					// get the meta-data
+					String ctntId = post.getId();
+					Date date = post.getCreatedTime();
+					Category auth = post.getFrom();
+					String authName;
+					if(auth==null)
+					{	authName = authorNames.get(authId);
+						if(authName==null)
+							authName = "N/A";
+					}
+					else
+						authName = auth.getName();
+					// create the post object
+					SocialSearchResult p = new SocialSearchResult(ctntId, authName, date, getName(), msg, false);
+					p.url = post.getLink();
+					result.add(p);
+					
+					// get the number of likes
+					Reading rdg = new Reading();
+				    rdg.limit(0);
+					rdg.summary();
+					ResponseList<Reaction> listL = facebook.getPostReactions(ctntId, rdg);
+					int likes = listL.getSummary().getTotalCount();
+					p.likes = likes;
+					// get the number of shares
+					rdg.fields("shares");
+					Post tempPost = facebook.getPost(ctntId, rdg);
+					Integer shares = tempPost.getSharesCount();
+					p.shares = shares;
+					logger.log("Found "+likes+" likes (and variants) and "+shares+" shares");
+					
+					// TODO we do not get the comments, this time (we could if needed)
+				}
 			}
 			logger.decreaseOffset();
 		}

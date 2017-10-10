@@ -36,7 +36,7 @@ import org.jsoup.select.Elements;
 
 import fr.univavignon.transpolosearch.data.article.Article;
 import fr.univavignon.transpolosearch.data.article.ArticleLanguage;
-import fr.univavignon.transpolosearch.retrieval.reader.ArticleReader;
+import fr.univavignon.transpolosearch.retrieval.reader.AbstractArticleReader;
 import fr.univavignon.transpolosearch.retrieval.reader.ReaderException;
 import fr.univavignon.transpolosearch.tools.html.HtmlNames;
 import fr.univavignon.transpolosearch.tools.html.HtmlTools;
@@ -66,7 +66,7 @@ public class LExpressReader extends AbstractJournalReader
 		URL url = new URL("http://www.lexpress.fr/styles/vip/angelina-jolie-et-brad-pitt-condamnes-a-verser-500-000-euros-a-une-artiste_1936140.html");
 //		URL url = new URL("http://www.lexpress.fr/actualite/politique/lfi/les-insoumis-ayant-chante-tout-l-ete_1935643.html");
 		
-		ArticleReader reader = new LExpressReader();
+		AbstractArticleReader reader = new LExpressReader();
 		Article article = reader.processUrl(url, ArticleLanguage.FR);
 		System.out.println(article);
 		article.write();
@@ -82,7 +82,21 @@ public class LExpressReader extends AbstractJournalReader
 	public String getDomain()
 	{	return DOMAIN;
 	}
-
+	
+	/**
+	 * Checks whether the specified URL is compatible
+	 * with this reader.
+	 * 
+	 * @param url
+	 * 		URL to check.
+	 * @return
+	 * 		{@code true} iff this reader can handle the URL.
+	 */
+	public static boolean checkDomain(String url)
+	{	boolean result = url.contains(DOMAIN);
+		return result;
+	}
+	
 	/////////////////////////////////////////////////////////////////
 	// RETRIEVE			/////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////	

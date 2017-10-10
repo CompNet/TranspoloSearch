@@ -36,7 +36,7 @@ import org.jsoup.select.Elements;
 
 import fr.univavignon.transpolosearch.data.article.Article;
 import fr.univavignon.transpolosearch.data.article.ArticleLanguage;
-import fr.univavignon.transpolosearch.retrieval.reader.ArticleReader;
+import fr.univavignon.transpolosearch.retrieval.reader.AbstractArticleReader;
 import fr.univavignon.transpolosearch.retrieval.reader.ReaderException;
 import fr.univavignon.transpolosearch.tools.html.HtmlNames;
 import fr.univavignon.transpolosearch.tools.html.HtmlTools;
@@ -67,7 +67,7 @@ public class LaVoixDuNordReader extends AbstractJournalReader
 //		URL url = new URL("http://www.lavoixdunord.fr/206352/article/2017-08-19/l-eglise-notre-dame-point-de-depart-de-la-francigena-en-france");
 		URL url = new URL("http://www.lavoixdunord.fr/128575/article/2017-03-07/le-vieux-lille-peur-de-perdre-une-centaine-d-emplois-tous-secteurs-confondus");
 		
-		ArticleReader reader = new LaVoixDuNordReader();
+		AbstractArticleReader reader = new LaVoixDuNordReader();
 		Article article = reader.processUrl(url, ArticleLanguage.FR);
 		System.out.println(article);
 		article.write();
@@ -83,7 +83,21 @@ public class LaVoixDuNordReader extends AbstractJournalReader
 	public String getDomain()
 	{	return DOMAIN;
 	}
-
+	
+	/**
+	 * Checks whether the specified URL is compatible
+	 * with this reader.
+	 * 
+	 * @param url
+	 * 		URL to check.
+	 * @return
+	 * 		{@code true} iff this reader can handle the URL.
+	 */
+	public static boolean checkDomain(String url)
+	{	boolean result = url.contains(DOMAIN);
+		return result;
+	}
+	
 	/////////////////////////////////////////////////////////////////
 	// RETRIEVE			/////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////	

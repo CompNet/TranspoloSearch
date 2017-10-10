@@ -35,7 +35,7 @@ import org.jsoup.select.Elements;
 
 import fr.univavignon.transpolosearch.data.article.Article;
 import fr.univavignon.transpolosearch.data.article.ArticleLanguage;
-import fr.univavignon.transpolosearch.retrieval.reader.ArticleReader;
+import fr.univavignon.transpolosearch.retrieval.reader.AbstractArticleReader;
 import fr.univavignon.transpolosearch.retrieval.reader.ReaderException;
 import fr.univavignon.transpolosearch.tools.html.HtmlNames;
 import fr.univavignon.transpolosearch.tools.string.StringTools;
@@ -46,7 +46,7 @@ import fr.univavignon.transpolosearch.tools.string.StringTools;
  * 
  * @author Vincent Labatut
  */
-public class WikipediaReader extends ArticleReader
+public class WikipediaReader extends AbstractArticleReader
 {	
 	/**
 	 * Method defined only for a quick test.
@@ -64,7 +64,7 @@ public class WikipediaReader extends ArticleReader
 //		URL url = new URL("https://fr.wikipedia.org/wiki/Apache_Software_Foundation");
 		URL url = new URL("https://fr.wikipedia.org/wiki/Transport_Layer_Security");
 		
-		ArticleReader reader = new WikipediaReader();
+		AbstractArticleReader reader = new WikipediaReader();
 		reader.setCacheEnabled(false);
 		Article article = reader.processUrl(url, ArticleLanguage.FR);
 		article.cleanContent();

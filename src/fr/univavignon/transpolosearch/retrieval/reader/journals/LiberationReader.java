@@ -35,7 +35,7 @@ import org.jsoup.select.Elements;
 
 import fr.univavignon.transpolosearch.data.article.Article;
 import fr.univavignon.transpolosearch.data.article.ArticleLanguage;
-import fr.univavignon.transpolosearch.retrieval.reader.ArticleReader;
+import fr.univavignon.transpolosearch.retrieval.reader.AbstractArticleReader;
 import fr.univavignon.transpolosearch.retrieval.reader.ReaderException;
 import fr.univavignon.transpolosearch.tools.html.HtmlNames;
 import fr.univavignon.transpolosearch.tools.html.HtmlTools;
@@ -65,7 +65,7 @@ public class LiberationReader extends AbstractJournalReader
 //		URL url = new URL("http://www.liberation.fr/sports/2017/08/17/psg-pourquoi-le-depart-de-matuidi-marque-la-fin-d-une-ere_1590282");
 		URL url = new URL("http://www.liberation.fr/planete/2017/08/09/coree-du-nord-il-est-devenu-tres-difficile-de-negocier-avec-kim-jong-un_1589153");
 		
-		ArticleReader reader = new LiberationReader();
+		AbstractArticleReader reader = new LiberationReader();
 		Article article = reader.processUrl(url, ArticleLanguage.FR);
 		System.out.println(article);
 		article.write();
@@ -81,7 +81,21 @@ public class LiberationReader extends AbstractJournalReader
 	public String getDomain()
 	{	return DOMAIN;
 	}
-
+	
+	/**
+	 * Checks whether the specified URL is compatible
+	 * with this reader.
+	 * 
+	 * @param url
+	 * 		URL to check.
+	 * @return
+	 * 		{@code true} iff this reader can handle the URL.
+	 */
+	public static boolean checkDomain(String url)
+	{	boolean result = url.contains(DOMAIN);
+		return result;
+	}
+	
 	/////////////////////////////////////////////////////////////////
 	// RETRIEVE			/////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////	

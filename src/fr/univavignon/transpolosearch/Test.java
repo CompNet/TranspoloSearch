@@ -81,7 +81,7 @@ import fr.univavignon.transpolosearch.data.event.DummyDistanceMetric;
 import fr.univavignon.transpolosearch.data.search.AbstractSearchResults;
 import fr.univavignon.transpolosearch.extraction.Extractor;
 import fr.univavignon.transpolosearch.retrieval.ArticleRetriever;
-import fr.univavignon.transpolosearch.retrieval.reader.ArticleReader;
+import fr.univavignon.transpolosearch.retrieval.reader.AbstractArticleReader;
 import fr.univavignon.transpolosearch.search.social.AbstractSocialEngine;
 import fr.univavignon.transpolosearch.search.web.AbstractWebEngine;
 import fr.univavignon.transpolosearch.search.web.GoogleEngine;

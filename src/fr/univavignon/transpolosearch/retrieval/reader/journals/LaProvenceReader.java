@@ -36,7 +36,7 @@ import org.jsoup.select.Elements;
 
 import fr.univavignon.transpolosearch.data.article.Article;
 import fr.univavignon.transpolosearch.data.article.ArticleLanguage;
-import fr.univavignon.transpolosearch.retrieval.reader.ArticleReader;
+import fr.univavignon.transpolosearch.retrieval.reader.AbstractArticleReader;
 import fr.univavignon.transpolosearch.retrieval.reader.ReaderException;
 import fr.univavignon.transpolosearch.tools.html.HtmlNames;
 import fr.univavignon.transpolosearch.tools.html.HtmlTools;
@@ -66,7 +66,7 @@ public class LaProvenceReader extends AbstractJournalReader
 		URL url = new URL("http://www.laprovence.com/article/faits-divers-justice/4581041/il-y-a-140-ans-hysterie-collective-pour-la-guillotine-publique-a-marseille.html");
 //		URL url = new URL("http://www.laprovence.com/article/om/4582455/ligue-europa-lom-a-eu-tres-chaud.html");
 		
-		ArticleReader reader = new LaProvenceReader();
+		AbstractArticleReader reader = new LaProvenceReader();
 		Article article = reader.processUrl(url, ArticleLanguage.FR);
 		System.out.println(article);
 		article.write();
@@ -82,7 +82,21 @@ public class LaProvenceReader extends AbstractJournalReader
 	public String getDomain()
 	{	return DOMAIN;
 	}
-
+	
+	/**
+	 * Checks whether the specified URL is compatible
+	 * with this reader.
+	 * 
+	 * @param url
+	 * 		URL to check.
+	 * @return
+	 * 		{@code true} iff this reader can handle the URL.
+	 */
+	public static boolean checkDomain(String url)
+	{	boolean result = url.contains(DOMAIN);
+		return result;
+	}
+	
 	/////////////////////////////////////////////////////////////////
 	// RETRIEVE			/////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////	
@@ -171,10 +185,14 @@ public class LaProvenceReader extends AbstractJournalReader
 			
 			// retrieve the author
 			Element authorElt = articleElt.getElementsByAttributeValueContaining(HtmlNames.ATT_CLASS, CLASS_AUTHOR).first();
-			String authorName = authorElt.text();
-			authorName = removeGtst(authorName);
-			logger.log("Found the author: "+authorName);
-			authors.add(authorName);
+			if(authorElt==null)
+				logger.log("Could not find any author");
+			else
+			{	String authorName = authorElt.text();
+				authorName = removeGtst(authorName);
+				logger.log("Found the author: "+authorName);
+				authors.add(authorName);
+			}
 			
 			// check if the access is restricted
 			Element restrElt = articleElt.getElementById(ID_RESTRICTED);

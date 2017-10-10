@@ -78,7 +78,7 @@ import fr.univavignon.transpolosearch.tools.log.HierarchicalLoggerManager;
  * 
  * @author Vincent Labatut
  */
-public abstract class ArticleReader
+public abstract class AbstractArticleReader
 {	
 	/////////////////////////////////////////////////////////////////
 	// FACTORY		/////////////////////////////////////////////////
@@ -92,29 +92,29 @@ public abstract class ArticleReader
 	 * @return
 	 * 		An appropriate reader for the specified address.
 	 */
-	public static ArticleReader buildReader(String url)
-	{	ArticleReader result;
+	public static AbstractArticleReader buildReader(String url)
+	{	AbstractArticleReader result;
 		
 		// wikipedia article
 		if(url.contains(WikipediaReader.DOMAIN))
 			result = new WikipediaReader();
 		
 		// handled french journal
-		else if(url.contains(LaProvenceReader.DOMAIN))
+		else if(LaProvenceReader.checkDomain(url))
 			result = new LaProvenceReader();
-		else if(url.contains(LaVoixDuNordReader.DOMAIN))
+		else if(LaVoixDuNordReader.checkDomain(url))
 			result = new LaVoixDuNordReader();
-		else if(url.contains(LeFigaroReader.DOMAIN))
+		else if(LeFigaroReader.checkDomain(url))
 			result = new LeFigaroReader();
-		else if(url.contains(LeMondeReader.DOMAIN))
+		else if(LeMondeReader.checkDomain(url))
 			result = new LeMondeReader();
-		else if(url.contains(LeParisienReader.DOMAIN))
+		else if(LeParisienReader.checkDomain(url))
 			result = new LeParisienReader();
-		else if(url.contains(LePointReader.DOMAIN))
+		else if(LePointReader.checkDomain(url))
 			result = new LePointReader();
-		else if(url.contains(LExpressReader.DOMAIN))
+		else if(LExpressReader.checkDomain(url))
 			result = new LExpressReader();
-		else if(url.contains(LiberationReader.DOMAIN))
+		else if(LiberationReader.checkDomain(url))
 			result = new LiberationReader();
 		
 		// generic reader for the other cases

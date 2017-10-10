@@ -37,7 +37,7 @@ import org.jsoup.select.Elements;
 
 import fr.univavignon.transpolosearch.data.article.Article;
 import fr.univavignon.transpolosearch.data.article.ArticleLanguage;
-import fr.univavignon.transpolosearch.retrieval.reader.ArticleReader;
+import fr.univavignon.transpolosearch.retrieval.reader.AbstractArticleReader;
 import fr.univavignon.transpolosearch.retrieval.reader.ReaderException;
 import fr.univavignon.transpolosearch.tools.html.HtmlNames;
 import fr.univavignon.transpolosearch.tools.string.StringTools;
@@ -65,9 +65,10 @@ public class LeParisienReader extends AbstractJournalReader
 	{	
 //		URL url = new URL("http://www.leparisien.fr/economie/tabac-pourquoi-les-francais-fument-toujours-autant-17-08-2017-7196751.php");
 //		URL url = new URL("http://www.leparisien.fr/economie/loi-travail-l-elysee-lache-du-lest-sur-le-timing-24-05-2017-6978660.php");
-		URL url = new URL("http://actualites.leparisien.fr/bertrand-delanoe");
+//		URL url = new URL("http://actualites.leparisien.fr/bertrand-delanoe");
+		URL url = new URL("http://www.leparisien.fr/paris-75/paris-fait-elle-assez-pour-le-logement-social-05-03-2017-6734658.php");
 		
-		ArticleReader reader = new LeParisienReader();
+		AbstractArticleReader reader = new LeParisienReader();
 		Article article = reader.processUrl(url, ArticleLanguage.FR);
 		System.out.println(article);
 		article.write();
@@ -78,10 +79,27 @@ public class LeParisienReader extends AbstractJournalReader
 	/////////////////////////////////////////////////////////////////
 	/** Text allowing to detect the domain */
 	public static final String DOMAIN = "www.leparisien.fr";
+	/** Subdomain with very different article structures */
+	public static final String SUB_DOMAIN = "/laparisienne/";
 
 	@Override
 	public String getDomain()
 	{	return DOMAIN;
+	}
+	
+	/**
+	 * Checks whether the specified URL is compatible
+	 * with this reader.
+	 * 
+	 * @param url
+	 * 		URL to check.
+	 * @return
+	 * 		{@code true} iff this reader can handle the URL.
+	 */
+	public static boolean checkDomain(String url)
+	{	boolean result = url.contains(DOMAIN)
+			&& !url.contains(SUB_DOMAIN);
+		return result;
 	}
 	
 	/////////////////////////////////////////////////////////////////
@@ -166,7 +184,11 @@ public class LeParisienReader extends AbstractJournalReader
 			
 					// get the title
 					Element titleElt = fullElt.getElementsByAttributeValueContaining(HtmlNames.ATT_CLASS, CLASS_TITLE).first();
-					title = titleElt.text(); 
+					if(titleElt==null)
+					{	Element headElt = document.getElementsByTag(HtmlNames.ELT_HEAD).first();
+						titleElt = headElt.getElementsByTag(HtmlNames.ELT_TITLE).first();
+					}
+					title = titleElt.text();
 					logger.log("Get title: \""+title+"\"");
 			
 					// retrieve the dates

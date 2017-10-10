@@ -37,7 +37,7 @@ import org.jsoup.select.Elements;
 
 import fr.univavignon.transpolosearch.data.article.Article;
 import fr.univavignon.transpolosearch.data.article.ArticleLanguage;
-import fr.univavignon.transpolosearch.retrieval.reader.ArticleReader;
+import fr.univavignon.transpolosearch.retrieval.reader.AbstractArticleReader;
 import fr.univavignon.transpolosearch.retrieval.reader.ReaderException;
 import fr.univavignon.transpolosearch.tools.html.HtmlNames;
 import fr.univavignon.transpolosearch.tools.html.HtmlTools;
@@ -68,7 +68,7 @@ public class LeFigaroReader extends AbstractJournalReader
 //		URL url = new URL("http://www.lefigaro.fr/sciences/2017/08/17/01008-20170817ARTFIG00132-daniel-zagury-l-homme-qui-se-vaccina-contre-le-sida.php");
 //		URL url = new URL("http://www.lefigaro.fr/elections/presidentielles/2017/03/02/35003-20170302ARTFIG00373-fillon-les-elus-on-fera-sans-eux-les-electeurs-de-droite-ils-tiennent.php");
 		
-		ArticleReader reader = new LeFigaroReader();
+		AbstractArticleReader reader = new LeFigaroReader();
 		Article article = reader.processUrl(url, ArticleLanguage.FR);
 		System.out.println(article);
 		article.write();
@@ -84,7 +84,21 @@ public class LeFigaroReader extends AbstractJournalReader
 	public String getDomain()
 	{	return DOMAIN;
 	}
-
+	
+	/**
+	 * Checks whether the specified URL is compatible
+	 * with this reader.
+	 * 
+	 * @param url
+	 * 		URL to check.
+	 * @return
+	 * 		{@code true} iff this reader can handle the URL.
+	 */
+	public static boolean checkDomain(String url)
+	{	boolean result = url.contains(DOMAIN);
+		return result;
+	}
+	
 	/////////////////////////////////////////////////////////////////
 	// RETRIEVE			/////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////	

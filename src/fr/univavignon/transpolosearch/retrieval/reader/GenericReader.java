@@ -41,7 +41,7 @@ import org.jsoup.select.Elements;
 
 import fr.univavignon.transpolosearch.data.article.Article;
 import fr.univavignon.transpolosearch.data.article.ArticleLanguage;
-import fr.univavignon.transpolosearch.retrieval.reader.ArticleReader;
+import fr.univavignon.transpolosearch.retrieval.reader.AbstractArticleReader;
 import fr.univavignon.transpolosearch.retrieval.reader.ReaderException;
 import fr.univavignon.transpolosearch.tools.html.HtmlNames;
 import fr.univavignon.transpolosearch.tools.html.HtmlTools;
@@ -55,7 +55,7 @@ import fr.univavignon.transpolosearch.tools.string.StringTools;
  * 
  * @author Vincent Labatut
  */
-public class GenericReader extends ArticleReader
+public class GenericReader extends AbstractArticleReader
 {	
 	/**
 	 * Method defined only for a quick test.
@@ -71,7 +71,7 @@ public class GenericReader extends ArticleReader
 //		URL url = new URL("http://www.laprovence.com/article/faits-divers-justice/4581041/il-y-a-140-ans-hysterie-collective-pour-la-guillotine-publique-a-marseille.html");
 		URL url = new URL("http://www.lemonde.fr/politique/article/2017/08/22/code-du-travail-la-reforme-entre-dans-sa-phase-finale_5175000_823448.html");
 		
-		ArticleReader reader = new GenericReader();
+		AbstractArticleReader reader = new GenericReader();
 		Article article = reader.processUrl(url, ArticleLanguage.FR);
 		System.out.println(article);
 		article.write();

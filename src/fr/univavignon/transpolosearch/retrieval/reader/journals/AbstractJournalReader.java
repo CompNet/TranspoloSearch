@@ -22,7 +22,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.net.URLEncoder;
 
-import fr.univavignon.transpolosearch.retrieval.reader.ArticleReader;
+import fr.univavignon.transpolosearch.retrieval.reader.AbstractArticleReader;
 
 /**
  * Abstract class for more specific classes dedicated to
@@ -30,7 +30,7 @@ import fr.univavignon.transpolosearch.retrieval.reader.ArticleReader;
  * 
  * @author Vincent Labatut
  */
-public abstract class AbstractJournalReader extends ArticleReader
+public abstract class AbstractJournalReader extends AbstractArticleReader
 {
 	/////////////////////////////////////////////////////////////////
 	// NAME				/////////////////////////////////////////////
