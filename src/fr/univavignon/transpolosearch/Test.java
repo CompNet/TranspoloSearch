@@ -120,7 +120,7 @@ public class Test
 //		testGoogleSearch();
 		
 		// whole process
-//		testExtractor();
+		testExtractor();
 		
 		// compare searches
 			// hidalgo
@@ -139,11 +139,11 @@ public class Test
 //		testClustering();
 		
 		// complete reference
-		FileNames.setOutputFolder("Anne_Hidalgo");
-		String oldFile = FileNames.FO_WEB_SEARCH_RESULTS+File.separator+"old_reference.txt";
-		String newFile = FileNames.FO_WEB_SEARCH_RESULTS+File.separator+FileNames.FI_ANNOTATED_RESULTS;
-		String outFile = FileNames.FO_WEB_SEARCH_RESULTS+File.separator+"merged_reference.txt";
-		completeReference(oldFile,newFile,outFile);
+//		FileNames.setOutputFolder("Anne_Hidalgo");
+//		String oldFile = FileNames.FO_WEB_SEARCH_RESULTS+File.separator+"old_reference.txt";
+//		String newFile = FileNames.FO_WEB_SEARCH_RESULTS+File.separator+FileNames.FI_ANNOTATED_RESULTS;
+//		String outFile = FileNames.FO_WEB_SEARCH_RESULTS+File.separator+"merged_reference.txt";
+//		completeReference(oldFile,newFile,outFile);
 		
 		logger.close();
 	}
@@ -570,8 +570,10 @@ public class Test
 		Extractor extractor = new Extractor();
 		
 		DateFormat df = new SimpleDateFormat("yyyyMMdd");
-		Date startDate = df.parse("20170306");
-		Date endDate = df.parse("20170312");
+//		Date startDate = df.parse("20170306");
+//		Date endDate = df.parse("20170312");
+		Date startDate = df.parse("20170227");
+		Date endDate = df.parse("20170319");
 		boolean searchDate = true;
 		boolean extendedSocialSearch = true;
 		ArticleLanguage language = ArticleLanguage.FR;

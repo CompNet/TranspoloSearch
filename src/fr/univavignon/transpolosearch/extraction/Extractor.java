@@ -325,7 +325,9 @@ public class Extractor
 					txt = txt + "(dates are ignored here, because the search is not strict)";
 				logger.log(txt);
 				logger.log("websites=");
-				logger.log(websites);
+				logger.increaseOffset();
+					logger.log(websites);
+				logger.decreaseOffset();
 			logger.decreaseOffset();
 			
 			// initializes the Web search engines
@@ -531,7 +533,9 @@ public class Extractor
 				logger.log("extendedSearch="+extendedSearch);
 				logger.log("additionalPages=");
 				if(!additionalSeeds.isEmpty())
+				logger.increaseOffset();
 					logger.log(additionalSeeds);
+				logger.decreaseOffset();
 			logger.decreaseOffset();
 			
 			// initializes the social media search engines

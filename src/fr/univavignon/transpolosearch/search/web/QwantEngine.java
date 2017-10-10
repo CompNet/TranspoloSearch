@@ -141,10 +141,11 @@ public class QwantEngine extends AbstractWebEngine
 		logger.log("Keywords: "+keywords);
 		String baseUrl = SERVICE_URL 
 				+ SERVICE_PARAM_FILTER 
-				+ SERVICE_PARAM_COUNT+pageLanguage;
+				+ SERVICE_PARAM_COUNT
+				+ SERVICE_PARAM_LANGUAGE
+				+ pageLanguage;
 		if(pageCountry!=null)
 			baseUrl = baseUrl + "_" + pageCountry;
-		baseUrl = baseUrl + SERVICE_PARAM_LANGUAGE;
 		String baseQuery = keywords;
 		if(website==null)
 			logger.log("No website specified");
