@@ -70,8 +70,8 @@ public abstract class AbstractSpecificSearchResults<T extends AbstractSearchResu
 	 * @param endDate
 	 * 		End of the time period.
 	 */
-	private void filterByDate(Date startDate, Date endDate)
-	{	logger.log("Removing articles not fitting the date constraints: "+startDate+"->"+endDate);
+	private void filterByEntityDate(Date startDate, Date endDate)
+	{	logger.log("Removing articles not fitting the entity date constraints: "+startDate+"->"+endDate);
 		logger.increaseOffset();
 			fr.univavignon.transpolosearch.tools.time.Date start = new fr.univavignon.transpolosearch.tools.time.Date(startDate);
 			fr.univavignon.transpolosearch.tools.time.Date end = new fr.univavignon.transpolosearch.tools.time.Date(endDate);
@@ -80,12 +80,36 @@ public abstract class AbstractSpecificSearchResults<T extends AbstractSearchResu
 			for(T result: results.values())
 			{	if(result.status==null)
 				{	total++;
-					if(!result.filterByDate(start,end,total))
+					if(!result.filterByEntityDate(start,end,total))
 						count++;
 				}
 			}
 		logger.decreaseOffset();
 		logger.log("Date-based filtering complete: "+count+"/"+total);
+	}
+	
+	/**
+	 * Discards results published out of the specified date range. 
+	 *  
+	 * @param startDate
+	 * 		Start of the time period.
+	 * @param endDate
+	 * 		End of the time period.
+	 */
+	private void filterByPublicationDate(Date startDate, Date endDate)
+	{	logger.log("Removing articles not fitting the publication date constraints: "+startDate+"->"+endDate);
+		logger.increaseOffset();
+			int count = 0;
+			int total = 0;
+			for(T result: results.values())
+			{	if(result.status==null)
+				{	total++;
+					if(!result.filterByPublicationDate(startDate,endDate,total))
+						count++;
+				}
+			}
+		logger.decreaseOffset();
+		logger.log("Publication date-based filtering complete: "+count+"/"+total);
 	}
 	
 	/**
@@ -121,19 +145,30 @@ if(result instanceof WebSearchResult && ((WebSearchResult)result).url.equalsIgno
 	 * in the specified date range, or not containing the 
 	 * compulsory expression.
 	 *  
+	 * @param startDate
+	 * 		Start of the period we want to consider, 
+	 * 		or {@code null} for no constraint.
+	 * @param endDate
+	 * 		End of the period we want to consider,
+	 * 		or {@code null} for no constraint.
+	 * @param filterByPubDate
+	 * 		Whether or not to filter articles depending on their publication date.
 	 * @param compulsoryExpression
 	 * 		String expression which must be present in the article,
 	 * 		or {@code null} if there is no such constraint.
 	 * @param language
 	 * 		targeted language of the articles.
 	 */
-	public void filterByContent(String compulsoryExpression, ArticleLanguage language)
+	public void filterByContent(Date startDate, Date endDate, boolean filterByPubDate, String compulsoryExpression, ArticleLanguage language)
 	{	logger.log("Starting filtering the articles by content");
 		logger.increaseOffset();
 		
 		// log stuff
 		logger.log("Parameters:");
 		logger.increaseOffset();
+			logger.log("startDate="+startDate);
+			logger.log("endDate="+endDate);
+			logger.log("filterByPubDate="+filterByPubDate);
 			logger.log("compulsoryExpression="+compulsoryExpression);
 			logger.log("language="+language);
 		logger.decreaseOffset();
@@ -150,6 +185,12 @@ if(result instanceof WebSearchResult && ((WebSearchResult)result).url.equalsIgno
 		else
 			logger.log("No compulsory expression to process");
 		
+		// possibly filter the remaining texts depending on the publication date
+		if(filterByPubDate)
+			filterByPublicationDate(startDate,endDate);
+		else
+			logger.log("No publication date filtering");
+		
 		logger.decreaseOffset();
 		logger.log("Content-based filtering complete");
 	}
@@ -162,11 +203,11 @@ if(result instanceof WebSearchResult && ((WebSearchResult)result).url.equalsIgno
 	 * 		Start of the time period.
 	 * @param endDate
 	 * 		End of the time period.
-	 * @param searchDate
-	 * 		Whether the date constraint was applied before ({@code true}) at search time,
-	 * 		or should be applied <i>a posteriori</i> here ({@code false}).
+	 * @param filterByEntDate
+	 * 		Whether or not filtering the articles depending on the fact they contain
+	 * 		a date belonging to the targeted period.
 	 */
-	public void filterByEntity(Date startDate, Date endDate, boolean searchDate)
+	public void filterByEntity(Date startDate, Date endDate, boolean filterByEntDate)
 	{	logger.log("Starting filtering the articles by entity");
 		logger.increaseOffset();
 		
@@ -175,18 +216,15 @@ if(result instanceof WebSearchResult && ((WebSearchResult)result).url.equalsIgno
 		logger.increaseOffset();
 			logger.log("startDate="+startDate);
 			logger.log("endDate="+endDate);
-			String txt = "searchDate="+searchDate;
-			if(searchDate)
-				txt = txt + "(dates are ignored here, because they were already used during the search)";
-			logger.log(txt);
+			logger.log("filterByEntDate="+filterByEntDate);
 		logger.decreaseOffset();
 		
 		// possibly filter the texts depending on the dates they contain
-		if(!searchDate)
+		if(filterByEntDate)
 		{	if(startDate==null || endDate==null)
 				logger.log("WARNING: one date is null, so both of them are ignored");
 			else
-				filterByDate(startDate, endDate);
+				filterByEntityDate(startDate, endDate);
 		}
 		
 		logger.decreaseOffset();

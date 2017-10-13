@@ -51,15 +51,15 @@ public abstract class AbstractSocialEngine
 	 * @param endDate
 	 * 		End of the period we want to consider,
 	 * 		or {@code null} for no constraint.
-	 * @param extendedSearch
+	 * @param doExtendedSearch
 	 * 		If {@code true}, the search returns the posts by the commenting
 	 * 		users, for the specified period. 
 	 */
-	public AbstractSocialEngine(String seed, Date startDate, Date endDate, boolean extendedSearch)
+	public AbstractSocialEngine(String seed, Date startDate, Date endDate, boolean doExtendedSearch)
 	{	this.seed = seed;
 		this.startDate = startDate;
 		this.endDate = endDate;
-		this.extendedSearch = extendedSearch;
+		this.doExtendedSearch = doExtendedSearch;
 	}
 	/////////////////////////////////////////////////////////////////
 	// LOGGER		/////////////////////////////////////////////////
@@ -158,7 +158,7 @@ public abstract class AbstractSocialEngine
 	/** End of the period on which the search focuses (or {@code null} for no period) */
 	protected Date endDate = null;
 	/** Whether to search among the people commenting the posts of the seed page ({@code true}) or not ({@code false}) */
-	protected boolean extendedSearch = false;
+	protected boolean doExtendedSearch = false;
 	
 	/**
 	 * Performs a search using the corresponding engine. The method

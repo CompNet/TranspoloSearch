@@ -108,14 +108,14 @@ public class Extractor
 	 * @param endDate
 	 * 		End of the period we want to consider,
 	 * 		or {@code null} for no constraint.
-	 * @param searchDate
-	 * 		If {@code true}, both dates will be used directly in the Web search.
-	 * 		Otherwise, they will be used <i>a posteri</i> to filter the detected events.
-	 * 		If one of the dates is {@code null}, this parameter has no effect.
+	 * @param filterByPubDate
+	 * 		Whether or not to filter articles depending on their publication date.
+	 * @param filterByEntDate
+	 * 		Whether or not to filter articles depending on the dates they contain.
 	 * @param compulsoryExpression
 	 * 		String expression which must be present in the article,
 	 * 		or {@code null} if there's no such constraint.
-	 * @param extendedSocialSearch
+	 * @param doExtendedSocialSearch
 	 * 		Whether the social media search should retrieve the posts published by the
 	 * 		users commenting the posts of interest, for the considered period. If 
 	 * 		{@code false}, only the posts on the targeted page and their direct comments
@@ -134,7 +134,7 @@ public class Extractor
 	 * @throws ProcessorException 
 	 * 		Problem while detecting the entity mentions.
 	 */
-	public void performExtraction(String keywords, List<String> websites, List<String> additionalSeeds, Date startDate, Date endDate, boolean searchDate, String compulsoryExpression, boolean extendedSocialSearch, ArticleLanguage language) throws IOException, ReaderException, ParseException, SAXException, ProcessorException
+	public void performExtraction(String keywords, List<String> websites, List<String> additionalSeeds, Date startDate, Date endDate, boolean filterByPubDate, boolean filterByEntDate, String compulsoryExpression, boolean doExtendedSocialSearch, ArticleLanguage language) throws IOException, ReaderException, ParseException, SAXException, ProcessorException
 	{	logger.log("Starting the information extraction");
 		logger.increaseOffset();
 		
@@ -152,11 +152,11 @@ public class Extractor
 		
 		// perform the Web search
 		logger.log("Performing the Web search");
-		WebSearchResults webRes = performWebExtraction(keywords, websites, startDate, endDate, searchDate, compulsoryExpression, language);
+		WebSearchResults webRes = performWebExtraction(keywords, websites, startDate, endDate, filterByPubDate, filterByEntDate, compulsoryExpression, language);
 		
 		// perform the social search
 		logger.log("Performing the social media search");
-		SocialSearchResults socialRes = performSocialExtraction(keywords, additionalSeeds, startDate, endDate, compulsoryExpression, extendedSocialSearch, language);
+		SocialSearchResults socialRes = performSocialExtraction(keywords, additionalSeeds, startDate, endDate, compulsoryExpression, doExtendedSocialSearch, language);
 		
 		// merge results and continue processing
 		logger.log("Merging web and social media results");
@@ -184,22 +184,16 @@ public class Extractor
 	 * @param endDate
 	 * 		End of the period we want to consider,
 	 * 		or {@code null} for no constraint.
-	 * @param searchDate
-	 * 		If {@code true}, both dates will be used directly in the Web search.
-	 * 		Otherwise, they will be used <i>a posteriori</i> to filter the detected events.
-	 * 		If one of the dates is {@code null}, this parameter has no effect.
 	 * @param language
 	 * 		Targeted language. 
 	 */
-	private void initWebSearchEngines(List<String> websites, Date startDate, Date endDate, boolean searchDate, ArticleLanguage language)
+	private void initWebSearchEngines(List<String> websites, Date startDate, Date endDate, ArticleLanguage language)
 	{	logger.log("Initializing the Web search engines");
 		logger.increaseOffset();
 		
 		// nullify dates if the search is not strict
-		if(!searchDate)
-		{	startDate = null;
+		if(startDate==null)
 			endDate = null;
-		}
 		
 		// iterate over each website
 		int i = 1;
@@ -284,16 +278,15 @@ public class Extractor
 	 * @param endDate
 	 * 		End of the period we want to consider,
 	 * 		or {@code null} for no constraint.
-	 * @param searchDate
-	 * 		If {@code true}, both dates will be used directly in the Web search.
-	 * 		Otherwise, they will be used <i>a posteri</i> to filter the detected events.
-	 * 		If one of the dates is {@code null}, this parameter has no effect.
+	 * @param filterByPubDate
+	 * 		Whether or not to filter articles depending on their publication date.
+	 * @param filterByEntDate
+	 * 		Whether or not to filter articles depending on the dates they contain.
 	 * @param compulsoryExpression
 	 * 		String expression which must be present in the article,
 	 * 		or {@code null} if there is no such constraint.
 	 * @param language
 	 * 		Language targeted during the search.
-	 * 
 	 * @return
 	 * 		The Web search results.
 	 * 
@@ -308,7 +301,7 @@ public class Extractor
 	 * @throws ProcessorException 
 	 * 		Problem while detecting the entity mentions.
 	 */
-	private WebSearchResults performWebExtraction(String keywords, List<String> websites, Date startDate, Date endDate, boolean searchDate, String compulsoryExpression, ArticleLanguage language) throws IOException, ReaderException, ParseException, SAXException, ProcessorException
+	private WebSearchResults performWebExtraction(String keywords, List<String> websites, Date startDate, Date endDate, boolean filterByPubDate, boolean filterByEntDate, String compulsoryExpression, ArticleLanguage language) throws IOException, ReaderException, ParseException, SAXException, ProcessorException
 	{	logger.log("Starting the web extraction");
 		logger.increaseOffset();
 			int currentStep = 1;
@@ -320,10 +313,8 @@ public class Extractor
 				logger.log("keywords="+keywords);
 				logger.log("startDate="+startDate);
 				logger.log("endDate="+endDate);
-				String txt = "searchDate="+searchDate;
-				if(!searchDate)
-					txt = txt + "(dates are ignored here, because the search is not strict)";
-				logger.log(txt);
+				logger.log("filterByPubDate="+filterByPubDate);
+				logger.log("filterByEntDate="+filterByEntDate);
 				logger.log("websites=");
 				logger.increaseOffset();
 					logger.log(websites);
@@ -331,7 +322,7 @@ public class Extractor
 			logger.decreaseOffset();
 			
 			// initializes the Web search engines
-			initWebSearchEngines(websites, startDate, endDate, searchDate, language);
+			initWebSearchEngines(websites, startDate, endDate, language);
 			
 			// perform the Web search
 			WebSearchResults results = performWebSearch(keywords);
@@ -351,7 +342,7 @@ public class Extractor
 			currentStep++;
 			
 			// possibly filter the articles depending on the content
-			results.filterByContent(compulsoryExpression, language);
+			results.filterByContent(startDate, endDate, filterByPubDate, compulsoryExpression, language);
 			fileName = currentStep + "_" + FileNames.FI_ARTICLES_CONTENT_FILTER;
 			results.exportResults(fileName);
 			results.computePerformance(fileName);
@@ -361,7 +352,7 @@ public class Extractor
 			results.detectMentions(recognizer);
 			
 			// possibly filter the articles depending on the entities
-			results.filterByEntity(startDate, endDate, searchDate);
+			results.filterByEntity(startDate, endDate, filterByEntDate);
 			fileName = currentStep + "_" + FileNames.FI_ARTICLES_ENTITY_FILTER;
 			results.exportResults(fileName);
 			results.computePerformance(fileName);
@@ -406,7 +397,7 @@ public class Extractor
 	 * 		Start of the period we want to consider, or {@code null} for no constraint.
 	 * @param endDate
 	 * 		End of the period we want to consider, or {@code null} for no constraint.
-	 * @param extendedSearch
+	 * @param doExtendedSearch
 	 * 		Whether the social media search should retrieve the posts published by the
 	 * 		users commenting the posts of interest, for the considered period. If 
 	 * 		{@code false}, only the posts on the targeted page and their direct comments
@@ -414,7 +405,7 @@ public class Extractor
 	 * @param language
 	 * 		Targeted language. 
 	 */
-	private void initSocialMediaEngines(List<String> seeds, Date startDate, Date endDate, boolean extendedSearch, ArticleLanguage language)
+	private void initSocialMediaEngines(List<String> seeds, Date startDate, Date endDate, boolean doExtendedSearch, ArticleLanguage language)
 	{	logger.log("Initializing the social media search engines");
 		logger.increaseOffset();
 		
@@ -426,7 +417,7 @@ public class Extractor
 			
 			// set up Facebook
 			try
-			{	FacebookEngine facebookEngine = new FacebookEngine(seed, startDate, endDate, extendedSearch, language);
+			{	FacebookEngine facebookEngine = new FacebookEngine(seed, startDate, endDate, doExtendedSearch, language);
 				socialEngines.add(facebookEngine);
 			} 
 			catch (FailingHttpStatusCodeException | IOException | URISyntaxException e) 
@@ -493,7 +484,7 @@ public class Extractor
 	 * @param endDate
 	 * 		End of the period we want to consider,
 	 * 		or {@code null} for no constraint.
-	 * @param extendedSearch
+	 * @param doExtendedSearch
 	 * 		Whether the social media search should retrieve the posts published by the
 	 * 		users commenting the posts of interest, for the considered period. If 
 	 * 		{@code false}, only the posts on the targeted page and their direct comments
@@ -518,7 +509,7 @@ public class Extractor
 	 * @throws ProcessorException 
 	 * 		Problem while detecting the entity mentions.
 	 */
-	private SocialSearchResults performSocialExtraction(String keywords, List<String> additionalSeeds, Date startDate, Date endDate, String compulsoryExpression, boolean extendedSearch, ArticleLanguage language) throws IOException, ReaderException, ParseException, SAXException, ProcessorException
+	private SocialSearchResults performSocialExtraction(String keywords, List<String> additionalSeeds, Date startDate, Date endDate, String compulsoryExpression, boolean doExtendedSearch, ArticleLanguage language) throws IOException, ReaderException, ParseException, SAXException, ProcessorException
 	{	logger.log("Starting the social media extraction");
 		logger.increaseOffset();
 			int currentStep = 1;
@@ -530,7 +521,7 @@ public class Extractor
 				logger.log("keywords="+keywords);
 				logger.log("startDate="+startDate);
 				logger.log("endDate="+endDate);
-				logger.log("extendedSearch="+extendedSearch);
+				logger.log("doExtendedSearch="+doExtendedSearch);
 				logger.log("additionalPages=");
 				if(!additionalSeeds.isEmpty())
 				logger.increaseOffset();
@@ -542,7 +533,7 @@ public class Extractor
 			List<String> seeds = new ArrayList<String>();
 			seeds.add(null);
 			seeds.addAll(additionalSeeds);
-			initSocialMediaEngines(seeds, startDate, endDate, extendedSearch, language);
+			initSocialMediaEngines(seeds, startDate, endDate, doExtendedSearch, language);
 			
 			// perform the social search
 			boolean includeComments = false;
@@ -556,7 +547,7 @@ public class Extractor
 			results.buildArticles(includeComments);
 			
 			// possibly filter the articles depending on the content
-			results.filterByContent(compulsoryExpression,language);
+			results.filterByContent(startDate, endDate, false, compulsoryExpression, language);	// false, because we suppose the targeted period is always respected when searching through the social media API
 			fileName = currentStep + "_" + FileNames.FI_ARTICLES_CONTENT_FILTER;
 			results.exportResults(fileName);
 			results.computePerformance(fileName);
@@ -566,7 +557,7 @@ public class Extractor
 			results.detectMentions(recognizer);
 			
 			// possibly filter the articles depending on the entities
-			results.filterByEntity(null,null,true); // unnecessary, unless we add other entity-based constraints than dates
+			results.filterByEntity(null,null,false); // unnecessary, unless we add other entity-based constraints than dates
 			fileName = currentStep + "_" + FileNames.FI_ARTICLES_ENTITY_FILTER;
 			results.exportResults(fileName);
 			results.computePerformance(fileName);

@@ -256,6 +256,7 @@ if(part.startsWith(("si tu aimes la vidéo")))
 			prev = prev.replaceAll("[\n\r]", " ");							// remove new lines
 			prev = prev.replaceAll("- -", " - ");							// clean multuple hyphens
 			prev = prev.replaceAll(":([)(])"," $1");						// OpeNer doesn't like ":(", for some reason... 
+			prev = prev.replaceAll("\\(\\.\\)","   ");						// OpeNer doesn't like ":(", for some reason... 
 		}
 		while(!result.equals(prev));
 		

@@ -383,7 +383,7 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
     	{	Set<Set<Integer>> partition = dendro.partitionK(k);
     		// get the silhouette
     		double sil = Silhouette.processSilhouette(distanceMatrix, partition);
-    		logger.log("k="+k+" >> Silhouete="+sil);
+    		logger.log("k="+k+"/"+remainingRes.size()+" >> Silhouete="+sil);
     		if(sil>bestSil)
 			{	bestSil = sil;
 				bestK = k;
@@ -926,7 +926,7 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
     	{	Set<Set<Integer>> partition = dendro.partitionK(k);
     		// get the silhouette
     		double sil = Silhouette.processSilhouette(distanceMatrix, partition);
-    		logger.log("k="+k+" >> Silhouete="+sil);
+    		logger.log("k="+k+"/"+events.size()+" >> Silhouete="+sil);
     		if(sil>bestSil)
 			{	bestSil = sil;
 				bestK = k;

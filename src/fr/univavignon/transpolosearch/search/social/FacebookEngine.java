@@ -90,7 +90,7 @@ public class FacebookEngine extends AbstractSocialEngine
 	 * @param endDate
 	 * 		End of the period we want to consider,
 	 * 		or {@code null} for no constraint.
-	 * @param extendedSearch
+	 * @param doExtendedSearch
 	 * 		If {@code true}, the search returns the posts by the commenting
 	 * 		users, for the specified period. 
 	 * @param language
@@ -105,8 +105,8 @@ public class FacebookEngine extends AbstractSocialEngine
 	 * @throws URISyntaxException 
 	 * 		Problem while logging in Facebook. 
 	 */
-	public FacebookEngine(String seed, Date startDate, Date endDate, boolean extendedSearch, ArticleLanguage language) throws FailingHttpStatusCodeException, MalformedURLException, IOException, URISyntaxException
-	{	super(seed,startDate,endDate,extendedSearch);
+	public FacebookEngine(String seed, Date startDate, Date endDate, boolean doExtendedSearch, ArticleLanguage language) throws FailingHttpStatusCodeException, MalformedURLException, IOException, URISyntaxException
+	{	super(seed,startDate,endDate,doExtendedSearch);
 		
 		switch(language)
 		{	case EN:

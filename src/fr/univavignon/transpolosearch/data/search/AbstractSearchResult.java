@@ -81,9 +81,11 @@ public abstract class AbstractSearchResult
 	public final static String STATUS_NO_MENTION = "No mention found";
 	/** Problematic status: no event was found in the page */
 	public final static String STATUS_NO_EVENT = "No event found";
-	/** Problematic status: the targeted date was found in the page */
+	/** Problematic status: the targeted date was not found in the page */
 	public final static String STATUS_MISSING_DATE = "Missing targeted date";
-	/** Problematic status: the targeted name was found in the page */
+	/** Problematic status: the publication date is incompatible with the targeted period */
+	public final static String STATUS_INVALID_DATE = "Invalid publication date";
+	/** Problematic status: the targeted name was not found in the page */
 	public final static String STATUS_MISSING_KEYWORD = "Missing keyword";
 	/** Problematic status: the page is not written using the targeted language */
 	public final static String STATUS_INCORRECT_LANGUAGE = "Incorrect language";
@@ -246,7 +248,7 @@ public abstract class AbstractSearchResult
 	 * @return
 	 * 		{@code true} iff the result was discarded.
 	 */
-	protected boolean filterByDate(Date startDate, Date endDate, int nbr)
+	protected boolean filterByEntityDate(Date startDate, Date endDate, int nbr)
 	{	logger.log("Processing article "+article.getTitle()+" ("+nbr+")");
 		logger.increaseOffset();
 			List<AbstractMention<?>> dateMentions = mentions.getMentionsByType(EntityType.DATE);
@@ -273,6 +275,47 @@ public abstract class AbstractSearchResult
 			// possibly remove the article/mentions
 			if(result)
 				status = STATUS_MISSING_DATE;
+		
+		logger.decreaseOffset();
+		return result;
+	}
+	
+	/**
+	 * Discards results published out of the specified date range. 
+	 *  
+	 * @param startDate
+	 * 		Start of the time period.
+	 * @param endDate
+	 * 		End of the time period.
+	 * @param nbr
+	 * 		Number of this result in the collection.
+	 * @return
+	 * 		{@code true} iff the result was discarded.
+	 */
+	protected boolean filterByPublicationDate(java.util.Date startDate, java.util.Date endDate, int nbr)
+	{	logger.log("Processing article "+article.getTitle()+" ("+nbr+")");
+		logger.increaseOffset();
+			boolean result = false;
+			java.util.Date pubDate = article.getPublishingDate();
+			if(pubDate==null)
+				logger.log("No publishing date for this article");
+			else
+			{	SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+				String str = "Publishing date is "+sdf.format(pubDate);
+				if(pubDate.compareTo(startDate)>=0 && pubDate.compareTo(endDate)<=0)
+					str = str + ": in the range";
+				else
+				{	result = true;
+					str = str + ": not in the range";
+				}
+				str = str + " " + sdf.format(startDate) + " -> " + sdf.format(endDate);
+				logger.log(str);
+				
+			}
+			
+			// possibly remove the article/mentions
+			if(result)
+				status = STATUS_INVALID_DATE;
 		
 		logger.decreaseOffset();
 		return result;
@@ -353,7 +396,7 @@ public abstract class AbstractSearchResult
 				String normalizedStr = value.toString();
 				if(!uniqueStr.contains(normalizedStr))
 				{	uniqueStr.add(normalizedStr);
-					String valueStr = mention.getStringValue();
+					String valueStr = mention.getValue().toString();
 					displayedStr.add(valueStr);
 				}
 			}

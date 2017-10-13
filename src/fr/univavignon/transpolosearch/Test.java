@@ -574,8 +574,9 @@ public class Test
 //		Date endDate = df.parse("20170312");
 		Date startDate = df.parse("20170227");
 		Date endDate = df.parse("20170319");
-		boolean searchDate = true;
-		boolean extendedSocialSearch = true;
+		boolean filterByPubDate = true;
+		boolean filterByEntDate = false;
+		boolean doExtendedSocialSearch = true;
 		ArticleLanguage language = ArticleLanguage.FR;
 		
 		List<List<Object>> params = Arrays.asList
@@ -606,7 +607,7 @@ public class Test
 			
 			logger.log("Processing "+keywords);
 			logger.increaseOffset();
-				extractor.performExtraction(keywords, websites, additionalPages, startDate, endDate, searchDate, compulsoryExpression, extendedSocialSearch, language);
+				extractor.performExtraction(keywords, websites, additionalPages, startDate, endDate, filterByPubDate, filterByEntDate, compulsoryExpression, doExtendedSocialSearch, language);
 			logger.decreaseOffset();
 		}
 	}
