@@ -162,9 +162,12 @@ public class Test
 	 * which contains less entries.
 	 * 
 	 * @param oldFile
-	 * 		Old reference file (contains the classes). 
+	 * 		Old reference file: contains the classes. We expect the URL as the first column,
+	 * 		then the class, and possibly additional fields (which will be kept in the output).  
 	 * @param newFile 
-	 * 		Current reference file (contains more results).
+	 * 		Current reference file: contains more results. We expect the URL as the first
+	 * 		column. The remaining columns are ignored (if one wants to add them in the produced
+	 * 		file, one can just edit it <i>a posteriori</i> using some office suite software.
 	 * @param outFile 
 	 * 		Result of the merge.
 	 * 
@@ -242,7 +245,7 @@ public class Test
 	// RETRIEVAL	/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
 	/**
-	 * Tests the retrieval of text comming from random Web sites.
+	 * Tests the retrieval of text coming from random Web sites.
 	 * 
 	 * @throws Exception
 	 * 		Problem during the retrieval.
@@ -612,6 +615,9 @@ public class Test
 		}
 	}
 }
+
+// TODO setup a fuzzy k-means (or some other clustering algorithm allowing overlapping clusters)
+// TODO try the boilerplate API to retrieve Web page content
 
 // TODO manips:
 // 		- Filtrer par date quand c'est possible, pour voir si ça améliore le beans
