@@ -622,5 +622,4 @@ public class Test
 // TODO manips:
 // 		- Filtrer par date quand c'est possible, pour voir si ça améliore le beans
 // 		- annoter les dernières recherches
-// 		- pour tester les faux négatifs: rechercher manuellement chaque évènement officiel d'Hidalgo (agenda)
 // 		- rajouter d'autres journaux locaux parisiens à la recherche hidalgo
