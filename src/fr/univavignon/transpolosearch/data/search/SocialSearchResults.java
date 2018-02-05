@@ -2,7 +2,7 @@ package fr.univavignon.transpolosearch.data.search;
 
 /*
  * TranspoloSearch
- * Copyright2015-18Vincent Labatut
+ * Copyright 2015-18 Vincent Labatut
  * 
  * This file is part of TranspoloSearch.
  * 
@@ -52,7 +52,7 @@ public class SocialSearchResults extends AbstractSpecificSearchResults<SocialSea
 	{	super();
 		
 		String filePath = FileNames.FO_SOCIAL_SEARCH_RESULTS + File.separator + FileNames.FI_ANNOTATED_RESULTS;
-		loadReference(filePath);
+		loadReferenceClusters(filePath);
 	}
 	
 	/////////////////////////////////////////////////////////////////

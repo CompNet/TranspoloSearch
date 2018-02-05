@@ -2,7 +2,7 @@ package fr.univavignon.transpolosearch.data.search;
 
 /*
  * TranspoloSearch
- * Copyright2015-18Vincent Labatut
+ * Copyright 2015-18 Vincent Labatut
  * 
  * This file is part of TranspoloSearch.
  * 
@@ -18,11 +18,21 @@ package fr.univavignon.transpolosearch.data.search;
  * along with TranspoloSearch. If not, see <http://www.gnu.org/licenses/>.
  */
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
+
 import java.util.Date;
+import java.util.List;
+import java.util.Scanner;
 
 import fr.univavignon.transpolosearch.data.article.ArticleLanguage;
+import fr.univavignon.transpolosearch.data.event.ReferenceEvent;
 import fr.univavignon.transpolosearch.processing.InterfaceRecognizer;
 import fr.univavignon.transpolosearch.processing.ProcessorException;
+import fr.univavignon.transpolosearch.tools.file.FileNames;
+import fr.univavignon.transpolosearch.tools.file.FileTools;
 
 /**
  * Collection of search results returned by a collection of
@@ -36,11 +46,24 @@ import fr.univavignon.transpolosearch.processing.ProcessorException;
  */
 public abstract class AbstractSpecificSearchResults<T extends AbstractSearchResult> extends AbstractSearchResults<T>
 {	
+	/**
+	 * Initializes the search result.
+	 * 
+	 * @throws UnsupportedEncodingException 
+	 * 		Problem while loading the reference. 
+	 */
+	public AbstractSpecificSearchResults() throws UnsupportedEncodingException
+	{	super();
+		
+		String filePath = FileNames.FO_OUTPUT + File.separator + FileNames.FI_ANNOTATED_RESULTS;
+		loadReferenceEvents(filePath);
+	}
+	
 	/////////////////////////////////////////////////////////////////
 	// FILTERING	/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
 	/**
-	 * Discards results whose language does not matche the targeted one.
+	 * Discards results whose language does not match the targeted one.
 	 *
 	 * @param language
 	 * 		targeted language of the articles.
@@ -284,5 +307,111 @@ boolean doit = false;
 		
 		logger.decreaseOffset();
 		logger.log("Display complete");
+	}
+	
+	/////////////////////////////////////////////////////////////////
+	// PERFORMANCE		/////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////
+	/**
+	 * Tries to load the manually annotated reference events, if the 
+	 * file exists. It is then used later to assess the system
+	 * performance.
+	 * <br/>
+	 * We expect the following format: event id on the first column,
+	 * event name on the second, event parent on the third, date on
+	 * the fourth. Columns are separated by tabulations. The rest
+	 * of the columns (if any) are just ignored.
+	 * 
+	 * @param filePath 
+	 * 		Path of the reference events file.
+	 * @throws UnsupportedEncodingException
+	 * 		Problem when loading the reference events file. 
+	 */
+	protected void loadReferenceEvents(String filePath) throws UnsupportedEncodingException
+	{	logger.increaseOffset();
+			
+			try
+			{	logger.log("Find a reference events file ("+filePath+"): loading it");
+				Scanner scanner = FileTools.openTextFileRead(filePath, "UTF-8");
+				while(scanner.hasNextLine())
+				{	String line = scanner.nextLine();
+					String[] tmp = line.split("\t");
+					
+					// event id
+					String idStr = tmp[0].trim();
+					int id = Integer.parseInt(idStr);
+					// event name
+					String name = tmp[1].trim();
+					// parent
+					String parentStr = tmp[2].trim();
+					ReferenceEvent parent = null;
+					if(!parentStr.isEmpty())
+					{	int parentId = Integer.parseInt(parentStr);
+						parent = referenceEvents.get(parentId);
+					}
+					// event date
+					String dateStr = tmp[3].trim().replace('-','/');
+					fr.univavignon.transpolosearch.tools.time.Date date = fr.univavignon.transpolosearch.tools.time.Date.importFromString(dateStr);
+					
+					// reference event
+					ReferenceEvent event = new ReferenceEvent(id, name, date, parent);
+					referenceEvents.put(id, event);
+				}
+			}
+			catch (FileNotFoundException e) 
+			{	logger.log("Found no reference events file at "+filePath);
+			}
+			
+		logger.decreaseOffset();
+	}
+	
+	/**
+	 * Tries to load the manually annotated reference clusters, 
+	 * if the file exists. It is then used later to assess the 
+	 * system performance.
+	 * <br/>
+	 * We expect the following format: URL on the first column,
+	 * then a tabulation, then the ids of the event(s). The rest
+	 * of the columns (if any) are just ignored. The ids are integers
+	 * separated by commas.
+	 * 
+	 * @param filePath 
+	 * 		Path of the reference clusters file.
+	 * @throws UnsupportedEncodingException
+	 * 		Problem when loading the reference clusters file. 
+	 */
+	protected void loadReferenceClusters(String filePath) throws UnsupportedEncodingException
+	{	logger.increaseOffset();
+			
+			try
+			{	logger.log("Find a reference clusters file ("+filePath+"): loading it");
+				Scanner scanner = FileTools.openTextFileRead(filePath, "UTF-8");
+				while(scanner.hasNextLine())
+				{	String line = scanner.nextLine();
+					String[] tmp = line.split("\t");
+					String key = tmp[0].trim();
+					if(tmp.length>1)
+					{	String clustName = tmp[1].trim();
+						List<ReferenceEvent> clust;
+						if(clustName.isEmpty())
+							clust = null;	// null means the URL is irrelevant
+						else
+						{	clust = new ArrayList<ReferenceEvent>();
+							String ctmp[] = clustName.split(",");
+							for(String cn: ctmp)
+							{	int id = Integer.parseInt(cn);
+								ReferenceEvent event = referenceEvents.get(id);
+								clust.add(event);
+							}
+						}
+						referenceClusters.put(key, clust);
+					}
+				}
+			}
+			catch (FileNotFoundException e) 
+			{	logger.log("Found no reference clusters file at "+filePath);
+			}
+			
+		logger.decreaseOffset();
 	}
 }

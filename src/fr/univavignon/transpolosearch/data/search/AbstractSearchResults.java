@@ -2,7 +2,7 @@ package fr.univavignon.transpolosearch.data.search;
 
 /*
  * TranspoloSearch
- * Copyright2015-18Vincent Labatut
+ * Copyright 2015-18 Vincent Labatut
  * 
  * This file is part of TranspoloSearch.
  * 
@@ -48,6 +48,7 @@ import fr.univavignon.transpolosearch.data.entity.EntityType;
 import fr.univavignon.transpolosearch.data.entity.mention.AbstractMention;
 import fr.univavignon.transpolosearch.data.event.Event;
 import fr.univavignon.transpolosearch.data.event.MyPam;
+import fr.univavignon.transpolosearch.data.event.ReferenceEvent;
 import fr.univavignon.transpolosearch.data.event.DummyDistanceMetric;
 import fr.univavignon.transpolosearch.data.event.Silhouette;
 import fr.univavignon.transpolosearch.tools.file.FileTools;
@@ -964,8 +965,10 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 	/////////////////////////////////////////////////////////////////
 	// PERFORMANCE		/////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
-	/** Manually annotated reference (if available) */
-	protected Map<String,String> reference = new HashMap<String,String>();
+	/** Manually annotated reference events (if available) */
+	protected Map<Integer,ReferenceEvent> referenceEvents = new HashMap<Integer,ReferenceEvent>();
+	/** Manually annotated reference clusters (if available) */
+	protected Map<String,List<ReferenceEvent>> referenceClusters = new HashMap<String,List<ReferenceEvent>>();
 	/** Performances, ready to be recorded in a CSV file */
 	private List<Map<String,String>> performances = new ArrayList<Map<String,String>>();
 	
@@ -981,41 +984,6 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 	public static final String PERF_RAND_INDEX = "Rand index";
 	/** Column name for the Normalized Mutual Information */
 	public static final String PERF_NMI = "NMI";
-	
-	/**
-	 * Tries to load the manually annotated reference, if the 
-	 * file exists. It is then used later to assess the system
-	 * performance.
-	 * 
-	 * @param filePath 
-	 * 		Path of the reference file.
-	 * @throws UnsupportedEncodingException
-	 * 		Problem when loading the reference file. 
-	 */
-	protected void loadReference(String filePath) throws UnsupportedEncodingException
-	{	logger.increaseOffset();
-			
-			try
-			{	logger.log("Find a reference file ("+filePath+"): loading it");
-				Scanner scanner = FileTools.openTextFileRead(filePath, "UTF-8");
-				while(scanner.hasNextLine())
-				{	String line = scanner.nextLine();
-					String[] tmp = line.split("\t");
-					String key = tmp[0].trim();
-					if(tmp.length>1)
-					{	String clust = tmp[1].trim();
-						if(clust.isEmpty())
-							clust = null;	// null means the URL is irrelevant
-						reference.put(key, clust);
-					}
-				}
-			}
-			catch (FileNotFoundException e) 
-			{	logger.log("Found no reference file at "+filePath);
-			}
-			
-		logger.decreaseOffset();
-	}
 	
 	/**
 	 * Records the performances in a CSV file.
@@ -1108,7 +1076,7 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 		for(Entry<String,T> entry: results.entrySet())
 		{	String key = entry.getKey();
 			T res = entry.getValue();
-			String ref = reference.get(key);
+			List<ReferenceEvent> ref = referenceClusters.get(key);
 			String est = res.status;
 			if(ref==null)
 			{	if(est==null)
@@ -1146,8 +1114,8 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 		for(Entry<String,T> entry: results.entrySet())
 		{	String key = entry.getKey();
 			T value = entry.getValue();
-			String clusterName = reference.get(key);
-			if(clusterName!=null && value.status==null)
+			List<ReferenceEvent> clusterEvents = referenceClusters.get(key);
+			if(clusterEvents!=null && value.status==null)
 				n++;
 		}
 		
@@ -1160,7 +1128,8 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 		for(Entry<String,T> entry: results.entrySet())
 		{	String key = entry.getKey();
 			T value = entry.getValue();
-			String clusterName = reference.get(key);
+//TODO HERE			
+			String clusterName = referenceClusters.get(key);
 			if(clusterName!=null && value.status==null)
 			{	int c1 = Integer.parseInt(value.cluster);
 				part1[i] = c1;

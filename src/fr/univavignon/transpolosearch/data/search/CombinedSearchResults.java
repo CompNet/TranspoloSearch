@@ -2,7 +2,7 @@ package fr.univavignon.transpolosearch.data.search;
 
 /*
  * TranspoloSearch
- * Copyright2015-18Vincent Labatut
+ * Copyright 2015-18 Vincent Labatut
  * 
  * This file is part of TranspoloSearch.
  * 
@@ -59,8 +59,9 @@ public class CombinedSearchResults extends AbstractSearchResults<AbstractSearchR
 		engineNames.addAll(webRes.engineNames);
 		engineNames.addAll(socRes.engineNames);
 		// and references
-		reference.putAll(webRes.reference);
-		reference.putAll(socRes.reference);
+		referenceEvents.putAll(webRes.referenceEvents);
+		referenceClusters.putAll(webRes.referenceClusters);
+		referenceClusters.putAll(socRes.referenceClusters);
 	}
 	
 	/////////////////////////////////////////////////////////////////

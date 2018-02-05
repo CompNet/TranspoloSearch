@@ -2,7 +2,7 @@ package fr.univavignon.transpolosearch.evaluation;
 
 /*
  * TranspoloSearch
- * Copyright2015-18Vincent Labatut
+ * Copyright 2015-18 Vincent Labatut
  * 
  * This file is part of TranspoloSearch.
  * 
@@ -43,7 +43,7 @@ import fr.univavignon.transpolosearch.tools.time.TimeFormatting;
  * This class is used to evaluate the performance
  * of recognizers. It requires a collection of manually
  * annotated articles, to be used as references.
- * recognizers are assessd by comparing their estimated
+ * recognizers are assessed by comparing their estimated
  * mentions to the actual ones. Various measures can
  * be used to perform this comparison.
  * 

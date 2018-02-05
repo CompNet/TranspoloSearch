@@ -2,7 +2,7 @@ package fr.univavignon.transpolosearch;
 
 /*
  * TranspoloSearch
- * Copyright2015-18Vincent Labatut
+ * Copyright 2015-18 Vincent Labatut
  * 
  * This file is part of TranspoloSearch.
  * 
@@ -621,5 +621,4 @@ public class Test
 
 // TODO manips:
 // 		- Filtrer par date quand c'est possible, pour voir si ça améliore le beans
-// 		- annoter les dernières recherches
-// 		- rajouter d'autres journaux locaux parisiens à la recherche hidalgo
+// 		- rajouter d'autres journaux locaux parisiens à la recherche Hidalgo
