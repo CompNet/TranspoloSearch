@@ -6,7 +6,7 @@ import fr.univavignon.transpolosearch.tools.xml.XmlNames;
 
 /*
  * TranspoloSearch
- * Copyright 2015-17 Vincent Labatut
+ * Copyright2015-18Vincent Labatut
  * 
  * This file is part of TranspoloSearch.
  * 

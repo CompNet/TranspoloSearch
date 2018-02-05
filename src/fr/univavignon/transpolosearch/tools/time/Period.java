@@ -6,7 +6,7 @@ import java.util.Calendar;
 
 /*
  * TranspoloSearch
- * Copyright 2015-17 Vincent Labatut
+ * Copyright2015-18Vincent Labatut
  * 
  * This file is part of TranspoloSearch.
  * 

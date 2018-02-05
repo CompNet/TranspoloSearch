@@ -2,7 +2,7 @@ TranspoloSearch
 =======
 *Web-based information extraction for political science*
 
-* Copyright 2015-17 Vincent Labatut
+* Copyright 2015-18 Vincent Labatut
 
 TranspoloSearch is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation. For source availability and license information see `licence.txt`
 
@@ -95,7 +95,7 @@ Here are the dependencies for TranspoloSearch:
     * TF1 (www.tf1.fr)
     * Valeurs Actuelles (www.valeursactuelles.com)
     * Voici (www.voici.fr)
-  * For these journal-specific reader, we could define a generic process consisting in looking for an HTML element with a predefined class for authors, another for title, etc. One would just have to define the appropriate classes (or other HTML info): updating such reader would be easier.
+  * For these journal-specific readers, we could define a generic process consisting in looking for an HTML element with a predefined class for authors, another for title, etc. One would just have to define the appropriate classes (or other HTML info): updating such reader would be easier.
 * Search engines:
   * Add the Duck Duck Go search engine. As of 2017/04/21, the Instant Answer API is too restricted to return results we could use in TranspoloSearch. See [this page](https://api.duckduckgo.com/api) for a description of the API. Also, it is powered by other search engines already integrated in TranspoloSearch.
   * Add the Yahoo search engine. Apparently, Yahoo is powered by Bing since 2011, so not worth it since we already have Bing.
