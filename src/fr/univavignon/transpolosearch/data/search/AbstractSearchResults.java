@@ -1210,7 +1210,10 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 				}
 				else
 					event = events.get(0);
-			}	//TODO would be better to keep the event leading to the best score... 
+			}
+			if(event!=null)
+				event = event.getAncestor();
+			//TODO would be better to keep the event leading to the best score... 
 			if(events!=null && value.status==null)
 			{	int c1 = Integer.parseInt(value.cluster);
 				part1[i] = c1;

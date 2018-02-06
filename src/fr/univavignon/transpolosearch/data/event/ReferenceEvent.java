@@ -125,11 +125,25 @@ public class ReferenceEvent
 	 * (of {@code null} if no parent).
 	 * 
 	 * @return
-	 * 		The id of the parent of this reference event (or 
+	 * 		The parent of this reference event (or 
 	 * 		{@code null} if no parent).
 	 */
 	public ReferenceEvent getParent()
 	{	return parent;
 	}
 	
+	/**
+	 * Returns the top ancestor of this reference event
+	 * (of {@code this} if no parent).
+	 * 
+	 * @return
+	 * 		The top ancestor of this reference event (or 
+	 * 		{@code this} if no parent).
+	 */
+	public ReferenceEvent getAncestor()
+	{	ReferenceEvent result = this;
+		if(parent!=null)
+			result = parent.getAncestor();
+		return result;
+	}
 }
