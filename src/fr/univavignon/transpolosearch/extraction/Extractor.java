@@ -160,7 +160,7 @@ public class Extractor
 		
 		// merge results and continue processing
 		logger.log("Merging web and social media results");
-		combineResults(webRes, socialRes, language);
+		combineResults(webRes, socialRes, language, startDate, endDate);
 		
 		logger.decreaseOffset();
 		logger.log("Information extraction over");
@@ -328,7 +328,7 @@ public class Extractor
 			WebSearchResults results = performWebSearch(keywords);
 			fileName = currentStep + "_" + FileNames.FI_ARTICLES_RAW;
 			results.exportResults(fileName);
-			results.computePerformance(fileName);
+			results.computePerformance(fileName, startDate, endDate);
 			currentStep++;
 	
 			// filter Web pages (remove PDFs, and so on)
@@ -338,14 +338,14 @@ public class Extractor
 			results.retrieveArticles();
 			fileName = currentStep + "_" + FileNames.FI_ARTICLES_URL_FILTER;
 			results.exportResults(fileName);
-			results.computePerformance(fileName);
+			results.computePerformance(fileName, startDate, endDate);
 			currentStep++;
 			
 			// possibly filter the articles depending on the content
 			results.filterByContent(startDate, endDate, filterByPubDate, compulsoryExpression, language);
 			fileName = currentStep + "_" + FileNames.FI_ARTICLES_CONTENT_FILTER;
 			results.exportResults(fileName);
-			results.computePerformance(fileName);
+			results.computePerformance(fileName, startDate, endDate);
 			currentStep++;
 			
 			// detect the entity mentions
@@ -355,7 +355,7 @@ public class Extractor
 			results.filterByEntity(startDate, endDate, filterByEntDate);
 			fileName = currentStep + "_" + FileNames.FI_ARTICLES_ENTITY_FILTER;
 			results.exportResults(fileName);
-			results.computePerformance(fileName);
+			results.computePerformance(fileName, startDate, endDate);
 			currentStep++;
 			
 			// displays the remaining articles with their mentions	//TODO maybe get the entities instead of the mentions, eventually?
@@ -365,7 +365,7 @@ public class Extractor
 			results.clusterArticles(language);
 			fileName = currentStep + "_" + FileNames.FI_ARTICLES_CLUSTERING;
 			results.exportResults(fileName);
-			results.computePerformance(fileName);
+			results.computePerformance(fileName, startDate, endDate);
 			currentStep++;
 			
 			// extract events from the remaining articles and mentions
@@ -540,7 +540,7 @@ public class Extractor
 			SocialSearchResults results = performSocialSearch(keywords, includeComments);
 			fileName = currentStep + "_" + FileNames.FI_ARTICLES_RAW;
 			results.exportResults(fileName);
-			results.computePerformance(fileName);
+			results.computePerformance(fileName, startDate, endDate);
 			currentStep++;
 			
 			// convert the posts to proper articles
@@ -550,7 +550,7 @@ public class Extractor
 			results.filterByContent(startDate, endDate, false, compulsoryExpression, language);	// false, because we suppose the targeted period is always respected when searching through the social media API
 			fileName = currentStep + "_" + FileNames.FI_ARTICLES_CONTENT_FILTER;
 			results.exportResults(fileName);
-			results.computePerformance(fileName);
+			results.computePerformance(fileName, startDate, endDate);
 			currentStep++;
 			
 			// detect the entity mentions
@@ -560,17 +560,17 @@ public class Extractor
 			results.filterByEntity(null,null,false); // unnecessary, unless we add other entity-based constraints than dates
 			fileName = currentStep + "_" + FileNames.FI_ARTICLES_ENTITY_FILTER;
 			results.exportResults(fileName);
-			results.computePerformance(fileName);
+			results.computePerformance(fileName, startDate, endDate);
 			currentStep++;
 			
-			// displays the remaining articles with their mentions	//TODO maybe get the entities instead of the mention, eventually?
+			// displays the remaining articles with their mentions	//TODO maybe get the entities instead of the mentions, eventually?
 			results.displayRemainingMentions(); // for debug only
 			
 			// cluster the articles by content
 			results.clusterArticles(language);
 			fileName = currentStep + "_" + FileNames.FI_ARTICLES_CLUSTERING;
 			results.exportResults(fileName);
-			results.computePerformance(fileName);
+			results.computePerformance(fileName, startDate, endDate);
 			currentStep++;
 			
 			// extract events from the remaining articles and mentions
@@ -650,13 +650,19 @@ public class Extractor
 	 * 		Social media search results.
 	 * @param language
 	 * 		Targeted language.
+	 * @param startDate
+	 * 		Start of the period we want to consider, 
+	 * 		or {@code null} for no constraint.
+	 * @param endDate
+	 * 		End of the period we want to consider,
+	 * 		or {@code null} for no constraint.
 	 * 
 	 * @throws UnsupportedEncodingException
 	 * 		Problem while exporting the results.
 	 * @throws FileNotFoundException
 	 * 		Problem while exporting the results.
 	 */
-	private void combineResults(WebSearchResults webRes, SocialSearchResults socRes, ArticleLanguage language) throws UnsupportedEncodingException, FileNotFoundException
+	private void combineResults(WebSearchResults webRes, SocialSearchResults socRes, ArticleLanguage language, Date startDate, Date endDate) throws UnsupportedEncodingException, FileNotFoundException
 	{	logger.log("Combining all results in a single file.");
 		logger.increaseOffset();
 			int currentStep = 1;
@@ -667,14 +673,14 @@ public class Extractor
 			combRes.resetClusters();
 			fileName = currentStep + "_" + FileNames.FI_ARTICLES_MERGE;
 			combRes.exportResults(fileName);
-			combRes.computePerformance(fileName);
+			combRes.computePerformance(fileName, startDate, endDate);
 			currentStep++;
 			
 			// cluster the combined articles by content
 			combRes.clusterArticles(language);
 			fileName = currentStep + "_" + FileNames.FI_ARTICLES_CLUSTERING;
 			combRes.exportResults(fileName);
-			combRes.computePerformance(fileName);
+			combRes.computePerformance(fileName, startDate, endDate);
 			currentStep++;
 			
 			// extract events from the articles and mentions

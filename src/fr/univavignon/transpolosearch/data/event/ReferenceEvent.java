@@ -18,7 +18,7 @@ package fr.univavignon.transpolosearch.data.event;
  * along with TranspoloSearch. If not, see <http://www.gnu.org/licenses/>.
  */
 
-import fr.univavignon.transpolosearch.tools.time.Date;
+import java.util.Date;
 
 /**
  * Object used to represent a ground truth event, manually

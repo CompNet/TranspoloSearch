@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -1045,16 +1046,22 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 	 * 
 	 * @param stepName
 	 * 		Name of the current step.
+	 * @param startDate
+	 * 		Start of the period we want to consider, 
+	 * 		or {@code null} for no constraint.
+	 * @param endDate
+	 * 		End of the period we want to consider,
+	 * 		or {@code null} for no constraint.
 	 */
-	public void computePerformance(String stepName)
+	public void computePerformance(String stepName, Date startDate, Date endDate)
 	{	logger.log("Evaluating the results");
 		logger.increaseOffset();
 	
 			Map<String,String> line = new HashMap<String,String>();
 			line.put(PERF_STEP, stepName);
-			computeDiscriminationPerformance(line);
+			computeDiscriminationPerformance(line, startDate, endDate);
 			if(!results.isEmpty() && results.values().iterator().next().cluster!=null)	// only if the clustering has already been performed 
-				computeClusteringPerformance(line);
+				computeClusteringPerformance(line, startDate, endDate);
 			performances.add(line);
 			
 		logger.decreaseOffset();
@@ -1066,8 +1073,14 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 	 * 
 	 * @param result
 	 * 		Result as a list of measures (Precision, Recall, F-measure).
+	 * @param startDate
+	 * 		Start of the period we want to consider, 
+	 * 		or {@code null} for no constraint.
+	 * @param endDate
+	 * 		End of the period we want to consider,
+	 * 		or {@code null} for no constraint.
 	 */
-	private void computeDiscriminationPerformance(Map<String,String> result)
+	private void computeDiscriminationPerformance(Map<String,String> result, Date startDate, Date endDate)
 	{	// process counts
 		int tp = 0;
 //		int tn = 0;
@@ -1076,7 +1089,7 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 		for(Entry<String,T> entry: results.entrySet())
 		{	String key = entry.getKey();
 			T res = entry.getValue();
-			List<ReferenceEvent> ref = referenceClusters.get(key);
+			List<ReferenceEvent> ref = referenceClusters.get(key);	//TODO must check the date
 			String est = res.status;
 			if(ref==null)
 			{	if(est==null)
@@ -1107,8 +1120,14 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 	 * 
 	 * @param result
 	 * 		Result as a list of measures (NMI, Rand index).
+	 * @param startDate
+	 * 		Start of the period we want to consider, 
+	 * 		or {@code null} for no constraint.
+	 * @param endDate
+	 * 		End of the period we want to consider,
+	 * 		or {@code null} for no constraint.
 	 */
-	private void computeClusteringPerformance(Map<String,String> result)
+	private void computeClusteringPerformance(Map<String,String> result, Date startDate, Date endDate)
 	{	// get the number of elements
 		int n = 0;
 		for(Entry<String,T> entry: results.entrySet())

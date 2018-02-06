@@ -21,8 +21,10 @@ package fr.univavignon.transpolosearch.data.search;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.UnsupportedEncodingException;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-
 import java.util.Date;
 import java.util.List;
 import java.util.Scanner;
@@ -350,8 +352,27 @@ boolean doit = false;
 						parent = referenceEvents.get(parentId);
 					}
 					// event date
-					String dateStr = tmp[3].trim().replace('-','/');
-					fr.univavignon.transpolosearch.tools.time.Date date = fr.univavignon.transpolosearch.tools.time.Date.importFromString(dateStr);
+					String dateStr = tmp[3].trim();
+					DateFormat format = new SimpleDateFormat("yyyy-MM-dd");
+					Date date = null;
+					try
+					{	date = format.parse(dateStr);
+					}
+					catch (ParseException e)
+					{	format = new SimpleDateFormat("yyyy-MM");
+						try
+						{	date = format.parse(dateStr);
+						} 
+						catch (ParseException e1) 
+						{	format = new SimpleDateFormat("yyyy");
+							try
+							{	date = format.parse(dateStr);
+							}
+							catch (ParseException e2) 
+							{	e2.printStackTrace();
+							}
+						}
+					}
 					
 					// reference event
 					ReferenceEvent event = new ReferenceEvent(id, name, date, parent);
