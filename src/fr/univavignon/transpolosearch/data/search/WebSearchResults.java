@@ -33,6 +33,7 @@ import java.util.Map;
 import org.xml.sax.SAXException;
 
 import fr.univavignon.transpolosearch.data.article.ArticleLanguage;
+import fr.univavignon.transpolosearch.data.event.ReferenceEvent;
 import fr.univavignon.transpolosearch.retrieval.ArticleRetriever;
 import fr.univavignon.transpolosearch.tools.file.FileNames;
 import fr.univavignon.transpolosearch.tools.file.FileTools;
@@ -49,11 +50,15 @@ public class WebSearchResults extends AbstractSpecificSearchResults<WebSearchRes
 	/**
 	 * Initializes the search result.
 	 * 
+	 * @param referenceEvents
+	 * 		Map containing the reference events, or
+	 * 		empty if no such events could be found.
+	 * 
 	 * @throws UnsupportedEncodingException 
 	 * 		Problem while loading the reference. 
 	 */
-	public WebSearchResults() throws UnsupportedEncodingException
-	{	super();
+	public WebSearchResults(Map<Integer,ReferenceEvent> referenceEvents) throws UnsupportedEncodingException
+	{	super(referenceEvents);
 		
 		String filePath = FileNames.FO_WEB_SEARCH_RESULTS + File.separator + FileNames.FI_ANNOTATED_RESULTS;
 		loadReferenceClusters(filePath);

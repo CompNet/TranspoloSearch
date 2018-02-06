@@ -96,7 +96,24 @@ public class ReferenceEvent
 	public Date getDate() 
 	{	return date;
 	}
-
+	
+	/**
+	 * Checks whether the date of this reference event is contained
+	 * in the specified temporal period.
+	 * 
+	 * @param startDate
+	 * 		Beginning of the period.
+	 * @param endDate
+	 * 		Ending of the period.
+	 * @return
+	 * 		{@code true} iff the date is within the period.
+	 */
+	public boolean isWithinPeriod(Date startDate, Date endDate)
+	{	boolean result = (date.equals(startDate) || date.after(startDate))
+			&& (date.equals(endDate) || date.before(endDate));
+		return result;
+	}
+	
 	/////////////////////////////////////////////////////////////////
 	// ID			/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////

@@ -30,7 +30,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Scanner;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeSet;
@@ -975,12 +974,18 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 	
 	/** Column name for the considered processing step */
 	public static final String PERF_STEP = "Step";
-	/** Column name for the Precision measure */
-	public static final String PERF_PRECISION = "Precision";
-	/** Column name for the Recall measure */
-	public static final String PERF_RECALL = "Recall";
-	/** Column name for the F-measure */
-	public static final String PERF_FMEASURE = "F-Measure";
+	/** Column name for the Precision measure computed only on the basis of the theme */
+	public static final String PERF_THEME_PRECISION = "Theme Precision";
+	/** Column name for the Recall measure computed only on the basis of the theme */
+	public static final String PERF_THEME_RECALL = "Theme Recall";
+	/** Column name for the F-measure measure computed only on the basis of the theme */
+	public static final String PERF_THEME_FMEASURE = "Theme F-Measure";
+	/** Column name for the Precision measure computed only on the basis of the theme */
+	public static final String PERF_THEME_TIME_PRECISION = "Theme-time Precision";
+	/** Column name for the Recall measure computed only on the basis of the theme */
+	public static final String PERF_THEME_TIME_RECALL = "Theme-time Recall";
+	/** Column name for the F-measure measure computed only on the basis of the theme */
+	public static final String PERF_THEME_TIME_FMEASURE = "Theme-time F-Measure";
 	/** Column name for the Rand index */
 	public static final String PERF_RAND_INDEX = "Rand index";
 	/** Column name for the Normalized Mutual Information */
@@ -1004,9 +1009,12 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 			// setup colon names
 			List<String> cols = Arrays.asList(
 					PERF_STEP,
-					PERF_PRECISION,
-					PERF_RECALL,
-					PERF_FMEASURE,
+					PERF_THEME_PRECISION,
+					PERF_THEME_RECALL,
+					PERF_THEME_FMEASURE,
+					PERF_THEME_TIME_PRECISION,
+					PERF_THEME_TIME_RECALL,
+					PERF_THEME_TIME_FMEASURE,
 					PERF_RAND_INDEX,
 					PERF_NMI
 			);
@@ -1069,7 +1077,8 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 	
 	/**
 	 * Computes the performance of the classification task: distinguishing
-	 * relevant from irrelevant search results.
+	 * relevant from irrelevant search results. We consider first relevance
+	 * only in terms of content, then both in terms of content and date.
 	 * 
 	 * @param result
 	 * 		Result as a list of measures (Precision, Recall, F-measure).
@@ -1082,36 +1091,79 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 	 */
 	private void computeDiscriminationPerformance(Map<String,String> result, Date startDate, Date endDate)
 	{	// process counts
-		int tp = 0;
-//		int tn = 0;
-		int fp = 0;
-		int fn = 0;
+		int tpT = 0;
+//		int tnT = 0;
+		int fpT = 0;
+		int fnT = 0;
+		int tpTT = 0;
+//		int tnTT = 0;
+		int fpTT = 0;
+		int fnTT = 0;
 		for(Entry<String,T> entry: results.entrySet())
 		{	String key = entry.getKey();
 			T res = entry.getValue();
-			List<ReferenceEvent> ref = referenceClusters.get(key);	//TODO must check the date
+			
+			// get reference object
+			List<ReferenceEvent> refs = referenceClusters.get(key);
+			ReferenceEvent refTheme = null;
+			ReferenceEvent refThemeTime = null;
+			if(refs!=null)
+			{	if(startDate!=null && endDate!=null)
+				{	Iterator<ReferenceEvent> it = refs.iterator();
+					while(refThemeTime==null && it.hasNext())
+					{	ReferenceEvent evt = it.next();
+						if(evt.isWithinPeriod(startDate,endDate))
+							refThemeTime = evt;
+					}
+				}
+				else
+					refThemeTime = refs.get(0);
+				refTheme = refs.get(0);
+			}
+			
+			// get estimated object
 			String est = res.status;
-			if(ref==null)
+			
+			// compare them
+			if(refTheme==null)
 			{	if(est==null)
-					fp++;
+					fpT++;
 //				else
-//					tn++;
+//					tnT++;
 			}
 			else
 			{	if(est==null)
-					tp++;
+					tpT++;
 				else
-					fn++;
+					fnT++;
+			}
+			if(refThemeTime==null)
+			{	if(est==null)
+					fpTT++;
+//				else
+//					tnTT++;
+			}
+			else
+			{	if(est==null)
+					tpTT++;
+				else
+					fnTT++;
 			}
 		}
 		
 		// compute measures
-		float precision = tp / (float)(tp + fp);
-		result.put(PERF_PRECISION, Float.toString(precision));
-		float recall = tp / (float)(tp + fn);
-		result.put(PERF_RECALL, Float.toString(recall));
-		float fmeasure = 2 * precision * recall / (precision + recall);
-		result.put(PERF_FMEASURE, Float.toString(fmeasure));
+		float precisionT = tpT / (float)(tpT + fpT);
+		result.put(PERF_THEME_PRECISION, Float.toString(precisionT));
+		float recallT = tpT / (float)(tpT + fnT);
+		result.put(PERF_THEME_RECALL, Float.toString(recallT));
+		float fmeasureT = 2 * precisionT * recallT / (precisionT + recallT);
+		result.put(PERF_THEME_FMEASURE, Float.toString(fmeasureT));
+		float precisionTT = tpTT / (float)(tpTT + fpTT);
+		result.put(PERF_THEME_TIME_PRECISION, Float.toString(precisionTT));
+		float recallTT = tpTT / (float)(tpTT + fnTT);
+		result.put(PERF_THEME_TIME_RECALL, Float.toString(recallTT));
+		float fmeasureTT = 2 * precisionTT * recallTT / (precisionTT + recallTT);
+		result.put(PERF_THEME_TIME_FMEASURE, Float.toString(fmeasureTT));
 	}
 
 	/**
@@ -1141,23 +1193,28 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 		// convert partition formats 
 		int[] part1 = new int[n];
 		int[] part2 = new int[n];
-		int clustCount = 1;
-		Map<String,Integer> clustMap = new HashMap<String,Integer>();
 		int i = 0;
 		for(Entry<String,T> entry: results.entrySet())
 		{	String key = entry.getKey();
 			T value = entry.getValue();
-//TODO HERE			
-			String clusterName = referenceClusters.get(key);
-			if(clusterName!=null && value.status==null)
+			List<ReferenceEvent> events = referenceClusters.get(key);
+			ReferenceEvent event = null;
+			if(events!=null)
+			{	if(startDate!=null && endDate!=null)
+				{	Iterator<ReferenceEvent> it = events.iterator();
+					while(event==null && it.hasNext())
+					{	ReferenceEvent evt = it.next();
+						if(evt.isWithinPeriod(startDate,endDate))
+							event = evt;
+					}
+				}
+				else
+					event = events.get(0);
+			}	//TODO would be better to keep the event leading to the best score... 
+			if(events!=null && value.status==null)
 			{	int c1 = Integer.parseInt(value.cluster);
 				part1[i] = c1;
-				Integer c2 = clustMap.get(clusterName);
-				if(c2==null)
-				{	clustMap.put(clusterName,clustCount);
-					c2 = clustCount;
-					clustCount++;
-				}
+				int c2 = event.getId();
 				part2[i] = c2;
 				i++;
 			}

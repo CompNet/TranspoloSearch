@@ -355,11 +355,11 @@ public class SocialSearchResult extends AbstractSearchResult
 			String likesStr = scanner.nextLine().trim();
 			Integer likes = null;
 			if(!likesStr.isEmpty())
-				likes = new Integer(likesStr);
+				likes = Integer.parseInt(likesStr);
 			String sharesStr = scanner.nextLine().trim();
 			Integer shares = null;
 			if(!sharesStr.isEmpty())
-				shares = new Integer(sharesStr);
+				shares = Integer.parseInt(sharesStr);
 			String content = scanner.nextLine().trim();
 			result = new SocialSearchResult(id, author, date, source, content, original);
 			String urlStr = scanner.nextLine().trim();

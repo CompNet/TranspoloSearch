@@ -18,22 +18,18 @@ package fr.univavignon.transpolosearch.data.search;
  * along with TranspoloSearch. If not, see <http://www.gnu.org/licenses/>.
  */
 
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.UnsupportedEncodingException;
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
 
 import fr.univavignon.transpolosearch.data.article.ArticleLanguage;
 import fr.univavignon.transpolosearch.data.event.ReferenceEvent;
 import fr.univavignon.transpolosearch.processing.InterfaceRecognizer;
 import fr.univavignon.transpolosearch.processing.ProcessorException;
-import fr.univavignon.transpolosearch.tools.file.FileNames;
 import fr.univavignon.transpolosearch.tools.file.FileTools;
 
 /**
@@ -51,14 +47,17 @@ public abstract class AbstractSpecificSearchResults<T extends AbstractSearchResu
 	/**
 	 * Initializes the search result.
 	 * 
+	 * @param referenceEvents
+	 * 		Previously loaded reference events, or an empty
+	 * 		list if no reference was defined. 
+	 * 
 	 * @throws UnsupportedEncodingException 
 	 * 		Problem while loading the reference. 
 	 */
-	public AbstractSpecificSearchResults() throws UnsupportedEncodingException
+	public AbstractSpecificSearchResults(Map<Integer,ReferenceEvent> referenceEvents) throws UnsupportedEncodingException
 	{	super();
 		
-		String filePath = FileNames.FO_OUTPUT + File.separator + FileNames.FI_ANNOTATED_RESULTS;
-		loadReferenceEvents(filePath);
+		this.referenceEvents = referenceEvents;
 	}
 	
 	/////////////////////////////////////////////////////////////////
@@ -314,78 +313,6 @@ boolean doit = false;
 	/////////////////////////////////////////////////////////////////
 	// PERFORMANCE		/////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
-	/**
-	 * Tries to load the manually annotated reference events, if the 
-	 * file exists. It is then used later to assess the system
-	 * performance.
-	 * <br/>
-	 * We expect the following format: event id on the first column,
-	 * event name on the second, event parent on the third, date on
-	 * the fourth. Columns are separated by tabulations. The rest
-	 * of the columns (if any) are just ignored.
-	 * 
-	 * @param filePath 
-	 * 		Path of the reference events file.
-	 * @throws UnsupportedEncodingException
-	 * 		Problem when loading the reference events file. 
-	 */
-	protected void loadReferenceEvents(String filePath) throws UnsupportedEncodingException
-	{	logger.increaseOffset();
-			
-			try
-			{	logger.log("Find a reference events file ("+filePath+"): loading it");
-				Scanner scanner = FileTools.openTextFileRead(filePath, "UTF-8");
-				while(scanner.hasNextLine())
-				{	String line = scanner.nextLine();
-					String[] tmp = line.split("\t");
-					
-					// event id
-					String idStr = tmp[0].trim();
-					int id = Integer.parseInt(idStr);
-					// event name
-					String name = tmp[1].trim();
-					// parent
-					String parentStr = tmp[2].trim();
-					ReferenceEvent parent = null;
-					if(!parentStr.isEmpty())
-					{	int parentId = Integer.parseInt(parentStr);
-						parent = referenceEvents.get(parentId);
-					}
-					// event date
-					String dateStr = tmp[3].trim();
-					DateFormat format = new SimpleDateFormat("yyyy-MM-dd");
-					Date date = null;
-					try
-					{	date = format.parse(dateStr);
-					}
-					catch (ParseException e)
-					{	format = new SimpleDateFormat("yyyy-MM");
-						try
-						{	date = format.parse(dateStr);
-						} 
-						catch (ParseException e1) 
-						{	format = new SimpleDateFormat("yyyy");
-							try
-							{	date = format.parse(dateStr);
-							}
-							catch (ParseException e2) 
-							{	e2.printStackTrace();
-							}
-						}
-					}
-					
-					// reference event
-					ReferenceEvent event = new ReferenceEvent(id, name, date, parent);
-					referenceEvents.put(id, event);
-				}
-			}
-			catch (FileNotFoundException e) 
-			{	logger.log("Found no reference events file at "+filePath);
-			}
-			
-		logger.decreaseOffset();
-	}
-	
 	/**
 	 * Tries to load the manually annotated reference clusters, 
 	 * if the file exists. It is then used later to assess the 

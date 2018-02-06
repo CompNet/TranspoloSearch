@@ -25,11 +25,15 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.text.DateFormat;
 import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Scanner;
 import java.util.Map.Entry;
 
 import org.xml.sax.SAXException;
@@ -37,6 +41,7 @@ import org.xml.sax.SAXException;
 import com.gargoylesoftware.htmlunit.FailingHttpStatusCodeException;
 
 import fr.univavignon.transpolosearch.data.article.ArticleLanguage;
+import fr.univavignon.transpolosearch.data.event.ReferenceEvent;
 import fr.univavignon.transpolosearch.data.search.AbstractSearchResults;
 import fr.univavignon.transpolosearch.data.search.CombinedSearchResults;
 import fr.univavignon.transpolosearch.data.search.SocialSearchResult;
@@ -54,6 +59,7 @@ import fr.univavignon.transpolosearch.search.web.GoogleEngine;
 import fr.univavignon.transpolosearch.search.web.QwantEngine;
 import fr.univavignon.transpolosearch.search.web.YandexEngine;
 import fr.univavignon.transpolosearch.tools.file.FileNames;
+import fr.univavignon.transpolosearch.tools.file.FileTools;
 import fr.univavignon.transpolosearch.tools.log.HierarchicalLogger;
 import fr.univavignon.transpolosearch.tools.log.HierarchicalLoggerManager;
 
@@ -150,13 +156,17 @@ public class Extractor
 		}
 		FileNames.setOutputFolder(outFolder);
 		
+		// retrieve the reference events (if any)
+		logger.log("Load reference events (if any)");
+		Map<Integer,ReferenceEvent> referenceEvents = loadReferenceEvents();
+		
 		// perform the Web search
 		logger.log("Performing the Web search");
-		WebSearchResults webRes = performWebExtraction(keywords, websites, startDate, endDate, filterByPubDate, filterByEntDate, compulsoryExpression, language);
+		WebSearchResults webRes = performWebExtraction(keywords, websites, startDate, endDate, filterByPubDate, filterByEntDate, compulsoryExpression, language, referenceEvents);
 		
 		// perform the social search
 		logger.log("Performing the social media search");
-		SocialSearchResults socialRes = performSocialExtraction(keywords, additionalSeeds, startDate, endDate, compulsoryExpression, doExtendedSocialSearch, language);
+		SocialSearchResults socialRes = performSocialExtraction(keywords, additionalSeeds, startDate, endDate, compulsoryExpression, doExtendedSocialSearch, language, referenceEvents);
 		
 		// merge results and continue processing
 		logger.log("Merging web and social media results");
@@ -228,14 +238,17 @@ public class Extractor
 	 * 
 	 * @param keywords
 	 * 		Person we want to look for.
+	 * @param referenceEvents
+	 * 		Map containing the reference events, or
+	 * 		empty if no such events could be found.
 	 * @return
 	 * 		List of web search results.
 	 * 
 	 * @throws IOException
 	 * 		Problem accessing the Web.
 	 */
-	private WebSearchResults performWebSearch(String keywords) throws IOException
-	{	WebSearchResults result = new WebSearchResults();
+	private WebSearchResults performWebSearch(String keywords, Map<Integer,ReferenceEvent> referenceEvents) throws IOException
+	{	WebSearchResults result = new WebSearchResults(referenceEvents);
 		
 		// apply each search engine
 		logger.log("Applying iteratively each search engine");
@@ -287,6 +300,9 @@ public class Extractor
 	 * 		or {@code null} if there is no such constraint.
 	 * @param language
 	 * 		Language targeted during the search.
+	 * @param referenceEvents
+	 * 		Map containing the reference events, or
+	 * 		empty if no such events could be found.
 	 * @return
 	 * 		The Web search results.
 	 * 
@@ -301,7 +317,7 @@ public class Extractor
 	 * @throws ProcessorException 
 	 * 		Problem while detecting the entity mentions.
 	 */
-	private WebSearchResults performWebExtraction(String keywords, List<String> websites, Date startDate, Date endDate, boolean filterByPubDate, boolean filterByEntDate, String compulsoryExpression, ArticleLanguage language) throws IOException, ReaderException, ParseException, SAXException, ProcessorException
+	private WebSearchResults performWebExtraction(String keywords, List<String> websites, Date startDate, Date endDate, boolean filterByPubDate, boolean filterByEntDate, String compulsoryExpression, ArticleLanguage language, Map<Integer,ReferenceEvent> referenceEvents) throws IOException, ReaderException, ParseException, SAXException, ProcessorException
 	{	logger.log("Starting the web extraction");
 		logger.increaseOffset();
 			int currentStep = 1;
@@ -325,60 +341,60 @@ public class Extractor
 			initWebSearchEngines(websites, startDate, endDate, language);
 			
 			// perform the Web search
-			WebSearchResults results = performWebSearch(keywords);
+			WebSearchResults result = performWebSearch(keywords, referenceEvents);
 			fileName = currentStep + "_" + FileNames.FI_ARTICLES_RAW;
-			results.exportResults(fileName);
-			results.computePerformance(fileName, startDate, endDate);
+			result.exportResults(fileName);
+			result.computePerformance(fileName, startDate, endDate);
 			currentStep++;
 	
 			// filter Web pages (remove PDFs, and so on)
-			results.filterByUrl();
+			result.filterByUrl();
 			
 			// retrieve the corresponding articles
-			results.retrieveArticles();
+			result.retrieveArticles();
 			fileName = currentStep + "_" + FileNames.FI_ARTICLES_URL_FILTER;
-			results.exportResults(fileName);
-			results.computePerformance(fileName, startDate, endDate);
+			result.exportResults(fileName);
+			result.computePerformance(fileName, startDate, endDate);
 			currentStep++;
 			
 			// possibly filter the articles depending on the content
-			results.filterByContent(startDate, endDate, filterByPubDate, compulsoryExpression, language);
+			result.filterByContent(startDate, endDate, filterByPubDate, compulsoryExpression, language);
 			fileName = currentStep + "_" + FileNames.FI_ARTICLES_CONTENT_FILTER;
-			results.exportResults(fileName);
-			results.computePerformance(fileName, startDate, endDate);
+			result.exportResults(fileName);
+			result.computePerformance(fileName, startDate, endDate);
 			currentStep++;
 			
 			// detect the entity mentions
-			results.detectMentions(recognizer);
+			result.detectMentions(recognizer);
 			
 			// possibly filter the articles depending on the entities
-			results.filterByEntity(startDate, endDate, filterByEntDate);
+			result.filterByEntity(startDate, endDate, filterByEntDate);
 			fileName = currentStep + "_" + FileNames.FI_ARTICLES_ENTITY_FILTER;
-			results.exportResults(fileName);
-			results.computePerformance(fileName, startDate, endDate);
+			result.exportResults(fileName);
+			result.computePerformance(fileName, startDate, endDate);
 			currentStep++;
 			
 			// displays the remaining articles with their mentions	//TODO maybe get the entities instead of the mentions, eventually?
-			results.displayRemainingMentions(); // for debug only
+			result.displayRemainingMentions(); // for debug only
 			
 			// cluster the article by content
-			results.clusterArticles(language);
+			result.clusterArticles(language);
 			fileName = currentStep + "_" + FileNames.FI_ARTICLES_CLUSTERING;
-			results.exportResults(fileName);
-			results.computePerformance(fileName, startDate, endDate);
+			result.exportResults(fileName);
+			result.computePerformance(fileName, startDate, endDate);
 			currentStep++;
 			
 			// extract events from the remaining articles and mentions
-			extractEvents(results, currentStep + "_", language);
+			extractEvents(result, currentStep + "_", language);
 			currentStep++;
 			
 			// record performance
-			results.recordPerformance(FileNames.FO_WEB_SEARCH_RESULTS + File.separator + currentStep + "_" + FileNames.FI_PERFORMANCE);
+			result.recordPerformance(FileNames.FO_WEB_SEARCH_RESULTS + File.separator + currentStep + "_" + FileNames.FI_PERFORMANCE);
 			currentStep++;
 			
 		logger.decreaseOffset();
 		logger.log("Web extraction over");
-		return results;
+		return result;
 	}
 	
 	/////////////////////////////////////////////////////////////////
@@ -437,14 +453,17 @@ public class Extractor
 	 * @param includeComments 
 	 * 		Whether ({@code true}) or not ({@code false}) to include comments 
 	 * 		in the proper article (or just the main post).
+	 * @param referenceEvents
+	 * 		Map containing the reference events, or
+	 * 		empty if no such events could be found.
 	 * @return
 	 * 		List of results taking the form of URLs.
 	 * 
 	 * @throws IOException
 	 * 		Problem accessing the Web.
 	 */
-	private SocialSearchResults performSocialSearch(String keywords, boolean includeComments) throws IOException
-	{	SocialSearchResults result = new SocialSearchResults();
+	private SocialSearchResults performSocialSearch(String keywords, boolean includeComments, Map<Integer,ReferenceEvent> referenceEvents) throws IOException
+	{	SocialSearchResults result = new SocialSearchResults(referenceEvents);
 		
 		// apply each search engine
 		logger.log("Applying iteratively each social engine");
@@ -494,7 +513,9 @@ public class Extractor
 	 * 		or {@code null} if there is no such constraint.
 	 * @param language
 	 * 		Language targeted during the search.
-	 * 
+	 * @param referenceEvents
+	 * 		Map containing the reference events, or
+	 * 		empty if no such events could be found.
 	 * @return
 	 * 		The social search results.
 	 * 
@@ -509,7 +530,7 @@ public class Extractor
 	 * @throws ProcessorException 
 	 * 		Problem while detecting the entity mentions.
 	 */
-	private SocialSearchResults performSocialExtraction(String keywords, List<String> additionalSeeds, Date startDate, Date endDate, String compulsoryExpression, boolean doExtendedSearch, ArticleLanguage language) throws IOException, ReaderException, ParseException, SAXException, ProcessorException
+	private SocialSearchResults performSocialExtraction(String keywords, List<String> additionalSeeds, Date startDate, Date endDate, String compulsoryExpression, boolean doExtendedSearch, ArticleLanguage language, Map<Integer,ReferenceEvent> referenceEvents) throws IOException, ReaderException, ParseException, SAXException, ProcessorException
 	{	logger.log("Starting the social media extraction");
 		logger.increaseOffset();
 			int currentStep = 1;
@@ -537,53 +558,53 @@ public class Extractor
 			
 			// perform the social search
 			boolean includeComments = false;
-			SocialSearchResults results = performSocialSearch(keywords, includeComments);
+			SocialSearchResults result = performSocialSearch(keywords, includeComments, referenceEvents);
 			fileName = currentStep + "_" + FileNames.FI_ARTICLES_RAW;
-			results.exportResults(fileName);
-			results.computePerformance(fileName, startDate, endDate);
+			result.exportResults(fileName);
+			result.computePerformance(fileName, startDate, endDate);
 			currentStep++;
 			
 			// convert the posts to proper articles
-			results.buildArticles(includeComments);
+			result.buildArticles(includeComments);
 			
 			// possibly filter the articles depending on the content
-			results.filterByContent(startDate, endDate, false, compulsoryExpression, language);	// false, because we suppose the targeted period is always respected when searching through the social media API
+			result.filterByContent(startDate, endDate, false, compulsoryExpression, language);	// false, because we suppose the targeted period is always respected when searching through the social media API
 			fileName = currentStep + "_" + FileNames.FI_ARTICLES_CONTENT_FILTER;
-			results.exportResults(fileName);
-			results.computePerformance(fileName, startDate, endDate);
+			result.exportResults(fileName);
+			result.computePerformance(fileName, startDate, endDate);
 			currentStep++;
 			
 			// detect the entity mentions
-			results.detectMentions(recognizer);
+			result.detectMentions(recognizer);
 			
 			// possibly filter the articles depending on the entities
-			results.filterByEntity(null,null,false); // unnecessary, unless we add other entity-based constraints than dates
+			result.filterByEntity(null,null,false); // unnecessary, unless we add other entity-based constraints than dates
 			fileName = currentStep + "_" + FileNames.FI_ARTICLES_ENTITY_FILTER;
-			results.exportResults(fileName);
-			results.computePerformance(fileName, startDate, endDate);
+			result.exportResults(fileName);
+			result.computePerformance(fileName, startDate, endDate);
 			currentStep++;
 			
 			// displays the remaining articles with their mentions	//TODO maybe get the entities instead of the mentions, eventually?
-			results.displayRemainingMentions(); // for debug only
+			result.displayRemainingMentions(); // for debug only
 			
 			// cluster the articles by content
-			results.clusterArticles(language);
+			result.clusterArticles(language);
 			fileName = currentStep + "_" + FileNames.FI_ARTICLES_CLUSTERING;
-			results.exportResults(fileName);
-			results.computePerformance(fileName, startDate, endDate);
+			result.exportResults(fileName);
+			result.computePerformance(fileName, startDate, endDate);
 			currentStep++;
 			
 			// extract events from the remaining articles and mentions
-			extractEvents(results, currentStep + "_", language);
+			extractEvents(result, currentStep + "_", language);
 			currentStep++;
 			
 			// record performance
-			results.recordPerformance(FileNames.FO_SOCIAL_SEARCH_RESULTS + File.separator + currentStep + "_" + FileNames.FI_PERFORMANCE);
+			result.recordPerformance(FileNames.FO_SOCIAL_SEARCH_RESULTS + File.separator + currentStep + "_" + FileNames.FI_PERFORMANCE);
 			currentStep++;
 			
 		logger.decreaseOffset();
 		logger.log("Social media extraction over");
-		return results;
+		return result;
 	}
 	
 	/////////////////////////////////////////////////////////////////
@@ -605,6 +626,84 @@ public class Extractor
 		recognizer.setCacheEnabled(true);//TODO set to false for debugging
 	}
 
+	/////////////////////////////////////////////////////////////////
+	// REFERENCE EVENTS		/////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////
+	/**
+	 * Tries to load the manually annotated reference events, if the 
+	 * file exists. It is then used later to assess the system
+	 * performance.
+	 * <br/>
+	 * We expect the following format: event id on the first column,
+	 * event name on the second, event parent on the third, date on
+	 * the fourth. Columns are separated by tabulations. The rest
+	 * of the columns (if any) are just ignored.
+	 * 
+	 * @return
+	 * 		A map of the predefined reference events.
+	 * @throws UnsupportedEncodingException
+	 * 		Problem when loading the reference events file. 
+	 */
+	private Map<Integer,ReferenceEvent> loadReferenceEvents() throws UnsupportedEncodingException
+	{	logger.increaseOffset();
+		Map<Integer,ReferenceEvent> result = new HashMap<Integer,ReferenceEvent>();
+		String filePath = FileNames.FO_OUTPUT + File.separator + FileNames.FI_ANNOTATED_RESULTS;
+
+			try
+			{	logger.log("Find a reference events file ("+filePath+"): loading it");
+				Scanner scanner = FileTools.openTextFileRead(filePath, "UTF-8");
+				while(scanner.hasNextLine())
+				{	String line = scanner.nextLine();
+					String[] tmp = line.split("\t");
+					
+					// event id
+					String idStr = tmp[0].trim();
+					int id = Integer.parseInt(idStr);
+					// event name
+					String name = tmp[1].trim();
+					// parent
+					String parentStr = tmp[2].trim();
+					ReferenceEvent parent = null;
+					if(!parentStr.isEmpty())
+					{	int parentId = Integer.parseInt(parentStr);
+						parent = result.get(parentId);
+					}
+					// event date
+					String dateStr = tmp[3].trim();
+					DateFormat format = new SimpleDateFormat("yyyy-MM-dd");
+					Date date = null;
+					try
+					{	date = format.parse(dateStr);
+					}
+					catch (ParseException e)
+					{	format = new SimpleDateFormat("yyyy-MM");
+						try
+						{	date = format.parse(dateStr);
+						} 
+						catch (ParseException e1) 
+						{	format = new SimpleDateFormat("yyyy");
+							try
+							{	date = format.parse(dateStr);
+							}
+							catch (ParseException e2) 
+							{	e2.printStackTrace();
+							}
+						}
+					}
+					
+					// reference event
+					ReferenceEvent event = new ReferenceEvent(id, name, date, parent);
+					result.put(id, event);
+				}
+			}
+			catch (FileNotFoundException e) 
+			{	logger.log("Found no reference events file at "+filePath);
+			}
+			
+		logger.decreaseOffset();
+		return result;
+	}
+	
 	/////////////////////////////////////////////////////////////////
 	// MERGE		/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
