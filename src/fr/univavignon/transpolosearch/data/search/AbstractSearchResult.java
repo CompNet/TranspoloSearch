@@ -121,7 +121,7 @@ public abstract class AbstractSearchResult
 	 */
 	protected void exportCluster(Map<String,String> result)
 	{	if(cluster!=null)
-			result.put(WebSearchResults.COL_ARTICLE_CLUSTER,cluster);
+			result.put(AbstractSearchResults.COL_ARTICLE_CLUSTER,cluster);
 	}
 	
 	/////////////////////////////////////////////////////////////////
@@ -141,16 +141,16 @@ public abstract class AbstractSearchResult
 	protected void exportTitle(Map<String,String> result)
 	{	if(article!=null)
 		{	String title = article.getTitle();
-			result.put(WebSearchResults.COL_TITLE,title);
+			result.put(AbstractSearchResults.COL_TITLE,title);
 			
 			if(this instanceof WebSearchResult)
-				result.put(WebSearchResults.COL_TITLE_CONTENT,title);
+				result.put(AbstractSearchResults.COL_TITLE_CONTENT,title);
 			else if(this instanceof SocialSearchResult)
 			{	String rawText = article.getRawText();
 				String beginning = rawText.replace('\n',' ');
 				beginning = beginning.replace('"','\'');
-				beginning = beginning.substring(0,Math.min(25,beginning.length()));
-				result.put(WebSearchResults.COL_TITLE_CONTENT,beginning);
+//				beginning = beginning.substring(0,Math.min(25,beginning.length()));
+				result.put(AbstractSearchResults.COL_TITLE_CONTENT,beginning);
 			}
 		}
 	}
@@ -179,7 +179,7 @@ public abstract class AbstractSearchResult
 		{	java.util.Date pubDate = article.getPublishingDate();
 			if(pubDate!=null)
 			{	String pubDateStr = DATE_FORMAT.format(pubDate);
-				result.put(WebSearchResults.COL_PUB_DATE ,pubDateStr);
+				result.put(AbstractSearchResults.COL_PUB_DATE ,pubDateStr);
 			}
 		}
 	}
@@ -201,7 +201,7 @@ public abstract class AbstractSearchResult
 				{	authorStr = it.next();
 					authorsStr = authorsStr + ", " + authorStr;
 				}
-				result.put(WebSearchResults.COL_AUTHORS,authorsStr);
+				result.put(AbstractSearchResults.COL_AUTHORS,authorsStr);
 			}
 		}
 	}
@@ -670,7 +670,7 @@ public abstract class AbstractSearchResult
 		String periodStr = period.toString();
 		periodStr = periodStr.replaceAll("[\\n\\r]", " ");
 		periodStr = periodStr.replaceAll("\"", "'");
-		result.put(WebSearchResults.COL_ENT_DATES,periodStr);
+		result.put(AbstractSearchResults.COL_ENT_DATES,periodStr);
 	}
 	
 	/**

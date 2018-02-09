@@ -321,7 +321,7 @@ boolean doit = false;
 	 * We expect the following format: URL on the first column,
 	 * then a tabulation, then the ids of the event(s). The rest
 	 * of the columns (if any) are just ignored. The ids are integers
-	 * separated by commas.
+	 * separated by semi-columns (:).
 	 * 
 	 * @param filePath 
 	 * 		Path of the reference clusters file.
@@ -345,7 +345,7 @@ boolean doit = false;
 							clust = null;	// null means the URL is irrelevant
 						else
 						{	clust = new ArrayList<ReferenceEvent>();
-							String ctmp[] = clustName.split(",");
+							String ctmp[] = clustName.split(":");
 							for(String cn: ctmp)
 							{	int id = Integer.parseInt(cn);
 								ReferenceEvent event = referenceEvents.get(id);

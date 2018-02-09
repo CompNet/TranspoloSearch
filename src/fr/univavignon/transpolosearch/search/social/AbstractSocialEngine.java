@@ -110,8 +110,10 @@ public abstract class AbstractSocialEngine
 		File cacheFolder = new File(cacheFilePath);
 		cacheFolder.mkdirs();
 		cacheFilePath = cacheFilePath + File.separator;
-		if(seed!=null)
-			cacheFilePath = cacheFilePath + seed.replace(' ', '_');
+		if(seed==null)
+			cacheFilePath = cacheFilePath + keywords.replace(' ', '_') + "_";
+		else
+			cacheFilePath = cacheFilePath + seed.replace(' ', '_') + "_";
 		cacheFilePath = cacheFilePath + FileNames.FI_SEARCH_RESULTS;
 		
 		// possibly use cached results

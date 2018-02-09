@@ -60,7 +60,7 @@ public class WebSearchResults extends AbstractSpecificSearchResults<WebSearchRes
 	public WebSearchResults(Map<Integer,ReferenceEvent> referenceEvents) throws UnsupportedEncodingException
 	{	super(referenceEvents);
 		
-		String filePath = FileNames.FO_WEB_SEARCH_RESULTS + File.separator + FileNames.FI_ANNOTATED_RESULTS;
+		String filePath = FileNames.FO_WEB_SEARCH_RESULTS + File.separator + FileNames.FI_ANNOTATED_CLUSTERS;
 		loadReferenceClusters(filePath);
 	}
 	

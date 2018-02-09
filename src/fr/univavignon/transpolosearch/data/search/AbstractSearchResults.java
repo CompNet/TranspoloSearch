@@ -585,6 +585,8 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 	public static final String COL_KEYWORDS = "Keywords";
 	/** Column name for the number of events in a cluster */
 	public static final String COL_FREQUENCY = "Frequency";
+	/** Column name for the content of a social media post */
+	public static final String COL_CONTENT = "Content";
 	
 	/**
 	 * Records the detailed list of previously identified events as a CSV file.
@@ -1068,7 +1070,14 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 			Map<String,String> line = new HashMap<String,String>();
 			line.put(PERF_STEP, stepName);
 			computeDiscriminationPerformance(line, startDate, endDate);
-			if(!results.isEmpty() && results.values().iterator().next().cluster!=null)	// only if the clustering has already been performed 
+			
+			boolean clusteringDone = false;
+			Iterator<T> it = results.values().iterator();
+			while(!clusteringDone && it.hasNext())
+			{	T res = it.next();
+				clusteringDone = res.cluster!=null;
+			}
+			if(clusteringDone)	// only if the clustering has already been performed 
 				computeClusteringPerformance(line, startDate, endDate);
 			performances.add(line);
 			
@@ -1165,7 +1174,84 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 		float fmeasureTT = 2 * precisionTT * recallTT / (precisionTT + recallTT);
 		result.put(PERF_THEME_TIME_FMEASURE, Float.toString(fmeasureTT));
 	}
-
+	
+	/**
+	 * Returns the best event from the list of possible reference events,
+	 * or {@code null} if the list is {@code null} or empty. The method
+	 * uses the ancestor event when available. It compare the event period
+	 * and the specified period. If several events fit the period, the
+	 * method arbitrarily returns the first one in the list.
+	 * 
+	 * @param events
+	 * 		List of possible events.
+	 * @param startDate
+	 * 		Beginning of the considered period.
+	 * @param endDate
+	 * 		End of the considered period.
+	 * @return
+	 * 		The selected reference event, or {@code null} if none 
+	 * 		could be selected.
+	 */
+	private ReferenceEvent getBestEvent(List<ReferenceEvent> events, Date startDate, Date endDate)
+	{	ReferenceEvent event = null;
+		
+		if(events!=null)
+		{	if(startDate!=null && endDate!=null)
+			{	Iterator<ReferenceEvent> it = events.iterator();
+				while(event==null && it.hasNext())
+				{	ReferenceEvent evt = it.next();
+					if(evt.isWithinPeriod(startDate,endDate))
+						event = evt;
+				}
+			}
+			else
+				event = events.get(0);
+		}
+		
+		if(event!=null)
+			event = event.getAncestor();
+		
+		//TODO would be better to keep the event leading to the best RI or NMI... 
+		
+		return event;
+	}
+	
+	/**
+	 * Takes a partition and renumbers the cluster ids so that
+	 * they are continuously numbered. It also returns the number
+	 * of clusters in the partition.
+	 * 
+	 * @param partition
+	 * 		Original partition, modified in place.
+	 * @return
+	 * 		Number of clusters in the partition.
+	 */
+	@SuppressWarnings("unused")
+	private int normalizeClusterIds(int[] partition)
+	{	// get and sort the unique cluster ids
+		Set<Integer> clusterIds = new TreeSet<Integer>();
+		for(int c: partition)
+			clusterIds.add(c);
+		
+		// re-number them contiguously
+		Map<Integer,Integer> idMap = new HashMap<Integer,Integer>();
+		int newId = 1;
+		for(int oldId: clusterIds)
+		{	idMap.put(oldId, newId);
+			newId++;
+		}
+		int result = newId - 1;
+		
+		// substitute in the original partition
+		for(int i=0;i<partition.length;i++)
+		{	int c = partition[i];
+			c = idMap.get(c);
+			partition[i] = c;	
+		}
+		
+		return result;
+	}
+	
 	/**
 	 * Computes the performance of the clustering task: identifying groups
 	 * of articles or events corresponding to the same real-world event.
@@ -1185,10 +1271,26 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 		for(Entry<String,T> entry: results.entrySet())
 		{	String key = entry.getKey();
 			T value = entry.getValue();
-			List<ReferenceEvent> clusterEvents = referenceClusters.get(key);
-			if(clusterEvents!=null && value.status==null)
+			List<ReferenceEvent> events = referenceClusters.get(key);
+			ReferenceEvent event = getBestEvent(events,startDate,endDate);
+			if(event!=null && value.status==null)
 				n++;
 		}
+		
+//		// TP/FP/FN based on clusters
+//		Set<Integer> tpEvts = new TreeSet<Integer>();
+//		Set<Integer> fpEvts1 = new TreeSet<Integer>();
+//		Set<Integer> fpEvts2 = new TreeSet<Integer>();
+//		Set<Integer> fnEvts = new TreeSet<Integer>();
+//		for(Entry<String,T> entry: results.entrySet())
+//		{	String key = entry.getKey();
+//			T value = entry.getValue();
+//			List<ReferenceEvent> events = referenceClusters.get(key);
+//			ReferenceEvent event = getBestEvent(events,startDate,endDate);
+//			if(event!=null && value.status==null)
+//				n++;
+//		}
+// TODO relatively to the actual events? or to those contained in the remaining results?
 		
 		// convert partition formats 
 		int[] part1 = new int[n];
@@ -1198,23 +1300,8 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 		{	String key = entry.getKey();
 			T value = entry.getValue();
 			List<ReferenceEvent> events = referenceClusters.get(key);
-			ReferenceEvent event = null;
-			if(events!=null)
-			{	if(startDate!=null && endDate!=null)
-				{	Iterator<ReferenceEvent> it = events.iterator();
-					while(event==null && it.hasNext())
-					{	ReferenceEvent evt = it.next();
-						if(evt.isWithinPeriod(startDate,endDate))
-							event = evt;
-					}
-				}
-				else
-					event = events.get(0);
-			}
-			if(event!=null)
-				event = event.getAncestor();
-			//TODO would be better to keep the event leading to the best score... 
-			if(events!=null && value.status==null)
+			ReferenceEvent event = getBestEvent(events,startDate,endDate);
+			if(event!=null && value.status==null)
 			{	int c1 = Integer.parseInt(value.cluster);
 				part1[i] = c1;
 				int c2 = event.getId();
@@ -1223,7 +1310,7 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 			}
 		}
 		
-		// compute measures
+		// compute partition-based measures
 		float randIndex = computeRandIndex(part1, part2);
 		result.put(PERF_RAND_INDEX, Float.toString(randIndex));
 		float nmi = computeNormalizedMutualInformation(part1, part2);
@@ -1280,22 +1367,14 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 	 * 		Real value representing how similar the partitions are. 
 	 */
 	private float computeNormalizedMutualInformation(int[] part1, int[] part2)
-	{	// get the numbers of clusters
-		int nclust1 = 0;
-		for(int i=0;i<part1.length;i++)
-			nclust1 = Math.max(nclust1,part1[i]);
-		nclust1++;
-		int nclust2 = 0;
-		for(int j=0;j<part2.length;j++)
-			nclust2 = Math.max(nclust2,part2[j]);
-		nclust2++;
+	{	// normalize, and get the numbers of clusters
+		int nclust1 = normalizeClusterIds(part1);
+		int nclust2 = normalizeClusterIds(part2);
 		
 		// init the (normalized) confusion matrix
 		float[][] confMat = new float[nclust1][nclust2];
 		for(int i=0;i<part1.length;i++)
-		{	for(int j=0;j<part2.length;j++)
-				confMat[part1[i]-1][part2[j]-1] = confMat[part1[i]-1][part2[j]-1] + 1f/part1.length;
-		}
+			confMat[part1[i]-1][part2[i]-1] = confMat[part1[i]-1][part2[i]-1] + 1f/part1.length;
 		
 		// compute the marginals
 		float[] rowMarg = new float[nclust1];
@@ -1315,7 +1394,9 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 		double numerator = 0;
 		for(int i=0;i<nclust1;i++)
 		{	for(int j=0;j<nclust2;j++)
-				numerator = numerator + confMat[i][j] * Math.log10(confMat[i][j]/(rowMarg[i]*colMarg[j]));
+			{	if(confMat[i][j]!=0)
+					numerator = numerator + confMat[i][j] * Math.log10(confMat[i][j]/(rowMarg[i]*colMarg[j]));
+			}
 		}
 		numerator = -2 * numerator;
 		

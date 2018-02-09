@@ -53,15 +53,25 @@ public class CombinedSearchResults extends AbstractSearchResults<AbstractSearchR
 	{	super();
 		
 		// add all results
-		results.putAll(webRes.results);
-		results.putAll(socRes.results);
+		if(webRes!=null)
+			results.putAll(webRes.results);
+		if(socRes!=null)
+			results.putAll(socRes.results);
 		// and search engines
-		engineNames.addAll(webRes.engineNames);
-		engineNames.addAll(socRes.engineNames);
-		// and references
-		referenceEvents.putAll(webRes.referenceEvents);
-		referenceClusters.putAll(webRes.referenceClusters);
-		referenceClusters.putAll(socRes.referenceClusters);
+		if(webRes!=null)
+			engineNames.addAll(webRes.engineNames);
+		if(socRes!=null)
+			engineNames.addAll(socRes.engineNames);
+		// and reference events
+		if(webRes!=null)
+			referenceEvents.putAll(webRes.referenceEvents);
+		else
+			referenceEvents.putAll(socRes.referenceEvents);
+		// and reference clusters
+		if(webRes!=null)
+			referenceClusters.putAll(webRes.referenceClusters);
+		if(socRes!=null)
+			referenceClusters.putAll(socRes.referenceClusters);
 	}
 	
 	/////////////////////////////////////////////////////////////////

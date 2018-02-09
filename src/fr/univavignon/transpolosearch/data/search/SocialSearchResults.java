@@ -56,7 +56,7 @@ public class SocialSearchResults extends AbstractSpecificSearchResults<SocialSea
 	public SocialSearchResults(Map<Integer,ReferenceEvent> referenceEvents) throws UnsupportedEncodingException
 	{	super(referenceEvents);
 		
-		String filePath = FileNames.FO_SOCIAL_SEARCH_RESULTS + File.separator + FileNames.FI_ANNOTATED_RESULTS;
+		String filePath = FileNames.FO_SOCIAL_SEARCH_RESULTS + File.separator + FileNames.FI_ANNOTATED_CLUSTERS;
 		loadReferenceClusters(filePath);
 	}
 	
@@ -123,7 +123,7 @@ public class SocialSearchResults extends AbstractSpecificSearchResults<SocialSea
 		
 		// setup colon names
 		List<String> cols = Arrays.asList(
-				COL_NOTES, COL_TITLE, COL_URL, COL_LENGTH, COL_PUB_DATE, 
+				COL_NOTES, COL_TITLE, COL_URL, COL_LENGTH, COL_PUB_DATE, //COL_CONTENT, 
 				COL_AUTHORS, COL_ORIGINAL, COL_LIKES, COL_SHARES, COL_COMMENTS, COL_STATUS, 
 				COL_ARTICLE_CLUSTER, COL_ENGINE, 
 				COL_ENT_DATES, COL_ENT_LOCATIONS, COL_ENT_PERSONS, COL_ENT_ORGANIZATIONS, 

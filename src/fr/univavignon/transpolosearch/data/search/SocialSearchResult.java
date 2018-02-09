@@ -105,6 +105,17 @@ public class SocialSearchResult extends AbstractSearchResult
 	/** Textual content of this post */
 	public String content = null;
 	
+	/**
+	 * Adds the content of this post to the specified map.
+	 * 
+	 * @param result
+	 * 		Map to fill with the required field.
+	 */
+	private void exportContent(Map<String,String> result)
+	{	if(content!=null)
+			result.put(AbstractSearchResults.COL_CONTENT,content);
+	}
+	
 	/////////////////////////////////////////////////////////////////
 	// AUTHOR		/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
@@ -150,7 +161,7 @@ public class SocialSearchResult extends AbstractSearchResult
 	 */
 	private void exportLikeNumber(Map<String,String> result)
 	{	if(likes!=null)
-		result.put(WebSearchResults.COL_LIKES,Integer.toString(likes));
+		result.put(AbstractSearchResults.COL_LIKES,Integer.toString(likes));
 	}
 	
 	/////////////////////////////////////////////////////////////////
@@ -167,7 +178,7 @@ public class SocialSearchResult extends AbstractSearchResult
 	 */
 	private void exportShareNumber(Map<String,String> result)
 	{	if(shares!=null)
-			result.put(WebSearchResults.COL_SHARES,Integer.toString(shares));
+			result.put(AbstractSearchResults.COL_SHARES,Integer.toString(shares));
 	}
 	
 	/////////////////////////////////////////////////////////////////
@@ -190,9 +201,9 @@ public class SocialSearchResult extends AbstractSearchResult
 	 */
 	private void exportCommentNumber(Map<String,String> result)
 	{	int commentNbr = comments.size();
-		result.put(WebSearchResults.COL_COMMENTS,Integer.toString(commentNbr));
+		result.put(AbstractSearchResults.COL_COMMENTS,Integer.toString(commentNbr));
 	}
-
+	
 	/////////////////////////////////////////////////////////////////
 	// URL			/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
@@ -403,6 +414,8 @@ public class SocialSearchResult extends AbstractSearchResult
 		exportStatus(result);
 		// publication date
 		exportPublicationDate(result);
+		// content
+		exportContent(result);
 		// likes
 		exportLikeNumber(result);
 		// shares

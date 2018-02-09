@@ -213,8 +213,10 @@ public class FileNames
 	public final static String FI_EVENT_CLUSTERS_BYARTICLE = "event_clusters_byarticle" + FileNames.EX_CSV;
 	/** Event clusters file, by sentence */
 	public final static String FI_EVENT_CLUSTERS_BYSENTENCE = "event_clusters_bysentence" + FileNames.EX_CSV;
+	/** Reference file for the events */
+	public final static String FI_ANNOTATED_EVENTS = "annotated_events" + FileNames.EX_TEXT;
 	/** Reference file for the information retrieval task */
-	public final static String FI_ANNOTATED_RESULTS = "annotated_results" + FileNames.EX_TEXT;
+	public final static String FI_ANNOTATED_CLUSTERS = "annotated_clusters" + FileNames.EX_TEXT;
 	/** Performance reached for the information retrieval task */
 	public final static String FI_PERFORMANCE = "performance" + FileNames.EX_CSV;
 	/** List of Facebook ids */

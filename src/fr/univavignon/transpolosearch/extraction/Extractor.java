@@ -162,11 +162,13 @@ public class Extractor
 		
 		// perform the Web search
 		logger.log("Performing the Web search");
-		WebSearchResults webRes = performWebExtraction(keywords, websites, startDate, endDate, filterByPubDate, filterByEntDate, compulsoryExpression, language, referenceEvents);
+		WebSearchResults webRes = null;
+		webRes = performWebExtraction(keywords, websites, startDate, endDate, filterByPubDate, filterByEntDate, compulsoryExpression, language, referenceEvents);
 		
 		// perform the social search
 		logger.log("Performing the social media search");
-		SocialSearchResults socialRes = performSocialExtraction(keywords, additionalSeeds, startDate, endDate, compulsoryExpression, doExtendedSocialSearch, language, referenceEvents);
+		SocialSearchResults socialRes = null;
+		socialRes = performSocialExtraction(keywords, additionalSeeds, startDate, endDate, compulsoryExpression, doExtendedSocialSearch, language, referenceEvents);
 		
 		// merge results and continue processing
 		logger.log("Merging web and social media results");
@@ -473,7 +475,7 @@ public class Extractor
 			logger.increaseOffset();
 				List<SocialSearchResult> posts = engine.retrieveResults(keywords);
 			
-				// add to the overall result object
+				// add to the overall object for social media results
 				String engineStr = engine.toString();
 				int rank = 1;
 				for(SocialSearchResult post: posts)
@@ -647,11 +649,11 @@ public class Extractor
 	private Map<Integer,ReferenceEvent> loadReferenceEvents() throws UnsupportedEncodingException
 	{	logger.increaseOffset();
 		Map<Integer,ReferenceEvent> result = new HashMap<Integer,ReferenceEvent>();
-		String filePath = FileNames.FO_OUTPUT + File.separator + FileNames.FI_ANNOTATED_RESULTS;
+		String filePath = FileNames.FO_OUTPUT + File.separator + FileNames.FI_ANNOTATED_EVENTS;
 
 			try
-			{	logger.log("Find a reference events file ("+filePath+"): loading it");
-				Scanner scanner = FileTools.openTextFileRead(filePath, "UTF-8");
+			{	Scanner scanner = FileTools.openTextFileRead(filePath, "UTF-8");
+				logger.log("Find a reference events file ("+filePath+"): loading it");
 				while(scanner.hasNextLine())
 				{	String line = scanner.nextLine();
 					String[] tmp = line.split("\t");

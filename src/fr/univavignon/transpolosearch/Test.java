@@ -602,15 +602,15 @@ public class Test
 			else
 				websites = (List<String>)param.get(2);
 			
-			List<String> additionalPages;
+			List<String> additionalSeeds;
 			if(param.get(3)==null)
-				additionalPages = new ArrayList<String>();
+				additionalSeeds = new ArrayList<String>();
 			else
-				additionalPages = (List<String>)param.get(3);
+				additionalSeeds = (List<String>)param.get(3);
 			
 			logger.log("Processing "+keywords);
 			logger.increaseOffset();
-				extractor.performExtraction(keywords, websites, additionalPages, startDate, endDate, filterByPubDate, filterByEntDate, compulsoryExpression, doExtendedSocialSearch, language);
+				extractor.performExtraction(keywords, websites, additionalSeeds, startDate, endDate, filterByPubDate, filterByEntDate, compulsoryExpression, doExtendedSocialSearch, language);
 			logger.decreaseOffset();
 		}
 	}
