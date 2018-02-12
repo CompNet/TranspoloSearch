@@ -990,8 +990,10 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 	public static final String PERF_THEME_TIME_FMEASURE = "Theme-time F-Measure";
 	/** Column name for the Rand index */
 	public static final String PERF_RAND_INDEX = "Rand index";
+	/** Column name for the adjusted Rand index */
+	public static final String PERF_ADJUSTED_RAND_INDEX = "Adjusted Rand index";
 	/** Column name for the Normalized Mutual Information */
-	public static final String PERF_NMI = "NMI";
+	public static final String PERF_NMI = "Normalized Mutual Information";
 	
 	/**
 	 * Records the performances in a CSV file.
@@ -1018,6 +1020,7 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 					PERF_THEME_TIME_RECALL,
 					PERF_THEME_TIME_FMEASURE,
 					PERF_RAND_INDEX,
+					PERF_ADJUSTED_RAND_INDEX,
 					PERF_NMI
 			);
 			
@@ -1226,7 +1229,6 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 	 * @return
 	 * 		Number of clusters in the partition.
 	 */
-	@SuppressWarnings("unused")
 	private int normalizeClusterIds(int[] partition)
 	{	// get and sort the unique cluster ids
 		Set<Integer> clusterIds = new TreeSet<Integer>();
@@ -1291,6 +1293,7 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 //				n++;
 //		}
 // TODO relatively to the actual events? or to those contained in the remaining results?
+// TODO add P, R and F for events (clusters) only
 		
 		// convert partition formats 
 		int[] part1 = new int[n];
@@ -1313,6 +1316,8 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 		// compute partition-based measures
 		float randIndex = computeRandIndex(part1, part2);
 		result.put(PERF_RAND_INDEX, Float.toString(randIndex));
+		float adjustedRandIndex = computeAdjustedRandIndex(part1, part2);
+		result.put(PERF_ADJUSTED_RAND_INDEX, Float.toString(adjustedRandIndex));
 		float nmi = computeNormalizedMutualInformation(part1, part2);
 		result.put(PERF_NMI, Float.toString(nmi));
 	}
@@ -1351,6 +1356,66 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 		
 		// process the index
 		float result = (ss+dd)/(float)(ss+sd+ds+dd);
+		return result;
+	}
+	
+	/**
+	 * Computes the adjusted Rand index to compare two partitions.
+	 * See <a href="https://en.wikipedia.org/wiki/Rand_index#Adjusted_Rand_index">adjusted Rand index</a>.
+	 * 
+	 * @param part1
+	 * 		First partition.
+	 * @param part2
+	 * 		Second partition.
+	 * @return
+	 * 		Real value representing how similar the partitions are. 
+	 */
+	private float computeAdjustedRandIndex(int[] part1, int[] part2)
+	{	// normalize, and get the numbers of clusters
+		int nclust1 = normalizeClusterIds(part1);
+		int nclust2 = normalizeClusterIds(part2);
+		
+		// init the (normalized) confusion matrix
+		float[][] confMat = new float[nclust1][nclust2];
+		for(int i=0;i<part1.length;i++)
+			confMat[part1[i]-1][part2[i]-1] = confMat[part1[i]-1][part2[i]-1] + 1f/part1.length;
+		
+		// compute the marginals
+		float[] rowMarg = new float[nclust1];
+		for(int i=0;i<nclust1;i++)
+		{	rowMarg[i] = 0;
+			for(int j=0;j<nclust2;j++)
+				rowMarg[i] = rowMarg[i] + confMat[i][j];
+		}
+		float[] colMarg = new float[nclust2];
+		for(int j=0;j<nclust2;j++)
+		{	colMarg[j] = 0;
+			for(int i=0;i<nclust1;i++)
+				colMarg[j] = colMarg[j] + confMat[i][j];
+		}
+		
+		// compute the Rand index
+		float ri = 0;
+		for(int i=0;i<nclust1;i++)
+		{	for(int j=0;j<nclust2;j++)
+				ri = ri + confMat[i][j]*(confMat[i][j]-1)/2;
+		}
+
+		// compute the expected Rand index
+		float n1 = 0;
+		for(int i=0;i<nclust1;i++)
+			n1 = n1 + rowMarg[i]*(rowMarg[i]-1)/2;
+		float n2 = 0;
+		for(int j=0;j<nclust2;j++)
+			n2 = n2 + colMarg[j]*(colMarg[j]-1)/2;
+		float d = part1.length*(part1.length-1)/2;
+		float ei = n1*n2/d;
+		
+		// compute the maximal Rand index
+		float mi = (n1 + n2)/2;
+		
+		// process the index
+		float result = (ri+ei)/(mi-ei);
 		return result;
 	}
 	
