@@ -74,8 +74,7 @@ public class FileTools
 	};
 	
 	/**
-	 * Creates a filter able to retain only files
-	 * with the same name than the specified parameter.
+	 * Creates a filter able to retain only files with the same name than the specified parameter.
 	 * 
 	 * @param fileName
 	 * 		targeted filename.
@@ -97,8 +96,7 @@ public class FileTools
 	// READ				/////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
 	/**
-	 * Open the file at the specified path,
-	 * for reading.
+	 * Open the file at the specified path, for reading.
 	 * 
 	 * @param filePath 
 	 * 		File to open.
@@ -317,8 +315,7 @@ public class FileTools
 	// MOVE				/////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
 	/**
-	 * Moves a file or directory, even
-	 * if the directory is not empty.
+	 * Moves a file or directory, even if the directory is not empty.
 	 * 
 	 * @param oldFile
 	 * 		File or directory to delete.
@@ -396,7 +393,8 @@ public class FileTools
 	
 	/**
 	 * Copy a single file. Source code adapted from
-	 * http://stackoverflow.com/questions/106770/standard-concise-way-to-copy-a-file-in-java
+	 * <a href="http://stackoverflow.com/questions/106770/standard-concise-way-to-copy-a-file-in-java">
+	 * StackOverflow</a>
 	 * <br/>
 	 * Note folders are not created by this function.
 	 * 
@@ -453,8 +451,7 @@ public class FileTools
 	// LIST				/////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
 	/**
-	 * Returns a list of files whose name starts with the specified
-	 * prefix, and which are located in the specified folder.
+	 * Returns a list of files whose name starts with the specified prefix, and which are located in the specified folder.
 	 *  
 	 * @param folder
 	 * 		Folder directly containing the files.
@@ -482,8 +479,7 @@ public class FileTools
 	}
 
 	/**
-	 * Returns a list of files whose name ends with the specified
-	 * suffix, and which are located in the specified folder.
+	 * Returns a list of files whose name ends with the specified suffix, and which are located in the specified folder.
 	 *  
 	 * @param folder
 	 * 		Folder directly containing the files.
