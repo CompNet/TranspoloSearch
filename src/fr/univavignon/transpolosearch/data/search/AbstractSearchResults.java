@@ -106,7 +106,7 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 	/** Silhouette value corresponding to the last clustering done */
 	private double lastSilhouette = Double.NaN;
 	/** Confusion matrix of the last clustering, as a string (ready to be recorded in a CSV file */
-	private String lastConfMatStr = null;
+	public String lastConfMatStr = null;
 	
 	/**
 	 * Returns the number of entries in this collection of search results.
@@ -1819,11 +1819,7 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 	 * @throws FileNotFoundException
 	 * 		Problem when accessing the file.
 	 */
-	public void exportConfusionMatrix(String fileName) throws UnsupportedEncodingException, FileNotFoundException
-	{	PrintWriter pw = FileTools.openTextFileWrite(fileName, "UTF-8");
-		pw.write(lastConfMatStr);
-		pw.close();
-	}
+	public abstract void exportConfusionMatrix(String fileName) throws UnsupportedEncodingException, FileNotFoundException;
 	
 	/////////////////////////////////////////////////////////////////
 	// CSV			/////////////////////////////////////////////////

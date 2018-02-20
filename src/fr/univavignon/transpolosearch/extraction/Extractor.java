@@ -383,7 +383,7 @@ public class Extractor
 			// displays the remaining articles with their mentions	//TODO maybe get the entities instead of the mentions, eventually?
 			results.displayRemainingMentions(); // for debug only
 			
-			// cluster the article by content
+			// cluster the articles by content
 			results.clusterArticles(language);
 			fileName = currentStep + "_" + FileNames.FI_ARTICLES_CLUSTERING;
 			results.exportResults(fileName, startDate, endDate);

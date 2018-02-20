@@ -211,4 +211,12 @@ public class CombinedSearchResults extends AbstractSearchResults<AbstractSearchR
 	{	String folder = FileNames.FO_OUTPUT;
 		recordPerformance(folder);
 	}
+
+	@Override
+	public void exportConfusionMatrix(String fileName) throws UnsupportedEncodingException, FileNotFoundException
+	{	String path = FileNames.FO_OUTPUT + File.separator + fileName;
+		PrintWriter pw = FileTools.openTextFileWrite(path, "UTF-8");
+		pw.write(lastConfMatStr);
+		pw.close();
+	}
 }

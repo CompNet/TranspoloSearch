@@ -250,4 +250,12 @@ public class SocialSearchResults extends AbstractSpecificSearchResults<SocialSea
 	{	String folder = FileNames.FO_SOCIAL_SEARCH_RESULTS;
 		recordPerformance(folder);
 	}
+
+	@Override
+	public void exportConfusionMatrix(String fileName) throws UnsupportedEncodingException, FileNotFoundException
+	{	String path = FileNames.FO_SOCIAL_SEARCH_RESULTS + File.separator + fileName;
+		PrintWriter pw = FileTools.openTextFileWrite(path, "UTF-8");
+		pw.write(lastConfMatStr);
+		pw.close();
+	}
 }
