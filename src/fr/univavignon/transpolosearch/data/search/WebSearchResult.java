@@ -21,6 +21,7 @@ package fr.univavignon.transpolosearch.data.search;
 import java.io.IOException;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -34,6 +35,7 @@ import org.xml.sax.SAXException;
 
 import fr.univavignon.transpolosearch.data.entity.EntityType;
 import fr.univavignon.transpolosearch.data.event.Event;
+import fr.univavignon.transpolosearch.data.event.ReferenceEvent;
 import fr.univavignon.transpolosearch.retrieval.ArticleRetriever;
 import fr.univavignon.transpolosearch.retrieval.reader.ReaderException;
 import fr.univavignon.transpolosearch.tools.file.FileNames;
@@ -55,6 +57,14 @@ public class WebSearchResult extends AbstractSearchResult
 	public WebSearchResult(String url)
 	{	super();
 		this.url = url;
+	}
+	
+	/////////////////////////////////////////////////////////////////
+	// KEY			/////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////
+	@Override
+	public String getKey()
+	{	return url;
 	}
 	
 	/////////////////////////////////////////////////////////////////
@@ -233,7 +243,7 @@ public class WebSearchResult extends AbstractSearchResult
 	// CSV			/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
 	@Override
-	protected Map<String,String> exportResult()
+	protected Map<String,String> exportResult(Map<String,List<ReferenceEvent>> referenceClusters, Date startDate, Date endDate)
 	{	Map<String,String> result = new HashMap<String,String>();
 		
 		// title 
@@ -249,7 +259,7 @@ public class WebSearchResult extends AbstractSearchResult
 		// author(s)
 		exportAuthors(result);
 		// article cluster
-		exportCluster(result);
+		exportCluster(result, referenceClusters, startDate, endDate);
 		// search engine ranks
 		exportRanks(result);
 		
@@ -283,7 +293,7 @@ public class WebSearchResult extends AbstractSearchResult
 	 * 		search result (can be empty). 
 	 */
 	@Override
-	protected List<Map<String,String>> exportEvents()
+	protected List<Map<String,String>> exportEvents(Map<String,List<ReferenceEvent>> referenceClusters, Date startDate, Date endDate)
 	{	List<Map<String,String>> result = new ArrayList<Map<String,String>>();
 		
 		int rank = 0;
@@ -305,7 +315,7 @@ public class WebSearchResult extends AbstractSearchResult
 			// author(s)
 			exportAuthors(map);
 			// article cluster
-			exportCluster(map);
+			exportCluster(map, referenceClusters, startDate, endDate);
 			// search engine ranks
 			exportRanks(map);
 			// event and its stuff

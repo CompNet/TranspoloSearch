@@ -40,6 +40,7 @@ import fr.univavignon.transpolosearch.data.article.Article;
 import fr.univavignon.transpolosearch.data.article.ArticleLanguage;
 import fr.univavignon.transpolosearch.data.entity.EntityType;
 import fr.univavignon.transpolosearch.data.event.Event;
+import fr.univavignon.transpolosearch.data.event.ReferenceEvent;
 import fr.univavignon.transpolosearch.tools.file.FileNames;
 import fr.univavignon.transpolosearch.tools.string.StringTools;
 
@@ -75,6 +76,15 @@ public class SocialSearchResult extends AbstractSearchResult
 		this.source = source;
 		this.content = content;
 		this.original = original;
+	}
+	
+	/////////////////////////////////////////////////////////////////
+	// KEY			/////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////
+	@Override
+	public String getKey()
+	{	String result = id + "@" + source;
+		return result;
 	}
 	
 	/////////////////////////////////////////////////////////////////
@@ -405,7 +415,7 @@ public class SocialSearchResult extends AbstractSearchResult
 	// CSV			/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
 	@Override
-	protected Map<String, String> exportResult() 
+	protected Map<String, String> exportResult(Map<String,List<ReferenceEvent>> referenceClusters, Date startDate, Date endDate) 
 	{	Map<String,String> result = new HashMap<String,String>();
 	
 		// title 
@@ -431,7 +441,7 @@ public class SocialSearchResult extends AbstractSearchResult
 		// length
 		exportLength(result);
 		// article cluster
-		exportCluster(result);
+		exportCluster(result, referenceClusters, startDate, endDate);
 		
 		// mentions
 		exportMentions(result, EntityType.DATE);
@@ -463,7 +473,7 @@ public class SocialSearchResult extends AbstractSearchResult
 	 * 		search result (can be empty). 
 	 */
 	@Override
-	protected List<Map<String,String>> exportEvents()
+	protected List<Map<String,String>> exportEvents(Map<String,List<ReferenceEvent>> referenceClusters, Date startDate, Date endDate)
 	{	List<Map<String,String>> result = new ArrayList<Map<String,String>>();
 		
 		int rank = 0;
@@ -487,7 +497,7 @@ public class SocialSearchResult extends AbstractSearchResult
 			// date
 			exportPublicationDate(map);
 			// article cluster
-			exportCluster(map);
+			exportCluster(map, referenceClusters, startDate, endDate);
 			// search engine
 			exportSource(map);
 			// number of likes

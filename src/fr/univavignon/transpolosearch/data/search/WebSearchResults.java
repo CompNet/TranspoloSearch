@@ -26,6 +26,7 @@ import java.io.UnsupportedEncodingException;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -180,7 +181,7 @@ public class WebSearchResults extends AbstractSpecificSearchResults<WebSearchRes
 	// CSV			/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
 	@Override
-	public void exportResults(String fileName) throws UnsupportedEncodingException, FileNotFoundException
+	public void exportResults(String fileName, Date startDate, Date endDate) throws UnsupportedEncodingException, FileNotFoundException
 	{	logger.log("Recording all the Web search results in file "+fileName);
 		logger.increaseOffset();
 		
@@ -193,7 +194,7 @@ public class WebSearchResults extends AbstractSpecificSearchResults<WebSearchRes
 		// setup colon names
 		List<String> startCols = Arrays.asList(
 				COL_NOTES, COL_TITLE, COL_URL, COL_LENGTH, 
-				COL_PUB_DATE, COL_AUTHORS, COL_STATUS, COL_ARTICLE_CLUSTER
+				COL_PUB_DATE, COL_AUTHORS, COL_STATUS, COL_ARTICLE_CLUSTER, COL_REFERENCE_EVENTS
 		);
 		List<String> endCols = Arrays.asList(
 				COL_ENT_DATES, COL_ENT_LOCATIONS, COL_ENT_PERSONS, 
@@ -219,7 +220,7 @@ public class WebSearchResults extends AbstractSpecificSearchResults<WebSearchRes
 		
 		// write data and close file
 		for(WebSearchResult result: results.values())
-		{	Map<String,String> map = result.exportResult();
+		{	Map<String,String> map = result.exportResult(referenceClusters, startDate, endDate);
 			Iterator<String> it = cols.iterator();
 			while(it.hasNext())
 			{	String col = it.next();
@@ -240,7 +241,7 @@ public class WebSearchResults extends AbstractSpecificSearchResults<WebSearchRes
 	// EVENTS		/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
 	@Override
-	public void exportEvents(boolean bySentence, String filePrefix) throws UnsupportedEncodingException, FileNotFoundException
+	public void exportEvents(boolean bySentence, String filePrefix, Date startDate, Date endDate) throws UnsupportedEncodingException, FileNotFoundException
 	{	String fileName = filePrefix;
 		if(bySentence)
 			fileName = fileName + FileNames.FI_EVENT_LIST_BYSENTENCE;
@@ -253,7 +254,7 @@ public class WebSearchResults extends AbstractSpecificSearchResults<WebSearchRes
 			// setup colon names
 			List<String> startCols = Arrays.asList(
 					COL_NOTES, COL_EVENT_CLUSTER, COL_TITLE, COL_URL, COL_LENGTH, COL_PUB_DATE, COL_AUTHORS,
-					COL_STATUS, COL_ARTICLE_CLUSTER
+					COL_STATUS, COL_ARTICLE_CLUSTER, COL_REFERENCE_EVENTS
 			);
 			List<String> endCols = Arrays.asList(
 					COL_ENT_DATES, COL_ENT_LOCATIONS, 
@@ -285,7 +286,7 @@ public class WebSearchResults extends AbstractSpecificSearchResults<WebSearchRes
 			int total = 0;
 			logger.log("Treat each article separately");
 			for(WebSearchResult result: results.values())
-			{	List<Map<String,String>> lines = result.exportEvents();
+			{	List<Map<String,String>> lines = result.exportEvents(referenceClusters, startDate, endDate);
 				for(Map<String,String> line: lines)
 				{	it = cols.iterator();
 					while(it.hasNext())

@@ -345,7 +345,7 @@ public class Extractor
 			// perform the Web search
 			WebSearchResults result = performWebSearch(keywords, referenceEvents);
 			fileName = currentStep + "_" + FileNames.FI_ARTICLES_RAW;
-			result.exportResults(fileName);
+			result.exportResults(fileName, startDate, endDate);
 			result.computePerformance(fileName, startDate, endDate);
 			currentStep++;
 	
@@ -355,14 +355,14 @@ public class Extractor
 			// retrieve the corresponding articles
 			result.retrieveArticles();
 			fileName = currentStep + "_" + FileNames.FI_ARTICLES_URL_FILTER;
-			result.exportResults(fileName);
+			result.exportResults(fileName, startDate, endDate);
 			result.computePerformance(fileName, startDate, endDate);
 			currentStep++;
 			
 			// possibly filter the articles depending on the content
 			result.filterByContent(startDate, endDate, filterByPubDate, compulsoryExpression, language);
 			fileName = currentStep + "_" + FileNames.FI_ARTICLES_CONTENT_FILTER;
-			result.exportResults(fileName);
+			result.exportResults(fileName, startDate, endDate);
 			result.computePerformance(fileName, startDate, endDate);
 			currentStep++;
 			
@@ -372,7 +372,7 @@ public class Extractor
 			// possibly filter the articles depending on the entities
 			result.filterByEntity(startDate, endDate, filterByEntDate);
 			fileName = currentStep + "_" + FileNames.FI_ARTICLES_ENTITY_FILTER;
-			result.exportResults(fileName);
+			result.exportResults(fileName, startDate, endDate);
 			result.computePerformance(fileName, startDate, endDate);
 			currentStep++;
 			
@@ -382,12 +382,13 @@ public class Extractor
 			// cluster the article by content
 			result.clusterArticles(language);
 			fileName = currentStep + "_" + FileNames.FI_ARTICLES_CLUSTERING;
-			result.exportResults(fileName);
+			result.exportResults(fileName, startDate, endDate);
 			result.computePerformance(fileName, startDate, endDate);
 			currentStep++;
 			
 			// extract events from the remaining articles and mentions
-			extractEvents(result, currentStep + "_", language);
+			fileName = currentStep + "_";
+			extractEvents(result, fileName, language, startDate, endDate);
 			currentStep++;
 			
 			// record performance
@@ -562,7 +563,7 @@ public class Extractor
 			boolean includeComments = false;
 			SocialSearchResults result = performSocialSearch(keywords, includeComments, referenceEvents);
 			fileName = currentStep + "_" + FileNames.FI_ARTICLES_RAW;
-			result.exportResults(fileName);
+			result.exportResults(fileName, startDate, endDate);
 			result.computePerformance(fileName, startDate, endDate);
 			currentStep++;
 			
@@ -572,7 +573,7 @@ public class Extractor
 			// possibly filter the articles depending on the content
 			result.filterByContent(startDate, endDate, false, compulsoryExpression, language);	// false, because we suppose the targeted period is always respected when searching through the social media API
 			fileName = currentStep + "_" + FileNames.FI_ARTICLES_CONTENT_FILTER;
-			result.exportResults(fileName);
+			result.exportResults(fileName, startDate, endDate);
 			result.computePerformance(fileName, startDate, endDate);
 			currentStep++;
 			
@@ -582,7 +583,7 @@ public class Extractor
 			// possibly filter the articles depending on the entities
 			result.filterByEntity(null,null,false); // unnecessary, unless we add other entity-based constraints than dates
 			fileName = currentStep + "_" + FileNames.FI_ARTICLES_ENTITY_FILTER;
-			result.exportResults(fileName);
+			result.exportResults(fileName, startDate, endDate);
 			result.computePerformance(fileName, startDate, endDate);
 			currentStep++;
 			
@@ -592,12 +593,13 @@ public class Extractor
 			// cluster the articles by content
 			result.clusterArticles(language);
 			fileName = currentStep + "_" + FileNames.FI_ARTICLES_CLUSTERING;
-			result.exportResults(fileName);
+			result.exportResults(fileName, startDate, endDate);
 			result.computePerformance(fileName, startDate, endDate);
 			currentStep++;
 			
 			// extract events from the remaining articles and mentions
-			extractEvents(result, currentStep + "_", language);
+			fileName = currentStep + "_";
+			extractEvents(result, fileName, language, startDate, endDate);
 			currentStep++;
 			
 			// record performance
@@ -720,13 +722,19 @@ public class Extractor
 	 * 		String used to name the file to create.
 	 * @param language
 	 * 		Language of the articles.
+	 * @param startDate
+	 * 		Start of the period we want to consider, 
+	 * 		or {@code null} for no constraint.
+	 * @param endDate
+	 * 		End of the period we want to consider,
+	 * 		or {@code null} for no constraint.
 	 * 
 	 * @throws UnsupportedEncodingException
 	 * 		Problem while exporting the events.
 	 * @throws FileNotFoundException
 	 * 		Problem while exporting the events.
 	 */
-	private void extractEvents(AbstractSearchResults<?> results, String filePrefix, ArticleLanguage language) throws UnsupportedEncodingException, FileNotFoundException
+	private void extractEvents(AbstractSearchResults<?> results, String filePrefix, ArticleLanguage language, Date startDate, Date endDate) throws UnsupportedEncodingException, FileNotFoundException
 	{	boolean bySentence[] = {false,true};
 		for(boolean bs: bySentence)
 		{	// identify the events
@@ -735,7 +743,7 @@ public class Extractor
 			results.clusterEvents();
 			
 			// export the detailed list of events
-			results.exportEvents(bs, filePrefix);
+			results.exportEvents(bs, filePrefix, startDate, endDate);
 			// export the event clusters
 			results.exportEventClusters(bs, filePrefix, language);
 		}
@@ -773,28 +781,31 @@ public class Extractor
 			CombinedSearchResults combRes = new CombinedSearchResults(webRes, socRes);
 			combRes.resetClusters();
 			fileName = currentStep + "_" + FileNames.FI_ARTICLES_MERGE;
-			combRes.exportResults(fileName);
+			combRes.exportResults(fileName, startDate, endDate);
 			combRes.computePerformance(fileName, startDate, endDate);
 			currentStep++;
 			
 			// cluster the combined articles by content
 			combRes.clusterArticles(language);
 			fileName = currentStep + "_" + FileNames.FI_ARTICLES_CLUSTERING;
-			combRes.exportResults(fileName);
+			combRes.exportResults(fileName, startDate, endDate);
 			combRes.computePerformance(fileName, startDate, endDate);
 			currentStep++;
 			
 			// extract events from the articles and mentions
-			extractEvents(combRes, currentStep + "_", language);
+			fileName = currentStep + "_";
+			extractEvents(combRes, fileName, language, startDate, endDate);
 			currentStep++;
 			
 			// filter mentions based on article clusters
 			combRes.filterByCluster(1);
-			combRes.exportResults(currentStep + "_" + FileNames.FI_ARTICLES_CLUSTER_FILTER);
+			fileName = currentStep + "_" + FileNames.FI_ARTICLES_CLUSTER_FILTER;
+			combRes.exportResults(fileName, startDate, endDate);
 			currentStep++;
 			
 			// extract events based on the filtered mentions
-			extractEvents(combRes, currentStep + "_", language);
+			fileName = currentStep + "_";
+			extractEvents(combRes, fileName, language, startDate, endDate);
 			currentStep++;
 			
 			// record performance

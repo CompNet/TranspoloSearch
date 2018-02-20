@@ -384,7 +384,7 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
     	{	Set<Set<Integer>> partition = dendro.partitionK(k);
     		// get the silhouette
     		double sil = Silhouette.processSilhouette(distanceMatrix, partition);
-    		logger.log("k="+k+"/"+remainingRes.size()+" >> Silhouete="+sil);
+    		logger.log("k="+k+"/"+remainingRes.size()+" >> Silhouette="+sil);
     		if(sil>bestSil)
 			{	bestSil = sil;
 				bestK = k;
@@ -587,6 +587,8 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 	public static final String COL_FREQUENCY = "Frequency";
 	/** Column name for the content of a social media post */
 	public static final String COL_CONTENT = "Content";
+	/** Column name for the id of the reference event(s) of an article */
+	public static final String COL_REFERENCE_EVENTS = "Reference events";
 	
 	/**
 	 * Records the detailed list of previously identified events as a CSV file.
@@ -596,13 +598,19 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 	 * 		individual sentences.
 	 * @param filePrefix 
 	 * 		String used to name the file to create.
+	 * @param startDate
+	 * 		Start of the period we want to consider, 
+	 * 		or {@code null} for no constraint.
+	 * @param endDate
+	 * 		End of the period we want to consider,
+	 * 		or {@code null} for no constraint.
 	 * 
 	 * @throws UnsupportedEncodingException
 	 * 		Problem while accessing to the result file.
 	 * @throws FileNotFoundException
 	 * 		Problem while accessing to the result file.
 	 */
-	public abstract void exportEvents(boolean bySentence, String filePrefix) throws UnsupportedEncodingException, FileNotFoundException;
+	public abstract void exportEvents(boolean bySentence, String filePrefix, Date startDate, Date endDate) throws UnsupportedEncodingException, FileNotFoundException;
 	
 	/**
 	 * Adds the event cluster information to the specified map.
@@ -929,7 +937,7 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
     	{	Set<Set<Integer>> partition = dendro.partitionK(k);
     		// get the silhouette
     		double sil = Silhouette.processSilhouette(distanceMatrix, partition);
-    		logger.log("k="+k+"/"+events.size()+" >> Silhouete="+sil);
+    		logger.log("k="+k+"/"+events.size()+" >> Silhouette="+sil);
     		if(sil>bestSil)
 			{	bestSil = sil;
 				bestK = k;
@@ -976,12 +984,24 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 	
 	/** Column name for the considered processing step */
 	public static final String PERF_STEP = "Step";
+	/** Column name for the True Positive count computed only on the basis of the theme */
+	public static final String PERF_THEME_TP = "Theme TP";
+	/** Column name for the False Positive count computed only on the basis of the theme */
+	public static final String PERF_THEME_FP = "Theme FP";
+	/** Column name for the False Negative count computed only on the basis of the theme */
+	public static final String PERF_THEME_FN = "Theme FN";
 	/** Column name for the Precision measure computed only on the basis of the theme */
 	public static final String PERF_THEME_PRECISION = "Theme Precision";
 	/** Column name for the Recall measure computed only on the basis of the theme */
 	public static final String PERF_THEME_RECALL = "Theme Recall";
 	/** Column name for the F-measure measure computed only on the basis of the theme */
 	public static final String PERF_THEME_FMEASURE = "Theme F-Measure";
+	/** Column name for the True Positive count computed only on the basis of the theme */
+	public static final String PERF_THEME_TIME_TP = "Theme-time TP";
+	/** Column name for the False Positive count computed only on the basis of the theme */
+	public static final String PERF_THEME_TIME_FP = "Theme-time FP";
+	/** Column name for the False Negative count computed only on the basis of the theme */
+	public static final String PERF_THEME_TIME_FN = "Theme-time FN";
 	/** Column name for the Precision measure computed only on the basis of the theme */
 	public static final String PERF_THEME_TIME_PRECISION = "Theme-time Precision";
 	/** Column name for the Recall measure computed only on the basis of the theme */
@@ -994,6 +1014,18 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 	public static final String PERF_ADJUSTED_RAND_INDEX = "Adjusted Rand index";
 	/** Column name for the Normalized Mutual Information */
 	public static final String PERF_NMI = "Normalized Mutual Information";
+	/** Column name for the True Positive count computed only on the basis of the events */
+	public static final String PERF_EVENT_TP = "Event TP";
+	/** Column name for the False Positive count computed only on the basis of the events */
+	public static final String PERF_EVENT_FP = "Event FP";
+	/** Column name for the False Negative count computed only on the basis of the events */
+	public static final String PERF_EVENT_FN = "Event FN";
+	/** Column name for the Precision measure computed only on the basis of the events */
+	public static final String PERF_EVENT_PRECISION = "Event Precision";
+	/** Column name for the Recall measure computed only on the basis of the events */
+	public static final String PERF_EVENT_RECALL = "Event Recall";
+	/** Column name for the F-measure measure computed only on the basis of the events */
+	public static final String PERF_EVENT_FMEASURE = "Event F-Measure";
 	
 	/**
 	 * Records the performances in a CSV file.
@@ -1013,15 +1045,27 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 			// setup colon names
 			List<String> cols = Arrays.asList(
 					PERF_STEP,
+					PERF_THEME_TP,
+					PERF_THEME_FP,
+					PERF_THEME_FN,
 					PERF_THEME_PRECISION,
 					PERF_THEME_RECALL,
 					PERF_THEME_FMEASURE,
+					PERF_THEME_TIME_TP,
+					PERF_THEME_TIME_FP,
+					PERF_THEME_TIME_FN,
 					PERF_THEME_TIME_PRECISION,
 					PERF_THEME_TIME_RECALL,
 					PERF_THEME_TIME_FMEASURE,
 					PERF_RAND_INDEX,
 					PERF_ADJUSTED_RAND_INDEX,
-					PERF_NMI
+					PERF_NMI,
+					PERF_EVENT_TP,
+					PERF_EVENT_FP,
+					PERF_EVENT_FN,
+					PERF_EVENT_PRECISION,
+					PERF_EVENT_RECALL,
+					PERF_EVENT_FMEASURE
 			);
 			
 			// open file and write header
@@ -1081,7 +1125,9 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 				clusteringDone = res.cluster!=null;
 			}
 			if(clusteringDone)	// only if the clustering has already been performed 
-				computeClusteringPerformance(line, startDate, endDate);
+			{	computeClusteringPerformance(line, startDate, endDate);
+				computeEventPerformance(line, startDate, endDate);
+			}
 			performances.add(line);
 			
 		logger.decreaseOffset();
@@ -1163,13 +1209,20 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 			}
 		}
 		
-		// compute measures
+		// compute theme-based measures
+		result.put(PERF_THEME_TP, Integer.toString(tpT));
+		result.put(PERF_THEME_FP, Integer.toString(fpT));
+		result.put(PERF_THEME_FN, Integer.toString(fnT));
 		float precisionT = tpT / (float)(tpT + fpT);
 		result.put(PERF_THEME_PRECISION, Float.toString(precisionT));
 		float recallT = tpT / (float)(tpT + fnT);
 		result.put(PERF_THEME_RECALL, Float.toString(recallT));
 		float fmeasureT = 2 * precisionT * recallT / (precisionT + recallT);
 		result.put(PERF_THEME_FMEASURE, Float.toString(fmeasureT));
+		// compute theme-time-based measures
+		result.put(PERF_THEME_TIME_TP, Integer.toString(tpTT));
+		result.put(PERF_THEME_TIME_FP, Integer.toString(fpTT));
+		result.put(PERF_THEME_TIME_FN, Integer.toString(fnTT));
 		float precisionTT = tpTT / (float)(tpTT + fpTT);
 		result.put(PERF_THEME_TIME_PRECISION, Float.toString(precisionTT));
 		float recallTT = tpTT / (float)(tpTT + fnTT);
@@ -1259,7 +1312,7 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 	 * of articles or events corresponding to the same real-world event.
 	 * 
 	 * @param result
-	 * 		Result as a list of measures (NMI, Rand index).
+	 * 		Result as a list of measures (NMI, Rand index...).
 	 * @param startDate
 	 * 		Start of the period we want to consider, 
 	 * 		or {@code null} for no constraint.
@@ -1278,22 +1331,6 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 			if(event!=null && value.status==null)
 				n++;
 		}
-		
-//		// TP/FP/FN based on clusters
-//		Set<Integer> tpEvts = new TreeSet<Integer>();
-//		Set<Integer> fpEvts1 = new TreeSet<Integer>();
-//		Set<Integer> fpEvts2 = new TreeSet<Integer>();
-//		Set<Integer> fnEvts = new TreeSet<Integer>();
-//		for(Entry<String,T> entry: results.entrySet())
-//		{	String key = entry.getKey();
-//			T value = entry.getValue();
-//			List<ReferenceEvent> events = referenceClusters.get(key);
-//			ReferenceEvent event = getBestEvent(events,startDate,endDate);
-//			if(event!=null && value.status==null)
-//				n++;
-//		}
-// TODO relatively to the actual events? or to those contained in the remaining results?
-// TODO add P, R and F for events (clusters) only
 		
 		// convert partition formats 
 		int[] part1 = new int[n];
@@ -1375,19 +1412,19 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 		int nclust1 = normalizeClusterIds(part1);
 		int nclust2 = normalizeClusterIds(part2);
 		
-		// init the (normalized) confusion matrix
-		float[][] confMat = new float[nclust1][nclust2];
+		// init the confusion matrix
+		int[][] confMat = new int[nclust1][nclust2];
 		for(int i=0;i<part1.length;i++)
-			confMat[part1[i]-1][part2[i]-1] = confMat[part1[i]-1][part2[i]-1] + 1f/part1.length;
+			confMat[part1[i]-1][part2[i]-1] = confMat[part1[i]-1][part2[i]-1] + 1;
 		
 		// compute the marginals
-		float[] rowMarg = new float[nclust1];
+		int[] rowMarg = new int[nclust1];
 		for(int i=0;i<nclust1;i++)
 		{	rowMarg[i] = 0;
 			for(int j=0;j<nclust2;j++)
 				rowMarg[i] = rowMarg[i] + confMat[i][j];
 		}
-		float[] colMarg = new float[nclust2];
+		int[] colMarg = new int[nclust2];
 		for(int j=0;j<nclust2;j++)
 		{	colMarg[j] = 0;
 			for(int i=0;i<nclust1;i++)
@@ -1477,6 +1514,128 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 		return result;
 	}
 	
+	/**
+	 * Computes the performance of the event detection task: matching groups
+	 * of articles with real-world events. This bit is a little complicated,
+	 * because clusters are not exactly events. Here, we want to assess how
+	 * good the detected clusters would be if they were considered as events.
+	 * <br/>
+	 * We consider there is a match between a cluster and an event if this
+	 * event is majority among the cluster's elements (articles) (counting
+	 * the articles which do not correspond to any events).
+	 * <ul>
+	 * 		<li>If an event is matched by a single cluster, we have one TP.</li>
+	 * 		<li>If an event is matched by several distinct clusters, we also have one TP.</li>
+	 * 		<li>If an event is not matched by any cluster, we have a FN.</li>
+	 * 		<li>If a cluster matches several events, or none, we have a FP.</li>
+	 * </ul>
+	 * 
+	 * @param result
+	 * 		Result as a list of measures (Precision, Recall...).
+	 * @param startDate
+	 * 		Start of the period we want to consider, 
+	 * 		or {@code null} for no constraint.
+	 * @param endDate
+	 * 		End of the period we want to consider,
+	 * 		or {@code null} for no constraint.
+	 */
+	private void computeEventPerformance(Map<String,String> result, Date startDate, Date endDate)
+	{	// get the list of reference events occurring during the specified period
+		List<Integer> refEvts = new ArrayList<Integer>();
+		for(Entry<Integer,ReferenceEvent> entry: referenceEvents.entrySet())
+		{	int eventId = entry.getKey();
+			ReferenceEvent event = entry.getValue();
+			event = event.getAncestor();
+			if(event.isWithinPeriod(startDate, endDate) && !refEvts.contains(eventId))
+				refEvts.add(eventId);
+		}
+		
+		// get the list of estimated clusters (events)
+		List<Integer> estEvts = new ArrayList<Integer>();
+		for(T res: results.values())
+		{	if(res.status==null)
+			{	int evtId = Integer.parseInt(res.cluster);
+				if(!estEvts.contains(evtId))
+					estEvts.add(evtId);
+			}
+		}
+		
+		// compute some form of confusion matrix
+		int[][] confusionMatrix = new int[estEvts.size()][refEvts.size()];
+		int[] falsePositives = new int[estEvts.size()];
+		for(Entry<String,T> entry: results.entrySet())
+		{	String key = entry.getKey();
+			T value = entry.getValue();
+			List<ReferenceEvent> events = referenceClusters.get(key);
+			ReferenceEvent event = getBestEvent(events,startDate,endDate);
+			if(event==null)
+			{	// false positive
+				if(value.status==null)
+				{	int c1 = Integer.parseInt(value.cluster);
+					int idx1 = estEvts.indexOf(c1);
+					falsePositives[idx1]++;
+				}
+				// else: true negative, don't need to count
+			}
+			else
+			{	int c2 = event.getId();
+				int idx2 = refEvts.indexOf(c2);
+				// (potential) true positive
+				if(value.status==null)
+				{	int c1 = Integer.parseInt(value.cluster);
+					int idx1 = estEvts.indexOf(c1);
+					confusionMatrix[idx1][idx2]++;
+				}
+				// else: false negative, don't need to count
+			}
+		}
+		
+		// match clusters and events
+		Set<Integer> matches = new TreeSet<Integer>();
+		int fp = 0;
+		for(int i=0;i<confusionMatrix.length;i++)
+		{	// identify the event with larger intersection
+			int jmax = 0;
+			int jmax2 = -1;
+			for(int j=1;j<confusionMatrix[0].length;j++)
+			{	if(confusionMatrix[i][j]>confusionMatrix[i][jmax])
+				{	jmax2 = jmax;
+					jmax = j;
+				}
+			}
+			// also check the false positive list
+			if(confusionMatrix[i][jmax]<falsePositives[i])
+				// the cluster does not match any reference event
+				fp++;
+			else if(jmax2!=-1 && confusionMatrix[i][jmax]==confusionMatrix[i][jmax2])
+				// the cluster matches several reference events
+				fp++;
+			else
+				// there's a unique match
+				matches.add(jmax);
+		}
+		int tp = matches.size();
+		int fn = 0;
+		for(int j=1;j<confusionMatrix[0].length;j++)
+		{	int i = 0;
+			while(i<confusionMatrix.length && confusionMatrix[i][j]==0)
+				i++;
+			if(i==confusionMatrix.length)
+				fn++;
+		}
+		
+		// compute measures
+		result.put(PERF_EVENT_TP, Integer.toString(tp));
+		result.put(PERF_EVENT_FP, Integer.toString(fp));
+		result.put(PERF_EVENT_FN, Integer.toString(fn));
+		double precision = tp / (double)(tp + fp);
+		result.put(PERF_EVENT_PRECISION, Double.toString(precision));
+		double recall = tp / (double)(tp + fn);
+		result.put(PERF_EVENT_RECALL, Double.toString(recall));
+		double fmeasure = 2 * precision * recall / (precision + recall);
+		result.put(PERF_EVENT_FMEASURE, Double.toString(fmeasure));
+	}
+	
 	/////////////////////////////////////////////////////////////////
 	// CSV			/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
@@ -1485,11 +1644,17 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 	 * 
 	 * @param fileName
 	 * 		Name of the created file.  
+	 * @param startDate
+	 * 		Start of the period we want to consider, 
+	 * 		or {@code null} for no constraint.
+	 * @param endDate
+	 * 		End of the period we want to consider,
+	 * 		or {@code null} for no constraint.
 	 * 
 	 * @throws UnsupportedEncodingException
 	 * 		Problem while opening the CSV file.
 	 * @throws FileNotFoundException
 	 * 		Problem while opening the CSV file.
 	 */
-	public abstract void exportResults(String fileName) throws UnsupportedEncodingException, FileNotFoundException;
+	public abstract void exportResults(String fileName, Date startDate, Date endDate) throws UnsupportedEncodingException, FileNotFoundException;
 }

@@ -25,6 +25,7 @@ import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -72,7 +73,7 @@ public class SocialSearchResults extends AbstractSpecificSearchResults<SocialSea
 	 * 		Engine returning the post.
 	 */
 	public void addResult(SocialSearchResult post, String engineName)
-	{	String resultId = post.id + "@" + post.source;
+	{	String resultId = post.getKey();
 		SocialSearchResult result = results.get(resultId);
 		if(result==null)
 			results.put(resultId, post);
@@ -111,7 +112,7 @@ public class SocialSearchResults extends AbstractSpecificSearchResults<SocialSea
 	// CSV			/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
 	@Override
-	public void exportResults(String fileName) throws UnsupportedEncodingException, FileNotFoundException
+	public void exportResults(String fileName, Date startDate, Date endDate) throws UnsupportedEncodingException, FileNotFoundException
 	{	logger.log("Recording all the social search results in a file"+fileName);
 		logger.increaseOffset();
 		
@@ -125,7 +126,7 @@ public class SocialSearchResults extends AbstractSpecificSearchResults<SocialSea
 		List<String> cols = Arrays.asList(
 				COL_NOTES, COL_TITLE, COL_URL, COL_LENGTH, COL_PUB_DATE, //COL_CONTENT, 
 				COL_AUTHORS, COL_ORIGINAL, COL_LIKES, COL_SHARES, COL_COMMENTS, COL_STATUS, 
-				COL_ARTICLE_CLUSTER, COL_ENGINE, 
+				COL_ARTICLE_CLUSTER, COL_REFERENCE_EVENTS, COL_ENGINE, 
 				COL_ENT_DATES, COL_ENT_LOCATIONS, COL_ENT_PERSONS, COL_ENT_ORGANIZATIONS, 
 				COL_ENT_FUNCTIONS, COL_ENT_PRODUCTIONS, COL_ENT_MEETINGS
 			);
@@ -144,7 +145,7 @@ public class SocialSearchResults extends AbstractSpecificSearchResults<SocialSea
 		
 		// write data and close file
 		for(SocialSearchResult result: results.values())
-		{	Map<String,String> map = result.exportResult();
+		{	Map<String,String> map = result.exportResult(referenceClusters, startDate, endDate);
 			Iterator<String> it = cols.iterator();
 			while(it.hasNext())
 			{	String col = it.next();
@@ -165,7 +166,7 @@ public class SocialSearchResults extends AbstractSpecificSearchResults<SocialSea
 	// EVENTS		/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
 	@Override
-	public void exportEvents(boolean bySentence, String filePrefix) throws UnsupportedEncodingException, FileNotFoundException
+	public void exportEvents(boolean bySentence, String filePrefix, Date startDate, Date endDate) throws UnsupportedEncodingException, FileNotFoundException
 	{	String fileName = filePrefix;
 		if(bySentence)
 			fileName = fileName + FileNames.FI_EVENT_LIST_BYSENTENCE;
@@ -179,7 +180,7 @@ public class SocialSearchResults extends AbstractSpecificSearchResults<SocialSea
 			List<String> startCols = Arrays.asList(
 					COL_NOTES, COL_EVENT_CLUSTER, COL_TITLE, COL_URL, COL_LENGTH, COL_PUB_DATE, 
 					COL_AUTHORS, COL_ORIGINAL, COL_LIKES, COL_SHARES, COL_COMMENTS, COL_STATUS, 
-					COL_ARTICLE_CLUSTER, COL_SOCIAL_ENGINE
+					COL_ARTICLE_CLUSTER, COL_REFERENCE_EVENTS, COL_SOCIAL_ENGINE
 			);
 			List<String> endCols = Arrays.asList(
 					COL_ENT_DATES, COL_ENT_LOCATIONS, COL_ENT_PERSONS, COL_ENT_ORGANIZATIONS, 
@@ -208,7 +209,7 @@ public class SocialSearchResults extends AbstractSpecificSearchResults<SocialSea
 			int total = 0;
 			logger.log("Treat each article separately");
 			for(SocialSearchResult result: results.values())
-			{	List<Map<String,String>> lines = result.exportEvents();
+			{	List<Map<String,String>> lines = result.exportEvents(referenceClusters, startDate, endDate);
 				for(Map<String,String> line: lines)
 				{	it = cols.iterator();
 					while(it.hasNext())

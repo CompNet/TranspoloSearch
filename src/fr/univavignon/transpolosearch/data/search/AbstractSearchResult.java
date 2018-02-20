@@ -42,6 +42,7 @@ import fr.univavignon.transpolosearch.data.entity.mention.MentionPerson;
 import fr.univavignon.transpolosearch.data.entity.mention.MentionProduction;
 import fr.univavignon.transpolosearch.data.entity.mention.Mentions;
 import fr.univavignon.transpolosearch.data.event.Event;
+import fr.univavignon.transpolosearch.data.event.ReferenceEvent;
 import fr.univavignon.transpolosearch.processing.InterfaceRecognizer;
 import fr.univavignon.transpolosearch.processing.ProcessorException;
 import fr.univavignon.transpolosearch.processing.ProcessorName;
@@ -108,6 +109,18 @@ public abstract class AbstractSearchResult
 	}
 	
 	/////////////////////////////////////////////////////////////////
+	// KEY			/////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////
+	/**
+	 * Returns a unique key (as a String) for this result,
+	 * depending on its type (social media or Web).
+	 * 
+	 * @return
+	 * 		A unique string, specific to this result.
+	 */
+	public abstract String getKey();
+	
+	/////////////////////////////////////////////////////////////////
 	// CLUSTER		/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
 	/** Id of the cluster containing this result (when clustering the results...) */
@@ -118,10 +131,39 @@ public abstract class AbstractSearchResult
 	 * 
 	 * @param result
 	 * 		Map to fill with the required field.
+	 * @param referenceClusters 
+	 * 		Manually annotated reference clusters (if available).
+	 * @param startDate
+	 * 		Start of the period we want to consider, 
+	 * 		or {@code null} for no constraint.
+	 * @param endDate
+	 * 		End of the period we want to consider,
+	 * 		or {@code null} for no constraint.
 	 */
-	protected void exportCluster(Map<String,String> result)
-	{	if(cluster!=null)
+	protected void exportCluster(Map<String,String> result, Map<String,List<ReferenceEvent>> referenceClusters, java.util.Date startDate, java.util.Date endDate)
+	{	// estimated cluster (if available)
+		if(cluster!=null)
 			result.put(AbstractSearchResults.COL_ARTICLE_CLUSTER,cluster);
+		
+		// reference events (if available)
+		String key = getKey();
+		List<ReferenceEvent> refEvts = referenceClusters.get(key);
+		if(refEvts!=null)
+		{	Set<Integer> evtIds = new TreeSet<Integer>();
+			for(ReferenceEvent refEvt: refEvts)
+			{	if(refEvt.isWithinPeriod(startDate, endDate))
+				{	int evtId = refEvt.getId();
+					evtIds.add(evtId);
+				}
+			}
+			if(!evtIds.isEmpty())
+			{	Iterator<Integer> it = evtIds.iterator();
+				String evtStrs = it.next().toString();
+				while(it.hasNext())
+					evtStrs = evtStrs + ":" + it.next();
+				result.put(AbstractSearchResults.COL_REFERENCE_EVENTS,evtStrs);
+			}
+		}
 	}
 	
 	/////////////////////////////////////////////////////////////////
@@ -340,10 +382,18 @@ public abstract class AbstractSearchResult
 	/**
 	 * Export the article as a line in a CSV file.
 	 * 
+	 * @param referenceClusters 
+	 * 		Manually annotated reference clusters (if available).
+	 * @param startDate
+	 * 		Start of the period we want to consider, 
+	 * 		or {@code null} for no constraint.
+	 * @param endDate
+	 * 		End of the period we want to consider,
+	 * 		or {@code null} for no constraint.
 	 * @return
 	 * 		A map representing the line.
 	 */
-	protected abstract Map<String,String> exportResult();
+	protected abstract Map<String,String> exportResult(Map<String,List<ReferenceEvent>> referenceClusters, java.util.Date startDate, java.util.Date endDate);
 	
 	/////////////////////////////////////////////////////////////////
 	// MENTIONS		/////////////////////////////////////////////////
@@ -790,9 +840,17 @@ public abstract class AbstractSearchResult
 	/**
 	 * Records the results of the search as a CSV file.
 	 * 
+	 * @param referenceClusters 
+	 * 		Manually annotated reference clusters (if available).
+	 * @param startDate
+	 * 		Start of the period we want to consider, 
+	 * 		or {@code null} for no constraint.
+	 * @param endDate
+	 * 		End of the period we want to consider,
+	 * 		or {@code null} for no constraint.
 	 * @return
 	 * 		Map representing the events associated to this social
 	 * 		search result (can be empty). 
 	 */
-	protected abstract List<Map<String,String>> exportEvents();
+	protected abstract List<Map<String,String>> exportEvents(Map<String,List<ReferenceEvent>> referenceClusters, java.util.Date startDate, java.util.Date endDate);
 }

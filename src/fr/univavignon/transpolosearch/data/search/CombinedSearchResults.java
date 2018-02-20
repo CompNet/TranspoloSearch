@@ -24,6 +24,7 @@ import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -78,7 +79,7 @@ public class CombinedSearchResults extends AbstractSearchResults<AbstractSearchR
 	// CSV			/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
 	@Override
-	public void exportResults(String fileName) throws UnsupportedEncodingException, FileNotFoundException
+	public void exportResults(String fileName, Date startDate, Date endDate) throws UnsupportedEncodingException, FileNotFoundException
 	{	logger.log("Recording all the combined search results in file "+fileName);
 		logger.increaseOffset();
 		
@@ -89,7 +90,7 @@ public class CombinedSearchResults extends AbstractSearchResults<AbstractSearchR
 		// setup colon names
 		List<String> cols = Arrays.asList(
 				COL_NOTES, COL_TITLE_CONTENT, COL_URL_ID, COL_LENGTH, COL_PUB_DATE, 
-				COL_AUTHORS, COL_STATUS, COL_ARTICLE_CLUSTER, COL_SOURCE, 
+				COL_AUTHORS, COL_STATUS, COL_ARTICLE_CLUSTER, COL_REFERENCE_EVENTS, COL_SOURCE, 
 				COL_ENT_DATES, COL_ENT_LOCATIONS, COL_ENT_PERSONS, COL_ENT_ORGANIZATIONS, 
 				COL_ENT_FUNCTIONS, COL_ENT_PRODUCTIONS, COL_ENT_MEETINGS
 		);
@@ -108,7 +109,7 @@ public class CombinedSearchResults extends AbstractSearchResults<AbstractSearchR
 		
 		// write data and close file
 		for(AbstractSearchResult result: results.values())
-		{	Map<String,String> map = result.exportResult();
+		{	Map<String,String> map = result.exportResult(referenceClusters, startDate, endDate);
 			Iterator<String> it = cols.iterator();
 			while(it.hasNext())
 			{	String col = it.next();
@@ -127,7 +128,7 @@ public class CombinedSearchResults extends AbstractSearchResults<AbstractSearchR
 	// EVENTS		/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
 	@Override
-	public void exportEvents(boolean bySentence, String filePrefix) throws UnsupportedEncodingException, FileNotFoundException 
+	public void exportEvents(boolean bySentence, String filePrefix, Date startDate, Date endDate) throws UnsupportedEncodingException, FileNotFoundException 
 	{	String fileName = filePrefix;
 		if(bySentence)
 			fileName = fileName + FileNames.FI_EVENT_LIST_BYSENTENCE;
@@ -140,7 +141,7 @@ public class CombinedSearchResults extends AbstractSearchResults<AbstractSearchR
 			// setup colon names
 			List<String> startCols = Arrays.asList(
 					COL_NOTES, COL_EVENT_CLUSTER, COL_TITLE_CONTENT, COL_URL_ID, COL_LENGTH, 
-					COL_PUB_DATE, COL_AUTHORS, COL_STATUS, COL_ARTICLE_CLUSTER, COL_SOURCE
+					COL_PUB_DATE, COL_AUTHORS, COL_STATUS, COL_ARTICLE_CLUSTER, COL_REFERENCE_EVENTS, COL_SOURCE
 			);
 			List<String> endCols = Arrays.asList(
 					COL_ENT_DATES, COL_ENT_LOCATIONS, COL_ENT_PERSONS, COL_ENT_ORGANIZATIONS, 
@@ -169,7 +170,7 @@ public class CombinedSearchResults extends AbstractSearchResults<AbstractSearchR
 			int total = 0;
 			logger.log("Treat each article separately");
 			for(AbstractSearchResult result: results.values())
-			{	List<Map<String,String>> lines = result.exportEvents();
+			{	List<Map<String,String>> lines = result.exportEvents(referenceClusters, startDate, endDate);
 				for(Map<String,String> line: lines)
 				{	it = cols.iterator();
 					while(it.hasNext())
