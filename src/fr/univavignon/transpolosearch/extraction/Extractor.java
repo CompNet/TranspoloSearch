@@ -388,12 +388,12 @@ public class Extractor
 			fileName = currentStep + "_" + FileNames.FI_ARTICLES_CLUSTERING;
 			results.exportResults(fileName, startDate, endDate);
 			results.computeArticleClusterPerformance(fileName, startDate, endDate);
-//			fileName = currentStep + "_" + FileNames.FI_ARTICLES_CLUSTERING_CONFMAT;
-//			results.exportConfusionMatrix(fileName);
+			fileName = currentStep + "_" + FileNames.FI_ARTICLES_CLUSTERING_CONFMAT;
+			results.exportConfusionMatrix(fileName);
 			results.recordPerformance();
 			currentStep++;
 			
-			// extract events from the remaining articles and mentions, cluster depending on events
+			// extract events from the remaining articles and mentions, and cluster them
 			fileName = currentStep + "_";
 			extractEvents(results, fileName, language, startDate, endDate);
 			currentStep++;
@@ -602,9 +602,11 @@ public class Extractor
 			results.exportResults(fileName, startDate, endDate);
 			results.computeArticleClusterPerformance(fileName, startDate, endDate);
 			results.recordPerformance();
+			fileName = currentStep + "_" + FileNames.FI_ARTICLES_CLUSTERING_CONFMAT;
+			results.exportConfusionMatrix(fileName);
 			currentStep++;
 			
-			// extract events from the remaining articles and mentions, cluster depending on events
+			// extract events from the remaining articles and mentions, and cluster them
 			fileName = currentStep + "_";
 			extractEvents(results, fileName, language, startDate, endDate);
 			currentStep++;
@@ -785,36 +787,38 @@ public class Extractor
 			String fileName;
 			
 			// merge the results and record
-			CombinedSearchResults combRes = new CombinedSearchResults(webRes, socRes);
-			combRes.resetClusters();
+			CombinedSearchResults results = new CombinedSearchResults(webRes, socRes);
+			results.resetClusters();
 			fileName = currentStep + "_" + FileNames.FI_ARTICLES_MERGE;
-			combRes.exportResults(fileName, startDate, endDate);
-			combRes.computeRelevancePerformance(fileName, startDate, endDate);
-			combRes.recordPerformance();
+			results.exportResults(fileName, startDate, endDate);
+			results.computeRelevancePerformance(fileName, startDate, endDate);
+			results.recordPerformance();
 			currentStep++;
 			
 			// cluster the combined articles by content
-			combRes.clusterArticles(language);
+			results.clusterArticles(language);
 			fileName = currentStep + "_" + FileNames.FI_ARTICLES_CLUSTERING;
-			combRes.exportResults(fileName, startDate, endDate);
-			combRes.computeArticleClusterPerformance(fileName, startDate, endDate);
-			combRes.recordPerformance();
+			results.exportResults(fileName, startDate, endDate);
+			results.computeArticleClusterPerformance(fileName, startDate, endDate);
+			results.recordPerformance();
+			fileName = currentStep + "_" + FileNames.FI_ARTICLES_CLUSTERING_CONFMAT;
+			results.exportConfusionMatrix(fileName);
 			currentStep++;
 			
-			// extract events from the articles and mentions
+			// extract events from articles and mentions
 			fileName = currentStep + "_";
-			extractEvents(combRes, fileName, language, startDate, endDate);
+			extractEvents(results, fileName, language, startDate, endDate);
 			currentStep++;
 			
 			// filter mentions based on article clusters
-			combRes.filterByCluster(1);
+			results.filterByCluster(1);
 			fileName = currentStep + "_" + FileNames.FI_ARTICLES_CLUSTER_FILTER;
-			combRes.exportResults(fileName, startDate, endDate);
+			results.exportResults(fileName, startDate, endDate);
 			currentStep++;
 			
 			// extract events based on the filtered mentions, and cluster them
 			fileName = currentStep + "_";
-			extractEvents(combRes, fileName, language, startDate, endDate);
+			extractEvents(results, fileName, language, startDate, endDate);
 			currentStep++;
 			
 		logger.decreaseOffset();

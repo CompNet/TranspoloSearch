@@ -105,6 +105,8 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 	protected Map<String,T> results = new HashMap<String,T>();
 	/** Silhouette value corresponding to the last clustering done */
 	private double lastSilhouette = Double.NaN;
+	/** Confusion matrix of the last clustering, as a string (ready to be recorded in a CSV file */
+	private String lastConfMatStr = null;
 	
 	/**
 	 * Returns the number of entries in this collection of search results.
@@ -1648,6 +1650,7 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 			if(event.isWithinPeriod(startDate, endDate) && !refEvts.contains(eventId))
 				refEvts.add(eventId);
 		}
+		Collections.sort(refEvts);
 		
 		// get the list of estimated clusters of articles events
 		List<Integer> estEvts = new ArrayList<Integer>();
@@ -1658,9 +1661,11 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 					estEvts.add(evtId);
 			}
 		}
+		Collections.sort(estEvts);
 		
 		// compute some form of confusion matrix
 		int[][] confusionMatrix = new int[estEvts.size()][refEvts.size()];
+		int[][] extendedConfusionMatrix = new int[estEvts.size()+1][refEvts.size()+1];
 		int[] falsePositives = new int[estEvts.size()];
 		for(Entry<String,T> entry: results.entrySet())
 		{	String key = entry.getKey();
@@ -1673,8 +1678,11 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 				{	int c1 = Integer.parseInt(value.cluster);
 					int idx1 = estEvts.indexOf(c1);
 					falsePositives[idx1]++;
+					extendedConfusionMatrix[idx1][refEvts.size()]++;
 				}
 				// else: true negative, don't need to count
+				else
+					extendedConfusionMatrix[estEvts.size()][refEvts.size()]++;
 			}
 			else
 			{	int c2 = event.getId();
@@ -1684,10 +1692,35 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 				{	int c1 = Integer.parseInt(value.cluster);
 					int idx1 = estEvts.indexOf(c1);
 					confusionMatrix[idx1][idx2]++;
+					extendedConfusionMatrix[idx1][idx2]++;
 				}
 				// else: false negative, don't need to count
+				else
+					extendedConfusionMatrix[estEvts.size()][idx2]++;
 			}
 		}
+		
+		// format confusion matrix as a string
+		StringBuffer confMat = new StringBuffer();
+			// headers
+			confMat.append("\"Clusters vs. Events\"");
+			for(int col: refEvts)
+				confMat.append(","+col);
+			confMat.append(",\"No event\"\n");
+			// values
+			for(int i=0;i<estEvts.size();i++)
+			{	int row = estEvts.get(i);
+				confMat.append(row);
+				for(int j=0;j<=refEvts.size();j++)
+					confMat.append(","+extendedConfusionMatrix[i][j]);
+				confMat.append("\n");
+			}
+			// last row
+			confMat.append("\"No cluster\"");
+			for(int j=0;j<=refEvts.size();j++)
+				confMat.append(","+extendedConfusionMatrix[estEvts.size()][j]);
+			confMat.append("\n");
+		lastConfMatStr = confMat.toString();
 		
 		// match clusters and events
 		Set<Integer> matches = new TreeSet<Integer>();
@@ -1773,6 +1806,23 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 //			computeEventClusterMatchingPerformance(line, startDate, endDate);
 			
 		logger.decreaseOffset();
+	}
+	
+	/**
+	 * Record the last processed confusion matrix as a CSV file.
+	 *  
+	 * @param fileName
+	 * 		Name of the file to create.
+	 * 
+	 * @throws UnsupportedEncodingException
+	 * 		Encoding problem.
+	 * @throws FileNotFoundException
+	 * 		Problem when accessing the file.
+	 */
+	public void exportConfusionMatrix(String fileName) throws UnsupportedEncodingException, FileNotFoundException
+	{	PrintWriter pw = FileTools.openTextFileWrite(fileName, "UTF-8");
+		pw.write(lastConfMatStr);
+		pw.close();
 	}
 	
 	/////////////////////////////////////////////////////////////////
