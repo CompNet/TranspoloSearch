@@ -233,7 +233,7 @@ public class WebSearchResults extends AbstractSpecificSearchResults<WebSearchRes
 			pw.println();
 		}
 		pw.close();
-
+		
 		logger.decreaseOffset();
 	}
 	
@@ -317,5 +317,14 @@ public class WebSearchResults extends AbstractSpecificSearchResults<WebSearchRes
 		String filePath = FileNames.FO_WEB_SEARCH_RESULTS + File.separator + fileName;
 		
 		exportEventClusters(filePath, language);
+	}
+	
+	/////////////////////////////////////////////////////////////////
+	// PERFORMANCE	/////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////
+	@Override
+	public void recordPerformance() throws UnsupportedEncodingException, FileNotFoundException
+	{	String folder = FileNames.FO_WEB_SEARCH_RESULTS;
+		recordPerformance(folder);
 	}
 }

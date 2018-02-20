@@ -343,61 +343,64 @@ public class Extractor
 			initWebSearchEngines(websites, startDate, endDate, language);
 			
 			// perform the Web search
-			WebSearchResults result = performWebSearch(keywords, referenceEvents);
+			WebSearchResults results = performWebSearch(keywords, referenceEvents);
 			fileName = currentStep + "_" + FileNames.FI_ARTICLES_RAW;
-			result.exportResults(fileName, startDate, endDate);
-			result.computePerformance(fileName, startDate, endDate);
+			results.exportResults(fileName, startDate, endDate);
+			results.computeRelevancePerformance(fileName, startDate, endDate);
+			results.recordPerformance();
 			currentStep++;
 	
 			// filter Web pages (remove PDFs, and so on)
-			result.filterByUrl();
+			results.filterByUrl();
 			
 			// retrieve the corresponding articles
-			result.retrieveArticles();
+			results.retrieveArticles();
 			fileName = currentStep + "_" + FileNames.FI_ARTICLES_URL_FILTER;
-			result.exportResults(fileName, startDate, endDate);
-			result.computePerformance(fileName, startDate, endDate);
+			results.exportResults(fileName, startDate, endDate);
+			results.computeRelevancePerformance(fileName, startDate, endDate);
+			results.recordPerformance();
 			currentStep++;
 			
 			// possibly filter the articles depending on the content
-			result.filterByContent(startDate, endDate, filterByPubDate, compulsoryExpression, language);
+			results.filterByContent(startDate, endDate, filterByPubDate, compulsoryExpression, language);
 			fileName = currentStep + "_" + FileNames.FI_ARTICLES_CONTENT_FILTER;
-			result.exportResults(fileName, startDate, endDate);
-			result.computePerformance(fileName, startDate, endDate);
+			results.exportResults(fileName, startDate, endDate);
+			results.computeRelevancePerformance(fileName, startDate, endDate);
+			results.recordPerformance();
 			currentStep++;
 			
 			// detect the entity mentions
-			result.detectMentions(recognizer);
+			results.detectMentions(recognizer);
 			
 			// possibly filter the articles depending on the entities
-			result.filterByEntity(startDate, endDate, filterByEntDate);
+			results.filterByEntity(startDate, endDate, filterByEntDate);
 			fileName = currentStep + "_" + FileNames.FI_ARTICLES_ENTITY_FILTER;
-			result.exportResults(fileName, startDate, endDate);
-			result.computePerformance(fileName, startDate, endDate);
+			results.exportResults(fileName, startDate, endDate);
+			results.computeRelevancePerformance(fileName, startDate, endDate);
+			results.recordPerformance();
 			currentStep++;
 			
 			// displays the remaining articles with their mentions	//TODO maybe get the entities instead of the mentions, eventually?
-			result.displayRemainingMentions(); // for debug only
+			results.displayRemainingMentions(); // for debug only
 			
 			// cluster the article by content
-			result.clusterArticles(language);
+			results.clusterArticles(language);
 			fileName = currentStep + "_" + FileNames.FI_ARTICLES_CLUSTERING;
-			result.exportResults(fileName, startDate, endDate);
-			result.computePerformance(fileName, startDate, endDate);
+			results.exportResults(fileName, startDate, endDate);
+			results.computeArticleClusterPerformance(fileName, startDate, endDate);
+//			fileName = currentStep + "_" + FileNames.FI_ARTICLES_CLUSTERING_CONFMAT;
+//			results.exportConfusionMatrix(fileName);
+			results.recordPerformance();
 			currentStep++;
 			
-			// extract events from the remaining articles and mentions
+			// extract events from the remaining articles and mentions, cluster depending on events
 			fileName = currentStep + "_";
-			extractEvents(result, fileName, language, startDate, endDate);
-			currentStep++;
-			
-			// record performance
-			result.recordPerformance(FileNames.FO_WEB_SEARCH_RESULTS + File.separator + currentStep + "_" + FileNames.FI_PERFORMANCE);
+			extractEvents(results, fileName, language, startDate, endDate);
 			currentStep++;
 			
 		logger.decreaseOffset();
 		logger.log("Web extraction over");
-		return result;
+		return results;
 	}
 	
 	/////////////////////////////////////////////////////////////////
@@ -561,54 +564,54 @@ public class Extractor
 			
 			// perform the social search
 			boolean includeComments = false;
-			SocialSearchResults result = performSocialSearch(keywords, includeComments, referenceEvents);
+			SocialSearchResults results = performSocialSearch(keywords, includeComments, referenceEvents);
 			fileName = currentStep + "_" + FileNames.FI_ARTICLES_RAW;
-			result.exportResults(fileName, startDate, endDate);
-			result.computePerformance(fileName, startDate, endDate);
+			results.exportResults(fileName, startDate, endDate);
+			results.computeRelevancePerformance(fileName, startDate, endDate);
+			results.recordPerformance();
 			currentStep++;
 			
 			// convert the posts to proper articles
-			result.buildArticles(includeComments);
+			results.buildArticles(includeComments);
 			
 			// possibly filter the articles depending on the content
-			result.filterByContent(startDate, endDate, false, compulsoryExpression, language);	// false, because we suppose the targeted period is always respected when searching through the social media API
+			results.filterByContent(startDate, endDate, false, compulsoryExpression, language);	// false, because we suppose the targeted period is always respected when searching through the social media API
 			fileName = currentStep + "_" + FileNames.FI_ARTICLES_CONTENT_FILTER;
-			result.exportResults(fileName, startDate, endDate);
-			result.computePerformance(fileName, startDate, endDate);
+			results.exportResults(fileName, startDate, endDate);
+			results.computeRelevancePerformance(fileName, startDate, endDate);
+			results.recordPerformance();
 			currentStep++;
 			
 			// detect the entity mentions
-			result.detectMentions(recognizer);
+			results.detectMentions(recognizer);
 			
 			// possibly filter the articles depending on the entities
-			result.filterByEntity(null,null,false); // unnecessary, unless we add other entity-based constraints than dates
+			results.filterByEntity(null,null,false); // unnecessary, unless we add other entity-based constraints than dates
 			fileName = currentStep + "_" + FileNames.FI_ARTICLES_ENTITY_FILTER;
-			result.exportResults(fileName, startDate, endDate);
-			result.computePerformance(fileName, startDate, endDate);
+			results.exportResults(fileName, startDate, endDate);
+			results.computeRelevancePerformance(fileName, startDate, endDate);
+			results.recordPerformance();
 			currentStep++;
 			
 			// displays the remaining articles with their mentions	//TODO maybe get the entities instead of the mentions, eventually?
-			result.displayRemainingMentions(); // for debug only
+			results.displayRemainingMentions(); // for debug only
 			
 			// cluster the articles by content
-			result.clusterArticles(language);
+			results.clusterArticles(language);
 			fileName = currentStep + "_" + FileNames.FI_ARTICLES_CLUSTERING;
-			result.exportResults(fileName, startDate, endDate);
-			result.computePerformance(fileName, startDate, endDate);
+			results.exportResults(fileName, startDate, endDate);
+			results.computeArticleClusterPerformance(fileName, startDate, endDate);
+			results.recordPerformance();
 			currentStep++;
 			
-			// extract events from the remaining articles and mentions
+			// extract events from the remaining articles and mentions, cluster depending on events
 			fileName = currentStep + "_";
-			extractEvents(result, fileName, language, startDate, endDate);
-			currentStep++;
-			
-			// record performance
-			result.recordPerformance(FileNames.FO_SOCIAL_SEARCH_RESULTS + File.separator + currentStep + "_" + FileNames.FI_PERFORMANCE);
+			extractEvents(results, fileName, language, startDate, endDate);
 			currentStep++;
 			
 		logger.decreaseOffset();
 		logger.log("Social media extraction over");
-		return result;
+		return results;
 	}
 	
 	/////////////////////////////////////////////////////////////////
@@ -746,6 +749,10 @@ public class Extractor
 			results.exportEvents(bs, filePrefix, startDate, endDate);
 			// export the event clusters
 			results.exportEventClusters(bs, filePrefix, language);
+			
+			// process event cluster results
+			results.computeEventClusterPerformance(bs, filePrefix, startDate, endDate);
+			results.recordPerformance();
 		}
 	}
 	
@@ -782,14 +789,16 @@ public class Extractor
 			combRes.resetClusters();
 			fileName = currentStep + "_" + FileNames.FI_ARTICLES_MERGE;
 			combRes.exportResults(fileName, startDate, endDate);
-			combRes.computePerformance(fileName, startDate, endDate);
+			combRes.computeRelevancePerformance(fileName, startDate, endDate);
+			combRes.recordPerformance();
 			currentStep++;
 			
 			// cluster the combined articles by content
 			combRes.clusterArticles(language);
 			fileName = currentStep + "_" + FileNames.FI_ARTICLES_CLUSTERING;
 			combRes.exportResults(fileName, startDate, endDate);
-			combRes.computePerformance(fileName, startDate, endDate);
+			combRes.computeArticleClusterPerformance(fileName, startDate, endDate);
+			combRes.recordPerformance();
 			currentStep++;
 			
 			// extract events from the articles and mentions
@@ -803,13 +812,9 @@ public class Extractor
 			combRes.exportResults(fileName, startDate, endDate);
 			currentStep++;
 			
-			// extract events based on the filtered mentions
+			// extract events based on the filtered mentions, and cluster them
 			fileName = currentStep + "_";
 			extractEvents(combRes, fileName, language, startDate, endDate);
-			currentStep++;
-			
-			// record performance
-			combRes.recordPerformance(FileNames.FO_OUTPUT + File.separator + currentStep + "_" + FileNames.FI_PERFORMANCE);
 			currentStep++;
 			
 		logger.decreaseOffset();

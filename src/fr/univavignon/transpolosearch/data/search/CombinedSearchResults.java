@@ -202,4 +202,13 @@ public class CombinedSearchResults extends AbstractSearchResults<AbstractSearchR
 		
 		exportEventClusters(filePath, language);
 	}
+	
+	/////////////////////////////////////////////////////////////////
+	// PERFORMANCE	/////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////
+	@Override
+	public void recordPerformance() throws UnsupportedEncodingException, FileNotFoundException
+	{	String folder = FileNames.FO_OUTPUT;
+		recordPerformance(folder);
+	}
 }

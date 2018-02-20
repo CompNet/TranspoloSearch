@@ -201,6 +201,8 @@ public class FileNames
 	public final static String FI_ARTICLES_ENTITY_FILTER = "articles_entity_filter" + FileNames.EX_CSV;
 	/** File containing the search results after article clustering */
 	public final static String FI_ARTICLES_CLUSTERING = "articles_clustering" + FileNames.EX_CSV;
+	/** File containing the confusion matrix resulting from the article clustering */
+	public final static String FI_ARTICLES_CLUSTERING_CONFMAT = "articles_clustering_confmat" + FileNames.EX_CSV;
 	/** File containing the merged Web and social media results */
 	public final static String FI_ARTICLES_MERGE = "articles_merge" + FileNames.EX_CSV;
 	/** File containing the search results after cluster filtering */

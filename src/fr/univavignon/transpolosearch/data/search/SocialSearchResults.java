@@ -241,4 +241,13 @@ public class SocialSearchResults extends AbstractSpecificSearchResults<SocialSea
 		
 		exportEventClusters(filePath, language);
 	}
+	
+	/////////////////////////////////////////////////////////////////
+	// PERFORMANCE	/////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////
+	@Override
+	public void recordPerformance() throws UnsupportedEncodingException, FileNotFoundException
+	{	String folder = FileNames.FO_SOCIAL_SEARCH_RESULTS;
+		recordPerformance(folder);
+	}
 }

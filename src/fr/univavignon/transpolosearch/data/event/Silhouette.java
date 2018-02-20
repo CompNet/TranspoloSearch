@@ -37,7 +37,8 @@ public class Silhouette
 	/////////////////////////////////////////////////////////////////
 	/**
 	 * Processes the Silhouette measure for the specified distance matrix
-	 * and partition (i.e. clustering).
+	 * and partition (i.e. clustering). In the partition, the element numbering 
+	 * must start from zero.
 	 * 
 	 * @param dist
 	 * 		Distance matrix.
