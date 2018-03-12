@@ -117,7 +117,7 @@ public class GenericReader extends AbstractArticleReader
 	/////////////////////////////////////////////////////////////////
 	// RETRIEVE			/////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////	
-	/** Formats be used to parse the dates */
+	/** Formats used to parse the dates */
 	private static final DateFormat DATE_FORMATS[] = 
 		{	new SimpleDateFormat("dd MMMM yyyy, HH'h'mm",Locale.FRENCH),
 			new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX",Locale.FRENCH),

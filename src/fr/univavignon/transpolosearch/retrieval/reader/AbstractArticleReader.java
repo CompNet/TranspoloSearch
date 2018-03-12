@@ -95,11 +95,11 @@ public abstract class AbstractArticleReader
 	public static AbstractArticleReader buildReader(String url)
 	{	AbstractArticleReader result;
 		
-		// wikipedia article
+		// Wikipedia article
 		if(url.contains(WikipediaReader.DOMAIN))
 			result = new WikipediaReader();
 		
-		// handled french journal
+		// handled French journals
 		else if(LaProvenceReader.checkDomain(url))
 			result = new LaProvenceReader();
 		else if(LaVoixDuNordReader.checkDomain(url))
@@ -119,7 +119,8 @@ public abstract class AbstractArticleReader
 		
 		// generic reader for the other cases
 		else
-			result = new GenericReader();
+//			result = new GenericReader();
+			result = new BoilerpipeReader();
 		
 		return result;
 	}

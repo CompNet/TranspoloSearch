@@ -26,6 +26,7 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -75,6 +76,8 @@ import com.optimaize.langdetect.text.CommonTextObjectFactories;
 import com.optimaize.langdetect.text.TextObject;
 import com.optimaize.langdetect.text.TextObjectFactory;
 
+import de.l3s.boilerpipe.BoilerpipeProcessingException;
+import de.l3s.boilerpipe.extractors.ArticleExtractor;
 import fr.univavignon.transpolosearch.data.article.ArticleLanguage;
 import fr.univavignon.transpolosearch.data.event.MyPam;
 import fr.univavignon.transpolosearch.data.event.DummyDistanceMetric;
@@ -115,6 +118,7 @@ public class Test
 	{	
 		// retrieval
 //		testRetrievalGeneric();
+//		testBoilerPipe();
 		
 		// search
 //		testGoogleSearch();
@@ -355,6 +359,20 @@ public class Test
 		
 		logger.decreaseOffset();
 		logger.log("Test terminated");
+	}
+	
+	/**
+	 * Tests the BoilerPlate library, which allows extracting relevant text from HTML pages.
+	 * 
+	 * @throws MalformedURLException
+	 * 		Problem with the targeted URL.
+	 * @throws BoilerpipeProcessingException
+	 * 		Exception during the content extraction process.
+	 */
+	private static void testBoilerPipe() throws MalformedURLException, BoilerpipeProcessingException
+	{	URL url = new URL("http://www.lemonde.fr/police-justice/article/2018/02/21/eric-dupond-moretti-supplie-d-eviter-la-prison-a-jerome-cahuzac_5260350_1653578.html");
+		String text = ArticleExtractor.INSTANCE.getText(url);
+		System.out.println(text);
 	}
 	
 	/////////////////////////////////////////////////////////////////
@@ -616,9 +634,5 @@ public class Test
 	}
 }
 
+// TODO try to compare articles using only their named entities (by opposition to the whole lexicon)
 // TODO setup a fuzzy k-means (or some other clustering algorithm allowing overlapping clusters)
-// TODO try the boilerplate API to retrieve Web page content
-
-// TODO manips:
-// 		- Filtrer par date quand c'est possible, pour voir si ça améliore le beans
-// 		- rajouter d'autres journaux locaux parisiens à la recherche Hidalgo
