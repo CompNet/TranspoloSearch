@@ -146,4 +146,20 @@ public class ReferenceEvent
 			result = parent.getAncestor();
 		return result;
 	}
+
+	/////////////////////////////////////////////////////////////////
+	// MISC			/////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////
+	/**
+	 * Creates a copy of this event, but using the specified id.
+	 * 
+	 * @param id
+	 * 		Id of the copy.
+	 * @return
+	 * 		Modified copy of this event.
+	 */
+	public ReferenceEvent clone(int id)
+	{	ReferenceEvent result = new ReferenceEvent(id, name, date, parent);
+		return result;
+	}
 }

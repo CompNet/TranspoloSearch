@@ -24,12 +24,16 @@ import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import fr.univavignon.transpolosearch.data.article.ArticleLanguage;
+import fr.univavignon.transpolosearch.data.event.ReferenceEvent;
 import fr.univavignon.transpolosearch.tools.file.FileNames;
 import fr.univavignon.transpolosearch.tools.file.FileTools;
 
@@ -58,21 +62,47 @@ public class CombinedSearchResults extends AbstractSearchResults<AbstractSearchR
 			results.putAll(webRes.results);
 		if(socRes!=null)
 			results.putAll(socRes.results);
+		
 		// and search engines
 		if(webRes!=null)
 			engineNames.addAll(webRes.engineNames);
 		if(socRes!=null)
 			engineNames.addAll(socRes.engineNames);
+		
 		// and reference events
+		int maxId = 0;
 		if(webRes!=null)
-			referenceEvents.putAll(webRes.referenceEvents);
-		else
-			referenceEvents.putAll(socRes.referenceEvents);
+		{	referenceEvents.putAll(webRes.referenceEvents);
+			maxId = Collections.max(referenceEvents.keySet());
+		}
+		Map<Integer,Integer> conversionMap = new HashMap<Integer,Integer>();
+		if(socRes!=null)
+		{	for(ReferenceEvent refEvt: socRes.referenceEvents.values())
+			{	int oldId = refEvt.getId();
+				int newId = oldId + maxId;
+				conversionMap.put(oldId, newId);
+				ReferenceEvent copy = refEvt.clone(newId);
+				referenceEvents.put(newId,copy);
+			}
+		}
+		
 		// and reference clusters
 		if(webRes!=null)
 			referenceClusters.putAll(webRes.referenceClusters);
 		if(socRes!=null)
-			referenceClusters.putAll(socRes.referenceClusters);
+		{	for(Entry<String,List<ReferenceEvent>> entry: socRes.referenceClusters.entrySet())
+			{	String key = entry.getKey();
+				List<ReferenceEvent> oldVal = entry.getValue();
+				List<ReferenceEvent> newVal = new ArrayList<ReferenceEvent>();
+				for(ReferenceEvent oldEvt: oldVal)
+				{	int oldId = oldEvt.getId();
+					int newId = conversionMap.get(oldId);
+					ReferenceEvent newEvt = referenceEvents.get(newId); 
+					newVal.add(newEvt);
+				}
+				referenceClusters.put(key,newVal);
+			}
+		}
 	}
 	
 	/////////////////////////////////////////////////////////////////
