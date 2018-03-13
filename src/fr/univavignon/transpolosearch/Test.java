@@ -634,5 +634,6 @@ public class Test
 	}
 }
 
+// TODO filter articles that do not contain any event?
 // TODO try to compare articles using only their named entities (by opposition to the whole lexicon)
 // TODO setup a fuzzy k-means (or some other clustering algorithm allowing overlapping clusters)

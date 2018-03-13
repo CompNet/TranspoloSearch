@@ -701,8 +701,8 @@ public abstract class AbstractSearchResult
 
 			int result = events.size();
 			logger.log("Found "+result+" events");
-			if(result==0)
-				status = STATUS_NO_EVENT;
+//			if(result==0)					//TODO this affects later result processing (especially when computing performance)
+//				status = STATUS_NO_EVENT;
 		logger.decreaseOffset();
 		return result;
 	}

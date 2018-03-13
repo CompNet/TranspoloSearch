@@ -101,7 +101,7 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 	/////////////////////////////////////////////////////////////////
 	// RESULTS		/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
-	/** Map of results (articles) */
+	/** Map of results (articles), the String key is a unique id (url, alphanumerical code...) */
 	protected Map<String,T> results = new HashMap<String,T>();
 	/** Silhouette value corresponding to the last clustering done */
 	private double lastSilhouette = Double.NaN;
@@ -1230,6 +1230,9 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 			int fnTT = 0;
 			for(Entry<String,T> entry: results.entrySet())
 			{	String key = entry.getKey();
+//System.out.print(key);
+//if(key.startsWith("449762921767596_1246329098777637"))
+//	System.out.print("");
 				T res = entry.getValue();
 				
 				// get reference object
@@ -1256,28 +1259,45 @@ public abstract class AbstractSearchResults<T extends AbstractSearchResult>
 				// compare them
 				if(refTheme==null)
 				{	if(est==null)
-						fpT++;
-//					else
-//						tnT++;
+					{	fpT++;
+//						System.out.print("\tFP");
+					}
+					else
+					{	//tnT++;
+//						System.out.print("\tTN");
+					}
 				}
 				else
 				{	if(est==null)
-						tpT++;
+					{	tpT++;
+//						System.out.print("\tTP");
+					}
 					else
-						fnT++;
+					{	fnT++;
+//						System.out.print("\tFN");
+					}
 				}
 				if(refThemeTime==null)
 				{	if(est==null)
-						fpTT++;
-//					else
-//						tnTT++;
+					{	fpTT++;
+//						System.out.print("\tFP");
+					}
+					else
+					{	//tnTT++;
+//						System.out.print("\tTN");
+					}
 				}
 				else
 				{	if(est==null)
-						tpTT++;
+					{	tpTT++;
+//						System.out.print("\tTP");
+					}
 					else
-						fnTT++;
+					{	fnTT++;
+//						System.out.print("\tFN");
+					}
 				}
+//				System.out.println();
 			}
 			
 			// compute theme-based measures
