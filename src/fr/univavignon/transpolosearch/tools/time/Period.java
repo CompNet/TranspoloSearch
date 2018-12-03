@@ -175,7 +175,7 @@ public class Period implements Comparable<Period>
 	}
 	
 	/**
-	 * Returns a Period instance which is a copy of this Period,
+	 * Returns a {@code Period} instance which is a copy of this {@code Period},
 	 * but with possibly completed dates, when the day or month is
 	 * missing. Does not complete dates where the "larger" elements
 	 * are missing (e.g. day and month are known, but not year): in this

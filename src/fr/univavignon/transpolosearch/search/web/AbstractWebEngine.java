@@ -35,7 +35,7 @@ import fr.univavignon.transpolosearch.tools.log.HierarchicalLogger;
 import fr.univavignon.transpolosearch.tools.log.HierarchicalLoggerManager;
 
 /**
- * This class represents a search engine one can use to return
+ * This class represents a search engine that one can use to return
  * a list of articles from the general Web.
  * 
  * @author Vincent Labatut
@@ -43,8 +43,8 @@ import fr.univavignon.transpolosearch.tools.log.HierarchicalLoggerManager;
 public abstract class AbstractWebEngine
 {	
 	/**
-	 * Builds a search engine focusing on the specified website and
-	 * period. If the website is {@code null}, then there is no specific
+	 * Builds a search engine focusing on the specified Website and
+	 * period. If the Website is {@code null}, then there is no specific
 	 * focus. If the period is {@code null}, then there is temporal 
 	 * restriction.
 	 * 

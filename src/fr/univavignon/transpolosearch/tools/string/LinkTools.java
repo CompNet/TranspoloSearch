@@ -139,7 +139,7 @@ public class LinkTools
 	/////////////////////////////////////////////////////////////////
 	/**
 	 * Scans the specified linked text, and returns a list of all the
-	 * URL present in this text as hyperlinks.
+	 * URL present in this text as hyperlinks. 
 	 * 
 	 * @param linkedText
 	 * 		The linked text to process.

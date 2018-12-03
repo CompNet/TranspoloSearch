@@ -38,7 +38,7 @@ public class HierarchicalFormatter extends SimpleFormatter
 	/**
 	 * Creates a new formatter with
 	 * the specified limit for
-	 * a line of text.
+	 * a line of text. 
 	 * 
 	 * @param maxCols
 	 * 		Limit of a line of text.

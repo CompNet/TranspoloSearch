@@ -38,13 +38,13 @@ public class HtmlTools
 	/////////////////////////////////////////////////////////////////
 	/**
 	 * Returns the length of the longest uninterrupted text in the
-	 * specified element and its descendents. Here, by uninterrupted
+	 * specified element and its descendants. Here, by uninterrupted
 	 * we mean: contained in a single text node.
 	 * 
 	 * @param element
 	 * 		The element to process.
 	 * @return
-	 * 		The length of the longest uniterrupted text found (0 for none). 
+	 * 		The length of the longest uninterrupted text found (0 for none). 
 	 */
 	public static int getMaxTextLength(Element element)
 	{	int result = 0;
@@ -78,7 +78,7 @@ public class HtmlTools
 	// TIME				/////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
 	/**
-	 * Extract a date from the specified {@code TIME} HTML element.
+	 * Extract a date from the specified {@code TIME} html element.
 	 *  
 	 * @param timeElt
 	 * 		HTML element.

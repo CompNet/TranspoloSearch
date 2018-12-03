@@ -28,7 +28,7 @@ import fr.univavignon.transpolosearch.tools.file.FileNames;
  * General manager to handle all
  * the created {@link HierarchicalLogger} objects.
  * 
- * @version 1.3
+ * @version 1.3 
  * 
  * @author Vincent Labatut
  */

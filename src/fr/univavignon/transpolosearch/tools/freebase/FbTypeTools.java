@@ -126,9 +126,9 @@ public class FbTypeTools
 			String freebaseId = null;
 			
 			// get Freebase answer
-			HttpClient httpclient = HttpClientBuilder.create().build(); 
+			HttpClient httpClient = HttpClientBuilder.create().build(); 
 			HttpGet request = new HttpGet(url);
-			HttpResponse response = httpclient.execute(request);
+			HttpResponse response = httpClient.execute(request);
 			
 			// builds object from answer
 			JSONParser parser = new JSONParser();
@@ -212,9 +212,9 @@ public class FbTypeTools
 			logger.log(url);
 			
 			// get Freebase answer
-			HttpClient httpclient = HttpClientBuilder.create().build();
+			HttpClient httpClient = HttpClientBuilder.create().build();
 			HttpGet request = new HttpGet(url);
-			HttpResponse response = httpclient.execute(request);
+			HttpResponse response = httpClient.execute(request);
 			
 			// check if there is an answer
 			StatusLine status = response.getStatusLine();
@@ -291,9 +291,9 @@ public class FbTypeTools
 			logger.log(url);
 			
 			// get Freebase answer
-			HttpClient httpclient = HttpClientBuilder.create().build();
+			HttpClient httpClient = HttpClientBuilder.create().build();
 			HttpGet request = new HttpGet(url);
-			HttpResponse response = httpclient.execute(request);
+			HttpResponse response = httpClient.execute(request);
 			
 			// builds object from answer
 			JSONParser parser = new JSONParser();
@@ -331,9 +331,9 @@ public class FbTypeTools
 				logger.log(url);
 				
 				// get Freebase answer
-				HttpClient httpclient = HttpClientBuilder.create().build();
+				HttpClient httpClient = HttpClientBuilder.create().build();
 				HttpGet request = new HttpGet(url);
-				HttpResponse response = httpclient.execute(request);
+				HttpResponse response = httpClient.execute(request);
 				
 				// builds object from answer
 				JSONParser parser = new JSONParser();

@@ -42,7 +42,7 @@ public class StopWordsManager
 	/////////////////////////////////////////////////////////////////
 	// DATA					/////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
-	/** Map containing the stop word lists for all supported languages */
+	/** Map containing the stop-word lists for all supported languages */
 	private final static Map<ArticleLanguage,List<String>> STOP_WORDS = new HashMap<ArticleLanguage,List<String>>();
 	
 	/**
@@ -73,7 +73,7 @@ public class StopWordsManager
 	// LOADING				/////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
 	/**
-	 * Loads the stopword lists.
+	 * Loads the stop-word lists.
 	 * 
 	 * @throws UnsupportedEncodingException
 	 * 		Problem while accessing the stopword file. 

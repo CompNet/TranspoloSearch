@@ -56,7 +56,7 @@ import fr.univavignon.transpolosearch.tools.time.Period;
  * Represents one result of a search engine and some info 
  * regarding how it was subsequently processed.
  * 
- * @author Vincent Labatut
+ * @author Vincent Labatut 
  */
 public abstract class AbstractSearchResult
 {

@@ -111,7 +111,7 @@ public class WikipediaReader extends AbstractArticleReader
 	/////////////////////////////////////////////////////////////////
 	/** Language of the page currently processed */
 	private ArticleLanguage language;
-
+	
 	/**
 	 * Sets up the language depending on the URL.
 	 * 

@@ -32,7 +32,7 @@ import fr.univavignon.transpolosearch.tools.log.HierarchicalLoggerManager;
 /**
  * This class contains a set of methods related to Web communication.
  * 
- * @author Vincent Labatut
+ * @author Vincent Labatut 
  */
 public class WebTools
 {	

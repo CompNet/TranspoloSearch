@@ -50,7 +50,7 @@ import fr.univavignon.transpolosearch.tools.time.TimeFormatting;
  * {@code ....method3}</br>
  * {@code ..method4}</br>
  * where {@code method1} calls {@code method2}
- * and {@code method4}, and {@code method2}
+ * and {@code method4}, and {@code method2} 
  * calls {@code method3}.
  * 
  * @version 1.2

@@ -24,7 +24,7 @@ import java.util.regex.Pattern;
 /**
  * Class overrode on the fly in {@link DateParserEn}.
  * Each one is able to handle a specific textual
- * form of date. 
+ * form of date.
  * 
  * @author Vincent Labatut
  */

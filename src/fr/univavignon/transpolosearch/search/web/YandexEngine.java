@@ -223,9 +223,9 @@ public class YandexEngine extends AbstractWebEngine
 			logger.log("URL: "+url);
 			
 			// query the server	
-			HttpClient httpclient = HttpClientBuilder.create().build();
+			HttpClient httpClient = HttpClientBuilder.create().build();
 			HttpGet request = new HttpGet(url);
-			HttpResponse response = httpclient.execute(request);
+			HttpResponse response = httpClient.execute(request);
 			
 			// parse the XML response
 			logger.increaseOffset();

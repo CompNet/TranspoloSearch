@@ -45,7 +45,7 @@ import fr.univavignon.transpolosearch.tools.time.TimeFormatting;
  * annotated articles, to be used as references.
  * recognizers are assessed by comparing their estimated
  * mentions to the actual ones. Various measures can
- * be used to perform this comparison.
+ * be used to perform this comparison. 
  * 
  * @param <T>
  * 		TODO 

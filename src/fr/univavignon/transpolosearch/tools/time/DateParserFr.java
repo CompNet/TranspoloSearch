@@ -41,7 +41,7 @@ import fr.univavignon.transpolosearch.tools.log.HierarchicalLoggerManager;
  * the form of a {@link Date} object. This class was 
  * designed for the English language only.
  * 
- * @author Vincent Labatut
+ * @author Vincent Labatut 
  */
 public class DateParserFr
 {	

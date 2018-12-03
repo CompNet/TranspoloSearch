@@ -61,7 +61,7 @@ import fr.univavignon.transpolosearch.tools.log.HierarchicalLoggerManager;
  * {@link #getPunctuation(boolean)}, regular spaces and new lines 
  * {@code '\n'}. This holds for an article body: in addition, an 
  * article title must not contain new lines or double quotes 
- * {@code '"'}, so that we can include it in CSV files.
+ * {@code '"'}, so that we can include it in CSV files. 
  *  
  * @author Vincent Labatut
  */
@@ -714,7 +714,7 @@ public class StringTools
 	}
 	
 	/**
-	 * Removes all the non-latin letters, as they generally not supported
+	 * Removes all the non-latin letters, as they are generally not supported
 	 * by the recognizers (or other processors).
 	 * <br/>
 	 * This method is meant to be used only by {@link #cleanInnerText(String,ArticleLanguage)}.
@@ -1129,7 +1129,7 @@ public class StringTools
 	/**
 	 * Takes a string and a position in this string,
 	 * and returns a part of the string centered around
-	 * the specified postion, using the specified range
+	 * the specified position, using the specified range
 	 * to define the interval.
 	 * <br/>
 	 * Another line is used to mark the exact position
@@ -1180,12 +1180,12 @@ public class StringTools
 	/////////////////////////////////////////////////////////////////
 	/**
 	 * Compute the total word frequencies for the specified text.
-	 * If the language is specified, the stopwords are not counted.
+	 * If the language is specified, the stop-words are not counted.
 	 *  
 	 * @param text
 	 * 		The text to process.
 	 * @param language 
-	 * 		Language of the text, or {@code null} if stopwords should be counted.
+	 * 		Language of the text, or {@code null} if stop-words should be counted.
 	 * @return
 	 * 		A map associating a frequency to each word appearing at least once.
 	 */
@@ -1198,14 +1198,14 @@ public class StringTools
 	
 	/**
 	 * Compute the total word frequencies for the specified list of texts.
-	 * If the language is specified, the stopwords are not counted.
+	 * If the language is specified, the stop-words are not counted.
 	 * <br/>
 	 * The processed text is supposed to be clean.
 	 *  
 	 * @param texts
 	 * 		A list of texts.
 	 * @param language 
-	 * 		Language of the text, or {@code null} if stopwords should be counted.
+	 * 		Language of the text, or {@code null} if stop-words should be counted.
 	 * @return
 	 * 		A map associating a frequency to each word appearing at least once.
 	 */

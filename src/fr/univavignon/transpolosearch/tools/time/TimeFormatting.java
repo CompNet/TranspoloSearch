@@ -29,7 +29,7 @@ import java.util.Locale;
  * They are mainly used by the log classes to add
  * time and date to log messages.
  * 
- * @author Vincent Labatut
+ * @author Vincent Labatut 
  */
 public class TimeFormatting
 {

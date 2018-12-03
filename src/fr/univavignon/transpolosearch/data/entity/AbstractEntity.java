@@ -26,7 +26,7 @@ import fr.univavignon.transpolosearch.tools.xml.XmlNames;
  * Abstract class representing a general entity. An entity
  * can be either named or valued, i.e. associated to one or
  * several string names, which are relatively unique, or to
- * some quantity, amount, date, or other value.
+ * some quantity, amount, date, or other value. 
  * 
  * @author Vincent Labatut
  */

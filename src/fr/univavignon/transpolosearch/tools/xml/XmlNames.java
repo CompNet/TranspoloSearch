@@ -21,7 +21,7 @@ package fr.univavignon.transpolosearch.tools.xml;
 /**
  * This class contains XML-related strings.
  * 
- * @author Vincent Labatut
+ * @author Vincent Labatut 
  */
 public class XmlNames
 {	

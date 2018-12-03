@@ -27,7 +27,7 @@ import fr.univavignon.transpolosearch.tools.log.HierarchicalLoggerManager;
  * extract them and get a formal representation under
  * the form of a {@link Date} object. 
  * 
- * @author Vincent Labatut
+ * @author Vincent Labatut 
  */
 public class DateParser
 {	

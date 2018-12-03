@@ -47,7 +47,7 @@ import fr.univavignon.transpolosearch.tools.log.HierarchicalLoggerManager;
 import fr.univavignon.transpolosearch.tools.string.LinkTools;
 
 /**
- * This class handles extracts a collection of Wikipedia articles,
+ * This class extracts a collection of Wikipedia articles,
  * based on a starting page, by following the internal links (i.e.
  * links to other articles) until a maximal distance is reached.
  * 

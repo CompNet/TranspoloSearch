@@ -34,7 +34,7 @@ import fr.univavignon.transpolosearch.tools.xml.XmlTools;
 /**
  * This class handles the keys associated to the
  * access to certain services such as Freebase
- * or OpenCalais.
+ * or OpenCalais. 
  *  
  * @author Vincent Labatut
  */

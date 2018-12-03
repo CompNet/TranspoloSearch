@@ -203,7 +203,7 @@ public abstract class AbstractArticleReader
 	/**
 	 * Processes the specified URL to get the
 	 * targeted article. Also applies a cleaning step
-	 * (removing non-breaking space, and so on.
+	 * (removing non-breaking space, and so on).
 	 * 
 	 * @param url
 	 * 		Article address.

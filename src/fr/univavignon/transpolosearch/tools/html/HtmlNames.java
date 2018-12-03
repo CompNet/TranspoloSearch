@@ -24,7 +24,7 @@ import java.util.List;
 /**
  * This class contains HTML-related strings.
  * 
- * @author Vincent Labatut
+ * @author Vincent Labatut 
  */
 public class HtmlNames
 {	

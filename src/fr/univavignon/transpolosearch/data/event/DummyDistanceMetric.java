@@ -11,7 +11,7 @@ import jsat.linear.distancemetrics.DistanceMetric;
  * and cluster them with {@link MyPam} (JStat Library).
  *  
  * @author Vincent Labatut
- */
+ */ 
 @SuppressWarnings({ "javadoc", "serial" })
 public class DummyDistanceMetric implements DistanceMetric
 {	double[][] dist;

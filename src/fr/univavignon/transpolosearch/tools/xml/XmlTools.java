@@ -51,7 +51,7 @@ import fr.univavignon.transpolosearch.tools.file.FileNames;
 /**
  * This class contains a set of methods related to XML managment.
  * 
- * @author Vincent Labatut
+ * @author Vincent Labatut 
  */
 public class XmlTools
 {	

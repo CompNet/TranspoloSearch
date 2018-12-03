@@ -261,10 +261,10 @@ public class BingEngine extends AbstractWebEngine
 			logger.log("URL: "+url);
 			
 			// query the server
-			HttpClient httpclient = HttpClientBuilder.create().build();
+			HttpClient httpClient = HttpClientBuilder.create().build();
 			HttpGet request = new HttpGet(url);
 			request.setHeader("Ocp-Apim-Subscription-Key", API_KEY1);
-			HttpResponse response = httpclient.execute(request);
+			HttpResponse response = httpClient.execute(request);
 			
 			// parse the JSON response
 			String answer = WebTools.readAnswer(response);
@@ -411,9 +411,9 @@ public class BingEngine extends AbstractWebEngine
 //		
 //		// check the URL returned by Bing
 //		String urlStr = "http://www.bing.com/cr?IG=C688D700F2FC417AA9B10AA9F7337042&CID=24569A2FBE076C2425F49044BFE06DBD&rd=1&h=VUF8nVTYmDh6zzfje1tbK4pq9WLYMHZZsZtHW0Y5jI0&v=1&r=http%3a%2f%2fwww.closermag.fr%2farticle%2ffrancois-hollande-danse-avec-barack-obama-et-devient-la-risee-de-twitter-photo-604494&p=DevEx,5093.1";
-////		HttpClient httpclient = new DefaultHttpClient();   
+////		HttpClient httpClient = new DefaultHttpClient();   
 ////		HttpGet request = new HttpGet(urlStr);
-////		HttpResponse response = httpclient.execute(request);
+////		HttpResponse response = httpClient.execute(request);
 ////		String answer = WebTools.readAnswer(response);
 ////		PrintWriter pw = FileTools.openTextFileWrite(FileNames.FO_OUTPUT+File.separator+"test.html");
 ////		pw.print(answer);

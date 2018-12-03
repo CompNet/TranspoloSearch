@@ -27,7 +27,7 @@ import java.util.Locale;
  * have all the necessary information.
  * 
  * @author Burcu Küpelioğlu
- * @author Vincent Labatut
+ * @author Vincent Labatut 
  */
 public class Date implements Comparable<Date>
 {	

@@ -102,9 +102,9 @@ public class FbIdTools
 			logger.log(url);
 			
 			// get Freebase answer
-			HttpClient httpclient = HttpClientBuilder.create().build();
+			HttpClient httpClient = HttpClientBuilder.create().build();
 			HttpGet request = new HttpGet(url);
-			HttpResponse response = httpclient.execute(request);
+			HttpResponse response = httpClient.execute(request);
 			
 			// builds object from answer
 			JSONParser parser = new JSONParser();

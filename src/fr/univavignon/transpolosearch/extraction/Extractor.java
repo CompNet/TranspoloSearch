@@ -1,7 +1,5 @@
 package fr.univavignon.transpolosearch.extraction;
 
-import java.io.File;
-
 /*
  * TranspoloSearch
  * Copyright 2015-18 Vincent Labatut
@@ -19,6 +17,8 @@ import java.io.File;
  * You should have received a copy of the GNU General Public License
  * along with TranspoloSearch. If not, see <http://www.gnu.org/licenses/>.
  */
+
+import java.io.File;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;

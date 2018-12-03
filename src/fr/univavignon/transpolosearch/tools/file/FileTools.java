@@ -39,7 +39,7 @@ import java.util.Scanner;
 
 /**
  * This class contains various methods
- * related to file management.
+ * related to file management. 
  *  
  * @author Vincent Labatut
  */
