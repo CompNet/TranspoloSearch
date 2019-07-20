@@ -39,7 +39,7 @@ import java.util.Scanner;
 
 /**
  * This class contains various methods
- * related to file management. 
+ * related to file management.
  *  
  * @author Vincent Labatut
  */
@@ -49,7 +49,7 @@ public class FileTools
 	// FILTERS			/////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
 	/** Filter focusing on raw.txt files */
-	public final static FilenameFilter FILTER_RAW_TEXT = createFilter(FileNames.FI_RAW_TEXT);
+	public final static FilenameFilter FILTER_RAW_TEXT = createFilenameFilter(FileNames.FI_RAW_TEXT);
 	
 	/** Filter able to retain only directories */
 	public final static FileFilter FILTER_DIRECTORY = new FileFilter()
@@ -74,18 +74,41 @@ public class FileTools
 	};
 	
 	/**
-	 * Creates a filter able to retain only files with the same name than the specified parameter.
+	 * Creates a filter able to retain only files
+	 * with the same name as the specified parameter.
 	 * 
 	 * @param fileName
-	 * 		targeted filename.
+	 * 		Targeted filename.
 	 * @return
 	 * 		Filter dedicated to this name.
 	 */
-	public final static FilenameFilter createFilter(final String fileName)
+	public final static FilenameFilter createFilenameFilter(final String fileName)
 	{	FilenameFilter result = new FilenameFilter()
 		{	@Override
 			public boolean accept(File folder, String name)
 			{	boolean result = fileName.equals(name);
+				return result;
+			}
+		};
+		return result;
+	}
+	
+	/**
+	 * Creates a filter able to retain only files
+	 * with the same name as the specified parameter.
+	 * 
+	 * @param extension
+	 * 		Targeted extension.
+	 * @return
+	 * 		Filter dedicated to this name.
+	 */
+	public final static FilenameFilter createExtensionFilter(String extension)
+	{	final String ext = extension.toLowerCase(Locale.ENGLISH);
+		FilenameFilter result = new FilenameFilter()
+		{	@Override
+			public boolean accept(File folder, String name)
+			{	name = name.toLowerCase(Locale.ENGLISH);
+				boolean result = name.endsWith(ext);
 				return result;
 			}
 		};
@@ -136,7 +159,11 @@ public class FileTools
 	public static Scanner openTextFileRead(File file, String encoding) throws FileNotFoundException, UnsupportedEncodingException
 	{	FileInputStream fis = new FileInputStream(file);
 //		InputStreamReader isr = new InputStreamReader(fis,"UTF-8");
-		InputStreamReader isr = new InputStreamReader(fis, encoding);
+		InputStreamReader isr;
+		if(encoding!=null)
+			isr = new InputStreamReader(fis, encoding);
+		else
+			isr = new InputStreamReader(fis);
 		Scanner result = new Scanner(isr);
 		return result;
 	}
@@ -451,7 +478,8 @@ public class FileTools
 	// LIST				/////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
 	/**
-	 * Returns a list of files whose name starts with the specified prefix, and which are located in the specified folder.
+	 * Returns a list of files whose name starts with the specified
+	 * prefix, and which are located in the specified folder.
 	 *  
 	 * @param folder
 	 * 		Folder directly containing the files.
@@ -479,7 +507,8 @@ public class FileTools
 	}
 
 	/**
-	 * Returns a list of files whose name ends with the specified suffix, and which are located in the specified folder.
+	 * Returns a list of files whose name ends with the specified
+	 * suffix, and which are located in the specified folder.
 	 *  
 	 * @param folder
 	 * 		Folder directly containing the files.
