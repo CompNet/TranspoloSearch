@@ -24,7 +24,7 @@ import java.io.File;
  * This class contains various constants
  * related to file and folder names.
  *  
- * @version 2
+ * @version 2.1
  * @author Vincent Labatut
  */
 public class FileNames
@@ -50,6 +50,10 @@ public class FileNames
 	public final static String EX_BASH = ".bash";
 	/** Binary file extension */
 	public final static String EX_BIN = ".bin";
+	/** BibTeX file extension */
+	public final static String EX_BIBTEX = ".bib";
+	/** Thomson ISI file extension */
+	public final static String EX_ISI = ".ciw";
 	/** Comma-separated values (CSV) file extension */
 	public final static String EX_CSV = ".csv";
 	/** PDF file extension */
@@ -70,7 +74,7 @@ public class FileNames
 	public final static String EX_HTML = ".html";
 	/** Graphml file extension */
 	public final static String EX_GRAPHML = ".graphml";
-
+	
 	/////////////////////////////////////////////////////////////////
 	// FILES		/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
