@@ -26,7 +26,7 @@ import com.google.api.services.customsearch.Customsearch;
 import com.google.api.services.customsearch.model.Result;
 import com.google.api.services.customsearch.model.Search;
 
-import fr.univavignon.transpolosearch.tools.keys.KeyHandler;
+import fr.univavignon.tools.keys.KeyHandler;
 
 import java.io.IOException;
 import java.net.URL;

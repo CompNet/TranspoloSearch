@@ -1,12 +1,5 @@
 package fr.univavignon.transpolosearch.tools.time;	
 
-import java.text.DateFormatSymbols;
-import java.text.Normalizer;
-import java.text.Normalizer.Form;
-import java.time.LocalDate;
-import java.time.YearMonth;
-import java.util.ArrayList;
-
 /*
  * TranspoloSearch
  * Copyright 2015-18 Vincent Labatut
@@ -25,6 +18,13 @@ import java.util.ArrayList;
  * along with TranspoloSearch. If not, see <http://www.gnu.org/licenses/>.
  */
 
+import java.text.DateFormatSymbols;
+import java.text.Normalizer;
+import java.text.Normalizer.Form;
+import java.time.LocalDate;
+import java.time.YearMonth;
+import java.util.ArrayList;
+
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
@@ -32,8 +32,8 @@ import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import fr.univavignon.transpolosearch.tools.log.HierarchicalLogger;
-import fr.univavignon.transpolosearch.tools.log.HierarchicalLoggerManager;
+import fr.univavignon.tools.log.HierarchicalLogger;
+import fr.univavignon.tools.log.HierarchicalLoggerManager;
 
 /**
  * Sets of methods used to find dates in natural text,

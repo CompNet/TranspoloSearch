@@ -26,7 +26,7 @@ import java.io.File;
  *  
  * @author Vincent Labatut
  */
-public class FileNames
+public class FileNames extends fr.univavignon.tools.file.FileNames
 {	
 	/////////////////////////////////////////////////////////////////
 	// PREFIXES		/////////////////////////////////////////////////
@@ -39,18 +39,18 @@ public class FileNames
 	/////////////////////////////////////////////////////////////////
 	// FOLDERS		/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
-	/** Log folder */
-	public final static String FO_LOG = "log";
-	/** Output folder */
-	public static String FO_OUTPUT = "out";
+//	/** Log folder */
+//	public final static String FO_LOG = "log";
+//	/** Output folder */
+//	public static String FO_OUTPUT = "out";
 		/** Folder containing web search results */
 		public static String FO_WEB_SEARCH_RESULTS = FO_OUTPUT + File.separator + "web_search";
 			/** Folder containing cached web pages */
 			public static String FO_WEB_PAGES = FO_WEB_SEARCH_RESULTS + File.separator + "_pages";
 		/** Folder containing social media search results */
 		public static String FO_SOCIAL_SEARCH_RESULTS = FO_OUTPUT + File.separator + "social_search";
-	/** Resources folder */
-	public final static String FO_RESOURCES = "res";
+//	/** Resources folder */
+//	public final static String FO_RESOURCES = "res";
 		/** Folder used to store certain cached files */
 		public final static String FO_CACHE = FO_RESOURCES + File.separator + "cache";
 			/** Folder used to store Freebase cached files */
@@ -59,8 +59,8 @@ public class FileNames
 			public final static String FO_CACHE_WIKIMEDIA = FO_CACHE + File.separator + "wikimedia";
 		/** Folder used to store images */
 		public final static String FO_IMAGES = FO_RESOURCES + File.separator + "images";
-		/** Folder used to store various data */
-		public final static String FO_MISC = FO_RESOURCES + File.separator + "misc";
+//		/** Folder used to store various data */
+//		public final static String FO_MISC = FO_RESOURCES + File.separator + "misc";
 		/** Language XML files for the GUI */
 		public final static String FO_LANGUAGE = FO_RESOURCES + File.separator + "language";
 		/** Ner-related resources */
@@ -101,8 +101,8 @@ public class FileNames
 			public final static String FO_VOTECOMBINER = FO_NER + File.separator + "votecombiner";
 		/** Folder containing retrieval-related data */
 		public final static String FO_RETRIEVAL = FO_RESOURCES + File.separator + "retrieval";
-		/** Folder containing the XML schemas */
-		public final static String FO_SCHEMA = FO_RESOURCES + File.separator + "schemas";
+//		/** Folder containing the XML schemas */
+//		public final static String FO_SCHEMA = FO_RESOURCES + File.separator + "schemas";
 	
 	/**
 	 * Changes the folder used to output the files produced during the processing.
@@ -130,14 +130,10 @@ public class FileNames
 	public final static String FI_HELP_PAGE = "help" + FileNames.EX_HTML;
 	/** XML schema file used to store category maps */
 	public final static String FI_CATMAP_SCHEMA = "categorymaps" + FileNames.EX_SCHEMA;
-	/** XML schema file used for graphml  */
-	public final static String FI_GRAPHML_SCHEMA = "graphml" + FileNames.EX_SCHEMA;
 	/** XML schema file used to record mentions  */
 	public final static String FI_MENTION_SCHEMA = "mentions" + FileNames.EX_SCHEMA;
 	/** XML schema file used to record entities  */
 	public final static String FI_ENTITY_SCHEMA = "entities" + FileNames.EX_SCHEMA;
-	/** XML schema file used to store keys */
-	public final static String FI_KEY_SCHEMA = "keys" + FileNames.EX_SCHEMA;
 	/** XML file used to store keys */
 	public final static String FI_KB_NAMES = "kb_names" + FileNames.EX_TEXT;
 	/** XML schema file used to record article properties  */
@@ -158,8 +154,6 @@ public class FileNames
 	public final static String FI_ENTITY_LIST = "entities" + FileNames.EX_XML;
 	/** XML schema file used to store GUI texts */
 	public final static String FI_LANGUAGE = "language" + FileNames.EX_SCHEMA;
-	/** XML file used to store keys */
-	public final static String FI_KEY_LIST = "keys" + FileNames.EX_XML;
 	/** File output by a processor, using its own format */
 	public final static String FI_OUTPUT_TEXT = "output" + FileNames.EX_TEXT;
 	/** File containing some statistics processed on the corpus */
@@ -257,46 +251,4 @@ public class FileNames
 	public final static String FI_LOGO_LAB = "lia" + FileNames.EX_JPEG;
 	/** University logo */
 	public final static String FI_LOGO_UNIV = "uapv" + FileNames.EX_GIF;
-
-//	/**
-//	 * Returns the filename used to store the
-//	 * specified statistic.
-//	 * 
-//	 * @param stat
-//	 * 		Name of the statistic.
-//	 * @return
-//	 * 		Associated filename.
-//	 */
-//	public static String getStatFilename(String stat)
-//	{	String result = FI_STATS_TEXT + stat + EX_TEXT;
-//		return result;
-//	}
-	
-	/////////////////////////////////////////////////////////////////
-	// EXTENSIONS	/////////////////////////////////////////////////
-	/////////////////////////////////////////////////////////////////
-	/** Bash file extension */
-	public final static String EX_BASH = ".bash";
-	/** Binary file extension */
-	public final static String EX_BIN = ".bin";
-	/** Comma-separated values (CSV) file extension */
-	public final static String EX_CSV = ".csv";
-	/** PDF file extension */
-	public final static String EX_PDF = ".pdf";
-	/** PNG image format */
-	public final static String EX_PNG = ".png";
-	/** JPEG image format */
-	public final static String EX_JPEG = ".jpeg";
-	/** GIF image format */
-	public final static String EX_GIF = ".gif";
-	/** XML Schema file extension */
-	public final static String EX_SCHEMA = ".xsd";
-	/** Text file extension */
-	public final static String EX_TEXT = ".txt";
-	/** XML file extension */
-	public final static String EX_XML = ".xml";
-	/** HTML file extension */
-	public final static String EX_HTML = ".html";
-	/** Graphml file extension */
-	public final static String EX_GRAPHML = ".graphml";
 }

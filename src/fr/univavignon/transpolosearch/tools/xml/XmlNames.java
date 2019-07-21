@@ -48,8 +48,6 @@ public class XmlNames
 	public static final String ATT_FONT_SIZE = "fontSize";
 	/** Some identification code */
 	public static final String ATT_ID = "id";
-	/** Id associated to some key */
-	public static final String ATT_KEYID = "id";
 	/** Representation of a knowledge base */
 	public static final String ATT_KNOWLEDGE_BASE = "knowledgeBase";
 	/** Linker applied to the entity */
@@ -110,8 +108,6 @@ public class XmlNames
 	public static final String ELT_MENTION = "mention";
 	/** A group of GUI texts */
 	public static final String ELT_GROUP = "group";
-	/** Some text key */
-	public static final String ELT_KEY = "key";
 	/** Language of an article */
 	public static final String ELT_LANGUAGE = "language";
 	/** Last loaded values (editor) */

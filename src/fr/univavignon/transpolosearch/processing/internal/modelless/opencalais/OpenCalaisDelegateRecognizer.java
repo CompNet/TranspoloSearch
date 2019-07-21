@@ -46,9 +46,10 @@ import fr.univavignon.transpolosearch.data.entity.mention.AbstractMention;
 import fr.univavignon.transpolosearch.data.entity.mention.Mentions;
 import fr.univavignon.transpolosearch.processing.ProcessorException;
 import fr.univavignon.transpolosearch.processing.internal.modelless.AbstractModellessInternalDelegateRecognizer;
-import fr.univavignon.transpolosearch.tools.keys.KeyHandler;
 import fr.univavignon.transpolosearch.tools.string.StringTools;
-import fr.univavignon.transpolosearch.tools.web.WebTools;
+
+import fr.univavignon.tools.keys.KeyHandler;
+import fr.univavignon.tools.web.WebTools;
 
 /**
  * This class acts as an interface with the OpenCalais Web service.

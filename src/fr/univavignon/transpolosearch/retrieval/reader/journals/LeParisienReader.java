@@ -39,8 +39,9 @@ import fr.univavignon.transpolosearch.data.article.Article;
 import fr.univavignon.transpolosearch.data.article.ArticleLanguage;
 import fr.univavignon.transpolosearch.retrieval.reader.AbstractArticleReader;
 import fr.univavignon.transpolosearch.retrieval.reader.ReaderException;
-import fr.univavignon.transpolosearch.tools.html.HtmlNames;
 import fr.univavignon.transpolosearch.tools.string.StringTools;
+
+import fr.univavignon.tools.web.HtmlNames;
 
 /**
  * From a specified URL, this class retrieves a page

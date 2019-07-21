@@ -39,12 +39,13 @@ import fr.univavignon.transpolosearch.data.entity.AbstractEntity;
 import fr.univavignon.transpolosearch.data.entity.Entities;
 import fr.univavignon.transpolosearch.data.entity.EntityType;
 import fr.univavignon.transpolosearch.tools.file.FileNames;
-import fr.univavignon.transpolosearch.tools.time.TimeFormatting;
 import fr.univavignon.transpolosearch.tools.xml.XmlNames;
-import fr.univavignon.transpolosearch.tools.xml.XmlTools;
 import fr.univavignon.transpolosearch.data.entity.mention.AbstractMention;
 import fr.univavignon.transpolosearch.processing.InterfaceRecognizer;
 import fr.univavignon.transpolosearch.processing.ProcessorName;
+
+import fr.univavignon.tools.time.TimeFormatting;
+import fr.univavignon.tools.xml.XmlTools;
 
 /**
  * Class representing a list of mentions,

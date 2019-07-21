@@ -39,11 +39,12 @@ import fr.univavignon.transpolosearch.data.entity.mention.Mentions;
 import fr.univavignon.transpolosearch.processing.InterfaceRecognizer;
 import fr.univavignon.transpolosearch.tools.file.FileNames;
 import fr.univavignon.transpolosearch.tools.file.FileTools;
-import fr.univavignon.transpolosearch.tools.log.HierarchicalLogger;
-import fr.univavignon.transpolosearch.tools.log.HierarchicalLoggerManager;
 import fr.univavignon.transpolosearch.tools.string.StringTools;
 import fr.univavignon.transpolosearch.tools.xml.XmlNames;
-import fr.univavignon.transpolosearch.tools.xml.XmlTools;
+
+import fr.univavignon.tools.log.HierarchicalLogger;
+import fr.univavignon.tools.log.HierarchicalLoggerManager;
+import fr.univavignon.tools.xml.XmlTools;
 
 /**
  * This class represents an article, i.e. all
@@ -470,11 +471,11 @@ public class Article implements Comparable<Article>
 		
 		// raw text
 		logger.log("Clean raw text");
-		rawText = StringTools.cleanText(rawText,language);
+		rawText = StringTools.cleanText(rawText,language.getLocale());
 		
 		// linked text
 		logger.log("Clean linked text");
-		linkedText = StringTools.cleanText(linkedText,language);
+		linkedText = StringTools.cleanText(linkedText,language.getLocale());
 		
 		// remove < and > signs
 		logger.log("Remove tag signs");
@@ -489,7 +490,7 @@ public class Article implements Comparable<Article>
 			else
 				title = "Empty article!";
 		}
-		title = StringTools.cleanTitle(title,language);
+		title = StringTools.cleanTitle(title,language.getLocale());
 		
 		logger.decreaseOffset();
 	}

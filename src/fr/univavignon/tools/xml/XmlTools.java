@@ -1,21 +1,21 @@
-package fr.univavignon.transpolosearch.tools.xml;
+package fr.univavignon.tools.xml;
 
 /*
- * TranspoloSearch
- * Copyright 2015-18 Vincent Labatut
+ * CommonTools
+ * Copyright 2010-19 Vincent Labatut
  * 
- * This file is part of TranspoloSearch.
+ * This file is part of CommonTools.
  * 
- * TranspoloSearch is free software: you can redistribute it and/or modify it under 
+ * CommonTools is free software: you can redistribute it and/or modify it under 
  * the terms of the GNU General Public License as published by the Free Software 
  * Foundation, either version 2 of the License, or (at your option) any later version.
  * 
- * TranspoloSearch is distributed in the hope that it will be useful, but WITHOUT ANY 
+ * CommonTools is distributed in the hope that it will be useful, but WITHOUT ANY 
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A 
  * PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * 
  * You should have received a copy of the GNU General Public License
- * along with TranspoloSearch. If not, see <http://www.gnu.org/licenses/>.
+ * along with CommonTools. If not, see <http://www.gnu.org/licenses/>.
  */
 
 import java.io.BufferedInputStream;
@@ -46,12 +46,13 @@ import org.xml.sax.ErrorHandler;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 
-import fr.univavignon.transpolosearch.tools.file.FileNames;
+import fr.univavignon.tools.file.FileNames;
 
 /**
  * This class contains a set of methods related to XML managment.
  * 
- * @author Vincent Labatut 
+ * @author Vincent Labatut
+ * @version 2
  */
 public class XmlTools
 {	
@@ -191,7 +192,7 @@ public class XmlTools
 	/**
 	 * Creates a new xml file using the specified element
 	 * as a root. The schema path is used to bound the
-	 * resulting document to a specific, local schema.
+	 * resulting document to a specific, <b>local</b> schema.
 	 * 
 	 * @param dataFile
 	 * 		The xml file to be created.
@@ -222,6 +223,52 @@ public class XmlTools
 	    Namespace sch = Namespace.getNamespace("xsi",XMLConstants.W3C_XML_SCHEMA_INSTANCE_NS_URI);
 		root.addNamespaceDeclaration(sch);
 		root.setAttribute("noNamespaceSchemaLocation",schemaPath,sch);
+		// define output format
+		Format format = Format.getPrettyFormat();
+		format.setIndent("\t");
+		format.setEncoding("UTF-8");
+		
+		// create outputter
+		XMLOutputter outputter = new XMLOutputter(format);
+		
+		// write in the stream
+	    outputter.output(document,outBuf);
+	    
+	    // close the stream
+	    outBuf.close();
+	}
+	
+	/**
+	 * Creates a new xml file using the specified element
+	 * as a root. The schema path is used to bound the
+	 * resulting document to a specific, <b>online</b> schema.
+	 * 
+	 * @param dataFile
+	 * 		The xml file to be created.
+	 * @param namespaceLocation
+	 * 		The xml schema to be mentioned.
+	 * @param schemaLocation
+	 * 		The xml schema to be mentioned.
+	 * @param root
+	 * 		The root element of the document.
+	 * 
+	 * @throws IOException
+	 * 		Problem when recording the new xml document.
+	 */
+	public static void makeFileFromRoot(File dataFile, String namespaceLocation, String schemaLocation, Element root) throws IOException
+	{	// open file stream
+		FileOutputStream out = new FileOutputStream(dataFile);
+		BufferedOutputStream outBuf = new BufferedOutputStream(out);
+		
+		// create document
+		Document document = new Document(root);
+		
+		// schema
+//	    Namespace def = Namespace.getNamespace(namespaceLocation);
+//		root.addNamespaceDeclaration(def);
+	    Namespace sch = Namespace.getNamespace("xsi",XMLConstants.W3C_XML_SCHEMA_INSTANCE_NS_URI);
+		root.addNamespaceDeclaration(sch);
+		root.setAttribute("schemaLocation",namespaceLocation+" "+schemaLocation,sch);
 		// define output format
 		Format format = Format.getPrettyFormat();
 		format.setIndent("\t");

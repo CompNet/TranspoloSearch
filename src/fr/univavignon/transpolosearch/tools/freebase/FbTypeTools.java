@@ -40,8 +40,8 @@ import org.json.simple.parser.JSONParser;
 
 import fr.univavignon.transpolosearch.data.entity.EntityType;
 import fr.univavignon.transpolosearch.tools.file.FileNames;
-import fr.univavignon.transpolosearch.tools.log.HierarchicalLogger;
-import fr.univavignon.transpolosearch.tools.log.HierarchicalLoggerManager;
+import fr.univavignon.tools.log.HierarchicalLogger;
+import fr.univavignon.tools.log.HierarchicalLoggerManager;
 
 /**
  * This class contains methods used to retrieve the Freebase

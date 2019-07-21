@@ -44,7 +44,8 @@ import fr.univavignon.transpolosearch.data.article.ArticleLanguage;
 import fr.univavignon.transpolosearch.data.search.SocialSearchResult;
 import fr.univavignon.transpolosearch.tools.file.FileNames;
 import fr.univavignon.transpolosearch.tools.file.FileTools;
-import fr.univavignon.transpolosearch.tools.keys.KeyHandler;
+
+import fr.univavignon.tools.keys.KeyHandler;
 
 import java.io.File;
 import java.io.FileNotFoundException;

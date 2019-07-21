@@ -18,6 +18,8 @@ package fr.univavignon.transpolosearch.data.article;
  * along with TranspoloSearch. If not, see <http://www.gnu.org/licenses/>.
  */
 
+import java.util.Locale;
+
 /**
  * Language of an article.
  * 
@@ -29,22 +31,43 @@ public enum ArticleLanguage
 	/** French */
 	FR;
 	
+//	/**
+//	 * Returns the word "and" in this language. This is used when replacing 
+//	 * the symbol "&" during text cleaning.
+//	 * 
+//	 * @return
+//	 * 		A string corresponding to the word "and" in this language.
+//	 */
+//	public String getEt()
+//	{	String result = null;
+//		
+//		switch(this)
+//		{	case EN:
+//				result = "and";
+//				break;
+//			case FR:
+//				result = "et";
+//				break;
+//		}
+//		
+//		return result;
+//	}
+	
 	/**
-	 * Returns the word "and" in this language. This is used when replacing 
-	 * the symbol "&" during text cleaning.
+	 * Returns the {@code Locale} associted to this language.
 	 * 
 	 * @return
-	 * 		A string corresponding to the word "and" in this language.
+	 * 		The corresponding {@code Locale}.
 	 */
-	public String getEt()
-	{	String result = null;
+	public Locale getLocale()
+	{	Locale result = null;
 		
 		switch(this)
 		{	case EN:
-				result = "and";
+				result = Locale.ENGLISH;
 				break;
 			case FR:
-				result = "et";
+				result = Locale.FRENCH;
 				break;
 		}
 		

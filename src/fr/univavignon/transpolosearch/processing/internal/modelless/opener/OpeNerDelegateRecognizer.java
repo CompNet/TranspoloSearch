@@ -54,7 +54,8 @@ import fr.univavignon.transpolosearch.processing.ProcessorException;
 import fr.univavignon.transpolosearch.processing.ProcessorName;
 import fr.univavignon.transpolosearch.processing.internal.modelless.AbstractModellessInternalDelegateRecognizer;
 import fr.univavignon.transpolosearch.tools.string.StringTools;
-import fr.univavignon.transpolosearch.tools.web.WebTools;
+
+import fr.univavignon.tools.web.WebTools;
 
 /**
  * This class acts as an interface with the OpeNer Web service.

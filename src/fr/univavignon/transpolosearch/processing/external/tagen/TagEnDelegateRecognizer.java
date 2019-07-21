@@ -46,7 +46,8 @@ import fr.univavignon.transpolosearch.processing.ProcessorException;
 import fr.univavignon.transpolosearch.processing.external.AbstractExternalDelegateRecognizer;
 import fr.univavignon.transpolosearch.tools.file.FileNames;
 import fr.univavignon.transpolosearch.tools.file.FileTools;
-import fr.univavignon.transpolosearch.tools.xml.XmlTools;
+
+import fr.univavignon.tools.xml.XmlTools;
 
 /**
  * This class acts as a delegate for the mention recognition with TagEN.

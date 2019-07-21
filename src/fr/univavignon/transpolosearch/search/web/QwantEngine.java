@@ -19,7 +19,8 @@ package fr.univavignon.transpolosearch.search.web;
  */
 
 import fr.univavignon.transpolosearch.data.article.ArticleLanguage;
-import fr.univavignon.transpolosearch.tools.web.WebTools;
+
+import fr.univavignon.tools.web.WebTools;
 
 import java.io.IOException;
 import java.net.URL;

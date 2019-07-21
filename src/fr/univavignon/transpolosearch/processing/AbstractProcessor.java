@@ -18,8 +18,8 @@ package fr.univavignon.transpolosearch.processing;
  * along with TranspoloSearch. If not, see <http://www.gnu.org/licenses/>.
  */
 
-import fr.univavignon.transpolosearch.tools.log.HierarchicalLogger;
-import fr.univavignon.transpolosearch.tools.log.HierarchicalLoggerManager;
+import fr.univavignon.tools.log.HierarchicalLogger;
+import fr.univavignon.tools.log.HierarchicalLoggerManager;
 
 /**
  * This class is used to represent or implement recognizers, resolvers and linkers.

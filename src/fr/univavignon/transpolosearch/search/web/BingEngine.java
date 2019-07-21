@@ -19,8 +19,9 @@ package fr.univavignon.transpolosearch.search.web;
  */
 
 import fr.univavignon.transpolosearch.data.article.ArticleLanguage;
-import fr.univavignon.transpolosearch.tools.web.WebTools;
-import fr.univavignon.transpolosearch.tools.keys.KeyHandler;
+
+import fr.univavignon.tools.web.WebTools;
+import fr.univavignon.tools.keys.KeyHandler;
 
 import java.io.IOException;
 import java.io.InputStream;

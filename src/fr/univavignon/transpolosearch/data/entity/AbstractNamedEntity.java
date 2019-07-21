@@ -30,8 +30,9 @@ import java.util.TreeSet;
 import org.jdom2.Attribute;
 import org.jdom2.Element;
 
-import fr.univavignon.transpolosearch.tools.log.HierarchicalLogger;
-import fr.univavignon.transpolosearch.tools.log.HierarchicalLoggerManager;
+import fr.univavignon.tools.log.HierarchicalLogger;
+import fr.univavignon.tools.log.HierarchicalLoggerManager;
+
 import fr.univavignon.transpolosearch.tools.xml.XmlNames;
 
 /**

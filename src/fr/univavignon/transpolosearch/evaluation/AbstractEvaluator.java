@@ -35,9 +35,10 @@ import fr.univavignon.transpolosearch.processing.InterfaceProcessor;
 import fr.univavignon.transpolosearch.processing.ProcessorException;
 import fr.univavignon.transpolosearch.retrieval.reader.ReaderException;
 import fr.univavignon.transpolosearch.tools.file.FileNames;
-import fr.univavignon.transpolosearch.tools.log.HierarchicalLogger;
-import fr.univavignon.transpolosearch.tools.log.HierarchicalLoggerManager;
-import fr.univavignon.transpolosearch.tools.time.TimeFormatting;
+
+import fr.univavignon.tools.log.HierarchicalLogger;
+import fr.univavignon.tools.log.HierarchicalLoggerManager;
+import fr.univavignon.tools.time.TimeFormatting;
 
 /**
  * This class is used to evaluate the performance

@@ -1,9 +1,5 @@
 package fr.univavignon.transpolosearch.tools.time;	
 
-import java.time.LocalDate;
-import java.time.temporal.ChronoUnit;
-import java.util.Calendar;
-
 /*
  * TranspoloSearch
  * Copyright 2015-18 Vincent Labatut
@@ -21,6 +17,10 @@ import java.util.Calendar;
  * You should have received a copy of the GNU General Public License
  * along with TranspoloSearch. If not, see <http://www.gnu.org/licenses/>.
  */
+
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
+import java.util.Calendar;
 
 /**
  * Represents a time period, whose bounds are expressed

@@ -64,9 +64,10 @@ import fr.univavignon.transpolosearch.retrieval.reader.journals.LiberationReader
 import fr.univavignon.transpolosearch.retrieval.reader.wikipedia.WikipediaReader;
 import fr.univavignon.transpolosearch.tools.file.FileNames;
 import fr.univavignon.transpolosearch.tools.file.FileTools;
-import fr.univavignon.transpolosearch.tools.html.HtmlNames;
-import fr.univavignon.transpolosearch.tools.log.HierarchicalLogger;
-import fr.univavignon.transpolosearch.tools.log.HierarchicalLoggerManager;
+
+import fr.univavignon.tools.web.HtmlNames;
+import fr.univavignon.tools.log.HierarchicalLogger;
+import fr.univavignon.tools.log.HierarchicalLoggerManager;
 
 /**
  * All classes automatically getting articles

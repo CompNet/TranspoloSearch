@@ -1,21 +1,21 @@
-package fr.univavignon.transpolosearch.tools.html;
+package fr.univavignon.tools.web;
 
 /*
- * TranspoloSearch
- * Copyright 2015-18 Vincent Labatut
+ * CommonTools
+ * Copyright 2010-19 Vincent Labatut
  * 
- * This file is part of TranspoloSearch.
+ * This file is part of CommonTools.
  * 
- * TranspoloSearch is free software: you can redistribute it and/or modify it under 
+ * CommonTools is free software: you can redistribute it and/or modify it under 
  * the terms of the GNU General Public License as published by the Free Software 
  * Foundation, either version 2 of the License, or (at your option) any later version.
  * 
- * TranspoloSearch is distributed in the hope that it will be useful, but WITHOUT ANY 
+ * CommonTools is distributed in the hope that it will be useful, but WITHOUT ANY 
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A 
  * PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * 
  * You should have received a copy of the GNU General Public License
- * along with TranspoloSearch. If not, see <http://www.gnu.org/licenses/>.
+ * along with CommonTools. If not, see <http://www.gnu.org/licenses/>.
  */
 
 import java.text.DateFormat;
@@ -30,6 +30,7 @@ import org.jsoup.nodes.TextNode;
  * This class contains a set of methods related to HTML managment.
  * 
  * @author Vincent Labatut
+ * @version 2
  */
 public class HtmlTools
 {	

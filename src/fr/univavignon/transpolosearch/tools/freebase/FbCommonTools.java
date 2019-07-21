@@ -18,9 +18,9 @@ package fr.univavignon.transpolosearch.tools.freebase;
  * along with TranspoloSearch. If not, see <http://www.gnu.org/licenses/>.
  */
 
-import fr.univavignon.transpolosearch.tools.keys.KeyHandler;
-import fr.univavignon.transpolosearch.tools.log.HierarchicalLogger;
-import fr.univavignon.transpolosearch.tools.log.HierarchicalLoggerManager;
+import fr.univavignon.tools.keys.KeyHandler;
+import fr.univavignon.tools.log.HierarchicalLogger;
+import fr.univavignon.tools.log.HierarchicalLoggerManager;
 
 /**
  * This class contains methods implementing 
