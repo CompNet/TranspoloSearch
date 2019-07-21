@@ -24,7 +24,7 @@ import java.io.File;
  * This class contains various constants
  * related to file and folder names.
  *  
- * @version 2.1
+ * @version 2.2
  * @author Vincent Labatut
  */
 public class FileNames
@@ -32,6 +32,8 @@ public class FileNames
 	/////////////////////////////////////////////////////////////////
 	// FOLDERS		/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
+	/** Input folder */
+	public final static String FO_INPUT = "in";
 	/** Log folder */
 	public final static String FO_LOG = "log";
 	/** Output folder */
@@ -74,7 +76,7 @@ public class FileNames
 	public final static String EX_HTML = ".html";
 	/** Graphml file extension */
 	public final static String EX_GRAPHML = ".graphml";
-	
+
 	/////////////////////////////////////////////////////////////////
 	// FILES		/////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////
@@ -82,6 +84,6 @@ public class FileNames
 	public final static String FI_GRAPHML_SCHEMA = "graphml" + FileNames.EX_SCHEMA;
 	/** XML file used to store keys */
 	public final static String FI_KEY_LIST = "keys" + FileNames.EX_XML;
-	/** XML schema file used to store keys */
+	/** XML schema of the file used to store keys */
 	public final static String FI_KEY_SCHEMA = "keys" + FileNames.EX_SCHEMA;
 }
