@@ -22,9 +22,14 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.URI;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
+import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.HttpClientBuilder;
 
 import fr.univavignon.tools.log.HierarchicalLogger;
 import fr.univavignon.tools.log.HierarchicalLoggerManager;
@@ -42,6 +47,34 @@ public class WebTools
 	/////////////////////////////////////////////////////////////////
 	/** Common object used for logging */
 	protected static HierarchicalLogger logger = HierarchicalLoggerManager.getHierarchicalLogger();
+	
+	/////////////////////////////////////////////////////////////////
+	// GET				/////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////
+	/**
+	 * Sends a get request to the specified URL, retrieve the answer and
+	 * returns it as a {@code String}.
+	 * 
+	 * @param url
+	 * 		Targeted URL.
+	 * @return
+	 * 		String corresponding to the obtained text.
+	 * 
+	 * @throws ClientProtocolException
+	 * 		Problem while accessing the URL.
+	 * @throws IOException
+	 * 		Problem while reading the answer.
+	 */
+	public static String processGet(URI url) throws ClientProtocolException, IOException
+	{	// query the server	
+		HttpClient httpClient = HttpClientBuilder.create().build();
+		HttpGet request = new HttpGet(url);
+		HttpResponse response = httpClient.execute(request);
+		
+		// read answer
+		String result = readAnswer(response);
+		return result;
+	}
 	
 	/////////////////////////////////////////////////////////////////
 	// ANSWERS			/////////////////////////////////////////////
