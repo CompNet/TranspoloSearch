@@ -13,7 +13,20 @@ TranspoloSearch is free software: you can redistribute it and/or modify it under
 -----------------------------------------------------------------------
 
 ## Description
-This software takes the name of a public person and a period, and retrieve all events available online involving this person during this period. It first perform a web search using various engines, then retrieves the corresponding Web pages, performs NER (named entity recognition), uses these entities to cluster the articles, and considers each cluster as the description of a specific event. It is designed to handle Web pages in French, but should work also for English. It has been used in references [MLE'15] and [ML'17].
+This software takes the name of a public person and a period, and retrieve all events available online involving this person during this period. It first perform a web search using various engines, then retrieves the corresponding Web pages, performs NER (named entity recognition), uses these entities to cluster the articles, and considers each cluster as the description of a specific event. It is designed to handle Web pages in French, but should work also for English. It has been used in references [[MLE'15](#references)] and [[ML'17](#references)].
+
+If you use this software, please cite reference [[MLE'15](#references)]:
+```bibtex
+@InProceedings{Marrel2015,
+  author           = {Marrel, Guillaume and Labatut, Vincent and El Bèze, Marc},
+  title            = {Le {Web} comme miroir du travail politique quotidien~? Reconstituer l'écho médiatique en ligne des événements d'un agenda d'élu},
+  booktitle        = {13ème Congrès de l'Association Française de Science Politique},
+  year             = {2015},
+  pages            = {25},
+  address          = {Aix-en-Provence, FR},
+  url              = {[hal-01904338](http://www.congres-afsp.fr/st/st7/st7marrellabatutelbeze.pdf)},
+}
+```
 
 
 ## Organization
@@ -29,7 +42,7 @@ The rest of the files are resources:
 * Folder `lib` contains the external libraries, especially the NER-related ones (cf. the *Dependencies* section).
 * Folder `log` contains the log generated during the processing.
 * Folder `out` contains the articles and the files generated during the process. 
-* Folder `res` contains the XML schemas (XSD files), as well as the configuration files required by certain NER tools.
+* Folder `res` contains the `XML` schemas (`XSD` files), as well as the configuration files required by certain NER tools.
 
 
 ## Installation
@@ -37,7 +50,7 @@ First, get the last version of the project. Second, you need to download some ad
 
 Most of the data files are too large to be compatible with GitHub constraints. For this reason, they are hosted on [FigShare](https://doi.org/10.6084/m9.figshare.1289791). Before using Nerwip, you need to retrieve these archives and unzip them in the Eclipse project.
 
-1. Go to our FigShare page https://doi.org/10.6084/m9.figshare.1289791
+1. Go to our [FigShare](https://doi.org/10.6084/m9.figshare.1289791) page.
 2. You need the data related to the different NER tools (models, dictionaries, etc.), and you can ignore the corpus files (used for another project).
   * Download all 4 Zip files containing the NER data,
   * Extract the `res` folder,  
